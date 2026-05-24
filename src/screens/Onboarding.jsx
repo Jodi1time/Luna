@@ -97,21 +97,51 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, email, password, confirm, onChange, storageMode }) {
-  const isSync = storageMode === 'sync'
+function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, createAccount, onChange, storageMode }) {
+  const accountRequired = storageMode === 'sync'
+  const showAccount = accountRequired || createAccount
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <Field label="Passcode" type="password" value={password} onChange={(v) => onChange('password', v)} placeholder="Min. 6 characters" />
-      <Field label="Confirm passcode" type="password" value={confirm} onChange={(v) => onChange('confirm', v)} placeholder="Re-enter passcode" />
-      <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
-        Your data is encrypted on this device with this passcode using AES-256. We never see it. If you forget your passcode, your data cannot be recovered.
+      <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
+
+      <Field label="Passcode" type="password" value={passcode} onChange={(v) => onChange('passcode', v)} placeholder="Min. 6 characters" />
+      <Field label="Confirm passcode" type="password" value={confirmPasscode} onChange={(v) => onChange('confirmPasscode', v)} placeholder="Re-enter passcode" />
+      <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
+        Your passcode encrypts your cycle data on this device using AES-256. We never see it. If you forget it, your data cannot be recovered.
       </div>
-      {isSync && (
-        <>
-          <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
-          <Field label="Your name (optional)" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
-        </>
-      )}
+
+      {/* Account section */}
+      <div style={{ borderTop: `1px solid ${T.hair}`, paddingTop: 16, marginTop: 4 }}>
+        {accountRequired ? (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 4 }}>REQUIRED FOR SYNC</div>
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create your account</div>
+            <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and multi-device sync.</div>
+          </div>
+        ) : (
+          <button type="button" onClick={() => onChange('createAccount', !createAccount)}
+            style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'inherit', color: T.text, marginBottom: showAccount ? 12 : 0 }}>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 3 }}>OPTIONAL</div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create an account</div>
+              <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and future multi-device sync. You can also do this later in Settings.</div>
+            </div>
+            <span style={{ color: T.accent, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1, marginLeft: 12, flexShrink: 0 }}>
+              {showAccount ? 'HIDE' : 'ADD'}
+            </span>
+          </button>
+        )}
+
+        {showAccount && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeUp .2s ease-out both' }}>
+            <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+            <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
+            <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
+              Separate from your device passcode. Used only to sign you in.
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -121,30 +151,54 @@ export default function Onboarding({ step }) {
   const [dateDay,   setDateDay]  = useState(new Date().getDate())
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [storage,   setStorage]  = useState('local')
-  const [account,   setAccount]  = useState({ name: '', email: '', password: '', confirm: '' })
+  const [account, setAccount] = useState({
+    name: '', passcode: '', confirmPasscode: '',
+    createAccount: false, email: '', accountPassword: '',
+  })
+  const [signupError, setSignupError] = useState('')
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
   const now = new Date()
 
   const finish = async () => {
+    setSignupError('')
     const d = new Date(now.getFullYear(), now.getMonth(), dateDay)
-    await createVault(account.password)
+    await createVault(account.passcode)
     await useLuna.persist.rehydrate()
+
+    const wantsAccount = storage === 'sync' || account.createAccount
+    let acct = null
+    if (wantsAccount && account.email && account.accountPassword) {
+      try {
+        const { signUp } = await import('../lib/supabase')
+        await signUp(account.email, account.accountPassword)
+        acct = { email: account.email }
+      } catch (e) {
+        setSignupError(e.message || 'Could not create account — you can try again from Settings.')
+      }
+    }
+
     setOnboarding({
       lastPeriodStart: d.toISOString().slice(0, 10),
       cycleLength: cycleDays,
       storageMode: storage,
-      account: account.email ? { name: account.name, email: account.email } : null,
+      displayName: account.name.trim(),
+      account: acct,
     })
     go('home')
   }
 
   const canAdvance = () => {
     if (step === 4) {
-      if (account.password.length < 6) return false
-      if (account.password !== account.confirm) return false
-      if (storage === 'sync' && account.email.trim() === '') return false
+      if (!account.name.trim()) return false
+      if (account.passcode.length < 6) return false
+      if (account.passcode !== account.confirmPasscode) return false
+      const wantsAccount = storage === 'sync' || account.createAccount
+      if (wantsAccount) {
+        if (!account.email.trim()) return false
+        if (account.accountPassword.length < 8) return false
+      }
       return true
     }
     return true
@@ -188,12 +242,24 @@ export default function Onboarding({ step }) {
 
       {step === 4 && <>
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          {storage === 'sync' ? <>Secure your data<br /><em>and create your account.</em></> : <>Secure your data<br /><em>with a passcode.</em></>}
+          One last thing —<br /><em>who are you?</em>
         </div>
         <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.5 }}>
-          {storage === 'sync' ? 'Used to encrypt this device and authenticate sync.' : 'Used to encrypt everything on this device. Required.'}
+          Your name appears on your home screen. Your passcode locks Luna on this device.
         </div>
-        <StepAccount name={account.name} email={account.email} password={account.password} confirm={account.confirm} onChange={setAccountField} storageMode={storage} />
+        <StepAccount
+          name={account.name}
+          passcode={account.passcode}
+          confirmPasscode={account.confirmPasscode}
+          email={account.email}
+          accountPassword={account.accountPassword}
+          createAccount={account.createAccount}
+          onChange={setAccountField}
+          storageMode={storage}
+        />
+        {signupError && (
+          <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5 }}>{signupError}</div>
+        )}
       </>}
 
       <div style={{ flex: 1 }} />

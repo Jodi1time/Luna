@@ -29,8 +29,9 @@ function Row({ label, value, right, onTap, danger }) {
 }
 
 export default function Settings() {
-  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft } = useLuna()
+  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName } = useLuna()
   const session = useLuna((s) => s.session)
+  const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
   const handleSignOut = async () => {
     await signOut()
   }
@@ -38,13 +39,13 @@ export default function Settings() {
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="You" />
-        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>Mira.</div>
+        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName || 'Welcome'}.</div>
       </div>
 
       {/* Pro card */}
       <div style={{ padding: '20px 16px 8px' }}>
         <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, display: 'flex', alignItems: 'center', gap: 14, borderRadius: T.r }}>
-          <div style={{ width: 50, height: 50, background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 22, fontWeight: 500, borderRadius: T.r }}>M</div>
+          <div style={{ width: 50, height: 50, background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 22, fontWeight: 500, borderRadius: T.r }}>{initial}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14, fontFamily: T.sans }}>{isPro ? 'Luna Pro' : 'Luna Free'}</div>
             <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.sans }}>

@@ -16,7 +16,8 @@ const useLuna = create(
       cycleLength: 28,
       periodLength: 5,
       storageMode: 'local',    // 'local' | 'sync'
-      account: null,           // { name, email } | null  (passcode is the encryption key, never stored)
+      displayName: '',         // shown in the You tab; collected during onboarding
+      account: null,           // { email } | null — only set if a Supabase account was created (passcode is the encryption key, never stored)
       completedChecks: [],     // array of CHECKUPS ids marked done
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
@@ -99,6 +100,7 @@ const useLuna = create(
         cycleLength:     s.cycleLength,
         periodLength:    s.periodLength,
         storageMode:     s.storageMode,
+        displayName:     s.displayName,
         account:         s.account,
         completedChecks: s.completedChecks,
         logs:            s.logs,
