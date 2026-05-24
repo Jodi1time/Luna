@@ -42,10 +42,13 @@ export default function App() {
     return <AppShell><Lock onUnlocked={() => setLocked(false)} /></AppShell>
   }
 
-  // Auto-redirect if not onboarded
-  const resolvedScreen = (!onboarded && !['welcome','onb1','onb2','onb3'].includes(screen))
-    ? 'welcome'
-    : screen
+  // Route to the right starting screen on each session.
+  // - If not onboarded and they're not already in the onboarding flow → Welcome
+  // - If onboarded but the session restored to 'welcome' (since screen isn't persisted)
+  //   or any onboarding step → Home
+  const resolvedScreen = !onboarded
+    ? (['welcome','onb1','onb2','onb3'].includes(screen) ? screen : 'welcome')
+    : (['welcome','onb1','onb2','onb3'].includes(screen) ? 'home' : screen)
 
   return (
     <AppShell>
