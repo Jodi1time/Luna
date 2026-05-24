@@ -43,7 +43,7 @@ export default function App() {
   }
 
   // Auto-redirect if not onboarded
-  const resolvedScreen = (!onboarded && !['welcome','onb1','onb2','onb3','onb4'].includes(screen))
+  const resolvedScreen = (!onboarded && !['welcome','onb1','onb2','onb3'].includes(screen))
     ? 'welcome'
     : screen
 
@@ -63,7 +63,6 @@ function ScreenRenderer({ screen }) {
     case 'onb1':     return <Onboarding step={1} />
     case 'onb2':     return <Onboarding step={2} />
     case 'onb3':     return <Onboarding step={3} />
-    case 'onb4':     return <Onboarding step={4} />
     case 'nourish':  return <Nourish />
     case 'care':     return <Care />
     case 'home':     return <Home />

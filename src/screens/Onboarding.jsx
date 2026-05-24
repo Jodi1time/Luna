@@ -4,7 +4,7 @@ import { CTAButton, SourceLine, Icons } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { createVault } from '../lib/crypto'
 
-function ProgressBar({ step, total = 4 }) {
+function ProgressBar({ step, total = 3 }) {
   return (
     <div style={{ display: 'flex', gap: 4, marginBottom: 36 }}>
       {Array.from({ length: total }).map((_, i) => (
@@ -55,29 +55,6 @@ function StepCycle({ value, onChange }) {
   )
 }
 
-function StepStorage({ value, onChange }) {
-  const opts = [
-    { id: 'local', label: 'On-device only',                  sub: 'Encrypted on this phone. Nothing leaves.',       rec: true },
-    { id: 'sync',  label: 'Sync with end-to-end encryption', sub: "Back up across your devices. We can't read it.", rec: false },
-  ]
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {opts.map((o) => (
-        <button key={o.id} onClick={() => onChange(o.id)}
-          style={{ padding: 16, border: `1px solid ${value === o.id ? T.accent : T.hair}`, background: value === o.id ? T.accent + '0E' : T.card, cursor: 'pointer', textAlign: 'left', position: 'relative', borderRadius: T.r, fontFamily: T.sans, color: T.text }}>
-          {o.rec && (
-            <div style={{ position: 'absolute', top: -1, right: -1, padding: '3px 8px', background: T.accent, color: '#fff', fontSize: 9, letterSpacing: 1.2, fontWeight: 700, fontFamily: T.sans }}>
-              RECOMMENDED
-            </div>
-          )}
-          <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 3 }}>{o.label}</div>
-          <div style={{ fontSize: 12, color: T.muted }}>{o.sub}</div>
-        </button>
-      ))}
-    </div>
-  )
-}
-
 function Field({ label, type = 'text', value, onChange, placeholder }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -97,9 +74,7 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, createAccount, onChange, storageMode }) {
-  const accountRequired = storageMode === 'sync'
-  const showAccount = accountRequired || createAccount
+function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, createAccount, onChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
@@ -112,27 +87,19 @@ function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, 
 
       {/* Account section */}
       <div style={{ borderTop: `1px solid ${T.hair}`, paddingTop: 16, marginTop: 4 }}>
-        {accountRequired ? (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 4 }}>REQUIRED FOR SYNC</div>
-            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create your account</div>
-            <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and multi-device sync.</div>
+        <button type="button" onClick={() => onChange('createAccount', !createAccount)}
+          style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'inherit', color: T.text, marginBottom: createAccount ? 12 : 0 }}>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 3 }}>OPTIONAL</div>
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create an account</div>
+            <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and future multi-device sync. You can also do this later in Settings.</div>
           </div>
-        ) : (
-          <button type="button" onClick={() => onChange('createAccount', !createAccount)}
-            style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'inherit', color: T.text, marginBottom: showAccount ? 12 : 0 }}>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 3 }}>OPTIONAL</div>
-              <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create an account</div>
-              <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and future multi-device sync. You can also do this later in Settings.</div>
-            </div>
-            <span style={{ color: T.accent, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1, marginLeft: 12, flexShrink: 0 }}>
-              {showAccount ? 'HIDE' : 'ADD'}
-            </span>
-          </button>
-        )}
+          <span style={{ color: T.accent, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1, marginLeft: 12, flexShrink: 0 }}>
+            {createAccount ? 'HIDE' : 'ADD'}
+          </span>
+        </button>
 
-        {showAccount && (
+        {createAccount && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeUp .2s ease-out both' }}>
             <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
             <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
@@ -150,7 +117,6 @@ export default function Onboarding({ step }) {
   const { go, setOnboarding, cycleLength } = useLuna()
   const [dateDay,   setDateDay]  = useState(new Date().getDate())
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
-  const [storage,   setStorage]  = useState('local')
   const [account, setAccount] = useState({
     name: '', passcode: '', confirmPasscode: '',
     createAccount: false, email: '', accountPassword: '',
@@ -167,9 +133,8 @@ export default function Onboarding({ step }) {
     await createVault(account.passcode)
     await useLuna.persist.rehydrate()
 
-    const wantsAccount = storage === 'sync' || account.createAccount
     let acct = null
-    if (wantsAccount && account.email && account.accountPassword) {
+    if (account.createAccount && account.email && account.accountPassword) {
       try {
         const { signUp } = await import('../lib/supabase')
         await signUp(account.email, account.accountPassword)
@@ -182,7 +147,6 @@ export default function Onboarding({ step }) {
     setOnboarding({
       lastPeriodStart: d.toISOString().slice(0, 10),
       cycleLength: cycleDays,
-      storageMode: storage,
       displayName: account.name.trim(),
       account: acct,
     })
@@ -190,12 +154,11 @@ export default function Onboarding({ step }) {
   }
 
   const canAdvance = () => {
-    if (step === 4) {
+    if (step === 3) {
       if (!account.name.trim()) return false
       if (account.passcode.length < 6) return false
       if (account.passcode !== account.confirmPasscode) return false
-      const wantsAccount = storage === 'sync' || account.createAccount
-      if (wantsAccount) {
+      if (account.createAccount) {
         if (!account.email.trim()) return false
         if (account.accountPassword.length < 8) return false
       }
@@ -204,13 +167,13 @@ export default function Onboarding({ step }) {
     return true
   }
 
-  const next = step < 4 ? () => go(`onb${step + 1}`) : finish
+  const next = step < 3 ? () => go(`onb${step + 1}`) : finish
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both' }}>
       <ProgressBar step={step} />
 
-      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 4</div>
+      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 3</div>
 
       {step === 1 && <>
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
@@ -231,17 +194,6 @@ export default function Onboarding({ step }) {
 
       {step === 3 && <>
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          Where does your<br /><em>data live?</em>
-        </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 20, fontFamily: T.sans, lineHeight: 1.5 }}>
-          Your default is on-device only. You can change it any time in Settings.
-        </div>
-        <StepStorage value={storage} onChange={setStorage} />
-        <SourceLine>You can change this any time in Settings → Privacy</SourceLine>
-      </>}
-
-      {step === 4 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
           One last thing —<br /><em>who are you?</em>
         </div>
         <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.5 }}>
@@ -255,7 +207,6 @@ export default function Onboarding({ step }) {
           accountPassword={account.accountPassword}
           createAccount={account.createAccount}
           onChange={setAccountField}
-          storageMode={storage}
         />
         {signupError && (
           <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5 }}>{signupError}</div>
@@ -273,7 +224,7 @@ export default function Onboarding({ step }) {
             </button>
           )}
           <CTAButton full onClick={next} style={{ opacity: canAdvance() ? 1 : 0.5 }}>
-            {step < 4 ? 'CONTINUE' : 'ENTER LUNA'} {Icons.arrow}
+            {step < 3 ? 'CONTINUE' : 'ENTER LUNA'} {Icons.arrow}
           </CTAButton>
         </div>
 
