@@ -59,6 +59,47 @@ Things to do/decide before opening Luna to the public. Keep this updated as item
   - Conflict resolution: last-write-wins with vector clocks per log day
   - Big feature — design separately
 
+## Luna assistant (post-launch AI companion)
+
+- [ ] **"Talk to Luna" — empathetic AI companion** (deliberate post-launch feature, not MVP)
+
+  Vision: a friend-tone AI inside the app for questions, complaints, encouragement, and
+  general support — feels like texting a knowledgeable friend who gets what cycles are like.
+  Especially powerful for the luteal/menstrual stretch when users need a soft place to land.
+
+  **Architectural load-bearing decisions (settle these BEFORE writing code):**
+
+  1. **Privacy posture.** The rest of Luna is "your data never leaves the device." AI inherently
+     means sending messages to a model API. Need clear in-product framing: "AI mode is opt-in,
+     per-conversation. Your stored cycle data is never auto-attached unless you toggle it."
+     Apple Intelligence is the reference for honest UX around cloud-processed content.
+  2. **Provider + retention.** Use Anthropic Claude (Haiku for cost, Sonnet for harder topics)
+     with zero-retention enabled. Strip identifiers; send only the message content plus
+     optional user-supplied cycle context.
+  3. **Safety guardrails.** Health context = high risk. System prompt enforces: empathy without
+     diagnosis, no dosing or drug-interaction advice, escalation to provider/crisis lines on
+     red-flag keywords (PMDD severity, suicide ideation, severe pain). Mirror the existing
+     HealthWatch flag set as in-prompt knowledge. Visible "not medical advice" framing.
+  4. **Cost model.** ~$0.01–0.05 per conversation with Haiku. Realistically a Pro feature.
+     Gives Pro tangible value beyond "more articles." Need server-side rate limiting per user
+     to bound costs.
+
+  **MVP scope (~1 week post-launch):**
+  - Text chat only (no voice in v1)
+  - Pro-only with daily/monthly message cap
+  - System prompt curated for tone + safety
+  - Optional toggle: "Share my current phase with Luna" (per-conversation, off by default)
+  - Crisis keywords → suicide/crisis hotline + therapist resources, override AI response
+  - Conversation history stored locally in the encrypted vault (Luna companion knows context
+    across sessions on this device, server holds nothing)
+
+  **v2 ideas:**
+  - Voice input/output (Web Speech API + TTS)
+  - Proactive encouraging messages during luteal/menstrual (local scheduling, curated copy,
+    not AI — keeps costs flat and tone controlled)
+  - "Vent / journal" mode that helps surface patterns over time
+  - Complaint logging that feeds back into symptom tracking
+
 ## Notifications
 
 - [ ] **Period / log / weekly editorial reminders**
