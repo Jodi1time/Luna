@@ -58,19 +58,16 @@ export default function Settings() {
         </div>
       </div>
 
-      <SectionLabel>Account</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        {session
-          ? <>
-              <Row label="Signed in as" value={session.user.email} />
-              <Row label="Sign out" onTap={handleSignOut} />
-            </>
-          : <Row label="Sign in or create account" onTap={() => go('auth')} />
-        }
-      </div>
-      <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-        Your account is for recovery and sync. Cycle data stays encrypted on this device.
-      </div>
+      {session && <>
+        <SectionLabel>Account</SectionLabel>
+        <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+          <Row label="Signed in as" value={session.user.email} />
+          <Row label="Sign out" onTap={handleSignOut} />
+        </div>
+        <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
+          Your account is for recovery and sync. Cycle data stays encrypted on this device.
+        </div>
+      </>}
 
       <SectionLabel>Cycle</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
