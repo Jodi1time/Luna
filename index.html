@@ -1,0 +1,2173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Luna — A cycle tracker that interprets, not just logs.</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="Luna is a privacy-first menstrual cycle tracker with evidence-grounded, plain-language guidance. Every claim is sourced." />
+<meta name="theme-color" content="#F4EFE5" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+/* Global styles for Luna & Still prototype canvas */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #f0eee9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+/* Phone screen scroll containers should not show scrollbars */
+.phone-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.phone-scroll::-webkit-scrollbar { display: none; }
+
+/* Tap feedback */
+.tap {
+  cursor: pointer;
+  transition: transform .12s ease, opacity .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tap:active { transform: scale(0.97); opacity: 0.85; }
+
+/* Subtle breathing animation */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50%      { transform: scale(1.08); opacity: 1; }
+}
+.breathe { animation: breathe 6s ease-in-out infinite; }
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.95); opacity: 0.4; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+.pulse-ring { animation: pulse-ring 3s ease-out infinite; }
+
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.orbit { animation: orbit-spin 40s linear infinite; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up .35s ease-out both; }
+
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+// shared.jsx — utilities, primitives, palettes shared across Luna + Still
+
+// ─────────────────────────────────────────────────────────────
+// Phone shell — minimal iPhone-ish wrapper, lighter than IOSDevice.
+// We use this so the screen is the full canvas (no extra chrome eating room)
+// ─────────────────────────────────────────────────────────────
+function Phone({ width = 360, height = 720, bg = '#fff', dark = false, children }) {
+  return (
+    <div style={{
+      width, height,
+      background: bg,
+      position: 'relative',
+      overflow: 'hidden',
+      borderRadius: 0, // canvas card already rounds
+      fontFamily: 'DM Sans, -apple-system, system-ui, sans-serif',
+      WebkitFontSmoothing: 'antialiased',
+      color: dark ? '#fff' : '#1c1410',
+    }}>
+      {/* Status bar */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 44,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 22px 0', zIndex: 30, pointerEvents: 'none',
+        color: dark ? '#fff' : '#1c1410',
+      }}>
+        <span style={{ fontSize: 14, fontWeight: 600, letterSpacing: -0.2 }}>9:41</span>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="2.5" height="4" rx="0.6"/><rect x="4" y="4" width="2.5" height="6" rx="0.6"/><rect x="8" y="2" width="2.5" height="8" rx="0.6"/><rect x="12" y="0" width="2.5" height="10" rx="0.6"/></svg>
+          <svg width="22" height="11" viewBox="0 0 22 11"><rect x="0.5" y="0.5" width="18" height="10" rx="3" stroke="currentColor" fill="none" opacity="0.4"/><rect x="2" y="2" width="14.5" height="7" rx="1.6" fill="currentColor"/></svg>
+        </div>
+      </div>
+      {/* Content */}
+      <div className="phone-scroll" style={{
+        position: 'absolute', inset: 0,
+        paddingTop: 44,
+      }}>
+        {children}
+      </div>
+      {/* Home indicator */}
+      <div style={{
+        position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)',
+        width: 110, height: 4, borderRadius: 4,
+        background: dark ? 'rgba(255,255,255,.55)' : 'rgba(0,0,0,.28)',
+        zIndex: 30,
+      }} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tab bar — generic, accepts items
+// ─────────────────────────────────────────────────────────────
+function TabBar({ items, active, onChange, dark = false, accent = '#000', bg }) {
+  return (
+    <div style={{
+      position: 'absolute', left: 0, right: 0, bottom: 0,
+      paddingBottom: 18, paddingTop: 10,
+      background: bg || (dark ? 'rgba(20,15,12,0.85)' : 'rgba(255,255,255,0.85)'),
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      borderTop: dark ? '0.5px solid rgba(255,255,255,0.08)' : '0.5px solid rgba(0,0,0,0.06)',
+      display: 'flex', justifyContent: 'space-around',
+      zIndex: 20,
+    }}>
+      {items.map((it) => {
+        const on = active === it.key;
+        return (
+          <button key={it.key}
+            onClick={() => onChange(it.key)}
+            className="tap"
+            style={{
+              border: 'none', background: 'transparent', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+              padding: '4px 8px',
+              color: on ? accent : (dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.42)'),
+              fontFamily: 'inherit',
+            }}>
+            <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {it.icon}
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 500, letterSpacing: 0.1 }}>{it.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tiny icons (mono-line)
+// ─────────────────────────────────────────────────────────────
+const Icon = {
+  home: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10l7-6 7 6v7a1 1 0 01-1 1h-4v-5H8v5H4a1 1 0 01-1-1z"/></svg>,
+  calendar: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M7 2v4M13 2v4"/></svg>,
+  plus: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M10 4v12M4 10h12"/></svg>,
+  insights: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 16l4-4 3 3 7-7"/><path d="M14 8h3v3"/></svg>,
+  settings: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="10" cy="10" r="2.4"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.5 1.5M13.5 13.5L15 15M5 15l1.5-1.5M13.5 6.5L15 5" strokeLinecap="round"/></svg>,
+  history: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10a7 7 0 1014-1"/><path d="M3 5v4h4"/><path d="M10 6v4l2.5 2"/></svg>,
+  play: <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3 2v10l9-5z"/></svg>,
+  lock: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"><rect x="3" y="6" width="8" height="6" rx="1.5"/><path d="M5 6V4.5a2 2 0 014 0V6"/></svg>,
+  sparkle: <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 0l1.4 4.6L13 6l-4.6 1.4L7 12l-1.4-4.6L1 6l4.6-1.4z" opacity=".9"/></svg>,
+  moon: <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M11.5 8.5A5 5 0 015.5 2.5 5 5 0 1011.5 8.5z"/></svg>,
+  arrow: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h8M7 3l4 4-4 4"/></svg>,
+  back: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 7H3M7 3L3 7l4 4"/></svg>,
+  close: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>,
+  check: <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7l3 3 5-6"/></svg>,
+  pause: <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="3" y="2" width="3" height="10" rx="1"/><rect x="8" y="2" width="3" height="10" rx="1"/></svg>,
+};
+
+// ─────────────────────────────────────────────────────────────
+// Button
+// ─────────────────────────────────────────────────────────────
+function Button({ children, onClick, fill = '#1c1410', text = '#fff', style = {}, full, ghost, outline }) {
+  const base = {
+    border: 'none', cursor: 'pointer',
+    padding: '14px 22px', borderRadius: 16,
+    fontFamily: 'inherit', fontSize: 15, fontWeight: 600,
+    letterSpacing: -0.1,
+    width: full ? '100%' : undefined,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+  };
+  if (ghost) {
+    return <button className="tap" onClick={onClick} style={{ ...base, background: 'transparent', color: fill, ...style }}>{children}</button>;
+  }
+  if (outline) {
+    return <button className="tap" onClick={onClick} style={{ ...base, background: 'transparent', color: fill, border: `1px solid ${fill}`, ...style }}>{children}</button>;
+  }
+  return <button className="tap" onClick={onClick} style={{ ...base, background: fill, color: text, ...style }}>{children}</button>;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Quick log emoji tap-targets
+// ─────────────────────────────────────────────────────────────
+function EmojiTap({ emoji, label, active, onClick, accent, bg = 'transparent', textColor }) {
+  return (
+    <button className="tap"
+      onClick={onClick}
+      style={{
+        border: 'none', cursor: 'pointer',
+        background: active ? accent : bg,
+        color: active ? '#fff' : (textColor || 'inherit'),
+        padding: '10px 6px',
+        borderRadius: 14,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+        minWidth: 56, fontFamily: 'inherit',
+        transition: 'background .15s, color .15s',
+      }}>
+      <span style={{ fontSize: 22, lineHeight: 1 }}>{emoji}</span>
+      <span style={{ fontSize: 10, fontWeight: 500, opacity: active ? 1 : 0.7 }}>{label}</span>
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// useScreen — tiny in-prototype router
+// ─────────────────────────────────────────────────────────────
+function useScreen(initial) {
+  const [screen, setScreen] = React.useState(initial);
+  const [stack, setStack] = React.useState([initial]);
+  const go = React.useCallback((next) => {
+    setScreen(next);
+    setStack((s) => [...s, next]);
+  }, []);
+  const back = React.useCallback(() => {
+    setStack((s) => {
+      if (s.length <= 1) return s;
+      const ns = s.slice(0, -1);
+      setScreen(ns[ns.length - 1]);
+      return ns;
+    });
+  }, []);
+  return { screen, go, back };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Image placeholder (subtle stripes)
+// ─────────────────────────────────────────────────────────────
+function Placeholder({ width = '100%', height = 120, label = 'image', color = '#999' }) {
+  return (
+    <div style={{
+      width, height, borderRadius: 12,
+      background: `repeating-linear-gradient(45deg, transparent 0 6px, ${color}22 6px 7px)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'DM Mono, monospace', fontSize: 10, color, opacity: 0.7,
+      letterSpacing: 0.5,
+    }}>{label}</div>
+  );
+}
+
+Object.assign(window, {
+  Phone, TabBar, Icon, Button, EmojiTap, useScreen, Placeholder,
+});
+
+
+// luna-data.jsx — Evidence-based medical content for Luna
+// Every claim sourced from peer-reviewed research, Cleveland Clinic, Kaiser
+// Permanente, Geisinger, Trinity Health, or systematic reviews. Sources listed
+// inline so users (and the team) can verify.
+
+// ─────────────────────────────────────────────────────────────
+// CYCLE PHASES — medically grounded
+// ─────────────────────────────────────────────────────────────
+const LUNA_PHASES = {
+  menstrual: {
+    id: 'menstrual',
+    name: 'Menstrual',
+    days: '1–7',
+    color: '#C84E2E',
+    hormones: 'Estrogen and progesterone drop sharply.',
+    whatsHappening: 'Your uterine lining sheds. Prostaglandins (inflammatory compounds) are released to help the uterus contract — this is what causes cramps and that flu-like feeling.',
+    bodyMood: 'Energy at its lowest. Brain may feel foggy. Serotonin and dopamine dip.',
+    sourceBody: 'Cleveland Clinic; Geisinger Health',
+    nutrition: {
+      headline: 'Iron is the priority.',
+      do: [
+        'Iron-rich foods: lean red meat, lentils, spinach, beans, tofu',
+        'Pair iron with vitamin C (oranges, peppers, broccoli) — it boosts absorption',
+        'Magnesium-rich foods may reduce cramps: pumpkin seeds, dark leafy greens, dark chocolate',
+        'Warm, anti-inflammatory foods: ginger tea, turmeric, soups',
+      ],
+      avoid: [
+        'High caffeine (can worsen cramps and anxiety)',
+        'Excess alcohol (poor sleep, dehydration)',
+      ],
+      source: 'Trinity Health Michigan; Cleveland Clinic',
+    },
+    exercise: {
+      headline: 'Rest is productive.',
+      do: ['Walking', 'Restorative yoga', 'Light stretching', 'Pilates if energy allows'],
+      avoid: ['Heavy lifting if cramping severe', 'High-intensity intervals'],
+      note: 'A 2020 systematic review found early follicular (overlapping with menstrual) shows trivially reduced exercise performance — but you can still train if you feel up to it.',
+      source: 'Sims et al., Systematic Review & Meta-Analysis 2020 (PMC7497427)',
+    },
+    redFlag: 'Heavy flow lasting >7 days or soaking a pad/tampon every hour for several hours = see a doctor. Could indicate menorrhagia or iron-deficiency anemia risk.',
+  },
+  follicular: {
+    id: 'follicular',
+    name: 'Follicular',
+    days: '8–13',
+    color: '#D88869',
+    hormones: 'Estrogen rises steadily. FSH triggers a dominant follicle to mature.',
+    whatsHappening: 'Your body is preparing to release an egg. The uterine lining begins to thicken again.',
+    bodyMood: 'Energy lifts. Mood, cognition, skin all tend to improve. Social drive often increases.',
+    sourceBody: 'Cleveland Clinic; FeelGoodPal (citing Sims 2020)',
+    nutrition: {
+      headline: 'Carb tolerance is highest now.',
+      do: [
+        'Complex carbs: quinoa, brown rice, oats, sweet potatoes',
+        'Lean proteins: chicken, fish, tofu, Greek yogurt',
+        'Healthy fats: avocado, olive oil, nuts and seeds',
+        'Fermented foods may support gut + estrogen metabolism: kimchi, yogurt, kefir',
+      ],
+      avoid: ['Rigid "estrogenic food" rules — no clinical evidence'],
+      source: 'Cleveland Clinic; Trinity Health Michigan',
+    },
+    exercise: {
+      headline: 'Best window for new PRs.',
+      do: ['Strength training', 'High-intensity intervals', 'Running, cycling, hiking', 'Try new movements — coordination tends to be sharper'],
+      avoid: [],
+      note: 'Insulin sensitivity is improved; anabolic response to protein may be slightly higher.',
+      source: 'Geisinger; Equator Virgin Active Nutrition Guide',
+    },
+    redFlag: 'Spotting between periods, severe pelvic pain, or no period after stopping birth control for 3+ months → see a doctor.',
+  },
+  ovulation: {
+    id: 'ovulation',
+    name: 'Ovulation',
+    days: '14–16',
+    color: '#E8B765',
+    hormones: 'Estrogen and testosterone peak. LH surge triggers egg release.',
+    whatsHappening: 'A mature egg is released from the ovary. Cervical mucus becomes egg-white-like. Basal body temperature rises ~0.5°F after ovulation.',
+    bodyMood: 'Peak energy, libido, and confidence for many people. Verbal fluency may sharpen.',
+    sourceBody: 'Cleveland Clinic; FeelGoodPal',
+    nutrition: {
+      headline: 'Oxidative stress increases — eat the rainbow.',
+      do: [
+        'Antioxidant-rich foods: berries, dark leafy greens, beets',
+        'Polyunsaturated fats: salmon, walnuts, flax, chia',
+        'Cruciferous vegetables (broccoli, cauliflower) support estrogen metabolism',
+        'Plenty of water — body temperature rises slightly',
+      ],
+      avoid: ['Excessive processed foods during this peak'],
+      source: 'Virgin Active Nutrition Guide for Menstrual Cycle',
+    },
+    exercise: {
+      headline: 'Peak performance window.',
+      do: ['Strength PRs', 'Sprint work', 'Team sports', 'Anything that needs confidence + power'],
+      avoid: [],
+      note: 'Be aware: some research suggests slightly higher ACL injury risk at ovulation due to ligament laxity from estrogen peak. Warm up thoroughly.',
+      source: 'Sports medicine research; Hertel et al.',
+    },
+    redFlag: 'Severe ovulation pain (mittelschmerz) lasting >24h or accompanied by fever could indicate ovarian cyst or PID — see a doctor.',
+  },
+  luteal: {
+    id: 'luteal',
+    name: 'Luteal',
+    days: '17–28',
+    color: '#9D6F8C',
+    hormones: 'Progesterone takes over and rises. Estrogen has a smaller secondary peak.',
+    whatsHappening: 'The corpus luteum (what\'s left of the follicle) produces progesterone to prep the uterus. If no pregnancy, hormones drop in the last days and the cycle restarts.',
+    bodyMood: 'Energy gradually declines. PMS symptoms may appear: bloating, irritability, fatigue, brain fog, cravings. Serotonin and dopamine begin to drop.',
+    sourceBody: 'Trinity Health; Cleveland Clinic; Geisinger',
+    nutrition: {
+      headline: 'Cravings are biological, not weak willpower.',
+      do: [
+        'Complex carbs (oats, sweet potato, whole grain) — support serotonin production',
+        'Magnesium: pumpkin seeds, dark chocolate (70%+), spinach — can reduce PMS severity',
+        'B6-rich foods: salmon, chicken, bananas — supports mood',
+        'Calcium: yogurt, fortified plant milk — may reduce PMS per RCT data',
+        'Stay hydrated to combat bloating',
+      ],
+      avoid: ['High sugar (worsens mood crashes)', 'Excess alcohol (worsens sleep, mood)', 'Excess salt if bloating'],
+      note: 'Research shows women eat 159–529 kcal/day more in the luteal phase. This is hormonally driven, not a discipline problem.',
+      source: 'Oxford Nutrition Reviews 2023; Trinity Health',
+    },
+    exercise: {
+      headline: 'Start strong. Taper as you go.',
+      do: [
+        'Early luteal: still good for moderate-to-vigorous workouts',
+        'Mid-to-late luteal: shift to walking, yoga, tai chi, Pilates',
+        'Light movement actually helps PMS — even when motivation drops',
+      ],
+      avoid: ['Punishing workouts in the final days before your period'],
+      source: 'Geisinger; Kaiser Permanente',
+    },
+    redFlag: 'If PMS feels disabling — extreme mood swings, depression, panic attacks, suicidal ideation in the days before your period — this could be PMDD (Premenstrual Dysphoric Disorder), a clinical condition affecting ~3–8% of menstruating people. Talk to a doctor. PMDD is treatable.',
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// SYMPTOMS — each tied to evidence-based context
+// ─────────────────────────────────────────────────────────────
+const LUNA_SYMPTOMS = {
+  cramps: {
+    label: 'Cramps',
+    emoji: '🩹',
+    why: 'Prostaglandins cause the uterus to contract to expel its lining. Higher prostaglandins → more severe cramps.',
+    evidence: [
+      'Heat (heating pad) is as effective as ibuprofen for many people — RCT evidence',
+      'Magnesium supplementation may reduce severity',
+      'Light exercise can help; sitting still often makes it worse',
+    ],
+    redFlag: 'Cramps that stop you from going to work/school, or are getting worse over time, could indicate endometriosis. Endometriosis affects ~10% of menstruating people and takes an average of 7+ years to diagnose. Ask your doctor.',
+    source: 'ACOG (American College of Obstetricians & Gynecologists)',
+  },
+  headache: {
+    label: 'Headache',
+    emoji: '🤕',
+    why: 'Estrogen drops at the end of luteal phase can trigger "menstrual migraines" in susceptible people.',
+    evidence: [
+      'Magnesium 400–600mg/day starting 3 days pre-period may prevent menstrual migraines',
+      'NSAIDs taken at the first sign are more effective than later',
+      'Tracking helps identify patterns — many people don\'t realize their headaches are cyclical',
+    ],
+    redFlag: 'New severe headache, headache with vision changes, or "worst headache of your life" = ER, not later.',
+    source: 'American Headache Society',
+  },
+  bloat: {
+    label: 'Bloating',
+    emoji: '🫧',
+    why: 'Progesterone slows digestion. Water retention also peaks in late luteal phase.',
+    evidence: [
+      'Most bloating resolves within first 2 days of period',
+      'Reduce salt, increase water, magnesium can help',
+      'Probiotic foods may support gut motility',
+    ],
+    redFlag: 'Persistent bloating that doesn\'t resolve with your period, or feels different — can rarely indicate ovarian issues. Worth checking if it persists.',
+    source: 'Cleveland Clinic',
+  },
+  mood: {
+    label: 'Mood swings',
+    emoji: '🥺',
+    why: 'Serotonin and dopamine drop in late luteal phase. The brain is genuinely operating in a different hormonal environment.',
+    evidence: [
+      'Aerobic exercise has the strongest RCT evidence for PMS mood',
+      'Calcium 1000–1200mg/day reduced PMS symptoms ~48% in a major RCT',
+      'CBT shows efficacy for PMDD when severe',
+    ],
+    redFlag: 'If you experience suicidal thoughts, hopelessness, or panic attacks specifically in the week before your period, this may be PMDD. PMDD is a clinical diagnosis with effective treatments. Please talk to a doctor.',
+    source: 'Thys-Jacobs RCT 1998; ACOG PMDD guidance',
+  },
+  tender: {
+    label: 'Tender breasts',
+    emoji: '💞',
+    why: 'Rising progesterone in luteal phase causes breast tissue swelling.',
+    evidence: [
+      'Reducing caffeine may help — RCT-supported',
+      'Vitamin E and evening primrose oil have mixed evidence',
+      'Well-fitted supportive bra during luteal phase often helps',
+    ],
+    redFlag: 'A new, persistent, unilateral lump that doesn\'t move with your cycle = see a doctor promptly.',
+    source: 'Cleveland Clinic',
+  },
+  fatigue: {
+    label: 'Fatigue',
+    emoji: '😴',
+    why: 'Estrogen and serotonin drops sap energy. Heavy menstrual bleeding can drive low iron, which compounds it.',
+    evidence: [
+      'Get ferritin checked if heavy flow + persistent fatigue',
+      'B12 and vitamin D status matter — both are often low in menstruating people',
+      'Sleep hygiene is more impactful than supplements',
+    ],
+    redFlag: 'Fatigue that doesn\'t lift with rest, plus pallor, hair loss, or shortness of breath → iron deficiency / anemia bloodwork.',
+    source: 'British Society for Haematology iron deficiency guidance',
+  },
+  acne: {
+    label: 'Skin breakout',
+    emoji: '🫥',
+    why: 'Testosterone\'s relative rise + progesterone\'s impact on sebum often causes late-luteal/early-menstrual breakouts.',
+    evidence: [
+      'Topical retinoids and salicylic acid are the most evidence-based',
+      'Hormonal acne pattern (jawline, chin, recurring monthly) often responds to spironolactone or hormonal birth control if severe',
+    ],
+    redFlag: 'Severe acne, hirsutism, irregular cycles together can indicate PCOS — see a doctor.',
+    source: 'AAD (American Academy of Dermatology)',
+  },
+  crave: {
+    label: 'Cravings',
+    emoji: '🍫',
+    why: 'Serotonin drops in luteal phase — your brain is literally seeking carbs to boost serotonin synthesis.',
+    evidence: [
+      'Eating regular complex-carb meals reduces craving intensity',
+      'Dark chocolate (70%+) is a reasonable craving response — magnesium + lower sugar than candy',
+      'Suppression usually backfires; honoring smaller cravings prevents binge cycles',
+    ],
+    source: 'Oxford Nutrition Reviews 2023',
+  },
+  sleep: {
+    label: 'Sleep issues',
+    emoji: '🌙',
+    why: 'Progesterone has a mild sedating effect — its drop late-luteal can cause insomnia. Body temperature also rises slightly in luteal phase, which can disrupt sleep.',
+    evidence: [
+      'Keep bedroom cool (~65°F)',
+      'Magnesium glycinate before bed has good safety profile',
+      'Caffeine clearance slows in luteal phase — cut your last cup earlier',
+    ],
+    source: 'Sleep Foundation; Mong & Cusmano 2016',
+  },
+  back: {
+    label: 'Back pain',
+    emoji: '🦴',
+    why: 'Prostaglandins refer pain to the lower back. Endometriosis can also cause cyclical lower-back pain.',
+    evidence: [
+      'Same heat / NSAID / movement protocol as cramps',
+      'Specific lower-back stretches: child\'s pose, cat-cow',
+    ],
+    redFlag: 'Severe back pain with painful sex or painful bowel movements during your period → ask about endometriosis screening.',
+    source: 'ACOG',
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// EVIDENCE-BASED ARTICLES (Library)
+// ─────────────────────────────────────────────────────────────
+const LUNA_ARTICLES = [
+  {
+    id: 'pmdd',
+    cat: 'Mental Health',
+    tag: 'Important',
+    title: 'PMDD: when it\'s not "just PMS"',
+    read: '4 min',
+    summary: 'Up to 1 in 12 menstruating people have PMDD. It\'s a clinical diagnosis — and it\'s treatable.',
+    body: [
+      'PMDD (Premenstrual Dysphoric Disorder) affects an estimated 3–8% of menstruating people. It\'s in the DSM-5 as a mental health condition — meaning it\'s formally recognized and well-studied.',
+      'The difference from PMS is severity. PMS is uncomfortable. PMDD is disabling. Symptoms must occur in the week before menstruation, improve within a few days of period onset, and be minimal or absent in the week post-period — for most cycles.',
+      'Symptoms can include: extreme mood swings, hopelessness, panic attacks, anger, suicidal ideation, severe fatigue, and difficulty concentrating.',
+      'Treatments with strong evidence: SSRIs (often dosed only during luteal phase), CBT, certain hormonal birth control formulations, and lifestyle interventions including aerobic exercise.',
+      'If you suspect PMDD, track symptoms for at least 2 cycles before your appointment. Your provider needs the daily data to diagnose — Luna can export this.',
+    ],
+    sources: [
+      'American College of Obstetricians and Gynecologists (ACOG) Practice Bulletin',
+      'International Association for Premenstrual Disorders (IAPMD)',
+      'Yonkers et al., Lancet 2008',
+    ],
+  },
+  {
+    id: 'iron',
+    cat: 'Nutrition',
+    tag: 'Common',
+    title: 'Heavy periods, low iron, and how they connect',
+    read: '3 min',
+    summary: 'If your period soaks pads/tampons hourly or lasts >7 days, your iron may be running on empty.',
+    body: [
+      'Heavy menstrual bleeding (menorrhagia) is defined as losing more than 80mL of blood per cycle, or bleeding for more than 7 days. Up to 1 in 5 menstruating people meet this definition.',
+      'Iron deficiency develops gradually. You can be iron-deficient without being anemic — and still feel exhausted, foggy, and have hair loss or restless legs.',
+      'Ask your doctor for a "ferritin" test, not just hemoglobin. Ferritin shows your stored iron and drops first.',
+      'Dietary iron: heme iron (red meat, poultry, fish) absorbs at ~25%, non-heme iron (beans, spinach, tofu) at ~5–10%. Pair non-heme with vitamin C to boost absorption.',
+      'Avoid taking iron with tea, coffee, or calcium — they block absorption.',
+    ],
+    sources: [
+      'British Society for Haematology',
+      'NIH Office of Dietary Supplements',
+      'NICE Guideline NG88 (Heavy Menstrual Bleeding)',
+    ],
+  },
+  {
+    id: 'endo',
+    cat: 'Conditions',
+    tag: 'Diagnosis matters',
+    title: 'Endometriosis: signs that warrant a conversation',
+    read: '5 min',
+    summary: 'Endometriosis affects ~10% of menstruating people and takes an average of 7+ years to diagnose.',
+    body: [
+      'Endometriosis is when tissue similar to the uterine lining grows outside the uterus. It causes inflammation and can fuse organs together.',
+      'Signs beyond "bad cramps": pain during or after sex, painful bowel movements during your period, chronic pelvic pain (not just cyclical), and infertility.',
+      'The diagnostic delay is a real, documented problem. Many people are told their pain is "normal" for years. It is not.',
+      'There is no blood test. Pelvic ultrasound can show some forms. Laparoscopy is the only definitive diagnosis.',
+      'Treatments range from NSAIDs to hormonal therapy to excision surgery. Earlier diagnosis = better long-term outcomes.',
+    ],
+    sources: [
+      'World Health Organization (WHO) Endometriosis Fact Sheet 2023',
+      'ESHRE Guideline on Endometriosis',
+      'Endometriosis Foundation of America',
+    ],
+  },
+  {
+    id: 'pcos',
+    cat: 'Conditions',
+    tag: 'Often missed',
+    title: 'PCOS: more than irregular periods',
+    read: '4 min',
+    summary: 'PCOS affects up to 1 in 10 menstruating people of reproductive age. Many go years undiagnosed.',
+    body: [
+      'PCOS (Polycystic Ovary Syndrome) is a hormonal condition. Diagnosis uses the Rotterdam criteria — you need 2 of 3: irregular cycles, elevated androgens (often shown by acne, hirsutism, or bloodwork), and polycystic ovaries on ultrasound.',
+      'It\'s associated with insulin resistance, increased risk of type 2 diabetes, and fertility challenges — all of which are manageable with early intervention.',
+      'Treatment isn\'t one-size: hormonal birth control, metformin, spironolactone, GLP-1 agonists, and lifestyle interventions all have evidence.',
+      'If you have unpredictable cycles (>35 days apart, or skipping months) without a clear cause like breastfeeding or recent contraceptive change, ask for a workup.',
+    ],
+    sources: [
+      'International PCOS Guideline 2023',
+      'Endocrine Society Clinical Practice Guideline',
+    ],
+  },
+  {
+    id: 'cravings',
+    cat: 'Nutrition',
+    tag: 'Mythbusting',
+    title: 'Why your luteal cravings are biology, not weakness',
+    read: '3 min',
+    summary: 'You eat 159–529 kcal/day more in luteal phase. That\'s normal and measurable.',
+    body: [
+      'A 2023 Oxford Nutrition Reviews narrative review of energy intake studies found women consume 159–529 kcal more per day in the luteal phase compared to the follicular phase.',
+      'The driver: serotonin drops in late luteal phase. Carbs increase tryptophan transport into the brain, which boosts serotonin. Your brain is asking for what it actually needs.',
+      'Restricting in luteal phase often backfires into binge cycles. Honoring smaller cravings with complex carbs (oats, sweet potato, whole grains) prevents that.',
+      'Dark chocolate 70%+ is a reasonable response — magnesium content + lower sugar than candy.',
+    ],
+    sources: [
+      'Souza et al., Nutrition Reviews 2023',
+      'Wurtman et al., Am J Clin Nutr',
+    ],
+  },
+  {
+    id: 'privacy',
+    cat: 'Your Data',
+    tag: 'Read this',
+    title: 'How Luna handles your cycle data — in plain English',
+    read: '3 min',
+    summary: 'On-device by default. No third-party tracking. You control exports.',
+    body: [
+      'Your cycle data is stored locally on your phone in encrypted form. It is not sent to our servers unless you explicitly enable backup.',
+      'We do not sell or share your data. We do not run third-party analytics or advertising trackers inside the app.',
+      'When you ask for an AI insight, only anonymized symptom and date data is sent to our AI partner. No identifying information leaves your device.',
+      'You can export everything as CSV at any time. You can also delete everything in one step from Settings → Data.',
+      'We support full account deletion within 24 hours of request. We do not retain a copy.',
+      'This is the way we think a health app should work — quiet, on your side, and never the product.',
+    ],
+    sources: [
+      'Luna data handling policy',
+      'Built on Apple’s on-device encryption framework',
+    ],
+  },
+  {
+    id: 'exercise',
+    cat: 'Movement',
+    tag: 'Mythbusting',
+    title: 'Cycle-syncing workouts: what the evidence actually says',
+    read: '4 min',
+    summary: 'The early follicular phase shows trivially reduced performance. The rest of the cycle, you can train hard.',
+    body: [
+      'A 2020 systematic review and meta-analysis of 78 studies found a trivial effect of menstrual cycle phase on exercise performance overall (effect size –0.06).',
+      'The largest measured effect was between early follicular and late follicular phases — and even that was small.',
+      'Translation: rigid "do this on day X, never on day Y" rules outpace the science. Listen to your body, not a chart.',
+      'What is well-supported: insulin sensitivity is improved in follicular phase, so carbs around training feel better. Anabolic response to protein may be slightly higher when estrogen is up.',
+      'During your period, light exercise can reduce cramps. Avoid hero workouts if you\'re wiped — but don\'t feel obligated to skip movement entirely.',
+    ],
+    sources: [
+      'McNulty et al., Sports Medicine 2020 (PMC7497427)',
+      'Sims et al., Roar protocol',
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// RED FLAGS — quick reference
+// ─────────────────────────────────────────────────────────────
+const LUNA_RED_FLAGS = [
+  { id: 'flow', q: 'Soaking a pad/tampon every hour for several hours', a: 'Could indicate menorrhagia or anemia risk. See a doctor.' },
+  { id: 'long', q: 'Periods lasting more than 7 days', a: 'Worth a conversation with your provider.' },
+  { id: 'pmdd', q: 'Severe mood disruption, hopelessness, or suicidal thoughts in the week before your period', a: 'This could be PMDD — a recognized clinical condition with effective treatments. Please talk to a doctor.' },
+  { id: 'cramps', q: 'Cramps that stop you from working or going to school', a: 'Not normal. Consider endometriosis screening.' },
+  { id: 'sex', q: 'Pain during or after sex', a: 'Worth checking — can indicate endometriosis or other pelvic conditions.' },
+  { id: 'spot', q: 'Spotting between periods (after the first 3 months on a new BC method)', a: 'Get it evaluated.' },
+  { id: 'absent', q: 'Missed periods for 3+ months without pregnancy', a: 'Could indicate PCOS, thyroid, stress amenorrhea — worth a workup.' },
+];
+
+Object.assign(window, { LUNA_PHASES, LUNA_SYMPTOMS, LUNA_ARTICLES, LUNA_RED_FLAGS });
+
+
+// luna-editorial.jsx — Refined Luna Editorial direction with evidence-grounded
+// content. All medical claims sourced from luna-data.jsx.
+//
+// Editorial visual system:
+// - Big serif type (Newsreader) for headlines, italic accents for quotes
+// - DM Sans for body and metadata
+// - Tabular numeric scales (issue numbers, days, dates)
+// - Sharp corners (radius 4)
+// - Single warm-terracotta accent, deep ink text on warm cream
+// - Magazine-style hairline dividers and small uppercase eyebrow labels
+//
+// Screens added beyond the v1 prototype:
+// - PhaseDetail (hormones · nutrition · exercise · mood · red flags · sources)
+// - Library (evidence-based article list)
+// - Article (full article with citations)
+// - HealthWatch (PMDD / endo / iron / PCOS screening + red flags)
+// - SymptomDetail (tap a logged symptom to see WHY + evidence + when-to-see-doctor)
+// - Privacy (full data handling explainer)
+
+const EDITORIAL_THEME = {
+  bg: '#F4EFE5',
+  card: '#FFFFFF',
+  subtle: '#EBE3D5',
+  accent: '#C84E2E',
+  accent2: '#1A1310',
+  text: '#1A1310',
+  muted: '#756A60',
+  hair: 'rgba(26,19,16,0.1)',
+  faint: 'rgba(26,19,16,0.06)',
+  serif: '"Newsreader", Georgia, serif',
+  sans: '"DM Sans", -apple-system, system-ui, sans-serif',
+  mono: '"DM Mono", ui-monospace, monospace',
+  radius: 4,
+};
+
+// ─────────────────────────────────────────────────────────────
+// LunaEditorial — top-level app
+// ─────────────────────────────────────────────────────────────
+function LunaEditorial({ tweaks = {} }) {
+  const theme = applyEditorialTweaks(EDITORIAL_THEME, tweaks);
+  const [screen, setScreen] = React.useState('welcome');
+  const [stack, setStack] = React.useState(['welcome']);
+  const [logged, setLogged] = React.useState({ mood: null, symptoms: [], flow: null });
+  const [phaseId, setPhaseId] = React.useState('ovulation');
+  const [articleId, setArticleId] = React.useState(null);
+  const [symptomId, setSymptomId] = React.useState(null);
+  const cycleDay = 14;
+
+  const go = (s) => { setScreen(s); setStack((st) => [...st, s]); };
+  const back = () => setStack((st) => {
+    if (st.length <= 1) return st;
+    const ns = st.slice(0, -1);
+    setScreen(ns[ns.length - 1]);
+    return ns;
+  });
+  const openArticle = (id) => { setArticleId(id); go('article'); };
+  const openSymptom = (id) => { setSymptomId(id); go('symptom'); };
+  const openPhase = (id) => { setPhaseId(id); go('phase'); };
+
+  const ctx = { theme, screen, go, back, logged, setLogged, cycleDay,
+    phaseId, articleId, symptomId, openArticle, openSymptom, openPhase };
+
+  return (
+    <Phone width={360} height={720} bg={theme.bg}>
+      <div style={{ position: 'absolute', inset: 0, background: theme.bg }}>
+        {screen === 'welcome'  && <EdWelcome ctx={ctx} />}
+        {screen === 'onb1'     && <EdOnb step={1} ctx={ctx} />}
+        {screen === 'onb2'     && <EdOnb step={2} ctx={ctx} />}
+        {screen === 'onb3'     && <EdOnb step={3} ctx={ctx} />}
+        {screen === 'home'     && <EdHome ctx={ctx} />}
+        {screen === 'phase'    && <EdPhaseDetail ctx={ctx} />}
+        {screen === 'log'      && <EdLog ctx={ctx} />}
+        {screen === 'symptom'  && <EdSymptomDetail ctx={ctx} />}
+        {screen === 'calendar' && <EdCalendar ctx={ctx} />}
+        {screen === 'insights' && <EdInsights ctx={ctx} />}
+        {screen === 'library'  && <EdLibrary ctx={ctx} />}
+        {screen === 'article'  && <EdArticle ctx={ctx} />}
+        {screen === 'watch'    && <EdHealthWatch ctx={ctx} />}
+        {screen === 'privacy'  && <EdPrivacy ctx={ctx} />}
+        {screen === 'paywall'  && <EdPaywall ctx={ctx} />}
+        {screen === 'settings' && <EdSettings ctx={ctx} />}
+      </div>
+      {['home', 'calendar', 'insights', 'library', 'settings'].includes(screen) && (
+        <EdTabBar ctx={ctx} />
+      )}
+    </Phone>
+  );
+}
+
+function applyEditorialTweaks(base, t) {
+  const palettes = window.LUNA_PALETTES || {};
+  const p = palettes[t.lunaPalette];
+  if (!p) return base;
+  return { ...base, accent: p.accent, bg: p.bg, subtle: p.subtle };
+}
+
+// LunaEditorialAt — starts the prototype at a specific screen. Used in the
+// design canvas to show key screens side-by-side without forcing the user
+// to tap through every flow first. Still fully interactive once mounted.
+function LunaEditorialAt({ screen, articleId, symptomId, phaseId, tweaks = {} }) {
+  const theme = applyEditorialTweaks(EDITORIAL_THEME, tweaks);
+  const [cur, setCur] = React.useState(screen || 'home');
+  const [stack, setStack] = React.useState([screen || 'home']);
+  const [logged, setLogged] = React.useState({ mood: null, symptoms: [], flow: null });
+  const [phId, setPhId] = React.useState(phaseId || 'ovulation');
+  const [artId, setArtId] = React.useState(articleId || 'pmdd');
+  const [symId, setSymId] = React.useState(symptomId || 'cramps');
+  const cycleDay = 14;
+
+  const go = (s) => { setCur(s); setStack((st) => [...st, s]); };
+  const back = () => setStack((st) => {
+    if (st.length <= 1) return st;
+    const ns = st.slice(0, -1);
+    setCur(ns[ns.length - 1]);
+    return ns;
+  });
+  const openArticle = (id) => { setArtId(id); go('article'); };
+  const openSymptom = (id) => { setSymId(id); go('symptom'); };
+  const openPhase = (id) => { setPhId(id); go('phase'); };
+
+  const ctx = { theme, screen: cur, go, back, logged, setLogged, cycleDay,
+    phaseId: phId, articleId: artId, symptomId: symId,
+    openArticle, openSymptom, openPhase };
+
+  return (
+    <Phone width={360} height={720} bg={theme.bg}>
+      <div style={{ position: 'absolute', inset: 0, background: theme.bg }}>
+        {cur === 'welcome'  && <EdWelcome ctx={ctx} />}
+        {cur === 'onb1'     && <EdOnb step={1} ctx={ctx} />}
+        {cur === 'onb2'     && <EdOnb step={2} ctx={ctx} />}
+        {cur === 'onb3'     && <EdOnb step={3} ctx={ctx} />}
+        {cur === 'home'     && <EdHome ctx={ctx} />}
+        {cur === 'phase'    && <EdPhaseDetail ctx={ctx} />}
+        {cur === 'log'      && <EdLog ctx={ctx} />}
+        {cur === 'symptom'  && <EdSymptomDetail ctx={ctx} />}
+        {cur === 'calendar' && <EdCalendar ctx={ctx} />}
+        {cur === 'insights' && <EdInsights ctx={ctx} />}
+        {cur === 'library'  && <EdLibrary ctx={ctx} />}
+        {cur === 'article'  && <EdArticle ctx={ctx} />}
+        {cur === 'watch'    && <EdHealthWatch ctx={ctx} />}
+        {cur === 'privacy'  && <EdPrivacy ctx={ctx} />}
+        {cur === 'paywall'  && <EdPaywall ctx={ctx} />}
+        {cur === 'settings' && <EdSettings ctx={ctx} />}
+      </div>
+      {['home', 'calendar', 'insights', 'library', 'settings'].includes(cur) && (
+        <EdTabBar ctx={ctx} />
+      )}
+    </Phone>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Reusable Editorial chrome
+// ─────────────────────────────────────────────────────────────
+function EdMasthead({ theme, issue = 'No. 14', date = 'Wed · 23 Oct', onBack }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+      padding: '8px 0 14px', borderBottom: `1px solid ${theme.hair}`,
+      fontFamily: theme.sans, marginBottom: 18,
+    }}>
+      <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700 }}>
+        {onBack ? (
+          <button onClick={onBack} className="tap" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'inherit', fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: 'inherit', padding: 0 }}>
+            ← LUNA · {issue}
+          </button>
+        ) : (
+          <>LUNA · {issue}</>
+        )}
+      </div>
+      <div style={{ fontSize: 10, color: theme.muted, letterSpacing: 1 }}>{date}</div>
+    </div>
+  );
+}
+
+function EdEyebrow({ theme, children, color }) {
+  return (
+    <div style={{
+      fontSize: 10, letterSpacing: 2, fontFamily: theme.sans, fontWeight: 700,
+      color: color || theme.muted, textTransform: 'uppercase', marginBottom: 8,
+    }}>{children}</div>
+  );
+}
+
+function EdSourceLine({ theme, children }) {
+  return (
+    <div style={{
+      fontSize: 10, fontFamily: theme.mono, color: theme.muted,
+      letterSpacing: 0.5, marginTop: 8, paddingTop: 8,
+      borderTop: `1px solid ${theme.hair}`,
+    }}>SOURCE — {children}</div>
+  );
+}
+
+function EdRule({ theme }) {
+  return <div style={{ height: 1, background: theme.hair, margin: '16px 0' }} />;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tab bar — editorial flavored
+// ─────────────────────────────────────────────────────────────
+function EdTabBar({ ctx }) {
+  const { theme, screen, go } = ctx;
+  const items = [
+    { key: 'home', label: 'Today', icon: Icon.home },
+    { key: 'calendar', label: 'Calendar', icon: Icon.calendar },
+    { key: 'log', label: '', icon: (
+      <div style={{
+        width: 38, height: 38, borderRadius: 0,
+        background: theme.accent, color: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginTop: -8,
+      }}>{Icon.plus}</div>
+    ) },
+    { key: 'library', label: 'Library', icon: Icon.insights },
+    { key: 'settings', label: 'You', icon: Icon.settings },
+  ];
+  return (
+    <TabBar items={items} active={screen} onChange={go}
+      dark={false} accent={theme.accent} bg="rgba(244,239,229,0.92)" />
+  );
+}
+
+Object.assign(window, { LunaEditorial, LunaEditorialAt, EDITORIAL_THEME });
+
+
+// luna-editorial-screens-a.jsx — Welcome, Onboarding, Home, Phase Detail
+
+// ─────────────────────────────────────────────────────────────
+// WELCOME — privacy-first hero
+// ─────────────────────────────────────────────────────────────
+function EdWelcome({ ctx }) {
+  const { theme, go } = ctx;
+  return (
+    <div className="fade-up" style={{
+      position: 'absolute', inset: 0, padding: '60px 28px 30px',
+      display: 'flex', flexDirection: 'column',
+      background: theme.bg, color: theme.text,
+    }}>
+      <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: theme.sans, marginBottom: 32 }}>
+        LUNA · ISSUE 01
+      </div>
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{
+          fontFamily: theme.serif, fontSize: 70, fontWeight: 300,
+          color: theme.accent, lineHeight: 0.95, letterSpacing: -3,
+          fontStyle: 'italic',
+        }}>Luna.</div>
+        <div style={{
+          fontFamily: theme.serif, fontSize: 30, fontWeight: 500,
+          letterSpacing: -0.6, lineHeight: 1.1, marginTop: 18,
+        }}>
+          A cycle tracker that interprets,<br />
+          <em>not just logs.</em>
+        </div>
+        <div style={{
+          fontFamily: theme.serif, fontSize: 17, lineHeight: 1.55,
+          color: theme.muted, marginTop: 16, paddingRight: 12,
+        }}>
+          Phase-specific guidance grounded in peer-reviewed research. A knowledgeable friend, in your pocket.
+        </div>
+      </div>
+
+      {/* Trust strip — three pillars, magazine style */}
+      <div style={{
+        marginTop: 24, padding: '14px 0',
+        borderTop: `1px solid ${theme.hair}`, borderBottom: `1px solid ${theme.hair}`,
+        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12,
+      }}>
+        {[
+          { e: '01', h: 'Yours alone', s: 'Stored on your phone, encrypted.' },
+          { e: '02', h: 'Evidence-led', s: 'Every claim sourced from clinical research.' },
+          { e: '03', h: 'Quiet by design', s: 'No notifications you didn’t ask for.' },
+        ].map((p, i) => (
+          <div key={i}>
+            <div style={{ fontFamily: theme.mono, fontSize: 10, color: theme.accent, marginBottom: 6 }}>{p.e}</div>
+            <div style={{ fontFamily: theme.serif, fontSize: 13, fontWeight: 600, marginBottom: 3 }}>{p.h}</div>
+            <div style={{ fontSize: 10.5, color: theme.muted, lineHeight: 1.4, fontFamily: theme.sans }}>{p.s}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 22 }}>
+        <Button fill={theme.accent} full onClick={() => go('onb1')}
+          style={{ borderRadius: theme.radius, padding: '16px 22px', fontFamily: theme.sans, letterSpacing: 0.3 }}>
+          BEGIN
+        </Button>
+        <button className="tap" onClick={() => go('home')}
+          style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            color: theme.muted, fontFamily: theme.sans, fontSize: 12,
+            marginTop: 12, padding: 8, width: '100%',
+          }}>
+          Skip to demo →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ONBOARDING — 3 steps, last one is privacy choice
+// ─────────────────────────────────────────────────────────────
+function EdOnb({ step, ctx }) {
+  const { theme, go } = ctx;
+  const next = step < 3 ? () => go('onb' + (step + 1)) : () => go('home');
+
+  return (
+    <div className="fade-up" style={{
+      position: 'absolute', inset: 0, padding: '60px 28px 30px',
+      display: 'flex', flexDirection: 'column',
+      background: theme.bg, color: theme.text,
+    }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 36 }}>
+        {[1, 2, 3].map((i) => (
+          <div key={i} style={{ height: 2, flex: 1, background: i <= step ? theme.accent : theme.hair }} />
+        ))}
+      </div>
+
+      <div style={{ fontFamily: theme.mono, fontSize: 10, letterSpacing: 1, color: theme.muted, marginBottom: 6 }}>
+        STEP {step} / 3
+      </div>
+
+      {step === 1 && (
+        <>
+          <div style={{ fontFamily: theme.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
+            When did your<br /><em>last period</em> start?
+          </div>
+          <div style={{ fontSize: 14, color: theme.muted, marginBottom: 28, fontFamily: theme.sans }}>
+            Estimate is fine — Luna refines predictions as you log.
+          </div>
+          <OnbDate theme={theme} />
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <div style={{ fontFamily: theme.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
+            How long is your<br /><em>cycle, typically?</em>
+          </div>
+          <div style={{ fontSize: 14, color: theme.muted, marginBottom: 28, fontFamily: theme.sans }}>
+            Average is 28 days. Anywhere 21–35 is medically normal.
+          </div>
+          <OnbCycle theme={theme} />
+          <EdSourceLine theme={theme}>ACOG — Menstrual Cycle Norms</EdSourceLine>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <div style={{ fontFamily: theme.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
+            Where does your<br /><em>data live?</em>
+          </div>
+          <div style={{ fontSize: 14, color: theme.muted, marginBottom: 20, fontFamily: theme.sans, lineHeight: 1.5 }}>
+            Your default is on-device only. We recommend this. You can change it any time in Settings.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { id: 'local', label: 'On-device only', sub: 'Encrypted on this phone. Nothing leaves.', rec: true },
+              { id: 'sync', label: 'Sync with end-to-end encryption', sub: 'Back up across your devices. We can\'t read it.', rec: false },
+            ].map((o) => (
+              <div key={o.id} className="tap" style={{
+                padding: 16, border: `1px solid ${o.rec ? theme.accent : theme.hair}`,
+                background: o.rec ? theme.accent + '0E' : theme.card,
+                cursor: 'pointer', position: 'relative',
+              }}>
+                {o.rec && (
+                  <div style={{
+                    position: 'absolute', top: -1, right: -1, padding: '3px 8px',
+                    background: theme.accent, color: '#fff', fontSize: 9, letterSpacing: 1.2,
+                    fontWeight: 700, fontFamily: theme.sans,
+                  }}>RECOMMENDED</div>
+                )}
+                <div style={{ fontFamily: theme.serif, fontSize: 17, fontWeight: 500, marginBottom: 3 }}>{o.label}</div>
+                <div style={{ fontSize: 12, color: theme.muted, fontFamily: theme.sans }}>{o.sub}</div>
+              </div>
+            ))}
+          </div>
+          <EdSourceLine theme={theme}>You can change this any time in Settings → Privacy</EdSourceLine>
+        </>
+      )}
+
+      <div style={{ flex: 1 }} />
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        {step > 1 && (
+          <Button outline fill={theme.text} onClick={() => go('onb' + (step - 1))}
+            style={{ borderRadius: theme.radius, fontFamily: theme.sans }}>{Icon.back}</Button>
+        )}
+        <Button fill={theme.accent} full onClick={next}
+          style={{ borderRadius: theme.radius, fontFamily: theme.sans, letterSpacing: 0.3 }}>
+          {step < 3 ? 'CONTINUE' : 'ENTER LUNA'} {Icon.arrow}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// HOME — editorial cover with hero day + phase + reading list
+// ─────────────────────────────────────────────────────────────
+function EdHome({ ctx }) {
+  const { theme, cycleDay, go, openPhase, openArticle } = ctx;
+  const phase = LUNA_PHASES.ovulation;
+  const featuredArticles = LUNA_ARTICLES.slice(0, 3);
+
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, paddingBottom: 96, color: theme.text, overflow: 'auto' }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} />
+
+        {/* Cover: huge day + phase */}
+        <div>
+          <EdEyebrow theme={theme}>CYCLE DAY · OVULATORY WINDOW</EdEyebrow>
+          <div style={{ fontFamily: theme.serif, fontSize: 180, fontWeight: 300, color: theme.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: -6 }}>
+            {cycleDay}
+          </div>
+          <div style={{
+            fontFamily: theme.serif, fontSize: 36, fontWeight: 400, fontStyle: 'italic',
+            letterSpacing: -0.8, marginTop: 4, lineHeight: 1,
+          }}>{phase.name}.</div>
+          <div style={{ fontFamily: theme.serif, fontSize: 18, lineHeight: 1.5, marginTop: 14, color: theme.text }}>
+            {phase.bodyMood} <em style={{ color: theme.accent }}>Peak window for focus, training, and big asks.</em>
+          </div>
+          <button onClick={() => openPhase('ovulation')} className="tap"
+            style={{
+              marginTop: 14, background: 'transparent', border: `1px solid ${theme.text}`,
+              padding: '10px 14px', cursor: 'pointer',
+              fontFamily: theme.sans, fontSize: 11, letterSpacing: 2, fontWeight: 700, color: theme.text,
+            }}>
+            READ THE FULL PHASE BRIEF →
+          </button>
+        </div>
+
+        {/* Quick log row */}
+        <div style={{ borderTop: `1px solid ${theme.hair}`, borderBottom: `1px solid ${theme.hair}`, padding: '14px 0', marginTop: 22, marginBottom: 22 }}>
+          <EdEyebrow theme={theme}>LOG · TAKES 10 SECONDS</EdEyebrow>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+            {[
+              { e: '😌', l: 'Calm' },
+              { e: '⚡', l: 'Energy' },
+              { e: '😴', l: 'Tired' },
+              { e: '😣', l: 'Cramps' },
+              { e: '🥺', l: 'Low' },
+            ].map((m, i) => (
+              <EmojiTap key={i} emoji={m.e} label={m.l} accent={theme.accent} textColor={theme.text} />
+            ))}
+          </div>
+          <button onClick={() => go('log')} className="tap"
+            style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: theme.accent, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, fontFamily: theme.sans, padding: 0 }}>
+            FULL LOG →
+          </button>
+        </div>
+
+        {/* The Editorial — feature insight */}
+        <EdEyebrow theme={theme}>THE EDITORIAL · THIS WEEK</EdEyebrow>
+        <button onClick={() => go('insights')} className="tap"
+          style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', width: '100%', color: theme.text, fontFamily: 'inherit', marginBottom: 4 }}>
+          <div style={{ fontFamily: theme.serif, fontSize: 24, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.2 }}>
+            Your energy peaks have shifted <em style={{ color: theme.accent }}>two days earlier.</em>
+          </div>
+          <div style={{ fontFamily: theme.serif, fontSize: 14, lineHeight: 1.55, color: theme.muted, marginTop: 10 }}>
+            Across three cycles, your most-energized log entries moved from day 16 to day 14. Cramps on day 1 are also milder. Your body is settling.
+          </div>
+          <div style={{ marginTop: 12, fontFamily: theme.sans, fontSize: 10, color: theme.muted, letterSpacing: 1, fontWeight: 600 }}>
+            BY LUNA · GROUNDED IN YOUR LAST 3 CYCLES
+          </div>
+        </button>
+
+        <EdRule theme={theme} />
+
+        {/* Reading list */}
+        <EdEyebrow theme={theme}>FROM THE LIBRARY</EdEyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
+          {featuredArticles.map((a) => (
+            <button key={a.id} onClick={() => openArticle(a.id)} className="tap"
+              style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', width: '100%', color: theme.text, fontFamily: 'inherit' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                <span style={{ fontSize: 9.5, fontFamily: theme.mono, color: theme.accent, letterSpacing: 1 }}>{a.cat.toUpperCase()}</span>
+                <span style={{ fontSize: 10, color: theme.muted, fontFamily: theme.sans }}>{a.read}</span>
+              </div>
+              <div style={{ fontFamily: theme.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.25, marginBottom: 4 }}>{a.title}</div>
+              <div style={{ fontFamily: theme.sans, fontSize: 12.5, color: theme.muted, lineHeight: 1.4 }}>{a.summary}</div>
+            </button>
+          ))}
+        </div>
+
+        <button onClick={() => go('library')} className="tap"
+          style={{ marginTop: 16, background: 'transparent', border: `1px solid ${theme.hair}`, padding: '10px 14px', cursor: 'pointer', fontFamily: theme.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 700, color: theme.text, width: '100%' }}>
+          OPEN THE FULL LIBRARY →
+        </button>
+
+        {/* Health Watch teaser */}
+        <div style={{
+          marginTop: 22, padding: 18, background: theme.text, color: '#FAF4ED',
+          cursor: 'pointer',
+        }} className="tap" onClick={() => go('watch')}>
+          <div style={{ fontFamily: theme.sans, fontSize: 10, letterSpacing: 2, color: theme.accent, fontWeight: 700, marginBottom: 8 }}>
+            HEALTH WATCH
+          </div>
+          <div style={{ fontFamily: theme.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.25 }}>
+            Worried about your symptoms? <em style={{ color: theme.accent }}>Take the screener.</em>
+          </div>
+          <div style={{ fontFamily: theme.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', marginTop: 8, lineHeight: 1.4 }}>
+            Quick checks for PMDD, endometriosis, iron deficiency, PCOS. Not a diagnosis — a conversation starter for your doctor.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PHASE DETAIL — the differentiator. Deep dive per phase.
+// ─────────────────────────────────────────────────────────────
+function EdPhaseDetail({ ctx }) {
+  const { theme, phaseId, back } = ctx;
+  const p = LUNA_PHASES[phaseId] || LUNA_PHASES.ovulation;
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, color: theme.text, background: theme.bg, overflow: 'auto', paddingBottom: 30 }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue={`Phase Brief · ${p.name}`} onBack={back} />
+      </div>
+
+      {/* Hero */}
+      <div style={{ padding: '0 22px' }}>
+        <EdEyebrow theme={theme} color={p.color}>{p.name.toUpperCase()} · DAYS {p.days}</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 44, fontWeight: 400, lineHeight: 1, letterSpacing: -1.2, fontStyle: 'italic', color: p.color, marginTop: 4 }}>
+          {p.name}.
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 18, lineHeight: 1.5, marginTop: 14 }}>
+          {p.whatsHappening}
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 15, lineHeight: 1.55, color: theme.muted, marginTop: 10, fontStyle: 'italic' }}>
+          {p.bodyMood}
+        </div>
+        <div style={{ marginTop: 14, padding: 12, background: theme.subtle }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: theme.sans, color: theme.muted, marginBottom: 4 }}>HORMONES</div>
+          <div style={{ fontFamily: theme.serif, fontSize: 14 }}>{p.hormones}</div>
+        </div>
+        <EdSourceLine theme={theme}>{p.sourceBody}</EdSourceLine>
+      </div>
+
+      <EdRule theme={theme} />
+
+      {/* Nutrition */}
+      <div style={{ padding: '0 22px' }}>
+        <EdEyebrow theme={theme}>NUTRITION</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 26, fontWeight: 500, lineHeight: 1.15, letterSpacing: -0.4, marginBottom: 14 }}>
+          {p.nutrition.headline}
+        </div>
+        <BrickList theme={theme} title="Lean in" items={p.nutrition.do} positive />
+        {p.nutrition.avoid?.length > 0 && (
+          <BrickList theme={theme} title="Ease off" items={p.nutrition.avoid} />
+        )}
+        {p.nutrition.note && (
+          <div style={{ marginTop: 12, padding: 12, borderLeft: `2px solid ${theme.accent}`, background: theme.faint, fontFamily: theme.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.5 }}>
+            {p.nutrition.note}
+          </div>
+        )}
+        <EdSourceLine theme={theme}>{p.nutrition.source}</EdSourceLine>
+      </div>
+
+      <EdRule theme={theme} />
+
+      {/* Exercise */}
+      <div style={{ padding: '0 22px' }}>
+        <EdEyebrow theme={theme}>MOVEMENT</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 26, fontWeight: 500, lineHeight: 1.15, letterSpacing: -0.4, marginBottom: 14 }}>
+          {p.exercise.headline}
+        </div>
+        <BrickList theme={theme} title="Best fit now" items={p.exercise.do} positive />
+        {p.exercise.avoid?.length > 0 && (
+          <BrickList theme={theme} title="Ease off" items={p.exercise.avoid} />
+        )}
+        {p.exercise.note && (
+          <div style={{ marginTop: 12, padding: 12, borderLeft: `2px solid ${theme.accent}`, background: theme.faint, fontFamily: theme.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.5 }}>
+            {p.exercise.note}
+          </div>
+        )}
+        <EdSourceLine theme={theme}>{p.exercise.source}</EdSourceLine>
+      </div>
+
+      <EdRule theme={theme} />
+
+      {/* Red flag */}
+      <div style={{ padding: '0 22px' }}>
+        <div style={{ padding: 16, border: `1px solid ${theme.accent}`, background: '#fff' }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 700, color: theme.accent, fontFamily: theme.sans, marginBottom: 8 }}>
+            ⚠ TALK TO YOUR DOCTOR IF
+          </div>
+          <div style={{ fontFamily: theme.serif, fontSize: 15, lineHeight: 1.5 }}>
+            {p.redFlag}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BrickList({ theme, title, items, positive }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{
+        fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: theme.sans,
+        color: positive ? theme.accent : theme.muted, marginBottom: 8,
+      }}>{title.toUpperCase()}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {items.map((it, i) => (
+          <div key={i} style={{
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+            fontFamily: theme.serif, fontSize: 14.5, lineHeight: 1.45,
+          }}>
+            <span style={{ color: positive ? theme.accent : theme.muted, fontFamily: theme.mono, fontSize: 11, marginTop: 4, flexShrink: 0, width: 14 }}>
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <span>{it}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { LunaEditorial, EdWelcome, EdOnb, EdHome, EdPhaseDetail, BrickList });
+
+
+// luna-editorial-screens-b.jsx — Log, Symptom, Calendar, Insights, Library, Article, Watch, Privacy, Paywall, Settings
+
+// ─────────────────────────────────────────────────────────────
+// LOG ENTRY — every symptom tappable for "why" detail
+// ─────────────────────────────────────────────────────────────
+function EdLog({ ctx }) {
+  const { theme, back, logged, setLogged, openSymptom } = ctx;
+  const moods = ['😌', '⚡', '😴', '😣', '🥺', '🤗', '😤'];
+  const flowLevels = ['Spotting', 'Light', 'Medium', 'Heavy'];
+
+  const toggleSym = (id) => setLogged((s) => ({
+    ...s, symptoms: s.symptoms.includes(id) ? s.symptoms.filter((x) => x !== id) : [...s.symptoms, id],
+  }));
+
+  return (
+    <div className="fade-up phone-scroll" style={{
+      position: 'absolute', inset: 0,
+      background: theme.bg, color: theme.text,
+      padding: '12px 22px 30px', overflow: 'auto',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', fontFamily: theme.sans }}>
+        <button onClick={back} className="tap" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, padding: 6, fontFamily: 'inherit' }}>{Icon.close}</button>
+        <div style={{ fontSize: 11, color: theme.muted, letterSpacing: 1.5, fontWeight: 700 }}>WED · 23 OCT</div>
+        <button onClick={back} className="tap" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: theme.accent, padding: 6, fontWeight: 700, fontSize: 11, letterSpacing: 1.5, fontFamily: 'inherit' }}>SAVE</button>
+      </div>
+
+      <div style={{ fontFamily: theme.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, margin: '14px 0 6px' }}>
+        How was<br /><em>today?</em>
+      </div>
+      <div style={{ fontSize: 13, color: theme.muted, marginBottom: 22, fontFamily: theme.sans }}>
+        Tap to log. Long-tap any symptom to see the evidence behind it.
+      </div>
+
+      {/* Mood */}
+      <EdEyebrow theme={theme}>MOOD</EdEyebrow>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 22 }}>
+        {moods.map((m) => (
+          <button key={m} className="tap"
+            onClick={() => setLogged((s) => ({ ...s, mood: m }))}
+            style={{
+              border: 'none', cursor: 'pointer', width: 42, height: 42,
+              fontSize: 22,
+              background: logged.mood === m ? theme.accent + '22' : 'transparent',
+              outline: logged.mood === m ? `1.5px solid ${theme.accent}` : 'none',
+              fontFamily: 'inherit',
+            }}>{m}</button>
+        ))}
+      </div>
+
+      {/* Symptoms */}
+      <EdEyebrow theme={theme}>SYMPTOMS · TAP THE INFO ICON FOR EVIDENCE</EdEyebrow>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 22 }}>
+        {Object.entries(LUNA_SYMPTOMS).slice(0, 8).map(([id, s]) => {
+          const on = logged.symptoms.includes(id);
+          return (
+            <div key={id} style={{
+              border: `1px solid ${on ? theme.accent : theme.hair}`,
+              background: on ? theme.accent + '12' : theme.card,
+              padding: '12px 4px 6px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              fontFamily: 'inherit',
+              position: 'relative',
+            }}>
+              <button
+                onClick={() => toggleSym(id)}
+                className="tap"
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                  fontFamily: 'inherit', color: theme.text, padding: 0, width: '100%',
+                }}>
+                <span style={{ fontSize: 20 }}>{s.emoji}</span>
+                <span style={{ fontSize: 10, fontWeight: 500 }}>{s.label}</span>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); openSymptom(id); }}
+                className="tap"
+                style={{
+                  position: 'absolute', top: 2, right: 2,
+                  width: 16, height: 16, padding: 0,
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: theme.muted, fontSize: 11, fontFamily: theme.mono, fontWeight: 700,
+                }}>?</button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Flow */}
+      <EdEyebrow theme={theme}>FLOW</EdEyebrow>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 22 }}>
+        {flowLevels.map((f) => {
+          const on = logged.flow === f;
+          return (
+            <button key={f} className="tap"
+              onClick={() => setLogged((s) => ({ ...s, flow: f }))}
+              style={{
+                flex: 1, border: `1px solid ${on ? theme.accent : theme.hair}`,
+                background: on ? theme.accent : theme.card,
+                color: on ? '#fff' : theme.text,
+                padding: '12px 4px',
+                cursor: 'pointer', fontFamily: theme.sans, fontSize: 11, letterSpacing: 1, fontWeight: 600, textTransform: 'uppercase',
+              }}>{f}</button>
+          );
+        })}
+      </div>
+
+      {/* Note */}
+      <EdEyebrow theme={theme}>NOTE</EdEyebrow>
+      <div style={{
+        background: theme.card, border: `1px solid ${theme.hair}`,
+        padding: 14, fontFamily: theme.serif, fontStyle: 'italic',
+        color: theme.muted, fontSize: 14, minHeight: 56,
+      }}>
+        What was on your mind today?
+      </div>
+
+      <EdSourceLine theme={theme}>Daily symptom tracking improves diagnostic accuracy for PMDD &amp; menstrual disorders — ACOG</EdSourceLine>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SYMPTOM DETAIL — why it happens + evidence + red flag
+// ─────────────────────────────────────────────────────────────
+function EdSymptomDetail({ ctx }) {
+  const { theme, symptomId, back } = ctx;
+  const s = LUNA_SYMPTOMS[symptomId];
+  if (!s) return <div style={{ padding: 20 }}>Symptom not found</div>;
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, background: theme.bg, color: theme.text, overflow: 'auto', paddingBottom: 30 }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="Symptom" onBack={back} />
+      </div>
+
+      <div style={{ padding: '0 22px' }}>
+        <EdEyebrow theme={theme}>SYMPTOM · EVIDENCE BRIEF</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 38, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05 }}>
+          <span style={{ fontSize: 44, marginRight: 10 }}>{s.emoji}</span>
+          <em>{s.label}</em>
+        </div>
+
+        <EdRule theme={theme} />
+
+        <EdEyebrow theme={theme}>WHY IT HAPPENS</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 17, lineHeight: 1.55 }}>{s.why}</div>
+
+        <EdRule theme={theme} />
+
+        <EdEyebrow theme={theme}>WHAT THE EVIDENCE SAYS</EdEyebrow>
+        <BrickList theme={theme} title="Try" items={s.evidence} positive />
+
+        {s.redFlag && (
+          <>
+            <EdRule theme={theme} />
+            <div style={{ padding: 16, border: `1px solid ${theme.accent}`, background: '#fff' }}>
+              <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 700, color: theme.accent, fontFamily: theme.sans, marginBottom: 8 }}>
+                ⚠ WHEN TO ESCALATE
+              </div>
+              <div style={{ fontFamily: theme.serif, fontSize: 15, lineHeight: 1.5 }}>
+                {s.redFlag}
+              </div>
+            </div>
+          </>
+        )}
+
+        <EdSourceLine theme={theme}>{s.source}</EdSourceLine>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// CALENDAR — same as v1 but editorial-styled
+// ─────────────────────────────────────────────────────────────
+function EdCalendar({ ctx }) {
+  const { theme } = ctx;
+  const today = 23;
+  const phaseFor = (d) => {
+    if (d >= 1 && d <= 5) return LUNA_PHASES.menstrual;
+    if (d >= 6 && d <= 12) return LUNA_PHASES.follicular;
+    if (d >= 13 && d <= 15) return LUNA_PHASES.ovulation;
+    if (d >= 16 && d <= 28) return LUNA_PHASES.luteal;
+    return null;
+  };
+
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, paddingBottom: 90, overflow: 'auto', background: theme.bg, color: theme.text }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="The Calendar" />
+        <EdEyebrow theme={theme}>OCT 2025</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 14 }}>
+          October.
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: theme.sans, color: theme.muted }}>
+          {Object.values(LUNA_PHASES).map((p) => (
+            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{ width: 8, height: 8, background: p.color }} />{p.name}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+          {['M','T','W','T','F','S','S'].map((d, i) => (
+            <div key={i} style={{ textAlign: 'center', fontSize: 9, color: theme.muted, fontFamily: theme.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => {
+            const ph = phaseFor(d);
+            const isToday = d === today;
+            const predicted = d > today;
+            return (
+              <div key={d} style={{
+                aspectRatio: '1', position: 'relative',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontFamily: theme.serif,
+                fontWeight: isToday ? 600 : 400,
+                background: ph && !predicted ? ph.color + (isToday ? '' : '22') : 'transparent',
+                color: isToday && ph ? '#fff' : theme.text,
+                border: predicted && ph ? `1px dashed ${ph.color}77` : 'none',
+              }}>{d}</div>
+            );
+          })}
+        </div>
+
+        <EdRule theme={theme} />
+
+        {/* Predictions with reasoning */}
+        <EdEyebrow theme={theme}>PREDICTIONS · WITH REASONING</EdEyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+          {[
+            { label: 'Next period', date: 'Nov 6', conf: '95%', why: 'Based on your last 3 cycles (avg 28 days, ±1).' },
+            { label: 'Fertile window', date: 'Oct 22 – Oct 25', conf: '88%', why: 'Predicted from cycle length and prior ovulation indicators.' },
+            { label: 'PMS window', date: 'Nov 1 – Nov 5', conf: '76%', why: 'You\'ve logged mood + bloating in this window in 4 of 5 prior cycles.' },
+          ].map((p, i) => (
+            <div key={i} style={{ padding: 14, background: theme.card, border: `1px solid ${theme.hair}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 10, letterSpacing: 1.5, color: theme.muted, fontWeight: 700, fontFamily: theme.sans }}>{p.label.toUpperCase()}</span>
+                <span style={{ fontSize: 10, fontFamily: theme.mono, color: theme.accent }}>{p.conf}</span>
+              </div>
+              <div style={{ fontFamily: theme.serif, fontSize: 22, fontWeight: 500, marginTop: 4 }}>{p.date}</div>
+              <div style={{ fontFamily: theme.sans, fontSize: 11.5, color: theme.muted, marginTop: 6, lineHeight: 1.4 }}>
+                <em>Why:</em> {p.why}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// INSIGHTS — long form, sourced
+// ─────────────────────────────────────────────────────────────
+function EdInsights({ ctx }) {
+  const { theme } = ctx;
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, paddingBottom: 90, overflow: 'auto', background: theme.bg, color: theme.text }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="The Editorial · Week 14" />
+
+        {/* Lead story */}
+        <EdEyebrow theme={theme}>LEAD INSIGHT</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>
+          Your energy peaks have shifted <em style={{ color: theme.accent }}>two days earlier.</em>
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 16, lineHeight: 1.6, marginBottom: 12 }}>
+          Across three cycles, your most-energized log entries moved from day 16 to day 14. Cramps on day 1 dropped from "moderate" in 3 of 3 cycles to "mild" in 2 of the last 3. Your body is settling.
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 15, lineHeight: 1.55, color: theme.muted, fontStyle: 'italic' }}>
+          One to watch: sleep dipped on days 24–26 in two of your last three cycles. Magnesium 400mg/day from day 22 onward has RCT support for sleep quality in luteal phase. Worth trying.
+        </div>
+        <EdSourceLine theme={theme}>Methodology — 90 log entries · 3 cycles · pattern analysis</EdSourceLine>
+
+        <EdRule theme={theme} />
+
+        {/* Pattern cards */}
+        <EdEyebrow theme={theme}>PATTERNS WE'RE WATCHING</EdEyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
+          {[
+            {
+              tag: 'MOOD', col: LUNA_PHASES.ovulation.color,
+              title: 'Energy peaks 2 days earlier',
+              body: 'You used to spike around day 16. Last 3 cycles → day 14.',
+              source: 'Pattern detected · 4 / 4 cycles',
+            },
+            {
+              tag: 'SYMPTOM', col: LUNA_PHASES.luteal.color,
+              title: 'Headaches cluster days 24–25',
+              body: 'Same in 4 of last 5 cycles. Pattern consistent with menstrual migraine (estrogen drop trigger).',
+              source: 'American Headache Society',
+            },
+            {
+              tag: 'SLEEP', col: LUNA_PHASES.menstrual.color,
+              title: 'Sleep drops in late luteal',
+              body: 'Average sleep falls from 7.4h to 6.5h. This is documented — body temp rises and progesterone falls.',
+              source: 'Mong & Cusmano 2016',
+            },
+          ].map((p, i) => (
+            <div key={i} style={{ padding: 14, background: theme.card, border: `1px solid ${theme.hair}`, borderLeft: `3px solid ${p.col}` }}>
+              <div style={{ fontSize: 9.5, letterSpacing: 1.5, fontWeight: 700, color: p.col, fontFamily: theme.sans, marginBottom: 6 }}>{p.tag}</div>
+              <div style={{ fontFamily: theme.serif, fontSize: 17, fontWeight: 500, marginBottom: 4, lineHeight: 1.2 }}>{p.title}</div>
+              <div style={{ fontSize: 12.5, color: theme.muted, lineHeight: 1.45, fontFamily: theme.sans }}>{p.body}</div>
+              <div style={{ marginTop: 8, fontSize: 9.5, fontFamily: theme.mono, color: theme.muted, letterSpacing: 0.5 }}>
+                {p.source}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// LIBRARY — evidence-based articles list
+// ─────────────────────────────────────────────────────────────
+function EdLibrary({ ctx }) {
+  const { theme, openArticle } = ctx;
+  const cats = ['All', ...new Set(LUNA_ARTICLES.map((a) => a.cat))];
+  const [cat, setCat] = React.useState('All');
+  const filtered = cat === 'All' ? LUNA_ARTICLES : LUNA_ARTICLES.filter((a) => a.cat === cat);
+
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, paddingBottom: 96, overflow: 'auto', background: theme.bg, color: theme.text }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="The Library" />
+        <EdEyebrow theme={theme}>EVIDENCE-LED · PLAIN ENGLISH</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>
+          The Library.
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 15, lineHeight: 1.55, color: theme.muted, marginTop: 10 }}>
+          Every article cites peer-reviewed research or major medical bodies. Plain language, clearly sourced.
+        </div>
+
+        {/* Cat filter */}
+        <div style={{ display: 'flex', gap: 6, marginTop: 18, flexWrap: 'wrap' }}>
+          {cats.map((c) => (
+            <button key={c} className="tap" onClick={() => setCat(c)}
+              style={{
+                background: cat === c ? theme.text : 'transparent',
+                color: cat === c ? theme.bg : theme.text,
+                border: `1px solid ${cat === c ? theme.text : theme.hair}`,
+                padding: '6px 10px', cursor: 'pointer',
+                fontFamily: theme.sans, fontSize: 10.5, fontWeight: 600, letterSpacing: 0.6,
+              }}>{c}</button>
+          ))}
+        </div>
+
+        <EdRule theme={theme} />
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {filtered.map((a, i) => (
+            <button key={a.id} onClick={() => openArticle(a.id)} className="tap"
+              style={{
+                background: 'transparent', border: 'none', textAlign: 'left',
+                padding: '16px 0', cursor: 'pointer', width: '100%', color: theme.text, fontFamily: 'inherit',
+                borderBottom: i < filtered.length - 1 ? `1px solid ${theme.hair}` : 'none',
+              }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                <span style={{ fontSize: 9.5, fontFamily: theme.mono, color: theme.accent, letterSpacing: 1 }}>{a.cat.toUpperCase()}</span>
+                <span style={{ fontSize: 10, color: theme.muted, fontFamily: theme.sans }}>{a.read}</span>
+              </div>
+              <div style={{ fontFamily: theme.serif, fontSize: 20, fontWeight: 500, lineHeight: 1.2, marginBottom: 6 }}>{a.title}</div>
+              <div style={{ fontFamily: theme.sans, fontSize: 12.5, color: theme.muted, lineHeight: 1.5 }}>{a.summary}</div>
+              {a.tag && (
+                <div style={{ marginTop: 8, display: 'inline-block', fontSize: 9, fontFamily: theme.mono, color: theme.accent, padding: '3px 6px', border: `1px solid ${theme.accent}` }}>
+                  {a.tag.toUpperCase()}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// ARTICLE DETAIL — full text + sources
+// ─────────────────────────────────────────────────────────────
+function EdArticle({ ctx }) {
+  const { theme, articleId, back } = ctx;
+  const a = LUNA_ARTICLES.find((x) => x.id === articleId) || LUNA_ARTICLES[0];
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, background: theme.bg, color: theme.text, overflow: 'auto', paddingBottom: 30 }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue={a.cat} onBack={back} />
+
+        <EdEyebrow theme={theme} color={theme.accent}>{a.cat.toUpperCase()} · {a.read}</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
+          {a.title}
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 17, lineHeight: 1.55, color: theme.muted, marginTop: 12, fontStyle: 'italic' }}>
+          {a.summary}
+        </div>
+
+        <EdRule theme={theme} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {a.body.map((p, i) => (
+            <p key={i} style={{ fontFamily: theme.serif, fontSize: 15.5, lineHeight: 1.6, margin: 0 }}>
+              {i === 0 && <span style={{
+                float: 'left', fontSize: 56, lineHeight: 0.85, fontWeight: 400, marginRight: 6, marginTop: 4,
+                color: theme.accent, fontFamily: theme.serif,
+              }}>{p[0]}</span>}
+              {i === 0 ? p.slice(1) : p}
+            </p>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 22, padding: 14, background: theme.subtle }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: theme.muted, fontFamily: theme.sans, marginBottom: 8 }}>
+            SOURCES
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {a.sources.map((s, i) => (
+              <div key={i} style={{ fontSize: 11.5, fontFamily: theme.mono, lineHeight: 1.4 }}>
+                {String(i + 1).padStart(2, '0')} — {s}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// HEALTH WATCH — symptom checker for PMDD, endo, iron, PCOS
+// ─────────────────────────────────────────────────────────────
+function EdHealthWatch({ ctx }) {
+  const { theme, back, openArticle } = ctx;
+  const [answers, setAnswers] = React.useState({});
+  const toggle = (id) => setAnswers((a) => ({ ...a, [id]: !a[id] }));
+  const flagsTriggered = LUNA_RED_FLAGS.filter((f) => answers[f.id]);
+
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, background: theme.bg, color: theme.text, overflow: 'auto', paddingBottom: 30 }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="Health Watch" onBack={back} />
+
+        <EdEyebrow theme={theme}>SCREENER · NOT A DIAGNOSIS</EdEyebrow>
+        <div style={{ fontFamily: theme.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1 }}>
+          When should you talk to a doctor?
+        </div>
+        <div style={{ fontFamily: theme.serif, fontSize: 14.5, lineHeight: 1.55, color: theme.muted, marginTop: 10 }}>
+          Tap any that apply to you. This isn't a diagnosis — it's a conversation starter you can show your provider. Luna will export the answers as a PDF if you want.
+        </div>
+
+        <EdRule theme={theme} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {LUNA_RED_FLAGS.map((f) => {
+            const on = !!answers[f.id];
+            return (
+              <button key={f.id} className="tap" onClick={() => toggle(f.id)}
+                style={{
+                  border: `1px solid ${on ? theme.accent : theme.hair}`,
+                  background: on ? theme.accent + '0E' : theme.card,
+                  padding: '14px 14px 14px 42px',
+                  cursor: 'pointer', fontFamily: 'inherit', color: theme.text,
+                  textAlign: 'left', position: 'relative',
+                }}>
+                <div style={{
+                  position: 'absolute', top: 14, left: 14,
+                  width: 16, height: 16,
+                  border: `1.5px solid ${on ? theme.accent : theme.muted}`,
+                  background: on ? theme.accent : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff',
+                }}>
+                  {on ? Icon.check : null}
+                </div>
+                <div style={{ fontFamily: theme.serif, fontSize: 14.5, fontWeight: 500, marginBottom: on ? 6 : 0, lineHeight: 1.35 }}>
+                  {f.q}
+                </div>
+                {on && (
+                  <div className="fade-up" style={{ fontFamily: theme.sans, fontSize: 12, color: theme.muted, lineHeight: 1.45 }}>
+                    {f.a}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {flagsTriggered.length > 0 && (
+          <div className="fade-up" style={{ marginTop: 22, padding: 18, background: theme.text, color: '#FAF4ED' }}>
+            <div style={{ fontFamily: theme.sans, fontSize: 10, letterSpacing: 2, color: theme.accent, fontWeight: 700, marginBottom: 8 }}>
+              NEXT STEP
+            </div>
+            <div style={{ fontFamily: theme.serif, fontSize: 19, lineHeight: 1.3, marginBottom: 10 }}>
+              You flagged <strong>{flagsTriggered.length}</strong> {flagsTriggered.length === 1 ? 'item' : 'items'}. <em style={{ color: theme.accent }}>Worth a doctor's visit.</em>
+            </div>
+            <div style={{ fontFamily: theme.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.5, marginBottom: 12 }}>
+              Luna can export your symptom log + these answers as a PDF you can email to your provider. Cycle tracking data improves diagnostic accuracy for cycle-related conditions.
+            </div>
+            <button className="tap" style={{
+              background: theme.accent, color: '#fff', border: 'none',
+              padding: '10px 14px', cursor: 'pointer',
+              fontFamily: theme.sans, fontSize: 11, letterSpacing: 2, fontWeight: 700,
+            }}>EXPORT DOCTOR-READY PDF →</button>
+          </div>
+        )}
+
+        <EdRule theme={theme} />
+
+        <EdEyebrow theme={theme}>LEARN MORE</EdEyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {['pmdd', 'endo', 'iron', 'pcos'].map((id) => {
+            const a = LUNA_ARTICLES.find((x) => x.id === id);
+            if (!a) return null;
+            return (
+              <button key={id} onClick={() => openArticle(id)} className="tap"
+                style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: theme.text, fontFamily: 'inherit' }}>
+                <div style={{ fontFamily: theme.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.25 }}>{a.title} →</div>
+                <div style={{ fontFamily: theme.sans, fontSize: 11.5, color: theme.muted, marginTop: 2 }}>{a.read} · {a.cat}</div>
+              </button>
+            );
+          })}
+        </div>
+
+        <EdSourceLine theme={theme}>This screener is informational. It does not replace a clinical evaluation.</EdSourceLine>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRIVACY — full data handling explainer
+// ─────────────────────────────────────────────────────────────
+function EdPrivacy({ ctx }) {
+  const { theme, back } = ctx;
+  const a = LUNA_ARTICLES.find((x) => x.id === 'privacy');
+  if (!a) return null;
+  return <EdArticle ctx={{ ...ctx, articleId: 'privacy' }} />;
+}
+
+// ─────────────────────────────────────────────────────────────
+// PAYWALL — editorial
+// ─────────────────────────────────────────────────────────────
+function EdPaywall({ ctx }) {
+  const { theme, back } = ctx;
+  const [plan, setPlan] = React.useState('annual');
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, background: theme.bg, color: theme.text, padding: '12px 22px 24px', overflow: 'auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 0' }}>
+        <button onClick={back} className="tap" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: theme.muted, padding: 6 }}>{Icon.close}</button>
+      </div>
+
+      <EdEyebrow theme={theme} color={theme.accent}>LUNA · PRO</EdEyebrow>
+      <div style={{ fontFamily: theme.serif, fontSize: 38, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 18 }}>
+        Insights that actually <em style={{ color: theme.accent }}>get you.</em>
+      </div>
+
+      <div style={{ marginBottom: 22 }}>
+        {[
+          ['Weekly AI editorial', 'Plain-language patterns, written for you.'],
+          ['Full Library access', 'Every article and phase brief unlocked.'],
+          ['Predictions with reasoning', 'Every “Why” badge expanded.'],
+          ['Doctor-ready exports', 'PDF + CSV with daily symptom data.'],
+          ['Quiet companion', 'No mid-app upsells once you’re in.'],
+        ].map(([t, sub], i) => (
+          <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: i < 4 ? `1px solid ${theme.hair}` : 'none' }}>
+            <div style={{ color: theme.accent, marginTop: 4, fontFamily: theme.mono, fontSize: 11 }}>{String(i + 1).padStart(2, '0')}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: theme.serif, fontSize: 16, fontWeight: 500 }}>{t}</div>
+              <div style={{ fontSize: 12, color: theme.muted, marginTop: 2, fontFamily: theme.sans }}>{sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+        {[
+          { id: 'annual', label: 'ANNUAL', price: '$49.99', sub: '$4.16/mo · Save 40%', badge: 'BEST VALUE' },
+          { id: 'monthly', label: 'MONTHLY', price: '$6.99', sub: 'Cancel anytime', badge: null },
+        ].map((p) => {
+          const on = plan === p.id;
+          return (
+            <button key={p.id} className="tap" onClick={() => setPlan(p.id)}
+              style={{
+                cursor: 'pointer', textAlign: 'left',
+                border: `1.5px solid ${on ? theme.accent : theme.hair}`,
+                background: on ? theme.accent + '0E' : theme.card,
+                color: theme.text, padding: 14,
+                display: 'flex', alignItems: 'center', gap: 12,
+                fontFamily: 'inherit', position: 'relative',
+              }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: theme.sans, fontWeight: 700, fontSize: 12, letterSpacing: 1 }}>{p.label}</div>
+                <div style={{ fontSize: 11, color: theme.muted, fontFamily: theme.sans, marginTop: 2 }}>{p.sub}</div>
+              </div>
+              <div style={{ fontFamily: theme.serif, fontSize: 22, fontWeight: 500 }}>{p.price}</div>
+              {p.badge && (
+                <div style={{
+                  position: 'absolute', top: -1, right: -1,
+                  background: theme.accent, color: '#fff',
+                  fontSize: 9, fontWeight: 700, letterSpacing: 1,
+                  padding: '3px 8px', fontFamily: theme.sans,
+                }}>{p.badge}</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <Button fill={theme.accent} full onClick={back}
+        style={{ borderRadius: theme.radius, fontFamily: theme.sans, letterSpacing: 0.5 }}>
+        START 7-DAY FREE TRIAL
+      </Button>
+      <div style={{ fontSize: 10, color: theme.muted, textAlign: 'center', marginTop: 10, fontFamily: theme.sans }}>
+        Cancel any time in Settings. Free trial then $49.99/yr.
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SETTINGS — editorial
+// ─────────────────────────────────────────────────────────────
+function EdSettings({ ctx }) {
+  const { theme, go } = ctx;
+  const SectionTitle = ({ children }) => (
+    <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: theme.muted, fontFamily: theme.sans, padding: '20px 22px 8px', textTransform: 'uppercase' }}>
+      {children}
+    </div>
+  );
+  const Row = ({ label, value, right, top, bottom, onTap, accent }) => (
+    <div onClick={onTap} className={onTap ? 'tap' : ''} style={{
+      background: theme.card, padding: '14px 18px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      borderBottom: bottom ? 'none' : `1px solid ${theme.hair}`,
+      cursor: onTap ? 'pointer' : 'default',
+    }}>
+      <div style={{ fontSize: 14, color: accent ? theme.accent : theme.text, fontFamily: theme.sans }}>{label}</div>
+      <div style={{ fontSize: 13, color: theme.muted, fontFamily: theme.sans, display: 'flex', alignItems: 'center', gap: 6 }}>
+        {value && <span>{value}</span>}
+        {right || <span style={{ color: theme.muted, opacity: 0.5 }}>›</span>}
+      </div>
+    </div>
+  );
+  const Toggle = ({ on = true }) => (
+    <div style={{ width: 36, height: 22, borderRadius: 11, background: on ? theme.accent : theme.hair, position: 'relative' }}>
+      <div style={{ position: 'absolute', top: 2, left: on ? 16 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+    </div>
+  );
+
+  return (
+    <div className="fade-up phone-scroll" style={{ position: 'absolute', inset: 0, paddingBottom: 96, overflow: 'auto', background: theme.bg, color: theme.text }}>
+      <div style={{ padding: '12px 22px 0' }}>
+        <EdMasthead theme={theme} issue="You" />
+        <div style={{ fontFamily: theme.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>Mira.</div>
+      </div>
+
+      <div style={{ padding: '20px 16px 8px' }}>
+        <div style={{
+          background: theme.card, padding: 16, border: `1px solid ${theme.hair}`,
+          display: 'flex', alignItems: 'center', gap: 14,
+        }}>
+          <div style={{ width: 50, height: 50, background: theme.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: theme.serif, fontSize: 22, fontWeight: 500 }}>M</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: 14, fontFamily: theme.sans }}>Luna Pro</div>
+            <div style={{ fontSize: 11.5, color: theme.muted, fontFamily: theme.sans }}>Free trial · 5 days left</div>
+          </div>
+        </div>
+      </div>
+
+      <SectionTitle>Cycle</SectionTitle>
+      <div style={{ margin: '0 16px', border: `1px solid ${theme.hair}` }}>
+        <Row label="Average cycle length" value="28 days" onTap={() => {}} />
+        <Row label="Average period length" value="5 days" onTap={() => {}} />
+        <Row label="Edit cycle phases" bottom onTap={() => {}} />
+      </div>
+
+      <SectionTitle>Privacy &amp; Data</SectionTitle>
+      <div style={{ margin: '0 16px', border: `1px solid ${theme.hair}` }}>
+        <Row label="Storage" value="On-device only" onTap={() => go('privacy')} accent />
+        <Row label="Lock with Face ID" right={<Toggle on />} />
+        <Row label="Anonymous analytics" right={<Toggle on={false} />} />
+        <Row label="Export all data (CSV)" onTap={() => {}} />
+        <Row label="Doctor-ready export (PDF)" onTap={() => go('watch')} />
+        <Row label="Delete everything" bottom onTap={() => {}} accent />
+      </div>
+
+      <SectionTitle>Home Screen</SectionTitle>
+      <div style={{ margin: '0 16px', border: `1px solid ${theme.hair}` }}>
+        <Row label="Show AI editorial card" right={<Toggle on />} />
+        <Row label="Show library suggestions" right={<Toggle on />} />
+        <Row label="Show Health Watch banner" right={<Toggle on />} bottom />
+      </div>
+      <div style={{ padding: '8px 22px', fontSize: 10.5, color: theme.muted, fontFamily: theme.sans, lineHeight: 1.4 }}>
+        Prefer a bare calendar? Toggle anything off here — the home screen adapts.
+      </div>
+
+      <SectionTitle>Notifications</SectionTitle>
+      <div style={{ margin: '0 16px', border: `1px solid ${theme.hair}` }}>
+        <Row label="Period reminder" right={<Toggle on />} />
+        <Row label="Daily log nudge" value="9:00 PM" onTap={() => {}} />
+        <Row label="Weekly editorial" right={<Toggle on />} bottom />
+      </div>
+
+      <SectionTitle>Support</SectionTitle>
+      <div style={{ margin: '0 16px', border: `1px solid ${theme.hair}` }}>
+        <Row label="View paywall (demo)" onTap={() => go('paywall')} />
+        <Row label="Health Watch screener" onTap={() => go('watch')} />
+        <Row label="Reset demo state" bottom onTap={() => go('welcome')} />
+      </div>
+
+      <div style={{ height: 30 }} />
+    </div>
+  );
+}
+
+Object.assign(window, {
+  EdLog, EdSymptomDetail, EdCalendar, EdInsights, EdLibrary, EdArticle,
+  EdHealthWatch, EdPrivacy, EdPaywall, EdSettings,
+});
+
+
+// app.jsx — Luna Editorial mount + onboarding helpers
+//
+// Renders a single Luna Editorial phone prototype centred on the page.
+// OnbDate / OnbCycle live here because the editorial onboarding screens
+// reference them; they were originally defined alongside the earlier
+// Luna variants in luna.jsx.
+
+function OnbDate({ theme }) {
+  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const dates = Array.from({ length: 28 }, (_, i) => i + 1);
+  const selected = 6;
+  return (
+    <div>
+      <div style={{
+        background: theme.card, padding: 16, borderRadius: theme.radius,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, fontFamily: theme.sans }}>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>October 2025</span>
+          <span style={{ color: theme.muted, fontSize: 13 }}>‹ ›</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+          {days.map((d, i) => (
+            <div key={i} style={{ textAlign: 'center', fontSize: 10, color: theme.muted, fontFamily: theme.sans }}>{d}</div>
+          ))}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+          {dates.map((d) => (
+            <div key={d} style={{
+              aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontFamily: theme.sans, fontWeight: d === selected ? 600 : 400,
+              background: d === selected ? theme.accent : 'transparent',
+              color: d === selected ? '#fff' : theme.text,
+              borderRadius: theme.radius,
+            }}>{d}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnbCycle({ theme }) {
+  const [val, setVal] = React.useState(28);
+  return (
+    <div>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <span style={{ fontFamily: theme.serif, fontSize: 96, fontWeight: 300, color: theme.accent, lineHeight: 1 }}>{val}</span>
+        <span style={{ fontFamily: theme.sans, fontSize: 14, color: theme.muted, marginLeft: 8 }}>days</span>
+      </div>
+      <input type="range" min={21} max={45} value={val} onChange={(e) => setVal(+e.target.value)}
+        style={{ width: '100%', accentColor: theme.accent }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: theme.muted, marginTop: 6, fontFamily: theme.sans }}>
+        <span>21</span><span>33</span><span>45</span>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { OnbDate, OnbCycle });
+
+function LunaSite() {
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      padding: '48px 20px 60px',
+      background: '#F4EFE5',
+      color: '#1A1310',
+      fontFamily: '"DM Sans", -apple-system, system-ui, sans-serif',
+    }}>
+      <header style={{
+        width: '100%', maxWidth: 720,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+        paddingBottom: 18, marginBottom: 36,
+        borderBottom: '1px solid rgba(26,19,16,0.10)',
+      }}>
+        <div style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700 }}>
+          LUNA · ISSUE 01
+        </div>
+        <div style={{ fontSize: 11, color: '#756A60', letterSpacing: 1 }}>
+          Interactive prototype
+        </div>
+      </header>
+
+      <div style={{ maxWidth: 720, width: '100%', marginBottom: 40 }}>
+        <div style={{
+          fontFamily: '"Newsreader", Georgia, serif',
+          fontSize: 56, fontWeight: 300, color: '#C84E2E',
+          lineHeight: 0.95, letterSpacing: -2.4, fontStyle: 'italic',
+          marginBottom: 18,
+        }}>Luna.</div>
+        <div style={{
+          fontFamily: '"Newsreader", Georgia, serif',
+          fontSize: 26, fontWeight: 500, letterSpacing: -0.5, lineHeight: 1.2,
+          marginBottom: 14,
+        }}>
+          A cycle tracker that interprets, <em>not just logs.</em>
+        </div>
+        <div style={{
+          fontFamily: '"Newsreader", Georgia, serif',
+          fontSize: 16, lineHeight: 1.55, color: '#756A60', maxWidth: 540,
+        }}>
+          Phase-specific guidance grounded in peer-reviewed research. Tap through the prototype below — every screen is wired, every claim is sourced.
+        </div>
+      </div>
+
+      <div style={{
+        background: '#1A1310',
+        borderRadius: 36,
+        padding: 8,
+        boxShadow: '0 24px 60px rgba(26,19,16,0.18), 0 4px 14px rgba(26,19,16,0.08)',
+      }}>
+        <div style={{ borderRadius: 28, overflow: 'hidden', background: '#F4EFE5' }}>
+          <LunaEditorial />
+        </div>
+      </div>
+
+      <footer style={{
+        marginTop: 48, paddingTop: 18, maxWidth: 720, width: '100%',
+        borderTop: '1px solid rgba(26,19,16,0.10)',
+        fontFamily: '"DM Mono", ui-monospace, monospace',
+        fontSize: 10, color: '#756A60', letterSpacing: 0.5,
+        display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+      }}>
+        <span>EVIDENCE-LED · PLAIN ENGLISH</span>
+        <span>YOURS ALONE · QUIET BY DESIGN</span>
+      </footer>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<LunaSite />);
+
+</script>
+</body>
+</html>
