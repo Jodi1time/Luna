@@ -44,7 +44,7 @@ function StepCycle({ value, onChange }) {
   return (
     <div>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <span style={{ fontFamily: T.serif, fontSize: 96, fontWeight: 300, color: T.accent, lineHeight: 1 }}>{value}</span>
+        <span key={value} style={{ fontFamily: T.serif, fontSize: 96, fontWeight: 300, color: T.accent, lineHeight: 1, display: 'inline-block', animation: 'numberPop 0.35s ease-out both' }}>{value}</span>
         <span style={{ fontFamily: T.sans, fontSize: 14, color: T.muted, marginLeft: 8 }}>days</span>
       </div>
       <input type="range" min={21} max={45} value={value} onChange={(e) => onChange(+e.target.value)} />

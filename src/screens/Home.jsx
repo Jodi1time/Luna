@@ -1,14 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { ARTICLES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
+function useCountUp(target, duration = 900) {
+  const [value, setValue] = useState(0)
+  useEffect(() => {
+    if (target == null) { setValue(0); return }
+    let raf
+    const start = performance.now()
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - t, 4)
+      setValue(Math.round(target * eased))
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [target, duration])
+  return value
+}
+
 export default function Home() {
   const store = useLuna()
   const { go, goPhase, goArticle, settings, saveLog } = store
   const { cycleDay, phase } = useCycle(store)
+  const animatedDay = useCountUp(cycleDay)
   const [quickMood, setQuickMood] = useState(null)
   const featuredArticles = ARTICLES.slice(0, 3)
 
@@ -25,8 +44,8 @@ export default function Home() {
         {/* Cover block */}
         <div style={{ marginBottom: 4 }}>
           <Eyebrow>{phase ? `CYCLE DAY · ${phase.name.toUpperCase()} WINDOW` : 'CYCLE DAY'}</Eyebrow>
-          <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22 }}>
-            {cycleDay || '—'}
+          <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
+            {cycleDay ? animatedDay : '—'}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>
             {phase?.name || 'Start logging'}.

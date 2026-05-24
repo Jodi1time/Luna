@@ -60,9 +60,9 @@ export default function Care() {
                         border: `1.5px solid ${done ? T.accent : T.muted}`,
                         background: done ? T.accent : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-                        transition: 'background .15s',
+                        transition: 'background .25s, border-color .25s',
                       }}>
-                        {done && Icons.check}
+                        {done && <span style={{ display: 'flex', animation: 'checkPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both' }}>{Icons.check}</span>}
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{
