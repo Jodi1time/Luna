@@ -21,6 +21,8 @@ import Settings     from './screens/Settings'
 import Nourish      from './screens/Nourish'
 import Care         from './screens/Care'
 import Auth         from './screens/Auth'
+import PrivacyPolicy from './screens/PrivacyPolicy'
+import Terms         from './screens/Terms'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -80,6 +82,8 @@ function ScreenRenderer({ screen }) {
     case 'paywall':  return <Paywall />
     case 'settings': return <Settings />
     case 'auth':     return <Auth />
+    case 'privacy':  return <PrivacyPolicy />
+    case 'terms':    return <Terms />
     default:         return <Home />
   }
 }

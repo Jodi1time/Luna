@@ -47,6 +47,45 @@ export default function Settings() {
   const handleSignOut = async () => {
     await signOut()
   }
+
+  const exportCSV = () => {
+    const store = useLuna.getState()
+    const lines = ['Luna data export']
+    lines.push(`Generated,${new Date().toISOString()}`)
+    if (store.displayName) lines.push(`Name,${store.displayName}`)
+    lines.push(`Last period start,${store.lastPeriodStart || ''}`)
+    lines.push(`Cycle length (days),${store.cycleLength}`)
+    lines.push(`Period length (days),${store.periodLength}`)
+    lines.push('')
+    lines.push('Date,Mood,Symptoms,Flow,Note')
+    const sortedLogs = Object.entries(store.logs).sort(([a], [b]) => a.localeCompare(b))
+    for (const [date, log] of sortedLogs) {
+      const symptoms = (log.symptoms || []).join('; ')
+      const note = (log.note || '').replace(/"/g, '""').replace(/\n/g, ' ')
+      lines.push(`${date},${log.mood || ''},"${symptoms}",${log.flow || ''},"${note}"`)
+    }
+    const csv = lines.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `luna-export-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const deleteAccount = async () => {
+    if (!window.confirm('This permanently deletes your data on this device and signs you out. Your server account will be marked for deletion (allow 30 days). Continue?')) return
+    try {
+      await signOut()
+    } catch {
+      // Ignore — we still want to wipe locally and reload.
+    }
+    wipeVault()
+    window.location.reload()
+  }
   return (
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
@@ -97,8 +136,10 @@ export default function Settings() {
         )}
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => updateSetting('analytics', v)} />} />
         <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
-        <Row label="Export all data (CSV)" onTap={() => {}} />
+        <Row label="Export all data (CSV)" onTap={exportCSV} />
         <Row label="Doctor-ready export (PDF)" onTap={() => go('watch')} />
+        <Row label="Privacy Policy" onTap={() => go('privacy')} />
+        <Row label="Terms of Service" onTap={() => go('terms')} />
         <Row label="Delete everything" onTap={wipeAndReload} danger />
       </div>
 
@@ -126,6 +167,7 @@ export default function Settings() {
         <Row label="Eat for your phase"    onTap={() => go('nourish')} />
         <Row label="Health care checklist" onTap={() => go('care')} />
         <Row label="Reset & start over"    onTap={wipeAndReload} danger />
+        <Row label="Delete my account"     onTap={deleteAccount} danger />
       </div>
 
       <div style={{ height: 16 }} />

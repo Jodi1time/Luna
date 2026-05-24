@@ -2,6 +2,26 @@
 
 Things to do/decide before opening Luna to the public. Keep this updated as items land or new ones appear.
 
+## Status
+
+**Last review:** 2026-05-24
+
+The core data layer is launch-ready. Several user-facing flows
+(billing, real legal review, server-side account deletion, monitoring)
+still need to be addressed before public launch. See "Critical for
+launch" below.
+
+## Critical for launch
+
+- [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
+- [ ] **Supabase Edge Function for true server-side account deletion** — the in-app "Delete my account" flow signs out and wipes the local vault, but the server-side row still needs an Edge Function to honour the 30-day deletion promise
+- [ ] **Stripe wiring for Pro subscription** — products, Checkout, webhook → `profiles.stripe_customer_id`, gate `isPro` from server
+- [ ] **Re-enable Supabase email confirmation with verify-in-background pattern** — see Authentication section below for the detailed approach
+- [ ] **Rotate the Supabase anon key** — the current anon key was pasted in chat history; rotate as a hygiene step
+- [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
+- [ ] **Sentry (or equivalent) error monitoring DSN** — the in-app `ErrorBoundary` already logs to `console.error`; wire it into a real monitor before public launch
+- [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
+
 ## Authentication & accounts
 
 - [ ] **Re-enable email confirmation with verify-in-background pattern**
@@ -109,9 +129,9 @@ Things to do/decide before opening Luna to the public. Keep this updated as item
 
 ## Polish
 
-- [ ] **Custom icon set replacing emojis** (mood/symptom glyphs, see Quick Log on Home + SymptomDetail)
-  - User asked for this; planned as a focused design pass
-  - Match the existing 20×20 stroke style of the tab bar icons
+- [x] **Custom icon set replacing emojis** (mood/symptom glyphs, see Quick Log on Home + SymptomDetail)
+  - Shipped in `src/components/symptomIcons.jsx`. Editorial mark-making for moods,
+    representational shapes for symptoms. Iterate on individual glyphs as needed.
 
 - [ ] **Onboarding pass on a real iPhone** — verify Face ID enrollment + unlock on actual hardware
 - [ ] **Accessibility audit** — color contrast, screen reader labels, keyboard nav
@@ -122,4 +142,7 @@ Things to do/decide before opening Luna to the public. Keep this updated as item
 - [ ] **Privacy policy + terms of service** pages — links from Settings
 - [ ] **HIPAA?** Most cycle trackers explicitly don't fall under HIPAA (no healthcare provider relationship). Confirm and note clearly.
 - [ ] **Age gate** — likely 13+ minimum, possibly higher for some jurisdictions
-- [ ] **Data export format** for GDPR/CCPA right-to-access requests (the CSV export button already exists; wire it up)
+- [x] **Data export format** for GDPR/CCPA right-to-access requests — CSV export wired up in Settings → Privacy & Data → "Export all data (CSV)"
+- [x] **Privacy policy + terms of service** pages — drafted in `src/screens/PrivacyPolicy.jsx` + `src/screens/Terms.jsx`, linked from Settings; still need legal review (see Critical above)
+- [x] **Age gate** — implicit 13+ confirmation on Welcome above the BEGIN button, with inline links to Terms + Privacy Policy
+- [x] **Error boundary at app level** — `src/components/ErrorBoundary.jsx` wraps `<App />` in `main.jsx`; needs Sentry DSN before launch
