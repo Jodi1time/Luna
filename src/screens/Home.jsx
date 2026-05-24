@@ -47,6 +47,25 @@ export default function Home() {
               READ THE FULL PHASE BRIEF →
             </button>
           )}
+          {/* Nourish card */}
+          {phase && (
+            <div style={{ marginTop: 14, padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${phase.color}`, borderRadius: T.r }}>
+              <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.accent, marginBottom: 6 }}>EAT FOR YOUR PHASE</div>
+              <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, marginBottom: 8 }}>{phase.nutrition.headline}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                {phase.nutrition.do.slice(0, 3).map((item, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ color: T.accent, fontFamily: T.mono, fontSize: 10, marginTop: 2, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                    <span style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.4 }}>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => go('nourish')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 10, fontWeight: 700, letterSpacing: 1.5, fontFamily: T.sans, padding: 0 }}>
+                FULL NUTRITION GUIDE →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick log */}

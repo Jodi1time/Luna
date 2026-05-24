@@ -16,12 +16,19 @@ const useLuna = create(
       periodLength: 5,
       storageMode: 'local',    // 'local' | 'sync'
       account: null,           // { name, email, password } | null
+      completedChecks: [],     // array of CHECKUPS ids marked done
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
       setCycleLength: (n) => set({ cycleLength: n }),
       setPeriodLength: (n) => set({ periodLength: n }),
       setLastPeriodStart: (d) => set({ lastPeriodStart: toISO(d) }),
       setStorageMode: (m) => set({ storageMode: m }),
+      toggleCheck: (id) =>
+        set((s) => ({
+          completedChecks: s.completedChecks.includes(id)
+            ? s.completedChecks.filter((c) => c !== id)
+            : [...s.completedChecks, id],
+        })),
 
       // ── Daily logs ───────────────────────────────────────────
       // keyed by ISO date string
@@ -85,6 +92,7 @@ const useLuna = create(
         periodLength:    s.periodLength,
         storageMode:     s.storageMode,
         account:         s.account,
+        completedChecks: s.completedChecks,
         logs:            s.logs,
         settings:        s.settings,
         isPro:           s.isPro,

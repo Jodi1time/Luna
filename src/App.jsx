@@ -14,6 +14,8 @@ import Article      from './screens/Article'
 import HealthWatch  from './screens/HealthWatch'
 import Paywall      from './screens/Paywall'
 import Settings     from './screens/Settings'
+import Nourish      from './screens/Nourish'
+import Care         from './screens/Care'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -42,6 +44,8 @@ function ScreenRenderer({ screen }) {
     case 'onb2':     return <Onboarding step={2} />
     case 'onb3':     return <Onboarding step={3} />
     case 'onb4':     return <Onboarding step={4} />
+    case 'nourish':  return <Nourish />
+    case 'care':     return <Care />
     case 'home':     return <Home />
     case 'phase':    return <PhaseDetail />
     case 'log':      return <Log />

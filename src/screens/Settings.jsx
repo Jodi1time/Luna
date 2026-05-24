@@ -81,6 +81,8 @@ export default function Settings() {
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Health Watch screener" onTap={() => go('watch')} />
         <Row label="View Pro features"     onTap={() => go('paywall')} />
+        <Row label="Eat for your phase"    onTap={() => go('nourish')} />
+        <Row label="Health care checklist" onTap={() => go('care')} />
         <Row label="Reset & start over"    onTap={() => go('welcome')} danger />
       </div>
 
