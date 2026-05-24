@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { wipeVault, lock } from '../lib/crypto'
+import { biometricSupported, biometricEnrolled, clearBiometric } from '../lib/biometric'
 import { signOut } from '../lib/supabase'
 
 const wipeAndReload = () => {
@@ -32,6 +34,16 @@ export default function Settings() {
   const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName } = useLuna()
   const session = useLuna((s) => s.session)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
+  const [biometricOn, setBiometricOn] = useState(biometricEnrolled())
+  const handleBiometricToggle = (v) => {
+    if (!v) {
+      if (window.confirm('Disable Face ID unlock? You\'ll need your passcode to unlock Luna.')) {
+        clearBiometric()
+        setBiometricOn(false)
+      }
+    }
+    // Don't handle "enable from settings" path in this first cut.
+  }
   const handleSignOut = async () => {
     await signOut()
   }
@@ -79,6 +91,10 @@ export default function Settings() {
       <SectionLabel>Privacy & Data</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Storage" value="On-device · Encrypted" onTap={() => go('article')} />
+        {biometricSupported() && biometricEnrolled() && (
+          <Row label="Face ID / Touch ID unlock"
+            right={<Toggle on={biometricOn} onChange={handleBiometricToggle} />} />
+        )}
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => updateSetting('analytics', v)} />} />
         <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
         <Row label="Export all data (CSV)" onTap={() => {}} />

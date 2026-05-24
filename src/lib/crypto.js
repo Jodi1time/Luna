@@ -104,6 +104,7 @@ export function wipeVault() {
   localStorage.removeItem(META_KEY)
   localStorage.removeItem(STORE_KEY)
   localStorage.removeItem(LEGACY_KEY)
+  localStorage.removeItem('luna-biometric')
   clearMemoryKey()
 }
 

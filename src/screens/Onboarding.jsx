@@ -3,6 +3,8 @@ import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { createVault } from '../lib/crypto'
+import { biometricSupported } from '../lib/biometric'
+import BiometricPrompt from './BiometricPrompt'
 
 function ProgressBar({ step, total = 3 }) {
   return (
@@ -107,6 +109,8 @@ export default function Onboarding({ step }) {
     email: '', accountPassword: '',
   })
   const [signupError, setSignupError] = useState('')
+  const [setupComplete, setSetupComplete] = useState(false)
+  const [finishedPasscode, setFinishedPasscode] = useState('')
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
@@ -135,7 +139,13 @@ export default function Onboarding({ step }) {
       displayName: account.name.trim(),
       account: acct,
     })
-    go('home')
+
+    if (biometricSupported()) {
+      setFinishedPasscode(account.passcode)
+      setSetupComplete(true)
+    } else {
+      go('home')
+    }
   }
 
   const canAdvance = () => {
@@ -154,6 +164,17 @@ export default function Onboarding({ step }) {
   }
 
   const next = step < 3 ? () => go(`onb${step + 1}`) : finish
+
+  if (setupComplete) {
+    return (
+      <BiometricPrompt
+        passcode={finishedPasscode}
+        userId={account.email || 'luna-user'}
+        userName={account.name}
+        onDone={() => go('home')}
+      />
+    )
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both' }}>
