@@ -38,10 +38,7 @@ export default function Welcome() {
 
       <div style={{ marginTop: 22 }}>
         <CTAButton full onClick={() => go('onb1')}>BEGIN</CTAButton>
-        <button onClick={() => go('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, marginTop: 12, padding: 8, width: '100%' }}>
-          Skip to demo →
-        </button>
-        <button onClick={() => go('auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, marginTop: 2, padding: 8, width: '100%' }}>
+        <button onClick={() => go('auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, marginTop: 12, padding: 8, width: '100%' }}>
           Already have an account? <span style={{ color: T.text, fontWeight: 600 }}>Sign in</span>
         </button>
       </div>
