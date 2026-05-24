@@ -147,6 +147,21 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {/* Care teaser */}
+        <div style={{ marginTop: 14, padding: 18, background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, cursor: 'pointer' }} onClick={() => go('care')}>
+          <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 8 }}>CARE · CHECKUPS & SCREENINGS</div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.25 }}>
+            Stay on top of your <em style={{ color: T.accent }}>preventive care.</em>
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, marginTop: 8, lineHeight: 1.4 }}>
+            Pap smears, mammograms, iron checks, thyroid. Track what's done and find an OB/GYN near you.
+          </div>
+          <div style={{ marginTop: 10, fontFamily: T.sans, fontSize: 10, color: T.accent, letterSpacing: 1.5, fontWeight: 700 }}>
+            OPEN CARE CHECKLIST →
+          </div>
+        </div>
+
         <div style={{ height: 16 }} />
       </div>
     </Screen>
