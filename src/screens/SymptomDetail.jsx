@@ -1,5 +1,6 @@
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, BrickList, Screen } from '../components/shared'
+import { SymptomIcon } from '../components/symptomIcons'
 import { SYMPTOMS } from '../data/lunaData'
 import useLuna from '../store/useLuna'
 
@@ -14,8 +15,10 @@ export default function SymptomDetail() {
       </div>
       <div style={{ padding: '0 22px', color: T.text }}>
         <Eyebrow>SYMPTOM · EVIDENCE BRIEF</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05 }}>
-          <span style={{ fontSize: 44, marginRight: 10 }}>{s.emoji}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05 }}>
+          <div style={{ color: T.accent, display: 'flex', alignItems: 'center' }}>
+            <SymptomIcon id={activeSymptomId} size={40} />
+          </div>
           <em>{s.label}</em>
         </div>
         <Rule />

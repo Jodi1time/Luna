@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
+import { SymptomIcon } from '../components/symptomIcons'
 import { ARTICLES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
@@ -91,16 +92,16 @@ export default function Home() {
         <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '14px 0', marginTop: 22, marginBottom: 22 }}>
           <Eyebrow>LOG · TAKES 10 SECONDS</Eyebrow>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            {[['😌','Calm'],['⚡','Energy'],['😴','Tired'],['😣','Cramps'],['🥺','Low']].map(([e, l]) => (
+            {[['calm','Calm'],['energy','Energy'],['tired','Tired'],['cramps','Cramps'],['low','Low']].map(([id, l]) => (
               <button key={l} onClick={() => handleQuickMood(l)}
                 style={{
                   border: 'none', cursor: 'pointer', background: quickMood === l ? T.accent + '22' : 'transparent',
                   outline: quickMood === l ? `1.5px solid ${T.accent}` : 'none',
                   padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                   minWidth: 52, borderRadius: T.r,
-                  color: T.text, fontFamily: T.sans,
+                  color: quickMood === l ? T.accent : T.text, fontFamily: T.sans,
                 }}>
-                <span style={{ fontSize: 22 }}>{e}</span>
+                <SymptomIcon id={id} size={24} />
                 <span style={{ fontSize: 10, fontWeight: 500 }}>{l}</span>
               </button>
             ))}

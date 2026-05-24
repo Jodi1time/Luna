@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
+import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
 import { SYMPTOMS } from '../data/lunaData'
 import useLuna from '../store/useLuna'
 
@@ -41,14 +42,18 @@ export default function Log() {
         {/* Mood */}
         <Eyebrow>MOOD</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-          {['😌','⚡','😴','😣','🥺','🤗','😤'].map((m) => (
-            <button key={m} onClick={() => setMood(m)}
+          {MOOD_IDS.map((id) => (
+            <button key={id} onClick={() => setMood(id)} title={MOOD_LABELS[id]}
               style={{
-                border: 'none', cursor: 'pointer', width: 40, height: 40, fontSize: 22,
-                background: mood === m ? T.accent + '22' : 'transparent',
-                outline: mood === m ? `1.5px solid ${T.accent}` : 'none',
+                border: 'none', cursor: 'pointer', width: 40, height: 40,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: mood === id ? T.accent + '22' : 'transparent',
+                outline: mood === id ? `1.5px solid ${T.accent}` : 'none',
+                color: mood === id ? T.accent : T.text,
                 borderRadius: T.r, fontFamily: 'inherit',
-              }}>{m}</button>
+              }}>
+              <SymptomIcon id={id} size={22} />
+            </button>
           ))}
         </div>
 
@@ -60,8 +65,8 @@ export default function Log() {
             return (
               <div key={id} style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
                 <button onClick={() => toggleSym(id)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, fontFamily: 'inherit', color: T.text, padding: 0, width: '100%' }}>
-                  <span style={{ fontSize: 20 }}>{s.emoji}</span>
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: on ? T.accent : T.text, padding: 0, width: '100%' }}>
+                  <SymptomIcon id={id} size={22} />
                   <span style={{ fontSize: 10, fontWeight: 500 }}>{s.label}</span>
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); goSymptom(id) }}
