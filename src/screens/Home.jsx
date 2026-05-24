@@ -25,7 +25,7 @@ export default function Home() {
         {/* Cover block */}
         <div style={{ marginBottom: 4 }}>
           <Eyebrow>{phase ? `CYCLE DAY · ${phase.name.toUpperCase()} WINDOW` : 'CYCLE DAY'}</Eyebrow>
-          <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 10 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22 }}>
             {cycleDay || '—'}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>
