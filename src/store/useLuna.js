@@ -15,6 +15,7 @@ const useLuna = create(
       cycleLength: 28,
       periodLength: 5,
       storageMode: 'local',    // 'local' | 'sync'
+      account: null,           // { name, email, password } | null
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
       setCycleLength: (n) => set({ cycleLength: n }),
@@ -83,6 +84,7 @@ const useLuna = create(
         cycleLength:     s.cycleLength,
         periodLength:    s.periodLength,
         storageMode:     s.storageMode,
+        account:         s.account,
         logs:            s.logs,
         settings:        s.settings,
         isPro:           s.isPro,

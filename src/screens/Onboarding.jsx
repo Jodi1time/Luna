@@ -3,29 +3,26 @@ import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
 import useLuna from '../store/useLuna'
 
-function ProgressBar({ step }) {
+function ProgressBar({ step, total = 4 }) {
   return (
     <div style={{ display: 'flex', gap: 4, marginBottom: 36 }}>
-      {[1,2,3].map((i) => (
-        <div key={i} style={{ height: 2, flex: 1, background: i <= step ? T.accent : T.hair, transition: 'background .2s' }} />
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{ height: 2, flex: 1, background: i < step ? T.accent : T.hair, transition: 'background .2s' }} />
       ))}
     </div>
   )
 }
 
 function StepDate({ value, onChange }) {
-  const days   = ['M','T','W','T','F','S','S']
-  const dates  = Array.from({ length: 31 }, (_, i) => i + 1)
-  const now    = new Date()
-  const month  = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const offset = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
-  const adj    = offset === 0 ? 6 : offset - 1 // Mon-first
-
+  const days  = ['M','T','W','T','F','S','S']
+  const dates = Array.from({ length: 31 }, (_, i) => i + 1)
+  const now   = new Date()
+  const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const first = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+  const adj   = first === 0 ? 6 : first - 1
   return (
-    <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}` }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14, fontFamily: T.sans }}>
-        <span style={{ fontWeight: 600, fontSize: 14 }}>{month}</span>
-      </div>
+    <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderRadius: T.r }}>
+      <div style={{ fontWeight: 600, fontSize: 14, fontFamily: T.sans, marginBottom: 14 }}>{month}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
         {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10, color: T.muted, fontFamily: T.sans }}>{d}</div>)}
       </div>
@@ -33,14 +30,9 @@ function StepDate({ value, onChange }) {
         {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}
         {dates.map((d) => (
           <button key={d} onClick={() => onChange(d)}
-            style={{
-              aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 13, fontFamily: T.sans, cursor: 'pointer', border: 'none',
-              background: value === d ? T.accent : 'transparent',
-              color: value === d ? '#fff' : T.text,
-              borderRadius: T.r,
-              fontWeight: value === d ? 600 : 400,
-            }}>{d}</button>
+            style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontFamily: T.sans, cursor: 'pointer', border: 'none', background: value === d ? T.accent : 'transparent', color: value === d ? '#fff' : T.text, borderRadius: T.r, fontWeight: value === d ? 600 : 400 }}>
+            {d}
+          </button>
         ))}
       </div>
     </div>
@@ -64,19 +56,14 @@ function StepCycle({ value, onChange }) {
 
 function StepStorage({ value, onChange }) {
   const opts = [
-    { id: 'local', label: 'On-device only',                   sub: 'Encrypted on this phone. Nothing leaves.',    rec: true },
-    { id: 'sync',  label: 'Sync with end-to-end encryption',  sub: "Back up across your devices. We can't read it.", rec: false },
+    { id: 'local', label: 'On-device only',                  sub: 'Encrypted on this phone. Nothing leaves.',       rec: true },
+    { id: 'sync',  label: 'Sync with end-to-end encryption', sub: "Back up across your devices. We can't read it.", rec: false },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {opts.map((o) => (
         <button key={o.id} onClick={() => onChange(o.id)}
-          style={{
-            padding: 16, border: `1px solid ${value === o.id ? T.accent : T.hair}`,
-            background: value === o.id ? T.accent + '0E' : T.card,
-            cursor: 'pointer', textAlign: 'left', position: 'relative', borderRadius: T.r,
-            fontFamily: T.sans, color: T.text,
-          }}>
+          style={{ padding: 16, border: `1px solid ${value === o.id ? T.accent : T.hair}`, background: value === o.id ? T.accent + '0E' : T.card, cursor: 'pointer', textAlign: 'left', position: 'relative', borderRadius: T.r, fontFamily: T.sans, color: T.text }}>
           {o.rec && (
             <div style={{ position: 'absolute', top: -1, right: -1, padding: '3px 8px', background: T.accent, color: '#fff', fontSize: 9, letterSpacing: 1.2, fontWeight: 700, fontFamily: T.sans }}>
               RECOMMENDED
@@ -90,11 +77,54 @@ function StepStorage({ value, onChange }) {
   )
 }
 
+function Field({ label, type = 'text', value, onChange, placeholder }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>{label}</div>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoCapitalize="off"
+        autoCorrect="off"
+        style={{ background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '13px 14px', fontSize: 15, fontFamily: T.sans, color: T.text, outline: 'none', width: '100%' }}
+        onFocus={(e) => { e.target.style.borderColor = T.accent }}
+        onBlur={(e)  => { e.target.style.borderColor = T.hair }}
+      />
+    </div>
+  )
+}
+
+function StepAccount({ name, email, password, onChange, storageMode }) {
+  const isSync = storageMode === 'sync'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
+      <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+      <Field label="Password" type="password" value={password} onChange={(v) => onChange('password', v)} placeholder={isSync ? 'Min. 8 characters' : 'Optional'} />
+      {isSync && (
+        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
+          An account is needed to sync your data across devices. Your data is encrypted before it leaves your phone — we cannot read it.
+        </div>
+      )}
+      {!isSync && (
+        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
+          Optional for on-device storage. Useful for managing your subscription and contacting support.
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Onboarding({ step }) {
-  const { go, setCycleLength, setLastPeriodStart, setStorageMode, setOnboarding, cycleLength } = useLuna()
-  const [dateDay,  setDateDay]  = useState(6)
-  const [cycleDays,setCycleDays]= useState(cycleLength || 28)
-  const [storage,  setStorage]  = useState('local')
+  const { go, setOnboarding, cycleLength } = useLuna()
+  const [dateDay,   setDateDay]  = useState(new Date().getDate())
+  const [cycleDays, setCycleDays]= useState(cycleLength || 28)
+  const [storage,   setStorage]  = useState('local')
+  const [account,   setAccount]  = useState({ name: '', email: '', password: '' })
+
+  const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
   const now = new Date()
 
@@ -104,17 +134,25 @@ export default function Onboarding({ step }) {
       lastPeriodStart: d.toISOString().slice(0, 10),
       cycleLength: cycleDays,
       storageMode: storage,
+      account: account.email ? account : null,
     })
     go('home')
   }
 
-  const next = step < 3 ? () => go(`onb${step + 1}`) : finish
+  const canAdvance = () => {
+    if (step === 4 && storage === 'sync') {
+      return account.email.trim() !== '' && account.password.length >= 8
+    }
+    return true
+  }
+
+  const next = step < 4 ? () => go(`onb${step + 1}`) : finish
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both' }}>
       <ProgressBar step={step} />
 
-      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 3</div>
+      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 4</div>
 
       {step === 1 && <>
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
@@ -144,18 +182,38 @@ export default function Onboarding({ step }) {
         <SourceLine>You can change this any time in Settings → Privacy</SourceLine>
       </>}
 
+      {step === 4 && <>
+        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
+          {storage === 'sync' ? <>Create your<br /><em>account.</em></> : <>One last thing —<br /><em>who are you?</em></>}
+        </div>
+        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.5 }}>
+          {storage === 'sync' ? 'Required to sync your data across devices.' : 'Optional. Useful for managing your subscription.'}
+        </div>
+        <StepAccount name={account.name} email={account.email} password={account.password} onChange={setAccountField} storageMode={storage} />
+      </>}
+
       <div style={{ flex: 1 }} />
 
-      <div style={{ display: 'flex', gap: 10 }}>
-        {step > 1 && (
-          <button onClick={() => go(`onb${step - 1}`)}
-            style={{ border: `1px solid ${T.text}`, background: 'transparent', color: T.text, padding: '15px 18px', borderRadius: T.r, cursor: 'pointer' }}>
-            {Icons.back}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {step > 1 && (
+            <button onClick={() => go(`onb${step - 1}`)}
+              style={{ border: `1px solid ${T.text}`, background: 'transparent', color: T.text, padding: '15px 18px', borderRadius: T.r, cursor: 'pointer' }}>
+              {Icons.back}
+            </button>
+          )}
+          <CTAButton full onClick={next} style={{ opacity: canAdvance() ? 1 : 0.5 }}>
+            {step < 4 ? 'CONTINUE' : 'ENTER LUNA'} {Icons.arrow}
+          </CTAButton>
+        </div>
+
+        {/* Skip account creation when on-device */}
+        {step === 4 && storage === 'local' && (
+          <button onClick={finish}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: '8px 0', textAlign: 'center' }}>
+            Skip for now — continue without an account
           </button>
         )}
-        <CTAButton full onClick={next}>
-          {step < 3 ? 'CONTINUE' : 'ENTER LUNA'} {Icons.arrow}
-        </CTAButton>
       </div>
     </div>
   )

@@ -41,6 +41,7 @@ function ScreenRenderer({ screen }) {
     case 'onb1':     return <Onboarding step={1} />
     case 'onb2':     return <Onboarding step={2} />
     case 'onb3':     return <Onboarding step={3} />
+    case 'onb4':     return <Onboarding step={4} />
     case 'home':     return <Home />
     case 'phase':    return <PhaseDetail />
     case 'log':      return <Log />
