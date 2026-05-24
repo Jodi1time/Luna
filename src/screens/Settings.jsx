@@ -90,7 +90,7 @@ export default function Settings() {
 
       <SectionLabel>Privacy & Data</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Storage" value="On-device · Encrypted" onTap={() => go('article')} />
+        <Row label="Storage" value="On-device · Encrypted" />
         {biometricSupported() && biometricEnrolled() && (
           <Row label="Face ID / Touch ID unlock"
             right={<Toggle on={biometricOn} onChange={handleBiometricToggle} />} />
