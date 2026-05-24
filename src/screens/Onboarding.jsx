@@ -74,40 +74,25 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, createAccount, onChange }) {
+function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, onChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
 
-      <Field label="Passcode" type="password" value={passcode} onChange={(v) => onChange('passcode', v)} placeholder="Min. 6 characters" />
-      <Field label="Confirm passcode" type="password" value={confirmPasscode} onChange={(v) => onChange('confirmPasscode', v)} placeholder="Re-enter passcode" />
-      <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
-        Your passcode encrypts your cycle data on this device using AES-256. We never see it. If you forget it, your data cannot be recovered.
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
+        <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Lock this device</div>
+        <Field label="Passcode" type="password" value={passcode} onChange={(v) => onChange('passcode', v)} placeholder="Min. 6 characters" />
+        <Field label="Confirm passcode" type="password" value={confirmPasscode} onChange={(v) => onChange('confirmPasscode', v)} placeholder="Re-enter passcode" />
       </div>
 
-      {/* Account section */}
-      <div style={{ borderTop: `1px solid ${T.hair}`, paddingTop: 16, marginTop: 4 }}>
-        <button type="button" onClick={() => onChange('createAccount', !createAccount)}
-          style={{ width: '100%', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontFamily: 'inherit', color: T.text, marginBottom: createAccount ? 12 : 0 }}>
-          <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase', marginBottom: 3 }}>OPTIONAL</div>
-            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500 }}>Create an account</div>
-            <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, marginTop: 3, lineHeight: 1.4 }}>For password recovery and future multi-device sync. You can also do this later in Settings.</div>
-          </div>
-          <span style={{ color: T.accent, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1, marginLeft: 12, flexShrink: 0 }}>
-            {createAccount ? 'HIDE' : 'ADD'}
-          </span>
-        </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
+        <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Your account · for recovery</div>
+        <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+        <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
+      </div>
 
-        {createAccount && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, animation: 'fadeUp .2s ease-out both' }}>
-            <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
-            <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
-            <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
-              Separate from your device passcode. Used only to sign you in.
-            </div>
-          </div>
-        )}
+      <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, padding: '12px 14px', background: T.subtle, borderRadius: T.r }}>
+        Your passcode keeps everything encrypted on this device — we can never see it. Your account lets you sign back in from a new device.
       </div>
     </div>
   )
@@ -119,7 +104,7 @@ export default function Onboarding({ step }) {
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [account, setAccount] = useState({
     name: '', passcode: '', confirmPasscode: '',
-    createAccount: false, email: '', accountPassword: '',
+    email: '', accountPassword: '',
   })
   const [signupError, setSignupError] = useState('')
 
@@ -134,11 +119,11 @@ export default function Onboarding({ step }) {
     await useLuna.persist.rehydrate()
 
     let acct = null
-    if (account.createAccount && account.email && account.accountPassword) {
+    if (account.email.trim() && account.accountPassword) {
       try {
         const { signUp } = await import('../lib/supabase')
-        await signUp(account.email, account.accountPassword)
-        acct = { email: account.email }
+        await signUp(account.email.trim(), account.accountPassword)
+        acct = { email: account.email.trim() }
       } catch (e) {
         setSignupError(e.message || 'Could not create account — you can try again from Settings.')
       }
@@ -158,10 +143,11 @@ export default function Onboarding({ step }) {
       if (!account.name.trim()) return false
       if (account.passcode.length < 6) return false
       if (account.passcode !== account.confirmPasscode) return false
-      if (account.createAccount) {
-        if (!account.email.trim()) return false
-        if (account.accountPassword.length < 8) return false
-      }
+      // Account fields: both empty (skip account) or both filled (create account)
+      const hasEmail = account.email.trim().length > 0
+      const hasPw    = account.accountPassword.length > 0
+      if (hasEmail !== hasPw) return false
+      if (hasEmail && account.accountPassword.length < 8) return false
       return true
     }
     return true
@@ -205,7 +191,6 @@ export default function Onboarding({ step }) {
           confirmPasscode={account.confirmPasscode}
           email={account.email}
           accountPassword={account.accountPassword}
-          createAccount={account.createAccount}
           onChange={setAccountField}
         />
         {signupError && (
