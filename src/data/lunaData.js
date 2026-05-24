@@ -204,6 +204,53 @@ export const ARTICLES = [
   },
 ]
 
+// ── Weekly editorial pool ─────────────────────────────────
+// 6 per phase × 4 phases = 24 distinct editorial cards.
+// Selected deterministically by (week of year) % pool length per phase,
+// so users see the same content all week and rotation feels weekly.
+export const EDITORIALS = {
+  menstrual: [
+    { pre: 'Rest is productive.', em: 'Honour this phase.', body: "Energy is at its lowest because estrogen and progesterone just dropped. That's biology asking for rest, not weakness." },
+    { pre: 'Iron is the priority this week.', em: 'You just lost some.', body: 'Heavy flow can deplete ferritin. Lean red meat, lentils, spinach, beans — pair with vitamin C to triple absorption.' },
+    { pre: 'A heating pad works.', em: 'The data is on your side.', body: 'For many people heat is as effective as ibuprofen for cramps. RCT evidence. Use both if cramps are severe — they hit different pathways.' },
+    { pre: 'Magnesium may reduce cramps.', em: 'Worth trying for three cycles.', body: 'Pumpkin seeds, dark leafy greens, 70%+ chocolate. Evidence is moderate, downside is essentially zero.' },
+    { pre: 'Light movement actually helps.', em: 'Even when motivation drops.', body: 'Walking, gentle yoga, stretching. Skip the hero workouts this week — your body has other work to do.' },
+    { pre: 'Track this flow.', em: 'It tells your doctor more than you think.', body: "Flow soaking pads hourly, or lasting >7 days, is worth a conversation. You're building the data right now." },
+  ],
+  follicular: [
+    { pre: 'Estrogen is rising.', em: 'Make the most of it.', body: 'Mood, cognition, skin all tend to improve. Energy lifts. This is the week your body operates most freely.' },
+    { pre: 'Best window for personal records.', em: 'Insulin sensitivity is up.', body: 'Strength, intervals, hard hikes. Your anabolic response to protein is sharper. Carbs feel different around training now.' },
+    { pre: 'Try the new thing this week.', em: 'Coordination is sharper.', body: "Whatever you've been putting off — class, sport, social — this is the natural time. Confidence is biologically supported." },
+    { pre: 'Sleep comes easier now.', em: 'Bank it while you have it.', body: "Body temperature drops, falling asleep is quicker. The deeper sleep here is rest you'll lean on later in the cycle." },
+    { pre: 'Your skin is calmer this week.', em: 'Hormonal acne is on the back foot.', body: 'Sebum production is lower. Many people see their clearest skin in late follicular.' },
+    { pre: 'Carbs around training.', em: 'Your body uses them well now.', body: 'Complex carbs — quinoa, oats, sweet potato. Insulin sensitivity makes them perform differently than they will in luteal.' },
+  ],
+  ovulation: [
+    { pre: 'Peak energy window.', em: 'Your body is ready.', body: 'Estrogen and testosterone peak. Strength, focus, libido, verbal fluency. The 36–72 hour window is real.' },
+    { pre: 'Sprint, lift, present.', em: 'Confidence is biological right now.', body: 'Many people feel their sharpest socially this week. Schedule the hard conversations, the asks, the presentations.' },
+    { pre: 'Warm up like you mean it.', em: 'ACL injuries spike during ovulation.', body: "Estrogen-driven ligament laxity is well documented. Extra mobility work, dynamic warm-ups — don't skip them this week." },
+    { pre: 'Cervical mucus is doing its job.', em: "It's data, not a problem.", body: 'Egg-white-like discharge marks the fertile window. Your body is signalling. Worth tracking regardless of pregnancy goals.' },
+    { pre: 'Antioxidants matter this week.', em: 'Berries, greens, beets.', body: 'Oxidative stress is elevated during ovulation. Eating the rainbow this week is more than a saying — it\'s measurably useful.' },
+    { pre: 'Body temperature rises slightly.', em: 'Drink more water.', body: 'A 0.5°F bump is normal after ovulation. Hydration helps everything — energy, skin, that vague "off" feeling some people get.' },
+  ],
+  luteal: [
+    { pre: 'Your brain is asking for carbs —', em: "that's biology.", body: 'Serotonin drops in late luteal. Carbs increase tryptophan transport. Your brain is asking for what it actually needs. Complex carbs work best.' },
+    { pre: "PMS isn't your imagination.", em: 'Hormones genuinely shift.', body: "Bloating, irritability, fatigue, brain fog. Serotonin and dopamine dip. The science is on your side — it's not a character flaw." },
+    { pre: 'Magnesium reduced PMS', em: 'in RCT data.', body: '400mg/day. Three cycles is a reasonable test. Pumpkin seeds, dark chocolate, leafy greens. Bedtime is the best time.' },
+    { pre: 'Light movement helps PMS mood.', em: 'Even when motivation drops.', body: "Walking and yoga have real RCT evidence here. Five minutes counts. Don't aim for hero workouts in the final luteal days." },
+    { pre: 'Calcium reduced PMS', em: '~48% in one trial.', body: 'Yogurt, fortified milk, leafy greens. Daily, not just during luteal. Thys-Jacobs 1998 — the foundational study.' },
+    { pre: 'If it feels disabling,', em: 'it might be PMDD.', body: 'Affecting ~3–8% of menstruating people. Treatable with several approaches. Track two cycles, then talk to a doctor. Luna can export the data.' },
+  ],
+}
+
+export function getWeeklyEditorial(phaseId, date = new Date()) {
+  const list = EDITORIALS[phaseId]
+  if (!list) return null
+  const start = new Date(date.getFullYear(), 0, 1)
+  const week = Math.floor((date - start) / (1000 * 60 * 60 * 24 * 7))
+  return list[((week % list.length) + list.length) % list.length]
+}
+
 export const RED_FLAGS = [
   { id: 'flow',   q: 'Soaking a pad/tampon every hour for several hours',                                         a: 'Could indicate menorrhagia or anaemia risk. See a doctor.' },
   { id: 'long',   q: 'Periods lasting more than 7 days',                                                          a: 'Worth a conversation with your provider.' },

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
-import { ARTICLES } from '../data/lunaData'
+import { ARTICLES, getWeeklyEditorial } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
@@ -117,15 +117,21 @@ export default function Home() {
           <Eyebrow>THE EDITORIAL · THIS WEEK</Eyebrow>
           <button onClick={() => go('insights')}
             style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', marginBottom: 4 }}>
-            <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.25 }}>
-              {phase?.id === 'luteal' ? <>Your brain is asking for carbs — <em style={{ color: T.accent }}>that's biology.</em></> :
-               phase?.id === 'ovulation' ? <>Peak energy window: <em style={{ color: T.accent }}>your body is ready.</em></> :
-               phase?.id === 'follicular' ? <>Estrogen is rising. <em style={{ color: T.accent }}>Make the most of it.</em></> :
-               <>Rest is productive. <em style={{ color: T.accent }}>Honour this phase.</em></>}
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
-              {phase ? phase.bodyMood : 'Start logging to unlock personalised insights.'}
-            </div>
+            {(() => {
+              const e = phase ? getWeeklyEditorial(phase.id) : null
+              return (
+                <>
+                  <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.4, lineHeight: 1.25 }}>
+                    {e
+                      ? <>{e.pre} <em style={{ color: T.accent }}>{e.em}</em></>
+                      : <>Start logging — <em style={{ color: T.accent }}>your editorial appears here.</em></>}
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
+                    {e?.body || (phase ? phase.bodyMood : 'Start logging to unlock personalised insights.')}
+                  </div>
+                </>
+              )
+            })()}
             <div style={{ marginTop: 10, fontFamily: T.sans, fontSize: 10, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>
               BY LUNA · BASED ON YOUR PHASE
             </div>
