@@ -83,6 +83,11 @@ const useLuna = create(
       // ── Pro ──────────────────────────────────────────────────
       isPro: false,
       trialDaysLeft: 7,
+
+      // ── Auth (Tier 3 — Supabase) ─────────────────────────────
+      session: null,
+      user:    null,
+      setSession: (session) => set({ session, user: session?.user || null }),
     }),
     {
       name: 'luna-store',

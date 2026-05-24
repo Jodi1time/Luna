@@ -2,6 +2,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { wipeVault, lock } from '../lib/crypto'
+import { signOut } from '../lib/supabase'
 
 const wipeAndReload = () => {
   if (window.confirm('This will permanently delete all your Luna data on this device. Continue?')) {
@@ -29,6 +30,10 @@ function Row({ label, value, right, onTap, danger }) {
 
 export default function Settings() {
   const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft } = useLuna()
+  const session = useLuna((s) => s.session)
+  const handleSignOut = async () => {
+    await signOut()
+  }
   return (
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
@@ -50,6 +55,20 @@ export default function Settings() {
             <button onClick={() => go('paywall')} style={{ background: T.accent, color: '#fff', border: 'none', padding: '8px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 1, borderRadius: T.r }}>UPGRADE</button>
           )}
         </div>
+      </div>
+
+      <SectionLabel>Account</SectionLabel>
+      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+        {session
+          ? <>
+              <Row label="Signed in as" value={session.user.email} />
+              <Row label="Sign out" onTap={handleSignOut} />
+            </>
+          : <Row label="Sign in or create account" onTap={() => go('auth')} />
+        }
+      </div>
+      <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
+        Your account is for recovery and sync. Cycle data stays encrypted on this device.
       </div>
 
       <SectionLabel>Cycle</SectionLabel>

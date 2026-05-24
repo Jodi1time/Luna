@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import useLuna from './store/useLuna'
 import { hasVault, hasLegacyData, getMemoryKey } from './lib/crypto'
+import { getSession, onAuthStateChange } from './lib/supabase'
 import Lock         from './screens/Lock'
 
 import Welcome      from './screens/Welcome'
@@ -19,6 +20,7 @@ import Paywall      from './screens/Paywall'
 import Settings     from './screens/Settings'
 import Nourish      from './screens/Nourish'
 import Care         from './screens/Care'
+import Auth         from './screens/Auth'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -27,6 +29,14 @@ export default function App() {
   const [locked, setLocked] = useState(initiallyLocked)
 
   const { screen, go, onboarded } = useLuna()
+  const setSession = useLuna((s) => s.setSession)
+
+  useEffect(() => {
+    if (locked) return
+    getSession().then(setSession)
+    const unsub = onAuthStateChange(setSession)
+    return unsub
+  }, [locked, setSession])
 
   if (locked) {
     return <AppShell><Lock onUnlocked={() => setLocked(false)} /></AppShell>
@@ -67,6 +77,7 @@ function ScreenRenderer({ screen }) {
     case 'watch':    return <HealthWatch />
     case 'paywall':  return <Paywall />
     case 'settings': return <Settings />
+    case 'auth':     return <Auth />
     default:         return <Home />
   }
 }
