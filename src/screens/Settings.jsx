@@ -1,6 +1,14 @@
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
+import { wipeVault, lock } from '../lib/crypto'
+
+const wipeAndReload = () => {
+  if (window.confirm('This will permanently delete all your Luna data on this device. Continue?')) {
+    wipeVault()
+    window.location.reload()
+  }
+}
 
 function SectionLabel({ children }) {
   return <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, fontFamily: T.sans, padding: '20px 22px 8px', textTransform: 'uppercase' }}>{children}</div>
@@ -53,11 +61,12 @@ export default function Settings() {
 
       <SectionLabel>Privacy & Data</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Storage" value="On-device only" onTap={() => go('article')} />
+        <Row label="Storage" value="On-device · Encrypted" onTap={() => go('article')} />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => updateSetting('analytics', v)} />} />
+        <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
         <Row label="Export all data (CSV)" onTap={() => {}} />
         <Row label="Doctor-ready export (PDF)" onTap={() => go('watch')} />
-        <Row label="Delete everything" onTap={() => {}} danger />
+        <Row label="Delete everything" onTap={wipeAndReload} danger />
       </div>
 
       <SectionLabel>Home Screen</SectionLabel>
@@ -83,7 +92,7 @@ export default function Settings() {
         <Row label="View Pro features"     onTap={() => go('paywall')} />
         <Row label="Eat for your phase"    onTap={() => go('nourish')} />
         <Row label="Health care checklist" onTap={() => go('care')} />
-        <Row label="Reset & start over"    onTap={() => go('welcome')} danger />
+        <Row label="Reset & start over"    onTap={wipeAndReload} danger />
       </div>
 
       <div style={{ height: 16 }} />

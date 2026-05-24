@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import useLuna from './store/useLuna'
+import { hasVault, hasLegacyData, getMemoryKey } from './lib/crypto'
+import Lock         from './screens/Lock'
 
 import Welcome      from './screens/Welcome'
 import Onboarding   from './screens/Onboarding'
@@ -20,10 +23,17 @@ import Care         from './screens/Care'
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
 export default function App() {
+  const initiallyLocked = (hasVault() || hasLegacyData()) && !getMemoryKey()
+  const [locked, setLocked] = useState(initiallyLocked)
+
   const { screen, go, onboarded } = useLuna()
 
+  if (locked) {
+    return <AppShell><Lock onUnlocked={() => setLocked(false)} /></AppShell>
+  }
+
   // Auto-redirect if not onboarded
-  const resolvedScreen = (!onboarded && !['welcome','onb1','onb2','onb3'].includes(screen))
+  const resolvedScreen = (!onboarded && !['welcome','onb1','onb2','onb3','onb4'].includes(screen))
     ? 'welcome'
     : screen
 

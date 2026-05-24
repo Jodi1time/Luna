@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
 import useLuna from '../store/useLuna'
+import { createVault } from '../lib/crypto'
 
 function ProgressBar({ step, total = 4 }) {
   return (
@@ -96,22 +97,20 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, email, password, onChange, storageMode }) {
+function StepAccount({ name, email, password, confirm, onChange, storageMode }) {
   const isSync = storageMode === 'sync'
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
-      <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
-      <Field label="Password" type="password" value={password} onChange={(v) => onChange('password', v)} placeholder={isSync ? 'Min. 8 characters' : 'Optional'} />
+      <Field label="Passcode" type="password" value={password} onChange={(v) => onChange('password', v)} placeholder="Min. 6 characters" />
+      <Field label="Confirm passcode" type="password" value={confirm} onChange={(v) => onChange('confirm', v)} placeholder="Re-enter passcode" />
+      <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
+        Your data is encrypted on this device with this passcode using AES-256. We never see it. If you forget your passcode, your data cannot be recovered.
+      </div>
       {isSync && (
-        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5, padding: '10px 14px', background: T.subtle, borderRadius: T.r }}>
-          An account is needed to sync your data across devices. Your data is encrypted before it leaves your phone — we cannot read it.
-        </div>
-      )}
-      {!isSync && (
-        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
-          Optional for on-device storage. Useful for managing your subscription and contacting support.
-        </div>
+        <>
+          <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+          <Field label="Your name (optional)" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
+        </>
       )}
     </div>
   )
@@ -122,26 +121,31 @@ export default function Onboarding({ step }) {
   const [dateDay,   setDateDay]  = useState(new Date().getDate())
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [storage,   setStorage]  = useState('local')
-  const [account,   setAccount]  = useState({ name: '', email: '', password: '' })
+  const [account,   setAccount]  = useState({ name: '', email: '', password: '', confirm: '' })
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
   const now = new Date()
 
-  const finish = () => {
+  const finish = async () => {
     const d = new Date(now.getFullYear(), now.getMonth(), dateDay)
+    await createVault(account.password)
+    await useLuna.persist.rehydrate()
     setOnboarding({
       lastPeriodStart: d.toISOString().slice(0, 10),
       cycleLength: cycleDays,
       storageMode: storage,
-      account: account.email ? account : null,
+      account: account.email ? { name: account.name, email: account.email } : null,
     })
     go('home')
   }
 
   const canAdvance = () => {
-    if (step === 4 && storage === 'sync') {
-      return account.email.trim() !== '' && account.password.length >= 8
+    if (step === 4) {
+      if (account.password.length < 6) return false
+      if (account.password !== account.confirm) return false
+      if (storage === 'sync' && account.email.trim() === '') return false
+      return true
     }
     return true
   }
@@ -184,12 +188,12 @@ export default function Onboarding({ step }) {
 
       {step === 4 && <>
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          {storage === 'sync' ? <>Create your<br /><em>account.</em></> : <>One last thing —<br /><em>who are you?</em></>}
+          {storage === 'sync' ? <>Secure your data<br /><em>and create your account.</em></> : <>Secure your data<br /><em>with a passcode.</em></>}
         </div>
         <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.5 }}>
-          {storage === 'sync' ? 'Required to sync your data across devices.' : 'Optional. Useful for managing your subscription.'}
+          {storage === 'sync' ? 'Used to encrypt this device and authenticate sync.' : 'Used to encrypt everything on this device. Required.'}
         </div>
-        <StepAccount name={account.name} email={account.email} password={account.password} onChange={setAccountField} storageMode={storage} />
+        <StepAccount name={account.name} email={account.email} password={account.password} confirm={account.confirm} onChange={setAccountField} storageMode={storage} />
       </>}
 
       <div style={{ flex: 1 }} />
@@ -207,13 +211,6 @@ export default function Onboarding({ step }) {
           </CTAButton>
         </div>
 
-        {/* Skip account creation when on-device */}
-        {step === 4 && storage === 'local' && (
-          <button onClick={finish}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: '8px 0', textAlign: 'center' }}>
-            Skip for now — continue without an account
-          </button>
-        )}
       </div>
     </div>
   )

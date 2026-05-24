@@ -1,6 +1,7 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { getPhaseForDay } from '../hooks/useCycle'
+import { secureStorage } from '../lib/crypto'
 
 // Date helpers
 const toISO = (d) => d instanceof Date ? d.toISOString().slice(0, 10) : d
@@ -15,7 +16,7 @@ const useLuna = create(
       cycleLength: 28,
       periodLength: 5,
       storageMode: 'local',    // 'local' | 'sync'
-      account: null,           // { name, email, password } | null
+      account: null,           // { name, email } | null  (passcode is the encryption key, never stored)
       completedChecks: [],     // array of CHECKUPS ids marked done
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
@@ -85,6 +86,8 @@ const useLuna = create(
     }),
     {
       name: 'luna-store',
+      storage: createJSONStorage(() => secureStorage),
+      skipHydration: true,
       partialize: (s) => ({
         onboarded:       s.onboarded,
         lastPeriodStart: s.lastPeriodStart,
