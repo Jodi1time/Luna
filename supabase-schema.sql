@@ -12,9 +12,11 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "Profiles readable by owner" on public.profiles;
 create policy "Profiles readable by owner"
   on public.profiles for select using (auth.uid() = id);
 
+drop policy if exists "Profiles editable by owner" on public.profiles;
 create policy "Profiles editable by owner"
   on public.profiles for update using (auth.uid() = id);
 
