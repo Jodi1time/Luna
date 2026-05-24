@@ -1,0 +1,15 @@
+export const T = {
+  bg:     '#F4EFE5',
+  card:   '#FFFFFF',
+  subtle: '#EBE3D5',
+  accent: '#C84E2E',
+  ink:    '#1A1310',
+  text:   '#1A1310',
+  muted:  '#756A60',
+  hair:   'rgba(26,19,16,0.10)',
+  faint:  'rgba(26,19,16,0.06)',
+  serif:  '"Newsreader", Georgia, serif',
+  sans:   '"DM Sans", -apple-system, system-ui, sans-serif',
+  mono:   '"DM Mono", ui-monospace, monospace',
+  r:      4,
+}
