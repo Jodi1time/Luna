@@ -5,6 +5,7 @@ import useLuna from '../store/useLuna'
 import { createVault } from '../lib/crypto'
 import { biometricSupported } from '../lib/biometric'
 import BiometricPrompt from './BiometricPrompt'
+import { StatusView } from '../components/StatusView'
 
 function ProgressBar({ step, total = 3 }) {
   return (
@@ -111,40 +112,51 @@ export default function Onboarding({ step }) {
   const [signupError, setSignupError] = useState('')
   const [setupComplete, setSetupComplete] = useState(false)
   const [finishedPasscode, setFinishedPasscode] = useState('')
+  const [finishing, setFinishing] = useState(false)
+  const [fatalError, setFatalError] = useState('')
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
   const now = new Date()
 
   const finish = async () => {
+    if (finishing) return
     setSignupError('')
-    const d = new Date(now.getFullYear(), now.getMonth(), dateDay)
-    await createVault(account.passcode)
-    await useLuna.persist.rehydrate()
+    setFatalError('')
+    setFinishing(true)
+    try {
+      const d = new Date(now.getFullYear(), now.getMonth(), dateDay)
+      await createVault(account.passcode)
+      await useLuna.persist.rehydrate()
 
-    let acct = null
-    if (account.email.trim() && account.accountPassword) {
-      try {
-        const { signUp } = await import('../lib/supabase')
-        await signUp(account.email.trim(), account.accountPassword)
-        acct = { email: account.email.trim() }
-      } catch (e) {
-        setSignupError(e.message || 'Could not create account — you can try again from Settings.')
+      let acct = null
+      if (account.email.trim() && account.accountPassword) {
+        try {
+          const { signUp } = await import('../lib/supabase')
+          await signUp(account.email.trim(), account.accountPassword)
+          acct = { email: account.email.trim() }
+        } catch (e) {
+          // Non-fatal: vault is created, user lands on Home, can retry account from Settings.
+          setSignupError(e.message || 'Could not create account — you can try again from Settings.')
+        }
       }
-    }
 
-    setOnboarding({
-      lastPeriodStart: d.toISOString().slice(0, 10),
-      cycleLength: cycleDays,
-      displayName: account.name.trim(),
-      account: acct,
-    })
+      setOnboarding({
+        lastPeriodStart: d.toISOString().slice(0, 10),
+        cycleLength: cycleDays,
+        displayName: account.name.trim(),
+        account: acct,
+      })
 
-    if (biometricSupported()) {
-      setFinishedPasscode(account.passcode)
-      setSetupComplete(true)
-    } else {
-      go('home')
+      if (biometricSupported()) {
+        setFinishedPasscode(account.passcode)
+        setSetupComplete(true)
+      } else {
+        go('home')
+      }
+    } catch (e) {
+      setFatalError(e?.message || "Couldn't finish setup. Please try again.")
+      setFinishing(false)
     }
   }
 
@@ -173,6 +185,19 @@ export default function Onboarding({ step }) {
         userName={account.name}
         onDone={() => go('home')}
       />
+    )
+  }
+
+  if (finishing || fatalError) {
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text }}>
+        <StatusView
+          loading={finishing && !fatalError}
+          loadingMessage="SETTING UP YOUR LUNA"
+          error={fatalError}
+          onRetry={() => { setFatalError(''); finish() }}
+        />
+      </div>
     )
   }
 
@@ -229,8 +254,8 @@ export default function Onboarding({ step }) {
               {Icons.back}
             </button>
           )}
-          <CTAButton full onClick={next} style={{ opacity: canAdvance() ? 1 : 0.5 }}>
-            {step < 3 ? 'CONTINUE' : 'ENTER LUNA'} {Icons.arrow}
+          <CTAButton full onClick={next} style={{ opacity: canAdvance() && !finishing ? 1 : 0.5 }}>
+            {finishing ? 'SETTING UP…' : (step < 3 ? 'CONTINUE' : 'ENTER LUNA')} {Icons.arrow}
           </CTAButton>
         </div>
 
