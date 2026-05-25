@@ -66,18 +66,20 @@ export default function Log() {
 
         {/* Mood */}
         <Eyebrow>MOOD</Eyebrow>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
           {MOOD_IDS.map((id) => (
-            <button key={id} onClick={() => setMood(id)} title={MOOD_LABELS[id]}
+            <button key={id} onClick={() => setMood(id)}
               style={{
-                border: 'none', cursor: 'pointer', width: 40, height: 40,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', cursor: 'pointer',
+                flex: 1, padding: '8px 2px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                 background: mood === id ? T.accent + '22' : 'transparent',
                 outline: mood === id ? `1.5px solid ${T.accent}` : 'none',
                 color: mood === id ? T.accent : T.text,
                 borderRadius: T.r, fontFamily: 'inherit',
               }}>
               <SymptomIcon id={id} size={22} />
+              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
             </button>
           ))}
         </div>
@@ -147,8 +149,8 @@ export default function Log() {
           Basal body temperature — first thing in the morning, before getting up. Rises ~0.5°F after ovulation.
         </div>
 
-        {/* Cervical mucus */}
-        <Eyebrow>CERVICAL MUCUS · OPTIONAL</Eyebrow>
+        {/* Discharge (cervical mucus internally — friendlier label here) */}
+        <Eyebrow>DISCHARGE · OPTIONAL</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 24 }}>
           {MUCUS_OPTIONS.map((m) => {
             const on = mucus === m.id

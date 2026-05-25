@@ -98,7 +98,12 @@
       <div class="luna-splash-sub">with you, always.</div>
     </div>
     <div id="root"></div>
-    <script>window.__lunaSplashStart = performance.now()</script>
+    <script>
+      // Dismiss any keyboard / focused input persisted across reload
+      // so the splash never shows up sharing the screen with a keyboard.
+      try { document.activeElement && document.activeElement.blur && document.activeElement.blur() } catch (_) {}
+      window.__lunaSplashStart = performance.now()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
