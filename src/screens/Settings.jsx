@@ -86,26 +86,6 @@ export default function Settings() {
     wipeVault()
     window.location.reload()
   }
-
-  const checkForUpdates = async () => {
-    try {
-      if ('serviceWorker' in navigator) {
-        const regs = await navigator.serviceWorker.getRegistrations()
-        for (const reg of regs) {
-          await reg.update()
-          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-        }
-        // Clear runtime caches that might serve stale assets
-        if ('caches' in window) {
-          const keys = await caches.keys()
-          await Promise.all(keys.map((k) => caches.delete(k)))
-        }
-      }
-    } catch {
-      // fall through to reload anyway
-    }
-    window.location.reload()
-  }
   return (
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
@@ -179,14 +159,6 @@ export default function Settings() {
         <Row label="Period reminder"  right={<Toggle on={settings.notifyPeriod} onChange={(v) => updateSetting('notifyPeriod', v)} />} />
         <Row label="Daily log nudge"  right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
-      </div>
-
-      <SectionLabel>App</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Check for updates" onTap={checkForUpdates} />
-      </div>
-      <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-        Future updates apply automatically. Use this if Luna ever seems out of date.
       </div>
 
       <SectionLabel>Support</SectionLabel>
