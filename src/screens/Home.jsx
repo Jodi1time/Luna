@@ -77,7 +77,7 @@ export default function Home() {
             <Eyebrow color={trimColor}>
               WEEK {preg.week} · {preg.trimester?.name?.toUpperCase()}
             </Eyebrow>
-            <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: trimColor, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
+            <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: trimColor, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
               {animatedDay || '—'}
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>
@@ -119,7 +119,7 @@ export default function Home() {
               ? `CYCLE DAY · ${bcLabel.toUpperCase()}`
               : (phase ? `CYCLE DAY · ${phase.name.toUpperCase()} WINDOW` : 'CYCLE DAY')}
           </Eyebrow>
-          <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
+          <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
             {cycleDay ? animatedDay : '—'}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>

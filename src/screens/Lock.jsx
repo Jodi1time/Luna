@@ -100,7 +100,6 @@ export default function Lock({ onUnlocked }) {
               onChange={(e) => { setPasscode(e.target.value); setError('') }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !needsMigration) submit() }}
               placeholder={needsMigration ? 'Choose a passcode (min 6)' : 'Passcode'}
-              autoFocus
               style={{
                 background: T.card,
                 border: `1px solid ${error ? T.accent : T.hair}`,

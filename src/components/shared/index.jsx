@@ -78,15 +78,18 @@ export function TabBar({ active, onChange }) {
         }
         const on = active === it.key
         return (
-          <button key={it.key} onClick={() => onChange(it.key)}
+          <button key={it.key} onClick={() => onChange(it.key)} className="no-tap"
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               padding: '4px 12px',
               color: on ? T.accent : 'rgba(26,19,16,0.42)',
               fontFamily: T.sans,
+              transition: 'color 0.25s ease-out',
             }}>
-            <div style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className={on ? 'tab-active' : undefined}
+              key={`${it.key}-${on ? 'on' : 'off'}`}
+              style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {it.icon}
             </div>
             <span style={{ fontSize: 10, fontWeight: 500 }}>{it.label}</span>

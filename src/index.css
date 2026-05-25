@@ -26,6 +26,11 @@ button.no-tap, button.no-tap:active { transform: none; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes numberPop {
   0%   { transform: scale(1); }
   35%  { transform: scale(1.08); }
@@ -41,6 +46,43 @@ button.no-tap, button.no-tap:active { transform: none; }
 @keyframes softGlow {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.85; }
+}
+
+/* Slow ambient breath — applies to accent numerals (cycle day, week-
+   of-pregnancy) to give them subtle life. ~4s cycle, opacity-only,
+   GPU-cheap. Triggered via className="ambient-breath". */
+@keyframes ambientBreath {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.92; }
+}
+.ambient-breath {
+  animation: ambientBreath 4.5s ease-in-out infinite;
+}
+
+/* Staggered children entry. Apply className="stagger" to a parent;
+   direct children animate in one after another (~60ms apart). Used
+   on Home cover cards, Settings sections, Insights pattern cards. */
+.stagger > * {
+  animation: fadeUp 0.45s ease-out both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
+.stagger > *:nth-child(7) { animation-delay: 360ms; }
+.stagger > *:nth-child(8) { animation-delay: 420ms; }
+
+/* Tab bar active icon: subtle scale-up so taps feel responsive
+   beyond color change alone. Applied conditionally in shared/index.jsx. */
+.tab-active {
+  animation: tabPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes tabPop {
+  0%   { transform: scale(0.92); }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 /* Range input — accent color */
