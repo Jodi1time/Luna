@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
+import { BC_LABELS } from './BirthControl'
 import { wipeVault, lock } from '../lib/crypto'
 import { biometricSupported, biometricEnrolled, clearBiometric } from '../lib/biometric'
 import { signOut } from '../lib/supabase'
@@ -31,7 +32,8 @@ function Row({ label, value, right, onTap, danger }) {
 }
 
 export default function Settings() {
-  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName } = useLuna()
+  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName, birthControl } = useLuna()
+  const methodLabel = BC_LABELS[birthControl?.method] || 'None'
   const session = useLuna((s) => s.session)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
   const [biometricOn, setBiometricOn] = useState(biometricEnrolled())
@@ -128,6 +130,7 @@ export default function Settings() {
         <Row label="Average period length" value={`${periodLength} days`} />
         <Row label="Update last period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
+        <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
       </div>
 
       <SectionLabel>Privacy & Data</SectionLabel>

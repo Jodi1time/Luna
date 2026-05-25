@@ -19,12 +19,14 @@ const useLuna = create(
       displayName: '',         // shown in the You tab; collected during onboarding
       account: null,           // { email } | null — only set if a Supabase account was created (passcode is the encryption key, never stored)
       completedChecks: [],     // array of CHECKUPS ids marked done
+      birthControl: { method: 'none', startDate: null },  // none | combined-pill | mini-pill | hormonal-iud | copper-iud | implant | shot | patch | ring
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
       setCycleLength: (n) => set({ cycleLength: n }),
       setPeriodLength: (n) => set({ periodLength: n }),
       setLastPeriodStart: (d) => set({ lastPeriodStart: toISO(d) }),
       setStorageMode: (m) => set({ storageMode: m }),
+      setBirthControl: (data) => set({ birthControl: { ...(get().birthControl || {}), ...data } }),
       toggleCheck: (id) =>
         set((s) => ({
           completedChecks: s.completedChecks.includes(id)
@@ -106,6 +108,7 @@ const useLuna = create(
         displayName:     s.displayName,
         account:         s.account,
         completedChecks: s.completedChecks,
+        birthControl:    s.birthControl,
         logs:            s.logs,
         settings:        s.settings,
         isPro:           s.isPro,

@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
-import { useCycle } from '../hooks/useCycle'
+import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
 const MS_PER_DAY = 86400000
@@ -11,6 +11,11 @@ export default function Calendar() {
   const store = useLuna()
   const cycle = useCycle(store)
   const { monthGrid, predictions } = cycle
+  const onHormonalBC = isOnHormonalBC(store.birthControl)
+  // Hide fertile window prediction on hormonal BC — ovulation is suppressed or unreliable
+  const filteredPredictions = predictions
+    ? (onHormonalBC ? predictions.filter((p) => p.label !== 'Fertile window') : predictions)
+    : null
   const now = new Date()
   const todayISO = now.toISOString().slice(0, 10)
 
@@ -102,9 +107,9 @@ export default function Calendar() {
 
         {/* Predictions */}
         <Eyebrow>PREDICTIONS · WITH REASONING</Eyebrow>
-        {predictions ? (
+        {filteredPredictions ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-            {predictions.map((p, i) => (
+            {filteredPredictions.map((p, i) => (
               <div key={i} style={{ padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ fontSize: 10, letterSpacing: 1.5, color: T.muted, fontWeight: 700, fontFamily: T.sans }}>{p.label.toUpperCase()}</span>

@@ -128,6 +128,90 @@ export function getPeriodHistory(logs, periodStarts) {
   return periods.reverse() // newest first
 }
 
+// Detects whether the user is on a hormonal birth control method.
+// Methods that suppress or override natural cycle hormones return true.
+// Copper IUD is non-hormonal — natural cycle continues, so returns false.
+export function isOnHormonalBC(birthControl) {
+  if (!birthControl?.method) return false
+  return ['combined-pill', 'mini-pill', 'hormonal-iud', 'implant', 'shot', 'patch', 'ring'].includes(birthControl.method)
+}
+
+// Detects the biphasic temperature shift that confirms ovulation.
+// Splits BBT readings into pre-ovulation (early cycle) vs post-ovulation
+// (late cycle) halves across multiple cycles. If the luteal average is
+// at least 0.3°F (or 0.17°C) higher than the follicular average, there's
+// a real shift — and the day where temps cross the mid-line is the typical
+// ovulation marker.
+//
+// Returns null when we don't have enough data, otherwise:
+//   { shiftDayMedian, shiftDelta, unit, follicularAvg, lutealAvg, samples }
+export function detectBBTShift(logs, periodStarts, cycleLength) {
+  if (!periodStarts || periodStarts.length < 2) return null
+
+  const cycleDayFor = (dateISO) => {
+    const t = new Date(dateISO + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (!anchor) return null
+    return Math.floor((t - new Date(anchor + 'T00:00:00').getTime()) / 86400000) + 1
+  }
+
+  // Gather BBT readings tagged with cycle day
+  const bbtReadings = []
+  let unit = 'F'
+  for (const [date, log] of Object.entries(logs || {})) {
+    if (!log?.bbt || typeof log.bbt.value !== 'number') continue
+    const day = cycleDayFor(date)
+    if (day == null) continue
+    unit = log.bbt.unit || unit
+    let v = log.bbt.value
+    // Normalize to F for the math so the threshold is consistent
+    if ((log.bbt.unit || 'F') === 'C') v = v * 9/5 + 32
+    bbtReadings.push({ day, valueF: v, originalUnit: log.bbt.unit || 'F' })
+  }
+
+  if (bbtReadings.length < 6) return null
+
+  const ovMid = Math.round(cycleLength / 2)
+  const follicular = bbtReadings.filter((r) => r.day <= ovMid)
+  const luteal     = bbtReadings.filter((r) => r.day >  ovMid)
+
+  if (follicular.length < 3 || luteal.length < 3) return null
+
+  const avg = (arr) => arr.reduce((a, b) => a + b.valueF, 0) / arr.length
+  const follF = avg(follicular)
+  const lutF  = avg(luteal)
+  const deltaF = lutF - follF
+
+  if (deltaF < 0.3) return null  // no real shift
+
+  // Find the day where readings cross the midpoint of the two averages
+  const midF = (follF + lutF) / 2
+  const crossingsByDay = {}
+  for (const r of bbtReadings) {
+    if (r.valueF >= midF) {
+      crossingsByDay[r.day] = (crossingsByDay[r.day] || 0) + 1
+    }
+  }
+  // First day with crossings in 2+ cycles (or most-frequent if only one cycle of data)
+  const dayCounts = Object.entries(crossingsByDay).map(([d, c]) => ({ day: Number(d), count: c })).sort((a, b) => a.day - b.day)
+  const shiftDayMedian = dayCounts.find((d) => d.count >= 2)?.day || dayCounts[0]?.day || ovMid
+
+  const back = (vF) => unit === 'C' ? (vF - 32) * 5/9 : vF
+  return {
+    shiftDayMedian,
+    shiftDelta: Number((unit === 'C' ? deltaF * 5/9 : deltaF).toFixed(2)),
+    unit,
+    follicularAvg: Number(back(follF).toFixed(2)),
+    lutealAvg: Number(back(lutF).toFixed(2)),
+    samples: bbtReadings.length,
+  }
+}
+
 // Detect recurring mood / symptom patterns across multiple cycles.
 // For each mood and each symptom, computes the median cycle day and the
 // concentration of occurrences within ±3 days of that median. Returns

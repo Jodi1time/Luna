@@ -3,7 +3,8 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
 import { ARTICLES, getWeeklyEditorial } from '../data/lunaData'
-import { useCycle } from '../hooks/useCycle'
+import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { BC_LABELS } from './BirthControl'
 import useLuna from '../store/useLuna'
 
 function useCountUp(target, duration = 900) {
@@ -26,12 +27,14 @@ function useCountUp(target, duration = 900) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, settings, saveLog, logs } = store
+  const { go, goPhase, goArticle, settings, saveLog, logs, birthControl } = store
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength } = cycle
   const animatedDay = useCountUp(cycleDay)
   const [quickMood, setQuickMood] = useState(null)
   const featuredArticles = ARTICLES.slice(0, 3)
+  const onHormonalBC = isOnHormonalBC(birthControl)
+  const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
@@ -40,7 +43,8 @@ export default function Home() {
   // - period is overdue (cycleDay > cycleLength) → "Did your period start?"
   // - OR within 3 days of expected period (cycleDay >= cycleLength - 3)
   // - AND user hasn't already logged flow today
-  const showPeriodCTA = !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+  // - AND not on hormonal BC (bleeds are predictable from the pack/method, not from us)
+  const showPeriodCTA = !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
     setQuickMood(m)
@@ -58,14 +62,18 @@ export default function Home() {
 
         {/* Cover block */}
         <div style={{ marginBottom: 4 }}>
-          <Eyebrow>{phase ? `CYCLE DAY · ${phase.name.toUpperCase()} WINDOW` : 'CYCLE DAY'}</Eyebrow>
+          <Eyebrow>
+            {onHormonalBC
+              ? `CYCLE DAY · ${bcLabel.toUpperCase()}`
+              : (phase ? `CYCLE DAY · ${phase.name.toUpperCase()} WINDOW` : 'CYCLE DAY')}
+          </Eyebrow>
           <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
             {cycleDay ? animatedDay : '—'}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>
             {phase?.name || 'Start logging'}.
           </div>
-          {phase && (
+          {phase && !onHormonalBC && (
             <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.5, marginTop: 12, color: T.text }}>
               {phase.bodyMood} <em style={{ color: T.accent }}>
                 {phase.id === 'ovulation' ? 'Peak window for focus, training, and big asks.' :
@@ -73,6 +81,11 @@ export default function Home() {
                  phase.id === 'luteal'     ? 'Honour rest. Cravings are biology, not weakness.' :
                                             'Be gentle with yourself. Rest is productive.'}
               </em>
+            </div>
+          )}
+          {phase && onHormonalBC && (
+            <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.5, marginTop: 12, color: T.text }}>
+              Your hormones are steadied by your method. <em style={{ color: T.accent }}>Patterns can still emerge — keep logging.</em>
             </div>
           )}
           {phase && (
@@ -106,7 +119,7 @@ export default function Home() {
             </div>
           )}
           {/* Nourish card */}
-          {phase && (
+          {phase && !onHormonalBC && (
             <div style={{ marginTop: 14, padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${phase.color}`, borderRadius: T.r }}>
               <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.accent, marginBottom: 6 }}>EAT FOR YOUR PHASE</div>
               <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, marginBottom: 8 }}>{phase.nutrition.headline}</div>

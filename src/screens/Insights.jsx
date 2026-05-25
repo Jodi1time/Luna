@@ -1,7 +1,7 @@
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
-import { useCycle, detectSymptomPatterns } from '../hooks/useCycle'
+import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC } from '../hooks/useCycle'
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import useLuna from '../store/useLuna'
 
@@ -31,8 +31,11 @@ export default function Insights() {
   const cycle = useCycle(store)
   const { phase, periodHistory } = cycle
   const logs = useLuna((s) => s.logs)
+  const birthControl = useLuna((s) => s.birthControl)
+  const onHormonalBC = isOnHormonalBC(birthControl)
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
   const cyclesLogged = periodHistory ? periodHistory.length : 0
+  const bbtShift = !onHormonalBC ? detectBBTShift(logs, periodHistory, cycle.cycleLength) : null
 
   return (
     <Screen>
@@ -40,22 +43,56 @@ export default function Insights() {
         <Masthead issue={`The Editorial · Week ${new Date().getWeek?.() || 1}`} />
 
         <Eyebrow>LEAD INSIGHT</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>
-          {phase
-            ? <>You are in <em style={{ color: T.accent }}>{phase.name} phase.</em> Here's what that means.</>
-            : <>Start logging to unlock <em style={{ color: T.accent }}>personalised insights.</em></>}
-        </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, marginBottom: 12 }}>
-          {phase ? phase.whatsHappening : 'Your insights will be generated from your logs and cycle data. The more you log, the more precise they become.'}
-        </div>
-        {phase && (
-          <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.muted, fontStyle: 'italic' }}>
-            {phase.bodyMood}
-          </div>
+        {onHormonalBC ? (
+          <>
+            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>
+              Your cycle is shaped by your method, <em style={{ color: T.accent }}>but symptoms still tell a story.</em> Here's what we've noticed.
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, marginBottom: 12 }}>
+              Hormonal contraception overrides the natural phase pattern, but moods, headaches, and other symptoms can still cluster — sometimes around your method's hormone schedule, sometimes around your own rhythms. Keep logging and Luna will surface what repeats.
+            </div>
+            <SourceLine>Pattern detection from your logs</SourceLine>
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>
+              {phase
+                ? <>You are in <em style={{ color: T.accent }}>{phase.name} phase.</em> Here's what that means.</>
+                : <>Start logging to unlock <em style={{ color: T.accent }}>personalised insights.</em></>}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, marginBottom: 12 }}>
+              {phase ? phase.whatsHappening : 'Your insights will be generated from your logs and cycle data. The more you log, the more precise they become.'}
+            </div>
+            {phase && (
+              <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.muted, fontStyle: 'italic' }}>
+                {phase.bodyMood}
+              </div>
+            )}
+            <SourceLine>{phase ? phase.sourceBody : 'Log at least 7 days to see pattern analysis'}</SourceLine>
+          </>
         )}
-        <SourceLine>{phase ? phase.sourceBody : 'Log at least 7 days to see pattern analysis'}</SourceLine>
 
         <Rule />
+
+        {bbtShift && (
+          <div style={{ marginBottom: 22 }}>
+            <Eyebrow>TEMPERATURE · BIPHASIC SHIFT</Eyebrow>
+            <div style={{ padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${PHASES.ovulation.color}`, borderRadius: T.r, marginTop: 4 }}>
+              <div style={{ fontSize: 9.5, letterSpacing: 1.5, fontWeight: 700, color: PHASES.ovulation.color, fontFamily: T.sans, marginBottom: 6 }}>
+                TEMPERATURE · BIPHASIC SHIFT
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 8, lineHeight: 1.25 }}>
+                Your ovulation marker is around <em style={{ color: T.accent }}>day {bbtShift.shiftDayMedian}.</em>
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 13, color: T.muted, lineHeight: 1.5, marginBottom: 10 }}>
+                Your post-ovulation temperatures run about {bbtShift.shiftDelta}°{bbtShift.unit} higher than your follicular phase. That's the biological signature of ovulation.
+              </div>
+              <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+                {bbtShift.follicularAvg}°{bbtShift.unit} → {bbtShift.lutealAvg}°{bbtShift.unit} · {bbtShift.samples} READING{bbtShift.samples === 1 ? '' : 'S'}
+              </div>
+            </div>
+          </div>
+        )}
 
         <Eyebrow>PATTERNS WE'RE WATCHING</Eyebrow>
         {patterns.length === 0 ? (
