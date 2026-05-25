@@ -33,19 +33,24 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Fade out the inline splash once React has painted. Minimum 350ms so
-// the brand mark doesn't flash by — long enough to register, short
-// enough to never feel like a wait.
+// Fade out the inline splash once React has painted AND a minimum
+// brand-exposure time has elapsed. Two requestAnimationFrame calls
+// ensure we wait through the React first paint, not just the initial
+// HTML paint. The 1100ms minimum gives the title card real on-screen
+// time — long enough that the eye actually registers it, short
+// enough that the app still feels responsive.
 const splashStart = window.__lunaSplashStart || performance.now()
-const minSplashMs = 350
+const MIN_SPLASH_MS = 1100
 requestAnimationFrame(() => {
-  const elapsed = performance.now() - splashStart
-  const remaining = Math.max(0, minSplashMs - elapsed)
-  setTimeout(() => {
-    const splash = document.getElementById('luna-splash')
-    if (splash) {
-      splash.classList.add('gone')
-      setTimeout(() => splash.remove(), 400)
-    }
-  }, remaining)
+  requestAnimationFrame(() => {
+    const elapsed = performance.now() - splashStart
+    const remaining = Math.max(0, MIN_SPLASH_MS - elapsed)
+    setTimeout(() => {
+      const splash = document.getElementById('luna-splash')
+      if (splash) {
+        splash.classList.add('gone')
+        setTimeout(() => splash.remove(), 500)
+      }
+    }, remaining)
+  })
 })
