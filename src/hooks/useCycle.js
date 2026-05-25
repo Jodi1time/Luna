@@ -8,13 +8,98 @@
 
 import { PHASES } from '../data/lunaData'
 
+const MS_PER_DAY = 86400000
+
+function daysBetween(aISO, bISO) {
+  const a = new Date(aISO); a.setHours(0,0,0,0)
+  const b = new Date(bISO); b.setHours(0,0,0,0)
+  return Math.round((b - a) / MS_PER_DAY)
+}
+
+// ── Period detection from flow logs ──────────────────────────
+// A period start = the first day of a continuous stretch of flow
+// (≥ Light), defined as: a flow-logged day with NO flow log in
+// the previous 7 days.
+// 'Spotting' is excluded — it doesn't count as a period start.
+export function detectPeriodStarts(logs) {
+  const flowDays = Object.entries(logs || {})
+    .filter(([_, l]) => l?.flow && l.flow !== 'Spotting')
+    .map(([d]) => d)
+    .sort()
+  const starts = []
+  for (let i = 0; i < flowDays.length; i++) {
+    if (i === 0) { starts.push(flowDays[i]); continue }
+    const gap = daysBetween(flowDays[i - 1], flowDays[i])
+    if (gap > 7) starts.push(flowDays[i])
+  }
+  return starts
+}
+
+// Merge detected starts with the onboarding-supplied lastPeriodStart
+// so the very first cycle (before any logs exist) still anchors predictions.
+export function allPeriodStarts(logs, onboardingStart) {
+  const detected = detectPeriodStarts(logs)
+  if (!onboardingStart) return detected
+  // Skip the onboarding date if a detected start is within 7 days of it
+  // (avoids double-counting when the user logged on or near the same day).
+  const hasNearby = detected.some((d) => Math.abs(daysBetween(d, onboardingStart)) <= 7)
+  if (hasNearby) return detected
+  return [onboardingStart, ...detected].sort()
+}
+
+// Average gap between consecutive period starts.
+// Falls back to the stored cycleLength when there's not enough data
+// or all detected gaps are outside the medically-normal 18–60 day range.
+export function dynamicCycleLength(starts, fallback) {
+  if (!starts || starts.length < 2) return fallback
+  const gaps = []
+  for (let i = 1; i < starts.length; i++) {
+    gaps.push(daysBetween(starts[i - 1], starts[i]))
+  }
+  const valid = gaps.filter((g) => g >= 18 && g <= 60)
+  if (valid.length === 0) return fallback
+  const avg = valid.reduce((a, b) => a + b, 0) / valid.length
+  return Math.round(avg)
+}
+
+// Average length of the actual bleeding stretches in the logs.
+// Returns null if we don't have enough data (need a stretch that ended).
+export function dynamicPeriodLength(logs, fallback) {
+  const flowDays = Object.entries(logs || {})
+    .filter(([_, l]) => l?.flow && l.flow !== 'Spotting')
+    .map(([d]) => d)
+    .sort()
+  if (flowDays.length === 0) return fallback
+  const stretches = []
+  let current = [flowDays[0]]
+  for (let i = 1; i < flowDays.length; i++) {
+    const gap = daysBetween(flowDays[i - 1], flowDays[i])
+    if (gap === 1) current.push(flowDays[i])
+    else {
+      stretches.push(current)
+      current = [flowDays[i]]
+    }
+  }
+  stretches.push(current)
+  // Only count stretches that have ended (i.e. the last stretch is excluded
+  // if it ends within the last 2 days — might still be ongoing)
+  const today = new Date(); today.setHours(0,0,0,0)
+  const completed = stretches.filter((s) => {
+    const last = new Date(s[s.length - 1])
+    return daysBetween(s[s.length - 1], today.toISOString().slice(0, 10)) > 2
+  })
+  if (completed.length === 0) return fallback
+  const avg = completed.reduce((a, s) => a + s.length, 0) / completed.length
+  return Math.max(1, Math.round(avg))
+}
+
 export function getCycleDay(lastPeriodStart, cycleLength) {
   if (!lastPeriodStart) return null
   const start = new Date(lastPeriodStart)
   const now   = new Date()
   now.setHours(0, 0, 0, 0)
   start.setHours(0, 0, 0, 0)
-  const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24))
+  const diff = Math.floor((now - start) / MS_PER_DAY)
   // Normalise to 1-based day within a cycle
   return ((diff % cycleLength) + cycleLength) % cycleLength + 1
 }
@@ -32,8 +117,8 @@ export function getPhaseColor(day, cycleLength, periodLength) {
   return getPhaseForDay(day, cycleLength, periodLength).color
 }
 
-// Returns array of {date ISO, phase, cycleDay} for a given month
-export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, periodLength) {
+// Returns array of {date ISO, phase, cycleDay, isPeriodDay} for a given month
+export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, periodLength, logs) {
   if (!lastPeriodStart) return []
   const start = new Date(lastPeriodStart)
   start.setHours(0, 0, 0, 0)
@@ -42,10 +127,13 @@ export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, period
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(year, month, d)
     date.setHours(0, 0, 0, 0)
-    const diff = Math.floor((date - start) / (1000 * 60 * 60 * 24))
+    const diff = Math.floor((date - start) / MS_PER_DAY)
     const cycleDay = ((diff % cycleLength) + cycleLength) % cycleLength + 1
     const phase = getPhaseForDay(cycleDay, cycleLength, periodLength)
-    grid.push({ date: date.toISOString().slice(0, 10), cycleDay, phase, future: date > new Date() })
+    const iso = date.toISOString().slice(0, 10)
+    const log = logs?.[iso]
+    const isPeriodDay = Boolean(log?.flow && log.flow !== 'Spotting')
+    grid.push({ date: iso, cycleDay, phase, future: date > new Date(), isPeriodDay })
   }
   return grid
 }
@@ -58,18 +146,18 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength) {
 
   // Find start of current cycle
   const now = new Date(); now.setHours(0,0,0,0)
-  const daysSinceStart = Math.floor((now - start) / 86400000)
+  const daysSinceStart = Math.floor((now - start) / MS_PER_DAY)
   const cyclesElapsed  = Math.floor(daysSinceStart / cycleLength)
-  const currentCycleStart = new Date(start.getTime() + cyclesElapsed * cycleLength * 86400000)
+  const currentCycleStart = new Date(start.getTime() + cyclesElapsed * cycleLength * MS_PER_DAY)
 
   const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-  const nextPeriod  = new Date(currentCycleStart.getTime() + cycleLength * 86400000)
+  const nextPeriod  = new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
   const ovDay       = Math.round(cycleLength / 2) - 1
-  const fertileStart= new Date(currentCycleStart.getTime() + (ovDay - 2) * 86400000)
-  const fertileEnd  = new Date(currentCycleStart.getTime() + (ovDay + 1) * 86400000)
-  const pmsStart    = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * 86400000)
-  const pmsEnd      = new Date(currentCycleStart.getTime() + (cycleLength - 1) * 86400000)
+  const fertileStart= new Date(currentCycleStart.getTime() + (ovDay - 2) * MS_PER_DAY)
+  const fertileEnd  = new Date(currentCycleStart.getTime() + (ovDay + 1) * MS_PER_DAY)
+  const pmsStart    = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * MS_PER_DAY)
+  const pmsEnd      = new Date(currentCycleStart.getTime() + (cycleLength - 1) * MS_PER_DAY)
 
   return [
     { label: 'Next period',    date: fmt(nextPeriod),                          conf: '95%', why: `Based on your ${cycleLength}-day cycle.` },
@@ -78,12 +166,41 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength) {
   ]
 }
 
+// Returns the number of days the user is overdue for their period.
+// Negative when the period is upcoming, positive when overdue.
+// Returns null when we don't have data.
+export function daysOverdue(lastPeriodStart, cycleLength) {
+  if (!lastPeriodStart) return null
+  const cycleDay = getCycleDay(lastPeriodStart, cycleLength)
+  if (cycleDay == null) return null
+  return cycleDay > cycleLength ? cycleDay - cycleLength : cycleDay - cycleLength
+}
+
 export function useCycle(store) {
-  const { lastPeriodStart, cycleLength, periodLength } = store
+  const { lastPeriodStart: storedStart, cycleLength: storedCycle, periodLength: storedPeriod, logs } = store
+
+  // Learn from the logs: detect period starts, then derive the most recent
+  // start + average cycle length from real data. Falls back to stored values
+  // when there's not enough history.
+  const starts = allPeriodStarts(logs, storedStart)
+  const cycleLength = dynamicCycleLength(starts, storedCycle)
+  const periodLength = dynamicPeriodLength(logs, storedPeriod)
+  const lastPeriodStart = starts.length > 0 ? starts[starts.length - 1] : storedStart
+
   const cycleDay = getCycleDay(lastPeriodStart, cycleLength)
   const phase    = cycleDay ? getPhaseForDay(cycleDay, cycleLength, periodLength) : null
   const predictions = getPredictions(lastPeriodStart, cycleLength, periodLength)
   const now = new Date()
-  const monthGrid = buildMonthGrid(now.getFullYear(), now.getMonth(), lastPeriodStart, cycleLength, periodLength)
-  return { cycleDay, phase, predictions, monthGrid }
+  const monthGrid = buildMonthGrid(now.getFullYear(), now.getMonth(), lastPeriodStart, cycleLength, periodLength, logs)
+
+  return {
+    cycleDay,
+    phase,
+    predictions,
+    monthGrid,
+    cycleLength,       // dynamic — use this in UI instead of store.cycleLength
+    periodLength,      // dynamic
+    lastPeriodStart,   // dynamic — most recent detected start, or onboarding fallback
+    periodHistory: starts, // for "your last N periods" display
+  }
 }

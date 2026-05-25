@@ -26,15 +26,29 @@ function useCountUp(target, duration = 900) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, settings, saveLog } = store
-  const { cycleDay, phase } = useCycle(store)
+  const { go, goPhase, goArticle, settings, saveLog, logs } = store
+  const cycle = useCycle(store)
+  const { cycleDay, phase, cycleLength } = cycle
   const animatedDay = useCountUp(cycleDay)
   const [quickMood, setQuickMood] = useState(null)
   const featuredArticles = ARTICLES.slice(0, 3)
 
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayLog = logs?.[todayISO]
+  const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
+  // Surface the Period Started CTA when:
+  // - period is overdue (cycleDay > cycleLength) → "Did your period start?"
+  // - OR within 3 days of expected period (cycleDay >= cycleLength - 3)
+  // - AND user hasn't already logged flow today
+  const showPeriodCTA = !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+
   const handleQuickMood = (m) => {
     setQuickMood(m)
     saveLog(new Date(), { mood: m })
+  }
+
+  const logPeriodStart = () => {
+    saveLog(new Date(), { ...(todayLog || {}), flow: 'Medium' })
   }
 
   return (
@@ -66,6 +80,30 @@ export default function Home() {
               style={{ marginTop: 14, background: 'transparent', border: `1px solid ${T.text}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 2, fontWeight: 700, color: T.text, borderRadius: T.r }}>
               READ THE FULL PHASE BRIEF →
             </button>
+          )}
+          {/* Period start CTA — surfaces near expected period to keep predictions adapting */}
+          {showPeriodCTA && (
+            <div style={{ marginTop: 14, padding: 14, background: T.accent + '12', border: `1px solid ${T.accent}`, borderRadius: T.r }}>
+              <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.accent, marginBottom: 6 }}>
+                {cycleDay > cycleLength ? `${cycleDay - cycleLength} DAY${cycleDay - cycleLength === 1 ? '' : 'S'} PAST EXPECTED` : 'PERIOD EXPECTED SOON'}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, marginBottom: 10, lineHeight: 1.3 }}>
+                Started today? <em style={{ color: T.accent }}>Tap to log it.</em>
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.4, marginBottom: 12 }}>
+                Logging the start day keeps Luna's predictions accurate for next cycle.
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={logPeriodStart}
+                  style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, borderRadius: T.r }}>
+                  YES — STARTED TODAY
+                </button>
+                <button onClick={() => go('log')}
+                  style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, borderRadius: T.r }}>
+                  ANOTHER DAY
+                </button>
+              </div>
+            </div>
           )}
           {/* Nourish card */}
           {phase && (
