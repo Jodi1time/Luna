@@ -93,18 +93,30 @@ export default function Lock({ onUnlocked }) {
       <div style={{ fontFamily: T.serif, fontSize: 16, color: T.muted, marginTop: 12, marginBottom: 28, lineHeight: 1.55 }}>
         {needsMigration
           ? "We've added encryption. Choose a passcode and we'll encrypt your existing data on this device. We never see it."
-          : 'Your data is encrypted on this device. Enter your passcode to unlock.'}
+          : (canBio && !biometricFailed
+              ? 'Look at your phone to unlock.'
+              : 'Your data is encrypted on this device. Enter your passcode to unlock.')}
       </div>
 
       {canBio && !biometricFailed && (
         <div style={{ marginBottom: 22 }}>
-          <CTAButton full onClick={tryBiometric} style={{ opacity: loading ? 0.5 : 1 }}>
-            {loading ? 'AUTHENTICATING…' : 'UNLOCK WITH FACE ID'} {Icons.arrow}
-          </CTAButton>
+          {/* No big "UNLOCK WITH FACE ID" button — Face ID is already
+              running automatically via tryBiometric() on mount. The iOS
+              system sheet is the primary UI; we just show a small
+              fall-back link in case the user dismisses that sheet. */}
+          <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 2, color: T.muted, fontWeight: 700, textAlign: 'center', padding: '14px 0' }}>
+            {loading ? 'AUTHENTICATING…' : 'WAITING FOR FACE ID'}
+          </div>
           <button onClick={() => setBiometricFailed(true)}
-            style={{ marginTop: 12, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: 8, width: '100%' }}>
+            style={{ marginTop: 8, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: 8, width: '100%' }}>
             Use passcode instead
           </button>
+          {!loading && (
+            <button onClick={tryBiometric}
+              style={{ marginTop: 4, background: 'none', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.sans, fontSize: 12, fontWeight: 600, padding: 8, width: '100%' }}>
+              Re-try Face ID
+            </button>
+          )}
         </div>
       )}
 
