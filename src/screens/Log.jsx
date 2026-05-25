@@ -5,6 +5,20 @@ import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
 import { SYMPTOMS } from '../data/lunaData'
 import useLuna from '../store/useLuna'
 
+const MUCUS_OPTIONS = [
+  { id: 'dry',      label: 'Dry',       sub: 'Low fertility' },
+  { id: 'sticky',   label: 'Sticky',    sub: 'Low fertility' },
+  { id: 'creamy',   label: 'Creamy',    sub: 'Moderate' },
+  { id: 'eggwhite', label: 'Egg-white', sub: 'Peak fertility' },
+  { id: 'watery',   label: 'Watery',    sub: 'High fertility' },
+]
+
+const SEX_OPTIONS = [
+  { id: 'protected',   label: 'Protected' },
+  { id: 'unprotected', label: 'Unprotected' },
+  { id: 'none',        label: 'None' },
+]
+
 export default function Log() {
   const { back, goSymptom, saveLog, getLog } = useLuna()
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -12,13 +26,19 @@ export default function Log() {
   const [mood,     setMood]     = useState(existing.mood || null)
   const [symptoms, setSymptoms] = useState(existing.symptoms || [])
   const [flow,     setFlow]     = useState(existing.flow || null)
+  const [bbt,      setBbt]      = useState(existing.bbt?.value ?? '')
+  const [bbtUnit,  setBbtUnit]  = useState(existing.bbt?.unit || 'F')
+  const [mucus,    setMucus]    = useState(existing.mucus || null)
+  const [sex,      setSex]      = useState(existing.sex || null)
   const [note,     setNote]     = useState(existing.note || '')
 
   const toggleSym = (id) =>
     setSymptoms((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
 
   const save = () => {
-    saveLog(todayISO, { mood, symptoms, flow, note })
+    const bbtNum = parseFloat(bbt)
+    const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
+    saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, note })
     back()
   }
 
@@ -87,6 +107,60 @@ export default function Log() {
               <button key={f} onClick={() => setFlow(f)}
                 style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, letterSpacing: 0.8, fontWeight: 600, textTransform: 'uppercase', borderRadius: T.r }}>
                 {f}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Temperature (BBT) */}
+        <Eyebrow>TEMPERATURE · OPTIONAL</Eyebrow>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            value={bbt}
+            onChange={(e) => setBbt(e.target.value)}
+            placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
+            style={{ flex: 1, background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '12px 14px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none' }}
+          />
+          <div style={{ display: 'flex', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+            {['F','C'].map((u) => (
+              <button key={u} onClick={() => setBbtUnit(u)}
+                style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '12px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 700 }}>
+                °{u}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4, marginBottom: 24 }}>
+          Basal body temperature — first thing in the morning, before getting up. Rises ~0.5°F after ovulation.
+        </div>
+
+        {/* Cervical mucus */}
+        <Eyebrow>CERVICAL MUCUS · OPTIONAL</Eyebrow>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 24 }}>
+          {MUCUS_OPTIONS.map((m) => {
+            const on = mucus === m.id
+            return (
+              <button key={m.id} onClick={() => setMucus(on ? null : m.id)}
+                style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600, borderRadius: T.r, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <span style={{ fontSize: 11, fontWeight: 700 }}>{m.label}</span>
+                <span style={{ fontSize: 8.5, color: T.muted, letterSpacing: 0.3 }}>{m.sub}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Sex */}
+        <Eyebrow>SEX · OPTIONAL</Eyebrow>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+          {SEX_OPTIONS.map((s) => {
+            const on = sex === s.id
+            return (
+              <button key={s.id} onClick={() => setSex(on ? null : s.id)}
+                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+                {s.label}
               </button>
             )
           })}

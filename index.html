@@ -14,9 +14,40 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,700;1,6..72,300;1,6..72,400;1,6..72,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <title>Luna</title>
+    <style>
+      html, body { margin: 0; padding: 0; background: #F4EFE5; }
+      #luna-splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        background: #F4EFE5; color: #1A1310;
+        transition: opacity 0.35s ease-out;
+      }
+      #luna-splash.gone { opacity: 0; pointer-events: none; }
+      .luna-splash-mark {
+        font-family: 'Newsreader', Georgia, serif;
+        font-style: italic; font-weight: 300;
+        font-size: 64px; letter-spacing: -2.5px;
+        color: #C84E2E; line-height: 1;
+        animation: lunaFadeIn 0.5s ease-out both;
+      }
+      .luna-splash-sub {
+        font-family: 'DM Mono', ui-monospace, monospace;
+        font-size: 10px; letter-spacing: 2.5px; font-weight: 500;
+        color: rgba(26,19,16,0.45);
+        margin-top: 16px;
+        animation: lunaFadeIn 0.5s ease-out 0.15s both;
+      }
+      @keyframes lunaFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
   </head>
   <body>
+    <div id="luna-splash">
+      <div class="luna-splash-mark">Luna.</div>
+      <div class="luna-splash-sub">CYCLE · INTERPRETED</div>
+    </div>
     <div id="root"></div>
+    <script>window.__lunaSplashStart = performance.now()</script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

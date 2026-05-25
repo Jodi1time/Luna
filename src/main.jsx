@@ -32,3 +32,20 @@ createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </StrictMode>,
 )
+
+// Fade out the inline splash once React has painted. Minimum 350ms so
+// the brand mark doesn't flash by — long enough to register, short
+// enough to never feel like a wait.
+const splashStart = window.__lunaSplashStart || performance.now()
+const minSplashMs = 350
+requestAnimationFrame(() => {
+  const elapsed = performance.now() - splashStart
+  const remaining = Math.max(0, minSplashMs - elapsed)
+  setTimeout(() => {
+    const splash = document.getElementById('luna-splash')
+    if (splash) {
+      splash.classList.add('gone')
+      setTimeout(() => splash.remove(), 400)
+    }
+  }, remaining)
+})

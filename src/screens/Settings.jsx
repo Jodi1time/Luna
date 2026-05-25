@@ -57,12 +57,14 @@ export default function Settings() {
     lines.push(`Cycle length (days),${store.cycleLength}`)
     lines.push(`Period length (days),${store.periodLength}`)
     lines.push('')
-    lines.push('Date,Mood,Symptoms,Flow,Note')
+    lines.push('Date,Mood,Symptoms,Flow,BBT,BBT_Unit,Mucus,Sex,Note')
     const sortedLogs = Object.entries(store.logs).sort(([a], [b]) => a.localeCompare(b))
     for (const [date, log] of sortedLogs) {
       const symptoms = (log.symptoms || []).join('; ')
       const note = (log.note || '').replace(/"/g, '""').replace(/\n/g, ' ')
-      lines.push(`${date},${log.mood || ''},"${symptoms}",${log.flow || ''},"${note}"`)
+      const bbtVal = log.bbt?.value ?? ''
+      const bbtUnit = log.bbt ? `°${log.bbt.unit}` : ''
+      lines.push(`${date},${log.mood || ''},"${symptoms}",${log.flow || ''},${bbtVal},${bbtUnit},${log.mucus || ''},${log.sex || ''},"${note}"`)
     }
     const csv = lines.join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
