@@ -1,32 +1,35 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import useLuna from './store/useLuna'
 import { hasVault, hasLegacyData, getMemoryKey } from './lib/crypto'
 import { getSession, onAuthStateChange } from './lib/supabase'
+import { StatusView } from './components/StatusView'
 import Lock         from './screens/Lock'
 
 import Welcome      from './screens/Welcome'
 import Onboarding   from './screens/Onboarding'
 import Home         from './screens/Home'
-import PhaseDetail  from './screens/PhaseDetail'
 import Log          from './screens/Log'
-import SymptomDetail from './screens/SymptomDetail'
 import Calendar     from './screens/Calendar'
 import Insights     from './screens/Insights'
 import Library      from './screens/Library'
-import Article      from './screens/Article'
-import HealthWatch  from './screens/HealthWatch'
-import Paywall      from './screens/Paywall'
 import Settings     from './screens/Settings'
-import Nourish      from './screens/Nourish'
-import Care         from './screens/Care'
 import Auth         from './screens/Auth'
-import PrivacyPolicy from './screens/PrivacyPolicy'
-import Terms         from './screens/Terms'
-import PeriodHistory from './screens/PeriodHistory'
-import EditPeriodStart from './screens/EditPeriodStart'
-import BirthControl   from './screens/BirthControl'
-import Pregnancy      from './screens/Pregnancy'
+import BiometricPrompt from './screens/BiometricPrompt'
+
+const PhaseDetail     = lazy(() => import('./screens/PhaseDetail'))
+const SymptomDetail   = lazy(() => import('./screens/SymptomDetail'))
+const Article         = lazy(() => import('./screens/Article'))
+const HealthWatch     = lazy(() => import('./screens/HealthWatch'))
+const Paywall         = lazy(() => import('./screens/Paywall'))
+const Nourish         = lazy(() => import('./screens/Nourish'))
+const Care            = lazy(() => import('./screens/Care'))
+const PrivacyPolicy   = lazy(() => import('./screens/PrivacyPolicy'))
+const Terms           = lazy(() => import('./screens/Terms'))
+const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
+const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
+const BirthControl    = lazy(() => import('./screens/BirthControl'))
+const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -58,7 +61,9 @@ export default function App() {
 
   return (
     <AppShell>
-      <ScreenRenderer screen={resolvedScreen} />
+      <Suspense fallback={<StatusView loading loadingMessage="LOADING" />}>
+        <ScreenRenderer screen={resolvedScreen} />
+      </Suspense>
       {TAB_SCREENS.includes(resolvedScreen) && (
         <TabBar active={resolvedScreen} onChange={go} />
       )}

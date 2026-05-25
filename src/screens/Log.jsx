@@ -4,6 +4,7 @@ import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
 import { SYMPTOMS } from '../data/lunaData'
 import useLuna from '../store/useLuna'
+import { validateBBT } from '../lib/validation'
 
 const MUCUS_OPTIONS = [
   { id: 'dry',      label: 'Dry',       sub: 'Low fertility' },
@@ -31,11 +32,15 @@ export default function Log() {
   const [mucus,    setMucus]    = useState(existing.mucus || null)
   const [sex,      setSex]      = useState(existing.sex || null)
   const [note,     setNote]     = useState(existing.note || '')
+  const [bbtError, setBbtError] = useState('')
 
   const toggleSym = (id) =>
     setSymptoms((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
 
   const save = () => {
+    const bbtErr = validateBBT(bbt, bbtUnit)
+    if (bbtErr) { setBbtError(bbtErr); return }
+    setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
     saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, note })
@@ -120,19 +125,24 @@ export default function Log() {
             inputMode="decimal"
             step="0.01"
             value={bbt}
-            onChange={(e) => setBbt(e.target.value)}
+            onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError('') }}
             placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
-            style={{ flex: 1, background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '12px 14px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none' }}
+            style={{ flex: 1, background: T.card, border: `1px solid ${bbtError ? T.accent : T.hair}`, borderRadius: T.r, padding: '12px 14px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none' }}
           />
           <div style={{ display: 'flex', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
             {['F','C'].map((u) => (
-              <button key={u} onClick={() => setBbtUnit(u)}
+              <button key={u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
                 style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '12px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 700 }}>
                 °{u}
               </button>
             ))}
           </div>
         </div>
+        {bbtError && (
+          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5, padding: '10px 14px', background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r, marginTop: 6, marginBottom: 8 }}>
+            {bbtError}
+          </div>
+        )}
         <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4, marginBottom: 24 }}>
           Basal body temperature — first thing in the morning, before getting up. Rises ~0.5°F after ovulation.
         </div>
@@ -169,7 +179,13 @@ export default function Log() {
         {/* Note */}
         <Eyebrow>NOTE</Eyebrow>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What was on your mind today?"
+          maxLength={2000}
           style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, padding: 14, fontSize: 14, lineHeight: 1.5, color: T.text, minHeight: 80, borderRadius: T.r }} />
+        {note.length > 1900 && (
+          <div style={{ fontSize: 10, fontFamily: T.mono, color: T.muted, textAlign: 'right', marginTop: 4 }}>
+            {note.length} / 2000
+          </div>
+        )}
 
         <SourceLine>Daily symptom tracking improves diagnostic accuracy for PMDD & menstrual disorders — ACOG</SourceLine>
       </div>

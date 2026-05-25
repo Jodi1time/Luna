@@ -6,6 +6,7 @@ import { createVault } from '../lib/crypto'
 import { biometricSupported } from '../lib/biometric'
 import BiometricPrompt from './BiometricPrompt'
 import { StatusView } from '../components/StatusView'
+import { validateName, validatePasscode, validateAccountPassword, validateEmail } from '../lib/validation'
 
 function ProgressBar({ step, total = 3 }) {
   return (
@@ -163,15 +164,22 @@ export default function Onboarding({ step }) {
   // Returns a human-readable string describing what's missing, or null if good to go.
   const validationMessage = () => {
     if (step !== 3) return null
-    if (!account.name.trim()) return 'Please enter your name to continue.'
-    if (account.passcode.length < 6) return 'Your passcode needs to be at least 6 characters.'
-    if (account.confirmPasscode.length > 0 && account.passcode !== account.confirmPasscode) return "Your passcodes don't match yet."
+    const nameErr = validateName(account.name)
+    if (nameErr) return nameErr
+    const pcErr = validatePasscode(account.passcode)
+    if (pcErr) return pcErr
     if (account.confirmPasscode.length === 0) return 'Confirm your passcode by re-entering it.'
+    if (account.passcode !== account.confirmPasscode) return "Your passcodes don't match yet."
     const hasEmail = account.email.trim().length > 0
     const hasPw    = account.accountPassword.length > 0
     if (hasEmail && !hasPw) return 'Add an account password — or leave the email blank to skip the account.'
     if (!hasEmail && hasPw) return 'Add your email — or leave the account password blank to skip the account.'
-    if (hasEmail && account.accountPassword.length < 8) return 'Account password needs to be at least 8 characters.'
+    if (hasEmail) {
+      const emailErr = validateEmail(account.email)
+      if (emailErr) return emailErr
+      const apErr = validateAccountPassword(account.accountPassword)
+      if (apErr) return apErr
+    }
     return null
   }
 

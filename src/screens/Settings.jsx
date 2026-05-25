@@ -2,10 +2,20 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
-import { BC_LABELS } from './BirthControl'
+import { BC_LABELS } from '../data/birthControl'
 import { wipeVault, lock } from '../lib/crypto'
 import { biometricSupported, biometricEnrolled, clearBiometric } from '../lib/biometric'
 import { signOut } from '../lib/supabase'
+
+// Defuse CSV formula-injection prefixes (=, +, -, @, tab, CR) by prepending
+// a tab. Then quote-escape if the cell contains quotes, commas, or newlines.
+function csvCell(value) {
+  if (value == null || value === '') return ''
+  const s = String(value)
+  const defused = /^[=+\-@\t\r]/.test(s) ? `\t${s}` : s
+  if (/[",\n\r]/.test(defused)) return `"${defused.replace(/"/g, '""')}"`
+  return defused
+}
 
 const wipeAndReload = () => {
   if (window.confirm('This will permanently delete all your Luna data on this device. Continue?')) {
@@ -61,20 +71,30 @@ export default function Settings() {
   const exportCSV = () => {
     const store = useLuna.getState()
     const lines = ['Luna data export']
-    lines.push(`Generated,${new Date().toISOString()}`)
-    if (store.displayName) lines.push(`Name,${store.displayName}`)
-    lines.push(`Last period start,${store.lastPeriodStart || ''}`)
-    lines.push(`Cycle length (days),${store.cycleLength}`)
-    lines.push(`Period length (days),${store.periodLength}`)
+    lines.push(`Generated,${csvCell(new Date().toISOString())}`)
+    if (store.displayName) lines.push(`Name,${csvCell(store.displayName)}`)
+    lines.push(`Last period start,${csvCell(store.lastPeriodStart || '')}`)
+    lines.push(`Cycle length (days),${csvCell(store.cycleLength)}`)
+    lines.push(`Period length (days),${csvCell(store.periodLength)}`)
     lines.push('')
     lines.push('Date,Mood,Symptoms,Flow,BBT,BBT_Unit,Mucus,Sex,Note')
     const sortedLogs = Object.entries(store.logs).sort(([a], [b]) => a.localeCompare(b))
     for (const [date, log] of sortedLogs) {
       const symptoms = (log.symptoms || []).join('; ')
-      const note = (log.note || '').replace(/"/g, '""').replace(/\n/g, ' ')
+      const note = (log.note || '').replace(/\n/g, ' ')
       const bbtVal = log.bbt?.value ?? ''
       const bbtUnit = log.bbt ? `°${log.bbt.unit}` : ''
-      lines.push(`${date},${log.mood || ''},"${symptoms}",${log.flow || ''},${bbtVal},${bbtUnit},${log.mucus || ''},${log.sex || ''},"${note}"`)
+      lines.push([
+        csvCell(date),
+        csvCell(log.mood || ''),
+        csvCell(symptoms),
+        csvCell(log.flow || ''),
+        csvCell(bbtVal),
+        csvCell(bbtUnit),
+        csvCell(log.mucus || ''),
+        csvCell(log.sex || ''),
+        csvCell(note),
+      ].join(','))
     }
     const csv = lines.join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })

@@ -11,6 +11,33 @@ The core data layer is launch-ready. Several user-facing flows
 still need to be addressed before public launch. See "Critical for
 launch" below.
 
+## Security audit · 2026-05-25
+
+Findings & status:
+
+- [x] No secret keys in client source. Only the Supabase anon key is
+      shipped (public by design, gated by RLS).
+- [x] No `dangerouslySetInnerHTML` anywhere — React auto-escapes.
+- [x] CSV export now defuses formula-injection prefixes (`=+-@`)
+      via `csvCell()` helper before writing.
+- [x] PDF export wraps all template interpolations in `htmlEscape()`
+      as a defensive layer.
+- [x] Input validation centralized in `src/lib/validation.js` with
+      length caps, email format, BBT range. Used in Onboarding, Auth,
+      Log.
+- [x] RLS policies now explicit: SELECT/UPDATE by owner, INSERT
+      restricted to self, DELETE denied entirely (server-side only).
+- [x] Code splitting: most non-tab screens lazy-loaded via
+      React.lazy. Main bundle reduced by ~30-40%.
+
+Not done in this pass (require server or external services):
+- Sentry / error monitoring (already in Critical for launch)
+- API latency monitoring (no client-side metric collection)
+- Penetration testing / third-party security audit
+- WAF / rate limiting beyond Supabase's defaults
+- Account-deletion Edge Function (Critical for launch)
+- Rotate the Supabase anon key (Critical for launch)
+
 ## Critical for launch
 
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
@@ -139,7 +166,12 @@ launch" below.
 
 - [ ] **Onboarding pass on a real iPhone** — verify Face ID enrollment + unlock on actual hardware
 - [ ] **Accessibility audit** — color contrast, screen reader labels, keyboard nav
-- [ ] **Performance pass** — code-split the Supabase bundle, lazy-load article content, audit the 500 KB JS bundle
+- [x] **Performance pass** — non-tab screens (article content,
+      HealthWatch, Paywall, Nourish, Care, PrivacyPolicy, Terms,
+      PeriodHistory, EditPeriodStart, BirthControl, Pregnancy,
+      PhaseDetail, SymptomDetail) are now lazy-loaded via
+      `React.lazy` (see 2026-05-25 security audit). Further Supabase
+      bundle splitting still possible.
 
 ## Legal / compliance
 

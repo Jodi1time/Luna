@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { CTAButton, Icons, Screen, Masthead } from '../components/shared'
 import { signIn, signUp, requestPasswordReset, supabaseEnabled } from '../lib/supabase'
+import { validateEmail, validateAccountPassword } from '../lib/validation'
 import useLuna from '../store/useLuna'
 
 function Field({ label, type = 'text', value, onChange, placeholder }) {
@@ -49,13 +50,19 @@ export default function Auth() {
   }
 
   const submit = async () => {
-    setError(''); setInfo(''); setBusy(true)
+    setError(''); setInfo('')
+    const emailErr = validateEmail(email)
+    if (emailErr) { setError(emailErr); return }
+    if (mode !== 'reset') {
+      const pwErr = validateAccountPassword(password)
+      if (pwErr) { setError(pwErr); return }
+    }
+    setBusy(true)
     try {
       if (mode === 'signin') {
         await signIn(email, password)
         go('home')
       } else if (mode === 'signup') {
-        if (password.length < 8) throw new Error('Password must be at least 8 characters')
         await signUp(email, password)
         setInfo('Check your email to confirm your account.')
       } else if (mode === 'reset') {

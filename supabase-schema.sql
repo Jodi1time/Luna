@@ -33,3 +33,17 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Explicit insert policy — only authenticated users inserting their own row.
+-- (The auth trigger already inserts via SECURITY DEFINER, but a policy
+--  makes the intent explicit and prevents accidental client-side inserts
+--  for other user ids.)
+drop policy if exists "Profiles insert by self" on public.profiles;
+create policy "Profiles insert by self"
+  on public.profiles for insert with check (auth.uid() = id);
+
+-- Deny client-side deletes entirely. Account deletion must go through
+-- a server-side Edge Function with the service-role key.
+drop policy if exists "Profiles deletes denied" on public.profiles;
+create policy "Profiles deletes denied"
+  on public.profiles for delete using (false);

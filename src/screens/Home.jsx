@@ -5,7 +5,7 @@ import { SymptomIcon } from '../components/symptomIcons'
 import { ARTICLES, PHASES, getWeeklyEditorial } from '../data/lunaData'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { usePregnancy } from '../hooks/usePregnancy'
-import { BC_LABELS } from './BirthControl'
+import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
 
 const trimesterColor = (n) => {
