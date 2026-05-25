@@ -17,13 +17,19 @@ mkdirSync(OUT_DIR, { recursive: true })
 
 // Device dimensions covering current and recent iPhones (portrait).
 const SIZES = [
-  // iPhone 15/14/13/12 Pro Max / Plus
+  // iPhone 16 Pro Max
+  { w: 1320, h: 2868, label: 'iphone-16-pro-max' },
+  // iPhone 15/14 Pro Max + 15/14 Plus + 16/16 Plus
   { w: 1290, h: 2796, label: 'iphone-15-pro-max' },
+  // iPhone 13 Pro Max / 12 Pro Max
+  { w: 1284, h: 2778, label: 'iphone-13-pro-max' },
+  // iPhone 16 Pro
+  { w: 1206, h: 2622, label: 'iphone-16-pro' },
   // iPhone 15/14 Pro
   { w: 1179, h: 2556, label: 'iphone-15-pro' },
   // iPhone 14/13/12 (and Pro non-Max)
   { w: 1170, h: 2532, label: 'iphone-14' },
-  // iPhone 13/12 mini
+  // iPhone 13/12 mini / 11 Pro / X / XS
   { w: 1125, h: 2436, label: 'iphone-13-mini' },
   // iPhone 11 Pro Max / XS Max
   { w: 1242, h: 2688, label: 'iphone-11-pro-max' },

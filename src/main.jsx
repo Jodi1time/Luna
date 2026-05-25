@@ -40,7 +40,7 @@ createRoot(document.getElementById('root')).render(
 // time — long enough that the eye actually registers it, short
 // enough that the app still feels responsive.
 const splashStart = window.__lunaSplashStart || performance.now()
-const MIN_SPLASH_MS = 1100
+const MIN_SPLASH_MS = 1800
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     const elapsed = performance.now() - splashStart
