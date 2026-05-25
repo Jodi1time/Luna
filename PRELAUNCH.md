@@ -41,12 +41,12 @@ Not done in this pass (require server or external services):
 ## Critical for launch
 
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
-- [ ] **Supabase Edge Function for true server-side account deletion** — the in-app "Delete my account" flow signs out and wipes the local vault, but the server-side row still needs an Edge Function to honour the 30-day deletion promise
+- [ ] **Supabase Edge Function for true server-side account deletion** — implementation shipped (`supabase/functions/delete-account/index.ts`, wired into Settings → Delete my account). Deployment is a 5-min CLI run, documented in SUPABASE_SETUP.md step 7.
 - [ ] **Stripe wiring for Pro subscription** — products, Checkout, webhook → `profiles.stripe_customer_id`, gate `isPro` from server
 - [ ] **Re-enable Supabase email confirmation with verify-in-background pattern** — see Authentication section below for the detailed approach
 - [ ] **Rotate the Supabase anon key** — the current anon key was pasted in chat history; rotate as a hygiene step
 - [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
-- [ ] **Sentry (or equivalent) error monitoring DSN** — the in-app `ErrorBoundary` already logs to `console.error`; wire it into a real monitor before public launch
+- [ ] **Sentry (or equivalent) error monitoring DSN** — setup is fully wired (`src/lib/sentry.js` + `ErrorBoundary` reports via `reportError`); just add `VITE_SENTRY_DSN` to GitHub Actions secrets to activate. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
 
 ## Authentication & accounts

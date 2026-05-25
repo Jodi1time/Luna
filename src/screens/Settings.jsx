@@ -109,12 +109,37 @@ export default function Settings() {
   }
 
   const deleteAccount = async () => {
-    if (!window.confirm('This permanently deletes your data on this device and signs you out. Your server account will be marked for deletion (allow 30 days). Continue?')) return
-    try {
-      await signOut()
-    } catch {
-      // Ignore — we still want to wipe locally and reload.
+    if (!window.confirm('This permanently deletes your Luna account and all locally encrypted data. Continue?')) return
+
+    // If signed in, ask the Edge Function to delete the server-side user
+    if (session) {
+      try {
+        const { supabase } = await import('../lib/supabase')
+        const { data: { session: s } } = await supabase.auth.getSession()
+        if (s) {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${s.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          if (!res.ok) {
+            const body = await res.text().catch(() => '')
+            if (!window.confirm(`Server-side deletion failed (${res.status}). Wipe local data anyway?\n\n${body}`)) {
+              return
+            }
+          }
+        }
+      } catch (e) {
+        if (!window.confirm(`Could not reach the server (${e?.message}). Wipe local data anyway?`)) {
+          return
+        }
+      }
     }
+
+    try { await signOut() } catch {}
     wipeVault()
     window.location.reload()
   }

@@ -1,6 +1,7 @@
 import { Component } from 'react'
 import { T } from '../data/theme'
 import { CTAButton } from './shared'
+import { reportError } from '../lib/sentry'
 
 export class ErrorBoundary extends Component {
   constructor(props) {
@@ -11,7 +12,7 @@ export class ErrorBoundary extends Component {
     return { hasError: true, error }
   }
   componentDidCatch(error, info) {
-    // Hook for Sentry / other monitoring later
+    reportError(error, info)
     if (typeof window !== 'undefined') {
       // eslint-disable-next-line no-console
       console.error('Luna error:', error, info)

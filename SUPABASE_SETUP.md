@@ -47,6 +47,52 @@ In the GitHub repo: **Settings → Secrets and variables → Actions → New rep
 
 The deploy workflow already reads these at build time once you add them.
 
-## 7. Done
+## 7. Deploy the delete-account Edge Function
+
+The in-app "Delete my account" flow calls a Supabase Edge Function
+(`supabase/functions/delete-account/index.ts`) that uses the
+service-role key to actually remove the user from `auth.users` (which
+cascades to `profiles`). The function needs to be deployed once to
+your Supabase project.
+
+1. **Install the Supabase CLI**
+   - Mac: `brew install supabase/tap/supabase`
+   - Other platforms: `npm install -g supabase` (or see the
+     [official install docs](https://supabase.com/docs/guides/cli/getting-started))
+
+2. **Log in from the repo root**
+   ```
+   supabase login
+   ```
+   This opens a browser to authorize the CLI.
+
+3. **Link the local repo to your Supabase project**
+   ```
+   supabase link --project-ref <PROJECT-REF>
+   ```
+   Your project ref is the subdomain part of your Supabase dashboard
+   URL (e.g. `abcd1234` for `https://supabase.com/dashboard/project/abcd1234`).
+
+4. **Deploy the function**
+   ```
+   supabase functions deploy delete-account --no-verify-jwt
+   ```
+   `--no-verify-jwt` is intentional: the function does its own JWT
+   verification (it reads the user from the token using the anon
+   client, then deletes that specific user via the service-role
+   client). Supabase doesn't need to verify before invoking.
+
+5. **Environment variables — nothing to set manually**
+   The function uses `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and
+   `SUPABASE_SERVICE_ROLE_KEY`. These are auto-populated as
+   environment variables by Supabase for Edge Functions, so you do
+   **not** need to configure them yourself.
+
+After deployment, the in-app delete button hits
+`<PROJECT-URL>/functions/v1/delete-account`, the function deletes
+the `auth.users` row (cascading to `profiles`), and the client wipes
+the local vault and reloads.
+
+## 8. Done
 
 Sign up in the app should now work end-to-end. The vault passcode remains separate — your cycle data still never leaves the device.

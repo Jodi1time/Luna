@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/sentry'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -40,7 +41,9 @@ createRoot(document.getElementById('root')).render(
 // time — long enough that the eye actually registers it, short
 // enough that the app still feels responsive.
 const splashStart = window.__lunaSplashStart || performance.now()
-const MIN_SPLASH_MS = 2400
+// Deliberate "enough to register, not enough to feel slow" choice —
+// short brand-exposure window before the app takes over.
+const MIN_SPLASH_MS = 700
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     const elapsed = performance.now() - splashStart
