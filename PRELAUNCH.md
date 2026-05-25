@@ -4,12 +4,14 @@ Things to do/decide before opening Luna to the public. Keep this updated as item
 
 ## Status
 
-**Last review:** 2026-05-24
+**Last review:** 2026-05-25
 
 The core data layer is launch-ready. Several user-facing flows
 (billing, real legal review, server-side account deletion, monitoring)
-still need to be addressed before public launch. See "Critical for
-launch" below.
+still need to be addressed before public launch. **Distribution is
+now App Store + Play Store** (decided 2026-05-25) — Luna will ship
+as a native app, not just a PWA. See "Native app distribution"
+section below for the work this entails.
 
 ## Security audit · 2026-05-25
 
@@ -48,6 +50,7 @@ Not done in this pass (require server or external services):
 - [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
 - [ ] **Sentry (or equivalent) error monitoring DSN** — setup is fully wired (`src/lib/sentry.js` + `ErrorBoundary` reports via `reportError`); just add `VITE_SENTRY_DSN` to GitHub Actions secrets to activate. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
+- [ ] **Wrap as native app via Capacitor for App Store + Play Store distribution** — see "Native app distribution" section below. Replaces the PWA-only path. Required so we can use native Face ID without the iOS WebAuthn sheet.
 
 ## Authentication & accounts
 
@@ -147,12 +150,148 @@ Not done in this pass (require server or external services):
   - "Vent / journal" mode that helps surface patterns over time
   - Complaint logging that feeds back into symptom tracking
 
+## Native app distribution (App Store + Play Store)
+
+Decision (2026-05-25): Luna ships as a **native app** on both stores,
+not just a PWA. Reason: native Face ID without the iOS WebAuthn
+permission sheet, plus the trust/discovery/billing advantages of
+being in the official app catalogues.
+
+**Approach: Capacitor wrapper around the existing React/Vite codebase.**
+We don't rewrite — the web app becomes the UI inside a thin native
+shell that exposes platform APIs (Face ID, notifications, App Store
+billing, etc).
+
+### Capacitor setup
+
+- [ ] **Install Capacitor and initialize native projects**
+  - `npm install @capacitor/core @capacitor/ios @capacitor/android`
+  - `npx cap init Luna com.luna.app --web-dir=dist`
+  - `npx cap add ios && npx cap add android`
+  - Each platform creates a native project folder (ios/, android/)
+    committed to the repo
+- [ ] **Update build pipeline**
+  - `npm run build` produces dist/ as before
+  - `npx cap sync` copies dist/ into both native projects
+  - iOS opens in Xcode (`npx cap open ios`); Android in Android Studio
+- [ ] **Replace WebAuthn biometric with native LocalAuthentication**
+  - Use `@capacitor-community/biometric-auth` or similar
+  - Native Face ID has no permission sheet — opens app → face scan
+    runs immediately → unlocked. Exactly what users expect.
+  - Wrap the existing `enrollBiometric` / `unlockWithBiometric`
+    functions in `src/lib/biometric.js` so the JS API stays the
+    same; the implementation calls the native plugin in the wrapped
+    build and falls back to WebAuthn in the PWA build.
+- [ ] **Capacitor splash screen plugin**
+  - Replaces the iOS apple-touch-startup-image PNGs we made — native
+    splash is more reliable and instant. Same brand mark.
+
+### iOS / App Store
+
+- [ ] **Apple Developer Program enrollment** — $99/year. Required to
+      publish to App Store. ~24-48 hour approval after first signup.
+- [ ] **App Store Connect setup**
+  - Create the app record, bundle ID (`com.luna.app` reserved)
+  - App icons in all required sizes (1024×1024 marketing icon plus
+    in-app sizes — Capacitor generates the latter)
+  - Screenshots: 3-10 per device size (6.7" iPhone Pro Max
+    portrait minimum, also 6.5" and 5.5" required for legacy support)
+  - App preview video (optional, recommended): 15-30s portrait MP4
+- [ ] **Privacy nutrition labels** — App Store form declaring what
+      data Luna collects, how it's used, whether it's linked to the
+      user, whether it's used for tracking. Luna's profile here is
+      tight: account email (linked, for support), encrypted cycle
+      data (not linked, never readable to us), no tracking.
+- [ ] **PrivacyInfo.xcprivacy manifest** — required for iOS 17+ apps.
+      Lists which "required reason" APIs we use (file timestamps,
+      UserDefaults, etc) and why. Capacitor docs cover this.
+- [ ] **App Tracking Transparency (ATT) prompt** — only required if
+      we add advertising or cross-app tracking. Luna doesn't, so
+      we declare "does not track" and skip the prompt.
+- [ ] **Age rating** — likely 12+ (mature themes/references for
+      reproductive health content). Configured in App Store Connect.
+- [ ] **Content guidelines compliance** — App Store has specific
+      rules for menstrual / reproductive health apps. Review §1.4
+      (Physical Harm) and §5.1.1 (Health) of guidelines. Our
+      "not medical advice" framing throughout the app helps.
+- [ ] **TestFlight beta** — invite friends/family before public
+      launch. Up to 10,000 testers, no review for internal testing.
+- [ ] **App Store review submission** — 24-72 hour first-time
+      review. Have all marketing materials ready first.
+
+### Android / Play Store
+
+- [ ] **Google Play Developer Account** — $25 one-time. Faster
+      approval than Apple (~few hours).
+- [ ] **Play Console setup**
+  - App listing, screenshots (phone + 7" tablet + 10" tablet),
+    feature graphic (1024×500), short + full descriptions
+  - Android adaptive icons (foreground + background layers)
+- [ ] **Data Safety form** — Play Store's equivalent of Apple's
+      nutrition labels. Declare what's collected, shared, security
+      practices. Same content as the iOS version.
+- [ ] **Content rating questionnaire** — IARC-driven. Probably
+      ends at "Mature 17+" or "Teen" depending on answers about
+      reproductive health content.
+- [ ] **Internal / closed testing track** — equivalent to TestFlight.
+      Roll out to a small group before production.
+- [ ] **Production submission** — review typically 1-3 days.
+
+### Billing — must use native IAP if paid features ship
+
+- [ ] **Replace direct Stripe with native IAP** for in-app
+      subscriptions. Apple and Google both require their billing
+      systems for digital subscriptions sold inside the app, taking
+      15-30% commission.
+  - `@capacitor-community/in-app-purchases` or RevenueCat
+    (recommended — RevenueCat handles cross-platform subscription
+    state in one API, ~$0 for low volume)
+  - Stripe can still be used for *web-only* subscription sales
+    (e.g. a marketing site checkout) — just not inside the iOS/
+    Android app
+
+### Push notifications — easier in native
+
+- [ ] **APNs (Apple) + FCM (Google) for push** — Capacitor's
+      `@capacitor/push-notifications` plugin gives one JS API
+      that routes to either. Period reminders, daily log nudges,
+      weekly editorial — all the toggles in Settings that currently
+      do nothing become real.
+- [ ] **Notification server** — to actually send pushes, we need
+      a small server (Edge Function works) that holds device
+      tokens and triggers messages on a schedule.
+
+### Estimated timeline
+
+- Capacitor setup + iOS/Android shell building: **1 week**
+- Native biometric + push integration: **3-5 days**
+- App Store + Play Store setup, screenshots, descriptions, privacy
+  forms: **3-5 days**
+- TestFlight beta + Play internal testing iteration: **1-2 weeks**
+- Apple review (first submit): **2-7 days** (variable)
+- Google review: **1-3 days**
+
+Realistic end-to-end: **4-6 weeks** from "start Capacitor setup"
+to "live on both stores."
+
+### Cost summary
+
+- Apple Developer Program: $99/year
+- Google Play Developer: $25 one-time
+- RevenueCat: free up to $10k/mo subscription revenue
+- Sentry: free tier covers small launch
+- Supabase: free tier covers small launch
+- Total fixed costs first year: **~$124**
+
 ## Notifications
 
 - [ ] **Period / log / weekly editorial reminders**
   - Settings toggles exist but don't do anything
-  - Use Notification API + Service Worker for local scheduling (no server needed initially)
-  - Push notifications later require a server (Tier 2)
+  - PWA path: Notification API + Service Worker for local scheduling
+  - Native path (preferred — see Native app distribution): APNs/FCM
+    via Capacitor's push-notifications plugin
+  - Either way needs the Settings toggles to actually drive
+    something. Decide once Capacitor is in.
 
 ## Polish
 
