@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
-import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
+import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
-import { ARTICLES, getWeeklyEditorial } from '../data/lunaData'
+import { ARTICLES, PHASES, getWeeklyEditorial } from '../data/lunaData'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from './BirthControl'
 import useLuna from '../store/useLuna'
+
+const trimesterColor = (n) => {
+  if (n === 1) return PHASES.ovulation.color
+  if (n === 2) return PHASES.follicular.color
+  if (n === 3) return PHASES.luteal.color
+  return T.accent
+}
 
 function useCountUp(target, duration = 900) {
   const [value, setValue] = useState(0)
@@ -30,7 +38,10 @@ export default function Home() {
   const { go, goPhase, goArticle, settings, saveLog, logs, birthControl } = store
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength } = cycle
-  const animatedDay = useCountUp(cycleDay)
+  const preg = usePregnancy(store)
+  const isPreg = preg.active
+  const trimColor = isPreg ? trimesterColor(preg.trimester?.number) : null
+  const animatedDay = useCountUp(isPreg ? preg.week : cycleDay)
   const [quickMood, setQuickMood] = useState(null)
   const featuredArticles = ARTICLES.slice(0, 3)
   const onHormonalBC = isOnHormonalBC(birthControl)
@@ -44,7 +55,7 @@ export default function Home() {
   // - OR within 3 days of expected period (cycleDay >= cycleLength - 3)
   // - AND user hasn't already logged flow today
   // - AND not on hormonal BC (bleeds are predictable from the pack/method, not from us)
-  const showPeriodCTA = !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+  const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
     setQuickMood(m)
@@ -58,9 +69,50 @@ export default function Home() {
   return (
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue={cycleDay ? `No. ${cycleDay}` : 'No. 1'} />
+        <Masthead issue={isPreg ? `Week ${preg.week}` : (cycleDay ? `No. ${cycleDay}` : 'No. 1')} />
 
-        {/* Cover block */}
+        {/* Cover block — Pregnancy variant */}
+        {isPreg && (
+          <div style={{ marginBottom: 4 }}>
+            <Eyebrow color={trimColor}>
+              WEEK {preg.week} · {preg.trimester?.name?.toUpperCase()}
+            </Eyebrow>
+            <div style={{ fontFamily: T.serif, fontSize: 160, fontWeight: 300, color: trimColor, lineHeight: 0.82, letterSpacing: -7, marginTop: 22, transition: 'color 0.6s ease-out' }}>
+              {animatedDay || '—'}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.8, marginTop: 6, lineHeight: 1 }}>
+              {preg.daysToDue > 0
+                ? `${preg.daysToDue} days to go.`
+                : preg.daysToDue === 0
+                  ? 'Today is your due date.'
+                  : `${Math.abs(preg.daysToDue)} days past your due date.`}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.5, marginTop: 12, color: T.text }}>
+              Week {preg.week} of 40. <em style={{ color: trimColor }}>{preg.trimester?.name}.</em>
+            </div>
+
+            {preg.content && (
+              <div style={{ marginTop: 14, padding: 16, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: T.r }}>
+                <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: trimColor, marginBottom: 8 }}>WHAT THIS WEEK LOOKS LIKE</div>
+                <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.25, marginBottom: 14, letterSpacing: -0.3 }}>
+                  About the size of {preg.content.size}.
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 6, textTransform: 'uppercase' }}>Baby</div>
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, marginBottom: 12 }}>
+                  {preg.content.baby}
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 6, textTransform: 'uppercase' }}>You</div>
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
+                  {preg.content.body}
+                </div>
+                <SourceLine>{preg.content.source}</SourceLine>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Cover block — Cycle variant */}
+        {!isPreg && (
         <div style={{ marginBottom: 4 }}>
           <Eyebrow>
             {onHormonalBC
@@ -138,6 +190,7 @@ export default function Home() {
             </div>
           )}
         </div>
+        )}
 
         {/* Quick log */}
         <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '14px 0', marginTop: 22, marginBottom: 22 }}>
@@ -164,7 +217,7 @@ export default function Home() {
         </div>
 
         {/* Editorial card */}
-        {settings.showEditorial && <>
+        {!isPreg && settings.showEditorial && <>
           <Eyebrow>THE EDITORIAL · THIS WEEK</Eyebrow>
           <button onClick={() => go('insights')}
             style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', marginBottom: 4 }}>

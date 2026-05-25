@@ -6,6 +6,12 @@ import { secureStorage } from '../lib/crypto'
 // Date helpers
 const toISO = (d) => d instanceof Date ? d.toISOString().slice(0, 10) : d
 const today = () => new Date().toISOString().slice(0, 10)
+const lmpToDueDate = (lmp) => {
+  if (!lmp) return null
+  const d = new Date(lmp + 'T00:00:00')
+  d.setDate(d.getDate() + 280) // Naegele's rule: LMP + 280 days
+  return d.toISOString().slice(0, 10)
+}
 
 const useLuna = create(
   persist(
@@ -20,6 +26,7 @@ const useLuna = create(
       account: null,           // { email } | null — only set if a Supabase account was created (passcode is the encryption key, never stored)
       completedChecks: [],     // array of CHECKUPS ids marked done
       birthControl: { method: 'none', startDate: null },  // none | combined-pill | mini-pill | hormonal-iud | copper-iud | implant | shot | patch | ring
+      pregnancy: { active: false, lmp: null, dueDate: null, startedAt: null },
 
       setOnboarding: (data) => set({ ...data, onboarded: true }),
       setCycleLength: (n) => set({ cycleLength: n }),
@@ -27,6 +34,15 @@ const useLuna = create(
       setLastPeriodStart: (d) => set({ lastPeriodStart: toISO(d) }),
       setStorageMode: (m) => set({ storageMode: m }),
       setBirthControl: (data) => set({ birthControl: { ...(get().birthControl || {}), ...data } }),
+      startPregnancy: ({ lmp }) => {
+        const dueDate = lmpToDueDate(lmp)
+        set({
+          pregnancy: { active: true, lmp, dueDate, startedAt: new Date().toISOString().slice(0, 10) },
+          // Pregnancy supersedes any active BC tracking — silently clear it.
+          birthControl: { method: 'none', startDate: null },
+        })
+      },
+      endPregnancy: () => set({ pregnancy: { active: false, lmp: null, dueDate: null, startedAt: null } }),
       toggleCheck: (id) =>
         set((s) => ({
           completedChecks: s.completedChecks.includes(id)
@@ -109,6 +125,7 @@ const useLuna = create(
         account:         s.account,
         completedChecks: s.completedChecks,
         birthControl:    s.birthControl,
+        pregnancy:       s.pregnancy,
         logs:            s.logs,
         settings:        s.settings,
         isPro:           s.isPro,

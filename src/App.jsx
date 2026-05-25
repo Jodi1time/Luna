@@ -26,6 +26,7 @@ import Terms         from './screens/Terms'
 import PeriodHistory from './screens/PeriodHistory'
 import EditPeriodStart from './screens/EditPeriodStart'
 import BirthControl   from './screens/BirthControl'
+import Pregnancy      from './screens/Pregnancy'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -90,6 +91,7 @@ function ScreenRenderer({ screen }) {
     case 'periodHistory': return <PeriodHistory />
     case 'editPeriodStart': return <EditPeriodStart />
     case 'birthControl': return <BirthControl />
+    case 'pregnancy': return <Pregnancy />
     default:         return <Home />
   }
 }

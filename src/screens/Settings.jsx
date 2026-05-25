@@ -32,8 +32,16 @@ function Row({ label, value, right, onTap, danger }) {
 }
 
 export default function Settings() {
-  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName, birthControl } = useLuna()
+  const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName, birthControl, pregnancy } = useLuna()
   const methodLabel = BC_LABELS[birthControl?.method] || 'None'
+  const pregLabel = (() => {
+    if (!pregnancy?.active || !pregnancy?.lmp) return 'Not active'
+    const start = new Date(pregnancy.lmp + 'T00:00:00')
+    const now = new Date(); now.setHours(0, 0, 0, 0)
+    const days = Math.floor((now - start) / 86400000)
+    const wk = Math.max(1, Math.floor(days / 7) + 1)
+    return `Week ${wk}`
+  })()
   const session = useLuna((s) => s.session)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
   const [biometricOn, setBiometricOn] = useState(biometricEnrolled())
@@ -131,6 +139,7 @@ export default function Settings() {
         <Row label="Update last period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
+        <Row label="Pregnancy" value={pregLabel} onTap={() => go('pregnancy')} />
       </div>
 
       <SectionLabel>Privacy & Data</SectionLabel>
