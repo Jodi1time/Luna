@@ -5,12 +5,21 @@ import { enrollBiometric } from '../lib/biometric'
 
 export default function BiometricPrompt({ passcode, userId, userName, onDone }) {
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   const enable = async () => {
     setBusy(true)
-    await enrollBiometric(passcode, { userId, userName })
+    setFailed(false)
+    const ok = await enrollBiometric(passcode, { userId, userName })
     setBusy(false)
-    onDone()
+    if (ok) {
+      onDone()
+    } else {
+      // Either user dismissed the system prompt or the device/browser
+      // doesn't support the WebAuthn PRF extension. Either way, let the
+      // user know it didn't take and continue with passcode unlock.
+      setFailed(true)
+    }
   }
 
   return (
@@ -26,12 +35,18 @@ export default function BiometricPrompt({ passcode, userId, userName, onDone }) 
       </div>
 
       <CTAButton full onClick={enable} style={{ opacity: busy ? 0.5 : 1 }}>
-        {busy ? 'WORKING…' : 'ENABLE FACE ID'} {Icons.arrow}
+        {busy ? 'WORKING…' : (failed ? 'TRY AGAIN' : 'ENABLE FACE ID')} {Icons.arrow}
       </CTAButton>
+
+      {failed && (
+        <div style={{ marginTop: 14, padding: '10px 14px', background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r, fontFamily: T.sans, fontSize: 12, color: T.text, lineHeight: 1.5 }}>
+          Couldn't enable Face ID. Either you cancelled, or your browser doesn't fully support biometric unlock yet. Your passcode still works.
+        </div>
+      )}
 
       <button onClick={onDone}
         style={{ marginTop: 14, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: 8, width: '100%' }}>
-        Not now — I'll just use my passcode
+        {failed ? 'Continue with passcode' : "Not now — I'll just use my passcode"}
       </button>
     </div>
   )

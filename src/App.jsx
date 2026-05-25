@@ -30,6 +30,7 @@ const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
 const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
+const EnableBiometric = lazy(() => import('./screens/EnableBiometric'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -96,6 +97,7 @@ function ScreenRenderer({ screen }) {
     case 'periodHistory': return <PeriodHistory />
     case 'editPeriodStart': return <EditPeriodStart />
     case 'birthControl': return <BirthControl />
+    case 'enableBiometric': return <EnableBiometric />
     case 'pregnancy': return <Pregnancy />
     default:         return <Home />
   }

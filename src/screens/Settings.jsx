@@ -56,13 +56,18 @@ export default function Settings() {
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
   const [biometricOn, setBiometricOn] = useState(biometricEnrolled())
   const handleBiometricToggle = (v) => {
-    if (!v) {
-      if (window.confirm('Disable Face ID unlock? You\'ll need your passcode to unlock Luna.')) {
+    if (v && !biometricEnrolled()) {
+      // Enroll path — go to a dedicated screen that re-asks for the
+      // passcode (needed to wrap it under PRF) and runs enrollment.
+      go('enableBiometric')
+      return
+    }
+    if (!v && biometricEnrolled()) {
+      if (window.confirm("Disable Face ID unlock? You'll need your passcode to unlock Luna.")) {
         clearBiometric()
         setBiometricOn(false)
       }
     }
-    // Don't handle "enable from settings" path in this first cut.
   }
   const handleSignOut = async () => {
     await signOut()
@@ -190,7 +195,7 @@ export default function Settings() {
       <SectionLabel>Privacy & Data</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Storage" value="On-device · Encrypted" />
-        {biometricSupported() && biometricEnrolled() && (
+        {biometricSupported() && (
           <Row label="Face ID / Touch ID unlock"
             right={<Toggle on={biometricOn} onChange={handleBiometricToggle} />} />
         )}
