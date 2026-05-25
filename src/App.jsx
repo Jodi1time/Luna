@@ -24,6 +24,7 @@ import Auth         from './screens/Auth'
 import PrivacyPolicy from './screens/PrivacyPolicy'
 import Terms         from './screens/Terms'
 import PeriodHistory from './screens/PeriodHistory'
+import EditPeriodStart from './screens/EditPeriodStart'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -86,6 +87,7 @@ function ScreenRenderer({ screen }) {
     case 'privacy':  return <PrivacyPolicy />
     case 'terms':    return <Terms />
     case 'periodHistory': return <PeriodHistory />
+    case 'editPeriodStart': return <EditPeriodStart />
     default:         return <Home />
   }
 }

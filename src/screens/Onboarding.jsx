@@ -160,20 +160,23 @@ export default function Onboarding({ step }) {
     }
   }
 
-  const canAdvance = () => {
-    if (step === 3) {
-      if (!account.name.trim()) return false
-      if (account.passcode.length < 6) return false
-      if (account.passcode !== account.confirmPasscode) return false
-      // Account fields: both empty (skip account) or both filled (create account)
-      const hasEmail = account.email.trim().length > 0
-      const hasPw    = account.accountPassword.length > 0
-      if (hasEmail !== hasPw) return false
-      if (hasEmail && account.accountPassword.length < 8) return false
-      return true
-    }
-    return true
+  // Returns a human-readable string describing what's missing, or null if good to go.
+  const validationMessage = () => {
+    if (step !== 3) return null
+    if (!account.name.trim()) return 'Please enter your name to continue.'
+    if (account.passcode.length < 6) return 'Your passcode needs to be at least 6 characters.'
+    if (account.confirmPasscode.length > 0 && account.passcode !== account.confirmPasscode) return "Your passcodes don't match yet."
+    if (account.confirmPasscode.length === 0) return 'Confirm your passcode by re-entering it.'
+    const hasEmail = account.email.trim().length > 0
+    const hasPw    = account.accountPassword.length > 0
+    if (hasEmail && !hasPw) return 'Add an account password — or leave the email blank to skip the account.'
+    if (!hasEmail && hasPw) return 'Add your email — or leave the account password blank to skip the account.'
+    if (hasEmail && account.accountPassword.length < 8) return 'Account password needs to be at least 8 characters.'
+    return null
   }
+
+  const blockReason = validationMessage()
+  const canAdvance = blockReason === null
 
   const next = step < 3 ? () => go(`onb${step + 1}`) : finish
 
@@ -247,6 +250,11 @@ export default function Onboarding({ step }) {
       <div style={{ flex: 1 }} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {step === 3 && blockReason && (
+          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5, padding: '10px 14px', background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r }}>
+            {blockReason}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10 }}>
           {step > 1 && (
             <button onClick={() => go(`onb${step - 1}`)}
@@ -254,7 +262,7 @@ export default function Onboarding({ step }) {
               {Icons.back}
             </button>
           )}
-          <CTAButton full onClick={next} style={{ opacity: canAdvance() && !finishing ? 1 : 0.5 }}>
+          <CTAButton full onClick={() => { if (canAdvance && !finishing) next() }} style={{ opacity: canAdvance && !finishing ? 1 : 0.5 }}>
             {finishing ? 'SETTING UP…' : (step < 3 ? 'CONTINUE' : 'ENTER LUNA')} {Icons.arrow}
           </CTAButton>
         </div>
