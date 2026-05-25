@@ -1,19 +1,36 @@
+import { useMemo } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
+const MS_PER_DAY = 86400000
+
 export default function Calendar() {
   const store = useLuna()
-  const { monthGrid, predictions } = useCycle(store)
+  const cycle = useCycle(store)
+  const { monthGrid, predictions } = cycle
   const now = new Date()
   const todayISO = now.toISOString().slice(0, 10)
-  const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   const dayLetters = ['M','T','W','T','F','S','S']
   const firstDay   = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
   const offset     = firstDay === 0 ? 6 : firstDay - 1
+
+  // Predicted next period start = lastPeriodStart + cycleLength days.
+  const nextPeriodStart = useMemo(() => {
+    if (!cycle.lastPeriodStart) return null
+    const start = new Date(cycle.lastPeriodStart + 'T00:00:00')
+    return new Date(start.getTime() + cycle.cycleLength * MS_PER_DAY)
+  }, [cycle.lastPeriodStart, cycle.cycleLength])
+
+  const isPredictedPeriod = (iso) => {
+    if (!nextPeriodStart) return false
+    const d = new Date(iso + 'T00:00:00')
+    const diff = Math.round((d - nextPeriodStart) / MS_PER_DAY)
+    return diff >= 0 && diff < cycle.periodLength
+  }
 
   return (
     <Screen>
@@ -24,13 +41,19 @@ export default function Calendar() {
           {now.toLocaleDateString('en-US', { month: 'long' })}.
         </div>
 
-        {/* Phase legend */}
+        {/* Phase + period legend */}
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: T.sans, color: T.muted }}>
           {Object.values(PHASES).map((p) => (
             <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
             </div>
           ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Period day
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />Predicted period
+          </div>
         </div>
 
         {/* Day headers */}
@@ -43,10 +66,13 @@ export default function Calendar() {
         {/* Days grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
           {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
-          {monthGrid.map(({ date, phase, future }) => {
+          {monthGrid.map(({ date, phase, future, isPeriodDay }) => {
             const isToday = date === todayISO
+            const showLoggedDot = isPeriodDay && !future
+            const showPredictedDot = future && isPredictedPeriod(date)
             return (
               <div key={date} style={{
+                position: 'relative',
                 aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
                 background: phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent',
@@ -55,6 +81,18 @@ export default function Calendar() {
                 borderRadius: T.r,
               }}>
                 {new Date(date + 'T12:00:00').getDate()}
+                {showLoggedDot && (
+                  <div style={{
+                    position: 'absolute', top: 3, right: 3,
+                    width: 5, height: 5, background: T.accent, borderRadius: '50%',
+                  }} />
+                )}
+                {showPredictedDot && (
+                  <div style={{
+                    position: 'absolute', top: 3, right: 3,
+                    width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent',
+                  }} />
+                )}
               </div>
             )
           })}

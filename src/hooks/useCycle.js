@@ -93,6 +93,111 @@ export function dynamicPeriodLength(logs, fallback) {
   return Math.max(1, Math.round(avg))
 }
 
+// Compact history of past periods derived from logs.
+// Returns array of { start, end, length, gapFromPrev }, newest first.
+// `end` walks forward from each start while flow days remain consecutive
+// (gap of 1 day or less). `gapFromPrev` is the day-distance from the
+// previous (older) period's start, or null for the oldest entry.
+export function getPeriodHistory(logs, periodStarts) {
+  if (!periodStarts || periodStarts.length === 0) return []
+  const flowDays = Object.entries(logs || {})
+    .filter(([_, l]) => l?.flow && l.flow !== 'Spotting')
+    .map(([d]) => d)
+    .sort()
+  const periods = []
+  for (let i = 0; i < periodStarts.length; i++) {
+    const start = periodStarts[i]
+    const nextStart = periodStarts[i + 1]
+    // walk forward from start while flow days are consecutive
+    let end = start
+    let cursor = new Date(start); cursor.setHours(0,0,0,0)
+    for (const day of flowDays) {
+      const d = new Date(day); d.setHours(0,0,0,0)
+      if (d < cursor) continue
+      if (nextStart && d >= new Date(nextStart)) break
+      const gap = Math.round((d - cursor) / MS_PER_DAY)
+      if (gap <= 1) { end = day; cursor = d }
+      else break
+    }
+    const length = Math.round((new Date(end) - new Date(start)) / MS_PER_DAY) + 1
+    const gapFromPrev = i > 0
+      ? Math.round((new Date(start) - new Date(periodStarts[i-1])) / MS_PER_DAY)
+      : null
+    periods.push({ start, end, length, gapFromPrev })
+  }
+  return periods.reverse() // newest first
+}
+
+// Detect recurring mood / symptom patterns across multiple cycles.
+// For each mood and each symptom, computes the median cycle day and the
+// concentration of occurrences within ±3 days of that median. Returns
+// only the patterns that appear in ≥60% of their occurrences inside that
+// window — those are the ones worth surfacing.
+export function detectSymptomPatterns(logs, periodStarts, cycleLength, periodLength) {
+  if (!periodStarts || periodStarts.length < 2) return []
+  const totalCycles = periodStarts.length - 1
+
+  // Find cycle day for an arbitrary date relative to the closest preceding period start
+  const cycleDayFor = (dateISO) => {
+    const t = new Date(dateISO + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (!anchor) return null
+    return Math.floor((t - new Date(anchor + 'T00:00:00').getTime()) / MS_PER_DAY) + 1
+  }
+
+  const groups = {} // id → { type, label, days: [] }
+  for (const [date, log] of Object.entries(logs || {})) {
+    const day = cycleDayFor(date)
+    if (day == null) continue
+    if (log.mood) {
+      const id = `mood_${log.mood}`
+      groups[id] = groups[id] || { type: 'mood', label: log.mood, days: [] }
+      groups[id].days.push(day)
+    }
+    for (const sym of (log.symptoms || [])) {
+      const id = `sym_${sym}`
+      groups[id] = groups[id] || { type: 'symptom', label: sym, days: [] }
+      groups[id].days.push(day)
+    }
+  }
+
+  const phaseFor = (day) => {
+    const ovStart = Math.round(cycleLength / 2) - 1
+    const ovEnd   = Math.round(cycleLength / 2) + 1
+    if (day <= periodLength) return 'menstrual'
+    if (day < ovStart)        return 'follicular'
+    if (day <= ovEnd)         return 'ovulation'
+    return 'luteal'
+  }
+
+  const patterns = []
+  for (const [id, g] of Object.entries(groups)) {
+    if (g.days.length < 2) continue
+    const sorted = [...g.days].sort((a, b) => a - b)
+    const median = sorted[Math.floor(sorted.length / 2)]
+    const inWindow = sorted.filter((d) => Math.abs(d - median) <= 3)
+    const concentration = inWindow.length / sorted.length
+    if (concentration < 0.6) continue
+    const min = Math.min(...inWindow)
+    const max = Math.max(...inWindow)
+    patterns.push({
+      id, type: g.type, label: g.label,
+      days: [min, max],
+      median,
+      occurrences: g.days.length,
+      cycles: totalCycles,
+      concentration,
+      phase: phaseFor(median),
+    })
+  }
+  return patterns.sort((a, b) => b.occurrences - a.occurrences).slice(0, 6)
+}
+
 export function getCycleDay(lastPeriodStart, cycleLength) {
   if (!lastPeriodStart) return null
   const start = new Date(lastPeriodStart)

@@ -125,6 +125,7 @@ export default function Settings() {
         <Row label="Average cycle length" value={`${cycleLength} days`} onTap={() => go('onb2')} />
         <Row label="Average period length" value={`${periodLength} days`} />
         <Row label="Update last period start" onTap={() => go('onb1')} />
+        <Row label="Period history" onTap={() => go('periodHistory')} />
       </div>
 
       <SectionLabel>Privacy & Data</SectionLabel>

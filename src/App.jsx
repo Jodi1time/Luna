@@ -23,6 +23,7 @@ import Care         from './screens/Care'
 import Auth         from './screens/Auth'
 import PrivacyPolicy from './screens/PrivacyPolicy'
 import Terms         from './screens/Terms'
+import PeriodHistory from './screens/PeriodHistory'
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -84,6 +85,7 @@ function ScreenRenderer({ screen }) {
     case 'auth':     return <Auth />
     case 'privacy':  return <PrivacyPolicy />
     case 'terms':    return <Terms />
+    case 'periodHistory': return <PeriodHistory />
     default:         return <Home />
   }
 }

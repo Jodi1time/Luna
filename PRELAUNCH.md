@@ -133,6 +133,10 @@ launch" below.
   - Shipped in `src/components/symptomIcons.jsx`. Editorial mark-making for moods,
     representational shapes for symptoms. Iterate on individual glyphs as needed.
 
+- [x] **Period history view** — Settings → Cycle → Period history
+- [x] **Symptom pattern detection** — Insights screen surfaces detected patterns across cycles
+- [x] **Calendar visualization** — logged period days + predicted future period dots
+
 - [ ] **Onboarding pass on a real iPhone** — verify Face ID enrollment + unlock on actual hardware
 - [ ] **Accessibility audit** — color contrast, screen reader labels, keyboard nav
 - [ ] **Performance pass** — code-split the Supabase bundle, lazy-load article content, audit the 500 KB JS bundle

@@ -1,20 +1,38 @@
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
-import { PHASES } from '../data/lunaData'
-import { useCycle } from '../hooks/useCycle'
+import { PHASES, SYMPTOMS } from '../data/lunaData'
+import { useCycle, detectSymptomPatterns } from '../hooks/useCycle'
+import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import useLuna from '../store/useLuna'
+
+const PHASE_COLOR = {
+  menstrual:  PHASES.menstrual.color,
+  follicular: PHASES.follicular.color,
+  ovulation:  PHASES.ovulation.color,
+  luteal:     PHASES.luteal.color,
+}
+
+// Resolve a pattern's icon id + human label from the raw key the store records.
+// Moods are stored as their id ('calm', 'energy', …) — looked up in MOOD_LABELS
+// for display, and used directly as the SymptomIcon path key. Symptoms are
+// stored as the SYMPTOMS dict id ('cramps', 'headache', …).
+function resolvePattern(p) {
+  if (p.type === 'mood') {
+    const lower = String(p.label).toLowerCase()
+    const display = MOOD_LABELS[lower] || MOOD_LABELS[p.label] || p.label
+    return { iconId: MOOD_LABELS[p.label] ? p.label : lower, display }
+  }
+  const dict = SYMPTOMS[p.label]
+  return { iconId: p.label, display: dict?.label || p.label }
+}
 
 export default function Insights() {
   const store = useLuna()
-  const { phase } = useCycle(store)
+  const cycle = useCycle(store)
+  const { phase, periodHistory } = cycle
   const logs = useLuna((s) => s.logs)
-  const logCount = Object.keys(logs).length
-
-  const patterns = [
-    { tag: 'MOOD', col: PHASES.ovulation.color, title: 'Energy peaks in your ovulatory window', body: 'Your highest-energy log entries cluster in the ovulation phase. Consistent with the testosterone + estrogen peak.', source: 'Pattern detected in your logs' },
-    { tag: 'NUTRITION', col: PHASES.luteal.color, title: 'Luteal cravings are biological', body: 'Serotonin drops in late luteal phase — your brain is seeking carbs to boost synthesis. You are not failing willpower.', source: 'Oxford Nutrition Reviews 2023' },
-    { tag: 'MOVEMENT', col: PHASES.follicular.color, title: 'Follicular phase: best training window', body: 'Insulin sensitivity is highest in follicular phase. Carbs around workouts feel better, recovery is faster.', source: 'Sims et al., 2020' },
-  ]
+  const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
+  const cyclesLogged = periodHistory ? periodHistory.length : 0
 
   return (
     <Screen>
@@ -40,20 +58,47 @@ export default function Insights() {
         <Rule />
 
         <Eyebrow>PATTERNS WE'RE WATCHING</Eyebrow>
-        {logCount < 3 ? (
-          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8 }}>
-            Log at least 3 days to start seeing patterns. You have {logCount} log{logCount !== 1 ? 's' : ''} so far.
+        {patterns.length === 0 ? (
+          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8, lineHeight: 1.5 }}>
+            {cyclesLogged < 2
+              ? <>We need at least one full cycle to spot patterns. Keep logging.</>
+              : <>No strong patterns yet — keep logging and they'll surface here.</>}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
-            {patterns.map((p, i) => (
-              <div key={i} style={{ padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${p.col}`, borderRadius: T.r }}>
-                <div style={{ fontSize: 9.5, letterSpacing: 1.5, fontWeight: 700, color: p.col, fontFamily: T.sans, marginBottom: 6 }}>{p.tag}</div>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 4, lineHeight: 1.2 }}>{p.title}</div>
-                <div style={{ fontSize: 12.5, color: T.muted, lineHeight: 1.45, fontFamily: T.sans }}>{p.body}</div>
-                <div style={{ marginTop: 8, fontSize: 9.5, fontFamily: T.mono, color: T.muted, letterSpacing: 0.5 }}>{p.source}</div>
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+            {patterns.map((p) => {
+              const { iconId, display } = resolvePattern(p)
+              const color = PHASE_COLOR[p.phase] || T.accent
+              const [min, max] = p.days
+              const dayLabel = min === max ? `day ${min}` : `days ${min}–${max}`
+              const sentence = p.type === 'symptom'
+                ? `Your ${display.toLowerCase()} tend to land in your ${p.phase} phase — ${dayLabel}`
+                : `You tend to log '${display}' in your ${p.phase} phase — ${dayLabel}`
+              const concentration = Math.round((p.concentration || 0) * 100)
+              return (
+                <div key={p.id} style={{ padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${color}`, borderRadius: T.r }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{ flexShrink: 0, color: T.accent, marginTop: 2 }}>
+                      <SymptomIcon id={iconId} size={28} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 9.5, letterSpacing: 1.5, fontWeight: 700, color: color, fontFamily: T.sans, marginBottom: 4 }}>
+                        {p.type.toUpperCase()} · DAYS {min}{min === max ? '' : `–${max}`}
+                      </div>
+                      <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 4, lineHeight: 1.2 }}>
+                        {p.type === 'symptom' ? `Your ${display.toLowerCase()}` : `Your '${display}' moods`}
+                      </div>
+                      <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.45, fontFamily: T.sans }}>
+                        {sentence}.
+                      </div>
+                      <div style={{ marginTop: 8, fontSize: 9.5, fontFamily: T.mono, color: T.muted, letterSpacing: 0.5 }}>
+                        {p.occurrences} OCCURRENCE{p.occurrences === 1 ? '' : 'S'} ACROSS {p.cycles} CYCLE{p.cycles === 1 ? '' : 'S'} · {concentration}% CONCENTRATION
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
         <div style={{ height: 16 }} />
