@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { CTAButton, Icons } from '../components/shared'
 import { unlock, migrateLegacy, wipeVault, hasLegacyData, hasVault } from '../lib/crypto'
@@ -13,15 +13,17 @@ export default function Lock({ onUnlocked }) {
   const [loading,  setLoading]  = useState(false)
   const canBio = biometricSupported() && biometricEnrolled() && !needsMigration
   const [biometricFailed, setBiometricFailed] = useState(false)
-  // Gate the passcode input behind a short delay so iOS can never try
-  // to auto-focus / surface its password autofill suggestion bar while
-  // the splash is still on screen. Until this flips true, the input
-  // is not in the DOM at all — iOS has nothing to focus.
-  const [inputReady, setInputReady] = useState(false)
-  useEffect(() => {
-    const t = setTimeout(() => setInputReady(true), 1300)
-    return () => clearTimeout(t)
-  }, [])
+  // Passcode input is NEVER in the DOM until the user explicitly taps
+  // to enter their passcode. This is the only reliable way to prevent
+  // iOS from raising the keyboard on its own during the splash.
+  // For migrations and biometric failure, we still auto-reveal because
+  // the user has clearly engaged at that point.
+  const [showPasscodeInput, setShowPasscodeInput] = useState(needsMigration)
+  const passcodeRef = useRef(null)
+  const revealPasscode = () => {
+    setShowPasscodeInput(true)
+    setTimeout(() => passcodeRef.current?.focus(), 50)
+  }
 
   const tryBiometric = async () => {
     setError('')
@@ -47,6 +49,12 @@ export default function Lock({ onUnlocked }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // If biometric fails, user has clearly engaged — go straight to passcode
+  useEffect(() => {
+    if (biometricFailed) revealPasscode()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [biometricFailed])
 
   const submit = async () => {
     setError('')
@@ -100,10 +108,26 @@ export default function Lock({ onUnlocked }) {
         </div>
       )}
 
-      {(!canBio || biometricFailed) && inputReady && (
+      {/* No-biometric path: show "ENTER PASSCODE" CTA until the user taps,
+          then the input renders and focuses. Keyboard only ever appears
+          as a direct response to the user's tap — no iOS auto-keyboard. */}
+      {(!canBio || biometricFailed) && !showPasscodeInput && (
+        <>
+          <CTAButton full onClick={revealPasscode}>
+            ENTER PASSCODE {Icons.arrow}
+          </CTAButton>
+          <button onClick={handleReset}
+            style={{ marginTop: 28, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: 8, textAlign: 'center', width: '100%' }}>
+            Forgot passcode? Reset all data.
+          </button>
+        </>
+      )}
+
+      {showPasscodeInput && (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 8 }}>
             <input
+              ref={passcodeRef}
               type="password"
               value={passcode}
               onChange={(e) => { setPasscode(e.target.value); setError('') }}

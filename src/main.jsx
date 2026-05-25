@@ -41,9 +41,10 @@ createRoot(document.getElementById('root')).render(
 // time — long enough that the eye actually registers it, short
 // enough that the app still feels responsive.
 const splashStart = window.__lunaSplashStart || performance.now()
-// Deliberate "enough to register, not enough to feel slow" choice —
-// short brand-exposure window before the app takes over.
-const MIN_SPLASH_MS = 1100
+// Target: app feels interactive within ~1 second of cold start.
+// 600ms splash + ~200ms fade gives the title card a clear moment
+// without making the user wait.
+const MIN_SPLASH_MS = 600
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     const elapsed = performance.now() - splashStart
