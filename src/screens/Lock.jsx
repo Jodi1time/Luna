@@ -13,6 +13,15 @@ export default function Lock({ onUnlocked }) {
   const [loading,  setLoading]  = useState(false)
   const canBio = biometricSupported() && biometricEnrolled() && !needsMigration
   const [biometricFailed, setBiometricFailed] = useState(false)
+  // Gate the passcode input behind a short delay so iOS can never try
+  // to auto-focus / surface its password autofill suggestion bar while
+  // the splash is still on screen. Until this flips true, the input
+  // is not in the DOM at all — iOS has nothing to focus.
+  const [inputReady, setInputReady] = useState(false)
+  useEffect(() => {
+    const t = setTimeout(() => setInputReady(true), 1300)
+    return () => clearTimeout(t)
+  }, [])
 
   const tryBiometric = async () => {
     setError('')
@@ -91,7 +100,7 @@ export default function Lock({ onUnlocked }) {
         </div>
       )}
 
-      {(!canBio || biometricFailed) && (
+      {(!canBio || biometricFailed) && inputReady && (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 8 }}>
             <input
@@ -100,6 +109,10 @@ export default function Lock({ onUnlocked }) {
               onChange={(e) => { setPasscode(e.target.value); setError('') }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !needsMigration) submit() }}
               placeholder={needsMigration ? 'Choose a passcode (min 6)' : 'Passcode'}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               style={{
                 background: T.card,
                 border: `1px solid ${error ? T.accent : T.hair}`,
@@ -118,6 +131,10 @@ export default function Lock({ onUnlocked }) {
                 onChange={(e) => { setConfirm(e.target.value); setError('') }}
                 onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
                 placeholder="Confirm passcode"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
                 style={{
                   background: T.card,
                   border: `1px solid ${error ? T.accent : T.hair}`,

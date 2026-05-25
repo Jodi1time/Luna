@@ -43,7 +43,7 @@ createRoot(document.getElementById('root')).render(
 const splashStart = window.__lunaSplashStart || performance.now()
 // Deliberate "enough to register, not enough to feel slow" choice —
 // short brand-exposure window before the app takes over.
-const MIN_SPLASH_MS = 700
+const MIN_SPLASH_MS = 1100
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     const elapsed = performance.now() - splashStart
