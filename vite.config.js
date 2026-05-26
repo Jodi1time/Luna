@@ -2,8 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// When building for the native iOS/Android shell via Capacitor, assets
+// load from the local filesystem and the base path must be '/'.
+// When building for GitHub Pages, the site lives under /Luna/.
+// The build mode is selected by setting VITE_NATIVE=true at build time
+// (see the `build:native` npm script).
+const isNative = process.env.VITE_NATIVE === 'true'
+
 export default defineConfig({
-  base: '/Luna/',
+  base: isNative ? '/' : '/Luna/',
   plugins: [
     react(),
     VitePWA({

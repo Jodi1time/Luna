@@ -1,4 +1,10 @@
 import { encryptString, decryptString } from './crypto'
+import {
+  isNativeRuntime,
+  nativeBiometricSupported,
+  enrollBiometricNative,
+  unlockWithBiometricNative,
+} from './biometricNative'
 
 const BIO_KEY = 'luna-biometric'
 const PRF_INPUT_STR = 'luna-prf-v1'
@@ -16,11 +22,27 @@ function prfInput() {
   return bytes
 }
 
+// On native (Capacitor) runtime, biometric availability is determined
+// by the OS plugin and we treat it as async. The sync WebAuthn check
+// stays for the web path.
+//
+// Note: this function returns true synchronously on native too — we
+// optimistically assume biometric is set up and defer the actual
+// capability check to enroll/unlock time. The plugin throws a useful
+// error if biometric isn't enrolled at the OS level.
 export function biometricSupported() {
+  if (isNativeRuntime()) return true
   return typeof window !== 'undefined'
     && window.PublicKeyCredential
     && typeof navigator.credentials?.create === 'function'
     && typeof navigator.credentials?.get === 'function'
+}
+
+// Async version that actually probes the native plugin. Use when you
+// need a definitive answer before showing biometric UI.
+export async function biometricSupportedAsync() {
+  if (isNativeRuntime()) return nativeBiometricSupported()
+  return biometricSupported()
 }
 
 export function biometricEnrolled() {
@@ -53,6 +75,10 @@ async function importPrfKey(prfBytes) {
 // Register a new biometric credential and wrap the passcode under it.
 // Returns true on success, false if the user cancels or PRF unsupported.
 export async function enrollBiometric(passcode, { userId, userName }) {
+  // Native (Capacitor) → use the OS biometric prompt directly. No
+  // WebAuthn permission sheet, no PRF concerns.
+  if (isNativeRuntime()) return enrollBiometricNative(passcode)
+
   if (!biometricSupported()) return false
 
   const challenge = crypto.getRandomValues(new Uint8Array(32))
@@ -111,8 +137,12 @@ export async function enrollBiometric(passcode, { userId, userName }) {
 
 // Returns the unwrapped passcode if biometric assertion succeeds, otherwise null.
 export async function unlockWithBiometric() {
+  if (isNativeRuntime()) return unlockWithBiometricNative()
   if (!biometricSupported() || !biometricEnrolled()) return null
   const stored = JSON.parse(localStorage.getItem(BIO_KEY))
+  // Native blobs stored with v: 'native-1' have no credentialId — bail
+  // safely (would only happen if user switches runtimes mid-session).
+  if (!stored.credentialId) return null
   const credentialId = b64decode(stored.credentialId)
 
   let assertion

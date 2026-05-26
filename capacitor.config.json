@@ -1,0 +1,16 @@
+{
+  "appId": "com.luna.app",
+  "appName": "Luna",
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic",
+    "scrollEnabled": true,
+    "backgroundColor": "#F4EFE5"
+  },
+  "android": {
+    "backgroundColor": "#F4EFE5"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}
