@@ -89,7 +89,7 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
               You flagged <strong>{triggered.length}</strong> {triggered.length === 1 ? 'item' : 'items'}. <em style={{ color: T.accent }}>Worth a doctor's visit.</em>
             </div>
             <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.5, marginBottom: 14 }}>
-              Luna can export your symptom log + these answers as a PDF you can email to your provider.
+              Export this as a PDF you can email to your provider.
             </div>
             <button onClick={exportPDF} style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 2, fontWeight: 700, borderRadius: T.r }}>
               EXPORT DOCTOR-READY PDF →

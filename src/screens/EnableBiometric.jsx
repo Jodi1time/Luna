@@ -38,7 +38,7 @@ export default function EnableBiometric() {
         userName: displayName || 'Luna user',
       })
       if (!ok) {
-        setError("Couldn't enable Face ID. Either you cancelled the system prompt or your browser doesn't fully support biometric unlock yet.")
+        setError("Couldn't enable Face ID. You cancelled the prompt, or your browser doesn't fully support biometric unlock.")
       } else {
         setSuccess(true)
         setTimeout(back, 1200)
@@ -60,7 +60,7 @@ export default function EnableBiometric() {
             Not supported here.
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55 }}>
-            Your browser doesn't support biometric unlock. On iPhone, this works best when Luna is added to your home screen.
+            Your browser doesn't support biometric unlock. On iPhone, add Luna to your home screen for this to work.
           </div>
         </div>
       </Screen>
@@ -94,7 +94,7 @@ export default function EnableBiometric() {
           Use Face ID to unlock<br/><em>next time?</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 28 }}>
-          Enter your current passcode to enable biometric unlock. Your passcode is still what encrypts your data — Face ID just unlocks it faster.
+          Enter your passcode to enable biometric unlock. Your passcode still encrypts everything — Face ID just unlocks it faster.
         </div>
 
         {!showInput && (

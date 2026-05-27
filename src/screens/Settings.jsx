@@ -201,7 +201,7 @@ export default function Settings() {
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Average cycle length" value={`${cycleLength} days`} />
         <Row label="Average period length" value={`${periodLength} days`} />
-        <Row label="Update last period start" onTap={() => go('editPeriodStart')} />
+        <Row label="Update period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
         <Row label="Pregnancy" value={pregLabel} onTap={() => go('pregnancy')} />
@@ -216,8 +216,8 @@ export default function Settings() {
         )}
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => updateSetting('analytics', v)} />} />
         <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
-        <Row label="Export all data (CSV)" onTap={exportCSV} />
-        <Row label="Doctor-ready export (PDF)" onTap={() => go('watch')} />
+        <Row label="Export all data" onTap={exportCSV} />
+        <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
         <Row label="Terms of Service" onTap={() => go('terms')} />
         <Row label="Delete everything" onTap={wipeAndReload} danger />
@@ -229,9 +229,6 @@ export default function Settings() {
         <Row label="Show library suggestions" right={<Toggle on={settings.showLibrary}   onChange={(v) => updateSetting('showLibrary', v)} />} />
         <Row label="Show Health Watch banner" right={<Toggle on={settings.showWatch}     onChange={(v) => updateSetting('showWatch', v)} />} />
       </div>
-      <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-        Toggle anything off. Home adapts.
-      </div>
 
       <SectionLabel>Notifications</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
@@ -242,12 +239,12 @@ export default function Settings() {
 
       <SectionLabel>Support</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Health Watch screener" onTap={() => go('watch')} />
-        <Row label="View Pro features"     onTap={() => go('paywall')} />
-        <Row label="Eat for your phase"    onTap={() => go('nourish')} />
-        <Row label="Health care checklist" onTap={() => go('care')} />
-        <Row label="Reset & start over"    onTap={wipeAndReload} danger />
-        <Row label="Delete my account"     onTap={deleteAccount} danger />
+        <Row label="Health Watch"       onTap={() => go('watch')} />
+        <Row label="View Pro features"  onTap={() => go('paywall')} />
+        <Row label="Eat for your phase" onTap={() => go('nourish')} />
+        <Row label="Care checklist"     onTap={() => go('care')} />
+        <Row label="Reset & start over" onTap={wipeAndReload} danger />
+        <Row label="Delete my account"  onTap={deleteAccount} danger />
       </div>
 
       <div style={{ height: 16 }} />

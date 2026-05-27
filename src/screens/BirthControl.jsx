@@ -20,7 +20,7 @@ export default function BirthControl() {
           What are you <em>using?</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Telling Luna about your method changes how we show predictions and educational content. We won't track fertility windows that don't apply to your contraception.
+          Your method shapes predictions and content. We won't track fertility windows that don't apply.
         </div>
       </div>
 
@@ -70,7 +70,7 @@ export default function BirthControl() {
       </div>
 
       <div style={{ padding: '20px 22px 8px', fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
-        You can change this any time. Cycle data already logged isn't affected.
+        Change this any time. Logged cycle data isn't affected.
       </div>
     </Screen>
   )

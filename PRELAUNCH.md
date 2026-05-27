@@ -338,3 +338,65 @@ to "live on both stores."
 - [x] **Privacy policy + terms of service** pages — drafted in `src/screens/PrivacyPolicy.jsx` + `src/screens/Terms.jsx`, linked from Settings; still need legal review (see Critical above)
 - [x] **Age gate** — implicit 13+ confirmation on Welcome above the BEGIN button, with inline links to Terms + Privacy Policy
 - [x] **Error boundary at app level** — `src/components/ErrorBoundary.jsx` wraps `<App />` in `main.jsx`; needs Sentry DSN before launch
+
+## v1.1 backlog (post-launch)
+
+Things deliberately deferred from v1.0 so we ship a tight launch and
+deepen specific surfaces afterwards.
+
+### Pregnancy mode deep-dive (v1.1's flagship update)
+
+Today's pregnancy mode is a shallow swap — cycle day becomes week of
+pregnancy, weekly baby/body content. That's a starter. Real
+companionship for ~9 months of someone's life means becoming a
+distinct app under the same brand.
+
+**Tier 1 — clinically important**
+- Pregnancy-specific symptom tracker (morning sickness, fatigue,
+  heartburn, swelling, Braxton Hicks, back pain, pelvic pain) —
+  replaces the existing menstrual symptom list when active
+- Kick counter (third trimester critical safety feature — tap when
+  baby kicks, time-window logging, alert if movements drop)
+- Appointment + test tracker (every 4 weeks → every 2 → weekly;
+  NT scan, anatomy scan, glucose, GBS, Tdap, RhoGAM if Rh-negative)
+- Pregnancy weight tracker (provider-recommended ranges by BMI;
+  gentle, never diet-shaming)
+- Blood pressure log (preeclampsia is the #1 silent risk)
+- Pregnancy HealthWatch — red flags specific to pregnancy:
+  severe headache, vision changes, sudden swelling, no fetal
+  movement, bleeding, intense lower-belly pain
+
+**Tier 2 — emotional + educational companion**
+- 30-40 stage-specific articles (first-trimester anxiety,
+  second-trimester travel safety, third-trimester prep)
+- Birth plan builder → exports as PDF for provider
+- Hospital bag checklist (phase-appropriate, gentle reminders)
+- Daily affirmation / supportive note (phase-aware)
+- Partner mode (read-only summary share)
+
+**Tier 3 — logistics**
+- Insurance / doctor / hospital contact card (one-tap)
+- Medication safety lookup (sourced, never a substitute for doctor)
+- Pregnancy nutrition shift (folate, iron, choline, DHA; what to
+  eat-more, what to skip — lunch meat, sushi, etc.)
+
+**Tier 4 — after birth**
+- Postpartum mode (recovery, breastfeeding tracking, PPD screening,
+  6-week followup)
+- Newborn add-on (feeds, naps, diapers) — could be "Luna baby"
+  as a separate sub-mode later
+
+Scope estimate: Tier 1 + 2 = 2-3 focused work sessions, mostly
+content (article writing, symptom definitions, red-flag lists).
+Tier 3 + 4 = additional sessions.
+
+Decision (2026-05-27): defer to v1.1 so the v1.0 launch can be a
+tight, fast, polished base. Pregnancy users (~5-10% of menstruating
+people at any moment) get the existing shallow mode at launch and
+the deep companion experience as a celebrated v1.1 feature drop.
+
+### Other v1.1 candidates
+- Article subscription / "new this week" feed (vs current fixed library)
+- WebCrypto worker offload (PBKDF2 to Web Worker so it doesn't block paint)
+- Postpartum mode (separate from pregnancy mode)
+- "Luna assistant" AI companion (already in its own section above)

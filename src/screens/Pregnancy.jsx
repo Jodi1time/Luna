@@ -97,7 +97,7 @@ function NotPregnantState() {
   const outOfRangeMessage = selected && !inRange
     ? selected < minISO
       ? 'That date is more than 40 weeks ago. If your pregnancy is past 40 weeks, please reach out to your provider.'
-      : 'That date is in the future. Pick a date on or close to today.'
+      : 'That date is in the future. Pick a date on or near today.'
     : null
 
   const now = new Date()
@@ -121,7 +121,7 @@ function NotPregnantState() {
           Are you <em>pregnant?</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Pregnancy mode replaces cycle tracking with week-by-week information for the 40 weeks. You can switch back any time.
+          Pregnancy mode swaps cycle tracking for week-by-week guidance through the 40 weeks. Switch back any time.
         </div>
 
         <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 10, textTransform: 'uppercase' }}>
@@ -161,7 +161,7 @@ function NotPregnantState() {
         </CTAButton>
 
         <div style={{ marginTop: 18, fontFamily: T.mono, fontSize: 10, color: T.muted, lineHeight: 1.6, letterSpacing: 0.4 }}>
-          NAEGELE'S RULE — due date = last period + 280 days. Actual delivery happens anywhere from 37–42 weeks for most pregnancies.
+          NAEGELE'S RULE — due date = last period + 280 days. Most deliveries happen between 37–42 weeks.
         </div>
       </div>
     </Screen>
@@ -253,7 +253,7 @@ function PregnantState() {
           <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, opacity: 0.7 }}>RETURN TO CYCLE</span>
         </button>
         <div style={{ marginTop: 10, fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
-          Your logs are preserved. Use this if you've given birth, or if circumstances change.
+          Your logs are preserved. Use this after birth, or if circumstances change.
         </div>
       </div>
     </Screen>
