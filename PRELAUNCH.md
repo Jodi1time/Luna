@@ -13,6 +13,10 @@ now App Store + Play Store** (decided 2026-05-25) — Luna will ship
 as a native app, not just a PWA. See "Native app distribution"
 section below for the work this entails.
 
+**Distribution + billing decisions (2026-05-27):** native via Capacitor
+(decided 2026-05-25) → in-app subscriptions via RevenueCat + native IAP
+(not Stripe, per Apple/Google rules for digital subscriptions sold in-app).
+
 ## Security audit · 2026-05-25
 
 Findings & status:
@@ -44,7 +48,7 @@ Not done in this pass (require server or external services):
 
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
 - [ ] **Supabase Edge Function for true server-side account deletion** — implementation shipped (`supabase/functions/delete-account/index.ts`, wired into Settings → Delete my account). Deployment is a 5-min CLI run, documented in SUPABASE_SETUP.md step 7.
-- [ ] **Stripe wiring for Pro subscription** — products, Checkout, webhook → `profiles.stripe_customer_id`, gate `isPro` from server
+- [ ] **In-app subscriptions via RevenueCat + native IAP** — see Payments / Pro section. Stripe ruled out for in-app per Apple/Google rules.
 - [x] (code) **Re-enable Supabase email confirmation with verify-in-background pattern** — implementation shipped:
       - signUp now passes emailRedirectTo
       - Onboarding shows "Check your email" note without blocking entry to Home
@@ -100,10 +104,19 @@ Not done in this pass (require server or external services):
 
 ## Payments / Pro
 
-- [ ] **Wire up Stripe for Pro subscription**
-  - Currently the paywall and Pro card are visual only
-  - Need: products in Stripe, checkout via Stripe.js, webhook → set `profiles.stripe_customer_id` and toggle `isPro`
-  - Email confirmation required before checkout (payment disputes)
+- [ ] **In-app subscriptions via RevenueCat + native IAP** (decided 2026-05-27)
+  - App Store and Play Store both forbid Stripe for digital subscriptions sold inside the app
+  - Apple StoreKit + Google Play Billing are mandatory; both take 15-30%
+  - RevenueCat (free up to ~$10k MRR) handles cross-platform subscription state
+    with one JS API
+  - Steps:
+    1. Create RevenueCat account, set up Luna project
+    2. Configure App Store Connect + Play Console with subscription products
+    3. `npm install @revenuecat/purchases-capacitor`
+    4. Wire Paywall.jsx to call `Purchases.purchasePackage()`
+    5. Subscription state syncs from RevenueCat → set `isPro` in store
+  - Stripe NOT used for in-app — kept as an option only for any future
+    web-only checkout (luna.com sign-up flow, B2B sales, etc.)
 
 ## Sync (Tier 1 E2EE)
 

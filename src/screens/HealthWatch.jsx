@@ -62,7 +62,7 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
         <Eyebrow>SCREENER · NOT A DIAGNOSIS</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1 }}>When should you talk to a doctor?</div>
         <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
-          Tap any that apply to you. This isn't a diagnosis — it's a conversation starter you can show your provider.
+          Tap any that apply. Not a diagnosis — a conversation starter for your provider.
         </div>
         <Rule />
 

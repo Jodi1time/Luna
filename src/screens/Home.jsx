@@ -128,10 +128,10 @@ export default function Home() {
           {phase && !onHormonalBC && (
             <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.5, marginTop: 12, color: T.text }}>
               {phase.bodyMood} <em style={{ color: T.accent }}>
-                {phase.id === 'ovulation' ? 'Peak window for focus, training, and big asks.' :
-                 phase.id === 'follicular' ? 'Energy rising — good time for new starts.' :
-                 phase.id === 'luteal'     ? 'Honour rest. Cravings are biology, not weakness.' :
-                                            'Be gentle with yourself. Rest is productive.'}
+                {phase.id === 'ovulation' ? 'Peak for focus, training, big asks.' :
+                 phase.id === 'follicular' ? 'Energy rising. Good for new starts.' :
+                 phase.id === 'luteal'     ? 'Cravings are biology. Honour rest.' :
+                                            'Be gentle. Rest is productive.'}
               </em>
             </div>
           )}

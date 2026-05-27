@@ -21,7 +21,7 @@ export default function Care() {
           Your health,<br /><em>maintained.</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Checkups and screenings most relevant to your health. Tap to mark as done.
+          Checkups that matter. Tap to mark done.
         </div>
 
         <button onClick={findProvider}

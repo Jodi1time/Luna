@@ -193,7 +193,7 @@ export default function Settings() {
           )}
         </div>
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-          Your account is for recovery and sync. Cycle data stays encrypted on this device.
+          For recovery only. Your data stays on this device.
         </div>
       </>}
 
@@ -230,7 +230,7 @@ export default function Settings() {
         <Row label="Show Health Watch banner" right={<Toggle on={settings.showWatch}     onChange={(v) => updateSetting('showWatch', v)} />} />
       </div>
       <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-        Prefer a bare calendar? Toggle anything off here — the home screen adapts.
+        Toggle anything off. Home adapts.
       </div>
 
       <SectionLabel>Notifications</SectionLabel>

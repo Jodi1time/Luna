@@ -24,7 +24,7 @@ export default function Nourish() {
           What to eat <em>right now.</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Your hormones change what your body needs across the month. These recommendations are evidence-based and phase-specific.
+          What your body wants shifts across the month. Evidence-based by phase.
         </div>
       </div>
 

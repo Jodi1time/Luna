@@ -96,7 +96,7 @@ function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, 
       </div>
 
       <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, padding: '12px 14px', background: T.subtle, borderRadius: T.r }}>
-        Your passcode keeps everything encrypted on this device — we can never see it. Your account lets you sign back in from a new device.
+        Your passcode encrypts everything here. Your account lets you sign in elsewhere.
       </div>
     </div>
   )
