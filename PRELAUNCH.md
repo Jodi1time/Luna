@@ -48,7 +48,7 @@ Not done in this pass (require server or external services):
 
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
 - [ ] **Supabase Edge Function for true server-side account deletion** — implementation shipped (`supabase/functions/delete-account/index.ts`, wired into Settings → Delete my account). Deployment is a 5-min CLI run, documented in SUPABASE_SETUP.md step 7.
-- [ ] **In-app subscriptions via RevenueCat + native IAP** — see Payments / Pro section. Stripe ruled out for in-app per Apple/Google rules.
+- [ ] **In-app subscriptions via RevenueCat + native IAP** — code shipped (`src/lib/revenuecat.js`, Paywall wired to call `purchasePackage()` with restore link + entitlement sync). Setup walkthrough in `REVENUECAT_SETUP.md`. Still need: RevenueCat dashboard config, App Store + Play Console product setup, plugin install (after Capacitor platforms added), and flipping `isPro: true` → `false` once real purchases work.
 - [x] (code) **Re-enable Supabase email confirmation with verify-in-background pattern** — implementation shipped:
       - signUp now passes emailRedirectTo
       - Onboarding shows "Check your email" note without blocking entry to Home

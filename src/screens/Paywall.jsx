@@ -1,11 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, CTAButton, Icons, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
+import {
+  revenueCatAvailable,
+  initRevenueCat,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  hasPro as rcHasPro,
+} from '../lib/revenuecat'
 
 export default function Paywall() {
   const back = useLuna((s) => s.back)
+  const setIsPro = useLuna((s) => s.setIsPro)
+  const user = useLuna((s) => s.user)
   const [plan, setPlan] = useState('annual')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [offering, setOffering] = useState(null)
+
   const features = [
     ['Weekly editorial',         'Plain-language patterns, written for your phase.'],
     ['Full Library access',      'Every article and phase brief unlocked.'],
@@ -13,10 +27,94 @@ export default function Paywall() {
     ['Doctor-ready exports',     'PDF + CSV with daily symptom data.'],
     ['Quiet companion',          "No mid-app upsells once you're in."],
   ]
-  const plans = [
-    { id: 'annual',  label: 'ANNUAL',  price: '$49.99', sub: '$4.16/mo · Save 40%', badge: 'BEST VALUE' },
-    { id: 'monthly', label: 'MONTHLY', price: '$6.99',  sub: 'Cancel any time',     badge: null },
+
+  // Fallback prices for web preview. The real prices come from
+  // RevenueCat / App Store Connect / Play Console when running native.
+  const fallbackPlans = [
+    { id: 'annual',  label: 'ANNUAL',  price: '$49.99', sub: '$4.16/mo · Save 40%', badge: 'BEST VALUE', pkg: null },
+    { id: 'monthly', label: 'MONTHLY', price: '$6.99',  sub: 'Cancel any time',     badge: null,         pkg: null },
   ]
+
+  // Native: pull live offerings from RevenueCat after init
+  useEffect(() => {
+    if (!revenueCatAvailable) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        await initRevenueCat(user?.id || null)
+        const o = await getOfferings()
+        if (!cancelled) setOffering(o)
+      } catch {
+        // Stay on fallback prices
+      }
+    })()
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  // Build the plan list — prefer live RevenueCat packages when present
+  const plans = (() => {
+    if (!offering?.availablePackages?.length) return fallbackPlans
+    const live = []
+    const a = offering.availablePackages.find((p) => p.packageType === 'ANNUAL')
+    const m = offering.availablePackages.find((p) => p.packageType === 'MONTHLY')
+    if (a) live.push({ id: 'annual',  label: 'ANNUAL',  price: a.product?.priceString || '$49.99', sub: '$4.16/mo · Save 40%', badge: 'BEST VALUE', pkg: a })
+    if (m) live.push({ id: 'monthly', label: 'MONTHLY', price: m.product?.priceString || '$6.99',  sub: 'Cancel any time',     badge: null,         pkg: m })
+    return live.length ? live : fallbackPlans
+  })()
+
+  const selectedPlan = plans.find((p) => p.id === plan) || plans[0]
+
+  const handleSubscribe = async () => {
+    setError('')
+    if (!revenueCatAvailable) {
+      // Beta path or web — just dismiss. Once on the App Store /
+      // Play Store, the native plugin runs the real purchase flow.
+      back()
+      return
+    }
+    if (!selectedPlan?.pkg) {
+      setError('No subscription package configured yet. Try again later.')
+      return
+    }
+    setBusy(true)
+    try {
+      const customerInfo = await purchasePackage(selectedPlan.pkg)
+      if (rcHasPro(customerInfo)) {
+        setIsPro(true)
+        back()
+      } else {
+        setError('Purchase completed but Pro not active yet. Try Restore.')
+      }
+    } catch (e) {
+      // RevenueCat throws for user-cancelled too — swallow that quietly
+      if (e?.code !== 'PURCHASE_CANCELLED') {
+        setError(e?.message || 'Could not complete purchase.')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRestore = async () => {
+    setError('')
+    setBusy(true)
+    try {
+      const info = await restorePurchases()
+      if (info && rcHasPro(info.customerInfo || info)) {
+        setIsPro(true)
+        back()
+      } else {
+        setError('No active subscription found on this account.')
+      }
+    } catch (e) {
+      setError(e?.message || 'Could not restore purchases.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const ctaLabel = busy ? 'WORKING…' : (revenueCatAvailable ? 'START 7-DAY FREE TRIAL' : 'CONTINUE')
+
   return (
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 24px', color: T.text }}>
@@ -58,8 +156,25 @@ export default function Paywall() {
             )
           })}
         </div>
-        <CTAButton full onClick={back}>START 7-DAY FREE TRIAL</CTAButton>
-        <div style={{ fontSize: 10, color: T.muted, textAlign: 'center', marginTop: 10, fontFamily: T.sans }}>Cancel any time in Settings. Free trial then {plan === 'annual' ? '$49.99/yr' : '$6.99/mo'}.</div>
+
+        {error && (
+          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, marginBottom: 10, padding: '8px 12px', background: T.accent + '12', borderRadius: T.r, lineHeight: 1.4 }}>
+            {error}
+          </div>
+        )}
+
+        <CTAButton full onClick={handleSubscribe} style={{ opacity: busy ? 0.5 : 1 }}>{ctaLabel}</CTAButton>
+
+        {revenueCatAvailable && (
+          <button onClick={handleRestore} disabled={busy}
+            style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, padding: 8, width: '100%' }}>
+            Restore purchases
+          </button>
+        )}
+
+        <div style={{ fontSize: 10, color: T.muted, textAlign: 'center', marginTop: 10, fontFamily: T.sans }}>
+          Cancel any time in Settings. Free trial then {selectedPlan?.price || '$49.99/yr'}.
+        </div>
       </div>
     </Screen>
   )

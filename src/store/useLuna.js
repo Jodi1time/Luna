@@ -100,11 +100,13 @@ const useLuna = create(
       goSymptom: (id) => set((s) => ({ activeSymptomId: id, screen: 'symptom', stack: [...s.stack, 'symptom'] })),
 
       // ── Pro ──────────────────────────────────────────────────
-      // Beta: all friends/family users get Pro for free. Real Pro
-      // gating will land when Stripe is wired up — at that point this
-      // default goes back to false and isPro flips on a paid signup.
+      // Beta: all friends/family users get Pro for free. Once
+      // RevenueCat is wired up (post-launch), this default goes back
+      // to false and isPro flips based on entitlement state from the
+      // native subscription provider.
       isPro: true,
       trialDaysLeft: 7,
+      setIsPro: (v) => set({ isPro: Boolean(v) }),
 
       // ── Auth (Tier 3 — Supabase) ─────────────────────────────
       session: null,
