@@ -7,7 +7,7 @@ export default function Paywall() {
   const back = useLuna((s) => s.back)
   const [plan, setPlan] = useState('annual')
   const features = [
-    ['Weekly AI editorial',      'Plain-language patterns, written for you.'],
+    ['Weekly editorial',         'Plain-language patterns, written for your phase.'],
     ['Full Library access',      'Every article and phase brief unlocked.'],
     ['Predictions with reasoning','Every "Why" badge expanded.'],
     ['Doctor-ready exports',     'PDF + CSV with daily symptom data.'],
@@ -21,7 +21,7 @@ export default function Paywall() {
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 24px', color: T.text }}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 0' }}>
-          <button onClick={back} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
+          <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
         </div>
         <Eyebrow color={T.accent}>LUNA · PRO</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 18 }}>

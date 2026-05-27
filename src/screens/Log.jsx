@@ -54,7 +54,7 @@ export default function Log() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 22px 30px' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans }}>
-          <button onClick={back} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
+          <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
           <div style={{ fontSize: 11, color: T.muted, letterSpacing: 1.5, fontWeight: 700 }}>{dateLabel}</div>
           <button onClick={save} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: 6, fontWeight: 700, fontSize: 11, letterSpacing: 1.5, fontFamily: T.sans }}>SAVE</button>
         </div>

@@ -134,8 +134,13 @@ export default function Onboarding({ step }) {
       if (account.email.trim() && account.accountPassword) {
         try {
           const { signUp } = await import('../lib/supabase')
-          await signUp(account.email.trim(), account.accountPassword)
+          const data = await signUp(account.email.trim(), account.accountPassword)
           acct = { email: account.email.trim() }
+          if (data && !data.session) {
+            // Email confirmation is required. The session will arrive
+            // via the auth state listener once the user clicks the link.
+            setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
+          }
         } catch (e) {
           // Non-fatal: vault is created, user lands on Home, can retry account from Settings.
           setSignupError(e.message || 'Could not create account — you can try again from Settings.')

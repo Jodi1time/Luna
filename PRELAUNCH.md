@@ -45,7 +45,11 @@ Not done in this pass (require server or external services):
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
 - [ ] **Supabase Edge Function for true server-side account deletion** — implementation shipped (`supabase/functions/delete-account/index.ts`, wired into Settings → Delete my account). Deployment is a 5-min CLI run, documented in SUPABASE_SETUP.md step 7.
 - [ ] **Stripe wiring for Pro subscription** — products, Checkout, webhook → `profiles.stripe_customer_id`, gate `isPro` from server
-- [ ] **Re-enable Supabase email confirmation with verify-in-background pattern** — see Authentication section below for the detailed approach
+- [x] (code) **Re-enable Supabase email confirmation with verify-in-background pattern** — implementation shipped:
+      - signUp now passes emailRedirectTo
+      - Onboarding shows "Check your email" note without blocking entry to Home
+      - Settings has a Verify email resend row when user.email_confirmed_at is null
+      - To activate: flip "Confirm email" ON in Supabase dashboard → Authentication → Providers → Email
 - [ ] **Rotate the Supabase anon key** — the current anon key was pasted in chat history; rotate as a hygiene step
 - [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
 - [ ] **Sentry (or equivalent) error monitoring DSN** — setup is fully wired (`src/lib/sentry.js` + `ErrorBoundary` reports via `reportError`); just add `VITE_SENTRY_DSN` to GitHub Actions secrets to activate. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`.

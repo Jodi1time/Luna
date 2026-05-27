@@ -34,7 +34,18 @@ export const supabase = new Proxy({}, {
 
 export async function signUp(email, password) {
   if (!supabaseEnabled) throw new Error('Auth not configured')
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  // emailRedirectTo: if Supabase has 'Confirm email' enabled, the user
+  // gets an email with a link that brings them back here. Once they
+  // click it, Supabase establishes the session and our auth state
+  // listener picks it up automatically.
+  const redirectTo = typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}`
+    : undefined
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+  })
   if (error) throw error
   return data
 }

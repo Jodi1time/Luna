@@ -176,6 +176,21 @@ export default function Settings() {
         <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
           <Row label="Signed in as" value={session.user.email} />
           <Row label="Sign out" onTap={handleSignOut} />
+          {!session.user.email_confirmed_at && (
+            <Row label="Verify email" onTap={async () => {
+              try {
+                const { supabase } = await import('../lib/supabase')
+                const { error } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: session.user.email,
+                  options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+                })
+                window.alert(error ? `Could not resend: ${error.message}` : `Verification email sent to ${session.user.email}.`)
+              } catch (e) {
+                window.alert(`Could not resend: ${e.message}`)
+              }
+            }} />
+          )}
         </div>
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
           Your account is for recovery and sync. Cycle data stays encrypted on this device.
@@ -210,7 +225,7 @@ export default function Settings() {
 
       <SectionLabel>Home Screen</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Show AI editorial card"   right={<Toggle on={settings.showEditorial} onChange={(v) => updateSetting('showEditorial', v)} />} />
+        <Row label="Show editorial card"      right={<Toggle on={settings.showEditorial} onChange={(v) => updateSetting('showEditorial', v)} />} />
         <Row label="Show library suggestions" right={<Toggle on={settings.showLibrary}   onChange={(v) => updateSetting('showLibrary', v)} />} />
         <Row label="Show Health Watch banner" right={<Toggle on={settings.showWatch}     onChange={(v) => updateSetting('showWatch', v)} />} />
       </div>
