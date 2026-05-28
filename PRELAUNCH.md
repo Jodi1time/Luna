@@ -47,16 +47,16 @@ Not done in this pass (require server or external services):
 ## Critical for launch
 
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
-- [ ] **Supabase Edge Function for true server-side account deletion** — implementation shipped (`supabase/functions/delete-account/index.ts`, wired into Settings → Delete my account). Deployment is a 5-min CLI run, documented in SUPABASE_SETUP.md step 7.
+- [x] **Supabase Edge Function for true server-side account deletion** — deployed 2026-05-27. Reachable at `/functions/v1/delete-account`, wired into Settings → Delete my account.
 - [ ] **In-app subscriptions via RevenueCat + native IAP** — code shipped (`src/lib/revenuecat.js`, Paywall wired to call `purchasePackage()` with restore link + entitlement sync). Setup walkthrough in `REVENUECAT_SETUP.md`. Still need: RevenueCat dashboard config, App Store + Play Console product setup, plugin install (after Capacitor platforms added), and flipping `isPro: true` → `false` once real purchases work.
 - [x] (code) **Re-enable Supabase email confirmation with verify-in-background pattern** — implementation shipped:
       - signUp now passes emailRedirectTo
       - Onboarding shows "Check your email" note without blocking entry to Home
       - Settings has a Verify email resend row when user.email_confirmed_at is null
       - To activate: flip "Confirm email" ON in Supabase dashboard → Authentication → Providers → Email
-- [ ] **Rotate the Supabase anon key** — the current anon key was pasted in chat history; rotate as a hygiene step
+- [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
 - [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
-- [ ] **Sentry (or equivalent) error monitoring DSN** — setup is fully wired (`src/lib/sentry.js` + `ErrorBoundary` reports via `reportError`); just add `VITE_SENTRY_DSN` to GitHub Actions secrets to activate. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`.
+- [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
 - [ ] **Wrap as native app via Capacitor for App Store + Play Store distribution** — see "Native app distribution" section below. Replaces the PWA-only path. Required so we can use native Face ID without the iOS WebAuthn sheet.
 
