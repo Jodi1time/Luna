@@ -63,11 +63,13 @@ export default function Auth() {
       if (mode === 'signin') {
         await signIn(email, password)
         // If this device has no vault yet (fresh install, new browser,
-        // or different origin like the domain migration), send the user
-        // through onboarding to set up a local passcode + vault. Their
-        // Supabase session persists across — they just need a local
-        // encryption setup. Otherwise, straight to home.
-        go(onboarded ? 'home' : 'onb1')
+        // or different origin like the domain migration), jump straight
+        // to the final onboarding step to set a local passcode + name.
+        // Skipping onb1/onb2 (cycle date + length) — those use defaults
+        // for returning users and can be adjusted in Settings. The
+        // Supabase session carries through; Onboarding step 3 sees the
+        // existing session and skips the email/password fields.
+        go(onboarded ? 'home' : 'onb3')
       } else if (mode === 'signup') {
         await signUp(email, password)
         setInfo('Check your email to confirm your account.')

@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { createVault } from '../lib/crypto'
 import { biometricSupported } from '../lib/biometric'
+import { getSession } from '../lib/supabase'
 import BiometricPrompt from './BiometricPrompt'
 import { StatusView } from '../components/StatusView'
 import { validateName, validatePasscode, validateAccountPassword, validateEmail } from '../lib/validation'
@@ -78,7 +79,7 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, onChange }) {
+function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, onChange, signedInEmail }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
@@ -89,11 +90,21 @@ function StepAccount({ name, passcode, confirmPasscode, email, accountPassword, 
         <Field label="Confirm passcode" type="password" value={confirmPasscode} onChange={(v) => onChange('confirmPasscode', v)} placeholder="Re-enter passcode" />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
-        <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Your account · for recovery</div>
-        <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
-        <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
-      </div>
+      {signedInEmail ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Signed in as</div>
+          <div style={{ fontFamily: T.sans, fontSize: 14, color: T.text }}>{signedInEmail}</div>
+          <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55 }}>
+            We don't sync your cycle data across devices yet — you can update your cycle info anytime in Settings.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
+          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Your account · for recovery</div>
+          <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+          <Field label="Account password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
+        </div>
+      )}
 
       <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, padding: '12px 14px', background: T.subtle, borderRadius: T.r }}>
         Your passcode encrypts everything here. Your account lets you sign in elsewhere.
@@ -115,6 +126,19 @@ export default function Onboarding({ step }) {
   const [finishedPasscode, setFinishedPasscode] = useState('')
   const [finishing, setFinishing] = useState(false)
   const [fatalError, setFatalError] = useState('')
+  // If the user reached onboarding from the sign-in flow, a Supabase
+  // session already exists. We use that email and hide the email +
+  // account password fields — they just need a local passcode + name.
+  const [signedInEmail, setSignedInEmail] = useState('')
+
+  useEffect(() => {
+    if (step !== 3) return
+    let cancelled = false
+    getSession()
+      .then((s) => { if (!cancelled && s?.user?.email) setSignedInEmail(s.user.email) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [step])
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
@@ -131,32 +155,29 @@ export default function Onboarding({ step }) {
       await useLuna.persist.rehydrate()
 
       let acct = null
-      if (account.email.trim() && account.accountPassword) {
+      if (signedInEmail) {
+        // User reached onboarding via the Sign-in flow — session already
+        // exists. Skip signup/signin entirely.
+        acct = { email: signedInEmail }
+      } else if (account.email.trim() && account.accountPassword) {
         const email = account.email.trim()
         const password = account.accountPassword
-        const { signUp, signIn, getSession } = await import('../lib/supabase')
-        // If a session already exists (user signed in via the Sign-in
-        // flow before reaching onboarding), just use the existing email.
-        const existing = await getSession().catch(() => null)
-        if (existing?.user?.email) {
-          acct = { email: existing.user.email }
-        } else {
+        const { signUp, signIn } = await import('../lib/supabase')
+        try {
+          const data = await signUp(email, password)
+          acct = { email }
+          if (data && !data.session) {
+            setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
+          }
+        } catch (e) {
+          // Signup failed — most commonly because the email is already
+          // registered. Fall back to signin so the same form handles
+          // both new and returning users.
           try {
-            const data = await signUp(email, password)
+            await signIn(email, password)
             acct = { email }
-            if (data && !data.session) {
-              setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
-            }
-          } catch (e) {
-            // Signup failed — most commonly because the email is already
-            // registered. Fall back to signin so the same form handles
-            // both new and returning users.
-            try {
-              await signIn(email, password)
-              acct = { email }
-            } catch (signInErr) {
-              setSignupError(e?.message || signInErr?.message || 'Could not create account — you can try again from Settings.')
-            }
+          } catch (signInErr) {
+            setSignupError(e?.message || signInErr?.message || 'Could not create account — you can try again from Settings.')
           }
         }
       }
@@ -196,6 +217,9 @@ export default function Onboarding({ step }) {
     if (pcErr) return pcErr
     if (account.confirmPasscode.length === 0) return 'Confirm your passcode by re-entering it.'
     if (account.passcode !== account.confirmPasscode) return "Your passcodes don't match yet."
+    // Returning user signed in via the Sign-in flow — email/password
+    // already established, nothing more to validate here.
+    if (signedInEmail) return null
     const hasEmail = account.email.trim().length > 0
     const hasPw    = account.accountPassword.length > 0
     if (hasEmail && !hasPw) return 'Add an account password — or leave the email blank to skip the account.'
@@ -275,6 +299,7 @@ export default function Onboarding({ step }) {
           email={account.email}
           accountPassword={account.accountPassword}
           onChange={setAccountField}
+          signedInEmail={signedInEmail}
         />
         {signupError && (
           <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5 }}>{signupError}</div>

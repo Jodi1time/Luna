@@ -11,13 +11,10 @@ export default function Welcome() {
       </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontFamily: T.serif, fontSize: 70, fontWeight: 300, color: T.accent, lineHeight: 0.95, letterSpacing: -3, fontStyle: 'italic' }}>
-          Luna.
-        </div>
-        <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.15, marginTop: 18 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.1 }}>
           A cycle tracker that interprets,<br /><em>not just logs.</em>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, color: T.muted, marginTop: 16 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, color: T.muted, marginTop: 18 }}>
           Phase-specific guidance grounded in peer-reviewed research. A knowledgeable friend, in your pocket.
         </div>
       </div>
