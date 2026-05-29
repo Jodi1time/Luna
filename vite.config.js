@@ -2,15 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// When building for the native iOS/Android shell via Capacitor, assets
-// load from the local filesystem and the base path must be '/'.
-// When building for GitHub Pages, the site lives under /Luna/.
-// The build mode is selected by setting VITE_NATIVE=true at build time
-// (see the `build:native` npm script).
-const isNative = process.env.VITE_NATIVE === 'true'
+// Base path is '/' for both web and native builds.
+// - Web: custom domain lunadiary.app serves Luna at the root, so we
+//   want absolute paths like /assets/index-XXX.js. The legacy
+//   github.io/Luna/ URL auto-redirects to lunadiary.app.
+// - Native (Capacitor): assets load from the local filesystem at root.
+// VITE_NATIVE is kept as an env var in case other build-time switches
+// need it later, but base path no longer depends on it.
 
 export default defineConfig({
-  base: isNative ? '/' : '/Luna/',
+  base: '/',
   plugins: [
     react(),
     VitePWA({
@@ -24,7 +25,7 @@ export default defineConfig({
         background_color: '#F4EFE5',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/Luna/',
+        start_url: '/',
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
