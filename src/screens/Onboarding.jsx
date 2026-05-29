@@ -132,18 +132,32 @@ export default function Onboarding({ step }) {
 
       let acct = null
       if (account.email.trim() && account.accountPassword) {
-        try {
-          const { signUp } = await import('../lib/supabase')
-          const data = await signUp(account.email.trim(), account.accountPassword)
-          acct = { email: account.email.trim() }
-          if (data && !data.session) {
-            // Email confirmation is required. The session will arrive
-            // via the auth state listener once the user clicks the link.
-            setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
+        const email = account.email.trim()
+        const password = account.accountPassword
+        const { signUp, signIn, getSession } = await import('../lib/supabase')
+        // If a session already exists (user signed in via the Sign-in
+        // flow before reaching onboarding), just use the existing email.
+        const existing = await getSession().catch(() => null)
+        if (existing?.user?.email) {
+          acct = { email: existing.user.email }
+        } else {
+          try {
+            const data = await signUp(email, password)
+            acct = { email }
+            if (data && !data.session) {
+              setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
+            }
+          } catch (e) {
+            // Signup failed — most commonly because the email is already
+            // registered. Fall back to signin so the same form handles
+            // both new and returning users.
+            try {
+              await signIn(email, password)
+              acct = { email }
+            } catch (signInErr) {
+              setSignupError(e?.message || signInErr?.message || 'Could not create account — you can try again from Settings.')
+            }
           }
-        } catch (e) {
-          // Non-fatal: vault is created, user lands on Home, can retry account from Settings.
-          setSignupError(e.message || 'Could not create account — you can try again from Settings.')
         }
       }
 
