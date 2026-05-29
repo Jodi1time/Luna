@@ -64,11 +64,14 @@ export default function App() {
   }
 
   // Route to the right starting screen on each session.
-  // - If not onboarded and they're not already in the onboarding flow → Welcome
+  // - If not onboarded: allow Welcome, the onboarding steps, Auth (reached
+  //   via "Already have an account?" on Welcome), and the legal screens
+  //   (linked from Welcome's "13+ / Terms / Privacy" line). Anything else
+  //   falls back to Welcome.
   // - If onboarded but the session restored to 'welcome' (since screen isn't persisted)
   //   or any onboarding step → Home
   const resolvedScreen = !onboarded
-    ? (['welcome','onb1','onb2','onb3'].includes(screen) ? screen : 'welcome')
+    ? (['welcome','onb1','onb2','onb3','auth','terms','privacy'].includes(screen) ? screen : 'welcome')
     : (['welcome','onb1','onb2','onb3'].includes(screen) ? 'home' : screen)
 
   return (
