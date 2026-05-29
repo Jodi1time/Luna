@@ -10,6 +10,7 @@ import {
   restorePurchases,
   hasPro as rcHasPro,
 } from '../lib/revenuecat'
+import { capture } from '../lib/posthog'
 
 export default function Paywall() {
   const back = useLuna((s) => s.back)
@@ -34,6 +35,11 @@ export default function Paywall() {
     { id: 'annual',  label: 'ANNUAL',  price: '$49.99', sub: '$4.16/mo · Save 40%', badge: 'BEST VALUE', pkg: null },
     { id: 'monthly', label: 'MONTHLY', price: '$6.99',  sub: 'Cancel any time',     badge: null,         pkg: null },
   ]
+
+  // Analytics: paywall viewed
+  useEffect(() => {
+    capture('paywall_viewed', { native: revenueCatAvailable })
+  }, [])
 
   // Native: pull live offerings from RevenueCat after init
   useEffect(() => {
@@ -81,6 +87,7 @@ export default function Paywall() {
       const customerInfo = await purchasePackage(selectedPlan.pkg)
       if (rcHasPro(customerInfo)) {
         setIsPro(true)
+        capture('pro_subscribed', { plan: selectedPlan.id })
         back()
       } else {
         setError('Purchase completed but Pro not active yet. Try Restore.')

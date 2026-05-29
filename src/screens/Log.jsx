@@ -44,6 +44,17 @@ export default function Log() {
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
     saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, note })
+    // Analytics: which CATEGORIES of fields were filled, not contents.
+    // Fire-and-forget — never block navigation on analytics.
+    import('../lib/posthog').then(({ capture }) => capture('log_saved', {
+      has_mood: Boolean(mood),
+      symptom_count: (symptoms || []).length,
+      has_flow: Boolean(flow),
+      has_bbt: Boolean(bbtPayload),
+      has_mucus: Boolean(mucus),
+      has_sex: Boolean(sex),
+      has_note: Boolean((note || '').trim().length),
+    })).catch(() => {})
     back()
   }
 

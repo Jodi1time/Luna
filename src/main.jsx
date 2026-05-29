@@ -2,8 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './lib/sentry'
+import { initPostHog } from './lib/posthog'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
+
+// Initialize PostHog. Capturing is opt-out by default — it will only
+// fire events once the user toggles 'Anonymous analytics' ON in
+// Settings (which calls setAnalyticsEnabled).
+initPostHog()
 
 // Silent auto-update: as soon as a new service worker takes control,
 // reload the page so the user is on the latest build without ever

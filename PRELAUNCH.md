@@ -57,6 +57,7 @@ Not done in this pass (require server or external services):
 - [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
 - [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
 - [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
+- [ ] **PostHog product analytics** — code shipped 2026-05-29 (`src/lib/posthog.js`, Settings toggle wired, captures at onboarding_completed / log_saved / paywall_viewed / pro_subscribed). Strict privacy posture: opt-out by default, no user content sent. Setup walkthrough in `POSTHOG_SETUP.md` — sign up at posthog.com, add `VITE_POSTHOG_KEY` to GitHub Secrets, redeploy. ~10 min total.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
 - [ ] **Wrap as native app via Capacitor for App Store + Play Store distribution** — see "Native app distribution" section below. Replaces the PWA-only path. Required so we can use native Face ID without the iOS WebAuthn sheet.
 

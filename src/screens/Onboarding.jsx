@@ -154,6 +154,13 @@ export default function Onboarding({ step }) {
         account: acct,
       })
 
+      // Analytics: completion + whether the user chose to create an
+      // account. NO content (name, email, dates) — only category data.
+      try {
+        const { capture } = await import('../lib/posthog')
+        capture('onboarding_completed', { account_created: Boolean(acct) })
+      } catch {}
+
       if (biometricSupported()) {
         setFinishedPasscode(account.passcode)
         setSetupComplete(true)

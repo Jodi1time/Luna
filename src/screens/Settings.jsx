@@ -6,6 +6,7 @@ import { BC_LABELS } from '../data/birthControl'
 import { wipeVault, lock } from '../lib/crypto'
 import { biometricSupported, biometricEnrolled, clearBiometric } from '../lib/biometric'
 import { signOut } from '../lib/supabase'
+import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
 
 // Defuse CSV formula-injection prefixes (=, +, -, @, tab, CR) by prepending
 // a tab. Then quote-escape if the cell contains quotes, commas, or newlines.
@@ -71,6 +72,7 @@ export default function Settings() {
   }
   const handleSignOut = async () => {
     await signOut()
+    resetAnalytics()
   }
 
   const exportCSV = () => {
@@ -145,6 +147,7 @@ export default function Settings() {
     }
 
     try { await signOut() } catch {}
+    resetAnalytics()
     wipeVault()
     window.location.reload()
   }
@@ -214,7 +217,7 @@ export default function Settings() {
           <Row label="Face ID / Touch ID unlock"
             right={<Toggle on={biometricOn} onChange={handleBiometricToggle} />} />
         )}
-        <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => updateSetting('analytics', v)} />} />
+        <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
         <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
         <Row label="Export all data" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />

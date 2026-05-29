@@ -40,6 +40,7 @@ export default function App() {
 
   const { screen, go, onboarded } = useLuna()
   const setSession = useLuna((s) => s.setSession)
+  const analyticsEnabled = useLuna((s) => s.settings?.analytics)
 
   useEffect(() => {
     if (locked) return
@@ -47,6 +48,16 @@ export default function App() {
     const unsub = onAuthStateChange(setSession)
     return unsub
   }, [locked, setSession])
+
+  // Sync the persisted analytics-opt-in toggle into PostHog so users
+  // who opted in previously stay opted in across sessions.
+  useEffect(() => {
+    if (locked) return
+    import('./lib/posthog').then(({ syncAnalyticsState, capture }) => {
+      syncAnalyticsState(Boolean(analyticsEnabled))
+      if (analyticsEnabled) capture('app_opened')
+    })
+  }, [locked, analyticsEnabled])
 
   if (locked) {
     return <AppShell><Lock onUnlocked={() => setLocked(false)} /></AppShell>
