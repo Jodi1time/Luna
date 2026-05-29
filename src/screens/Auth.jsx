@@ -26,6 +26,7 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
 
 export default function Auth() {
   const { back, go } = useLuna()
+  const onboarded = useLuna((s) => s.onboarded)
   const [mode, setMode] = useState('signin') // 'signin' | 'signup' | 'reset'
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -61,7 +62,12 @@ export default function Auth() {
     try {
       if (mode === 'signin') {
         await signIn(email, password)
-        go('home')
+        // If this device has no vault yet (fresh install, new browser,
+        // or different origin like the domain migration), send the user
+        // through onboarding to set up a local passcode + vault. Their
+        // Supabase session persists across — they just need a local
+        // encryption setup. Otherwise, straight to home.
+        go(onboarded ? 'home' : 'onb1')
       } else if (mode === 'signup') {
         await signUp(email, password)
         setInfo('Check your email to confirm your account.')
