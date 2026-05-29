@@ -10,7 +10,7 @@ export const PHASES = {
     color: '#C84E2E',
     hormones: 'Estrogen and progesterone drop sharply.',
     whatsHappening: 'Your uterine lining sheds. Prostaglandins contract the uterus — that causes cramps and the flu-like feeling.',
-    bodyMood: 'Energy at its lowest. Brain may feel foggy. Serotonin and dopamine dip.',
+    bodyMood: 'Your body is doing something quiet and demanding. Energy will be low — make space for it.',
     sourceBody: 'Cleveland Clinic; Geisinger Health',
     nutrition: {
       headline: 'Iron is the priority.',
@@ -39,7 +39,7 @@ export const PHASES = {
     color: '#D88869',
     hormones: 'Estrogen rises steadily. FSH triggers a dominant follicle to mature.',
     whatsHappening: 'Your body preps to release an egg as the uterine lining thickens again.',
-    bodyMood: 'Energy lifts. Mood, cognition, skin all tend to improve. Social drive often increases.',
+    bodyMood: 'Something gentle is rising. Estrogen lifts mood and energy a little more each day.',
     sourceBody: 'Cleveland Clinic; FeelGoodPal (citing Sims 2020)',
     nutrition: {
       headline: 'Carb tolerance is highest now.',
@@ -68,7 +68,7 @@ export const PHASES = {
     color: '#E8B765',
     hormones: 'Estrogen and testosterone peak. LH surge triggers egg release.',
     whatsHappening: 'A mature egg is released. Cervical mucus turns egg-white, and basal body temperature rises ~0.5°F after.',
-    bodyMood: 'Peak energy, libido, and confidence for many. Verbal fluency may sharpen.',
+    bodyMood: 'Your most outward-facing window. Notice what feels easier today — connection, words, wanting.',
     sourceBody: 'Cleveland Clinic; FeelGoodPal',
     nutrition: {
       headline: 'Oxidative stress is up — eat the rainbow.',
@@ -97,7 +97,7 @@ export const PHASES = {
     color: '#9D6F8C',
     hormones: 'Progesterone rises and takes over. Estrogen has a smaller secondary peak.',
     whatsHappening: "The corpus luteum produces progesterone to prep the uterus; without pregnancy, hormones drop and the cycle restarts.",
-    bodyMood: 'Energy declines. PMS may appear: bloating, irritability, fatigue, brain fog, cravings.',
+    bodyMood: 'Things slow down. Cravings, fatigue, edges to your mood — all chemistry, not character.',
     sourceBody: 'Trinity Health; Cleveland Clinic; Geisinger',
     nutrition: {
       headline: "Cravings are biological, not willpower.",

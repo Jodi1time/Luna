@@ -58,11 +58,11 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
   return (
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Health Watch" onBack={back} />
-        <Eyebrow>SCREENER · NOT A DIAGNOSIS</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1 }}>When should you talk to a doctor?</div>
-        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
-          Tap any that apply. Not a diagnosis — a conversation starter for your provider.
+        <Masthead issue="When something feels off" onBack={back} />
+        <Eyebrow>Not a diagnosis — words to take to your doctor</Eyebrow>
+        <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1 }}>What you've been feeling is real.</div>
+        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10 }}>
+          Tap anything that's been showing up for you lately. Luna will gather the language so the next conversation with your provider is easier.
         </div>
         <Rule />
 
@@ -84,21 +84,21 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
 
         {triggered.length > 0 && (
           <div style={{ marginTop: 22, padding: 18, background: T.text, color: '#FAF4ED', borderRadius: T.r, animation: 'fadeUp .25s ease-out both' }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 8 }}>NEXT STEP</div>
-            <div style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.3, marginBottom: 10 }}>
-              You flagged <strong>{triggered.length}</strong> {triggered.length === 1 ? 'item' : 'items'}. <em style={{ color: T.accent }}>Worth a doctor's visit.</em>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 8 }}>Worth bringing up</div>
+            <div style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.4, marginBottom: 10 }}>
+              {triggered.length === 1 ? 'One thing' : `${triggered.length} of these`} is worth a conversation with your provider.
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.5, marginBottom: 14 }}>
-              Export this as a PDF you can email to your provider.
+            <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.55, marginBottom: 14 }}>
+              We'll make a one-page summary you can email or print, so you don't have to find the words in the room.
             </div>
-            <button onClick={exportPDF} style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 2, fontWeight: 700, borderRadius: T.r }}>
-              EXPORT DOCTOR-READY PDF →
+            <button onClick={exportPDF} style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+              Make me a summary →
             </button>
           </div>
         )}
 
         <Rule />
-        <Eyebrow>LEARN MORE</Eyebrow>
+        <Eyebrow>To read with a cup of tea</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {['pmdd','endo','iron','pcos'].map((id) => {
             const a = ARTICLES.find((x) => x.id === id)

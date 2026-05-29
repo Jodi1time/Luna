@@ -151,7 +151,7 @@ export default function Settings() {
       </div>
 
       {session && <>
-        <SectionLabel>Account</SectionLabel>
+        <SectionLabel>Your account</SectionLabel>
         <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
           <Row label="Signed in as" value={session.user.email} />
           <Row label="Sign out" onTap={handleSignOut} />
@@ -172,11 +172,11 @@ export default function Settings() {
           )}
         </div>
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-          Sign in on any device to access your cycle data.
+          Sign in on any device to come back to your cycle.
         </div>
       </>}
 
-      <SectionLabel>Cycle</SectionLabel>
+      <SectionLabel>Your cycle</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Average cycle length" value={`${cycleLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Average period length" value={`${periodLength} days`} onTap={() => go('editCycleNumbers')} />
@@ -186,33 +186,26 @@ export default function Settings() {
         <Row label="Pregnancy" value={pregLabel} onTap={() => go('pregnancy')} />
       </div>
 
-      <SectionLabel>Privacy & Data</SectionLabel>
+      <SectionLabel>Privacy</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Storage" value="Encrypted at rest" />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
-        <Row label="Export all data" onTap={exportCSV} />
+        <Row label="Export everything" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
-        <Row label="Terms of Service" onTap={() => go('terms')} />
+        <Row label="Terms" onTap={() => go('terms')} />
       </div>
 
-      <SectionLabel>Home Screen</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Show editorial card"      right={<Toggle on={settings.showEditorial} onChange={(v) => updateSetting('showEditorial', v)} />} />
-        <Row label="Show library suggestions" right={<Toggle on={settings.showLibrary}   onChange={(v) => updateSetting('showLibrary', v)} />} />
-        <Row label="Show Health Watch banner" right={<Toggle on={settings.showWatch}     onChange={(v) => updateSetting('showWatch', v)} />} />
-      </div>
-
-      <SectionLabel>Notifications</SectionLabel>
+      <SectionLabel>Gentle reminders</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Period reminder"  right={<Toggle on={settings.notifyPeriod} onChange={(v) => updateSetting('notifyPeriod', v)} />} />
-        <Row label="Daily log nudge"  right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
+        <Row label="Daily check-in"   right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
 
-      <SectionLabel>Support</SectionLabel>
+      <SectionLabel>More from Luna</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Health Watch"       onTap={() => go('watch')} />
+        <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />

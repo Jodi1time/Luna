@@ -84,10 +84,10 @@ export default function Auth() {
     }
   }
 
-  const headline = mode === 'signin' ? 'Welcome back.' : mode === 'signup' ? 'Create your account.' : 'Reset your password.'
+  const headline = mode === 'signin' ? 'Welcome back.' : mode === 'signup' ? 'Make a little space for you.' : 'Forgot it? It happens.'
   const sub = mode === 'reset'
-    ? "We'll email you a reset link."
-    : "Sign in to access your cycle data on any device. Your data is encrypted at rest and only you can read it."
+    ? "We'll email you a link to set a new password."
+    : "Sign in to come back to your cycle on any device. Your data is encrypted at rest — only you can read it."
 
   return (
     <Screen>

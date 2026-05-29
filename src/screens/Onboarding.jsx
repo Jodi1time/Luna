@@ -95,7 +95,7 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
       )}
 
       <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, padding: '12px 14px', background: T.subtle, borderRadius: T.r }}>
-        Your account lets you sign in on any device. Your cycle data is encrypted at rest on Luna's servers.
+        Sign in on any device to come back to your cycle. Your data is encrypted at rest — only you can read it.
       </div>
     </div>
   )
@@ -214,7 +214,7 @@ export default function Onboarding({ step }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text }}>
         <StatusView
           loading={finishing && !fatalError}
-          loadingMessage="SETTING UP YOUR LUNA"
+          loadingMessage="GETTING THINGS READY"
           error={fatalError}
           onRetry={() => { setFatalError(''); finish() }}
         />
@@ -229,28 +229,32 @@ export default function Onboarding({ step }) {
       <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 3</div>
 
       {step === 1 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
           When did your<br /><em>last period</em> start?
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans }}>Estimate is fine — Luna refines predictions as you log.</div>
+        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+          A rough estimate is enough. We'll learn the rest from you.
+        </div>
         <StepDate value={dateDay} onChange={setDateDay} />
       </>}
 
       {step === 2 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          How long is your<br /><em>cycle, typically?</em>
+        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
+          How long is your<br /><em>cycle, usually?</em>
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans }}>Average is 28 days. Anywhere 21–35 is medically normal.</div>
+        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+          Most cycles land between 21 and 35 days. If yours is different, that's okay — bodies aren't averages.
+        </div>
         <StepCycle value={cycleDays} onChange={setCycleDays} />
         <SourceLine>ACOG — Menstrual Cycle Norms</SourceLine>
       </>}
 
       {step === 3 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          One last thing —<br /><em>who are you?</em>
+        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
+          Last thing —<br /><em>what shall we call you?</em>
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.5 }}>
-          Your name appears on your home screen.{signedInEmail ? '' : ' Your account lets you sign in on any device.'}
+        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+          Your name greets you on your home screen.{signedInEmail ? '' : ' Your account is how you sign in on any device.'}
         </div>
         <StepAccount
           name={account.name}
@@ -280,7 +284,7 @@ export default function Onboarding({ step }) {
             </button>
           )}
           <CTAButton full onClick={() => { if (canAdvance && !finishing) next() }} style={{ opacity: canAdvance && !finishing ? 1 : 0.5 }}>
-            {finishing ? 'SETTING UP…' : (step < 3 ? 'CONTINUE' : 'ENTER LUNA')} {Icons.arrow}
+            {finishing ? 'GETTING THINGS READY…' : (step < 3 ? 'CONTINUE' : 'WELCOME TO LUNA')} {Icons.arrow}
           </CTAButton>
         </div>
 
