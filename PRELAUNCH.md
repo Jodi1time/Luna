@@ -55,7 +55,7 @@ Not done in this pass (require server or external services):
       - Settings has a Verify email resend row when user.email_confirmed_at is null
       - To activate: flip "Confirm email" ON in Supabase dashboard → Authentication → Providers → Email
 - [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
-- [ ] **Either fix `jodi.com` DNS or remove the CNAME** — see Domain / hosting section
+- [x] **Domain registered: `lunadiary.app`** (purchased 2026-05-29). CNAME updated. Still need: GitHub Pages custom domain settings + registrar DNS records + Supabase redirect URL updates.
 - [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
 - [x] **PostHog product analytics** — DSN live 2026-05-29. Code in `src/lib/posthog.js`, Settings toggle wired, captures at onboarding_completed / log_saved / paywall_viewed / pro_subscribed. Strict privacy posture: opt-out by default, no user content sent. Reset on sign-out + account delete.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
