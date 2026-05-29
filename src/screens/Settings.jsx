@@ -178,8 +178,8 @@ export default function Settings() {
 
       <SectionLabel>Cycle</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Average cycle length" value={`${cycleLength} days`} />
-        <Row label="Average period length" value={`${periodLength} days`} />
+        <Row label="Average cycle length" value={`${cycleLength} days`} onTap={() => go('editCycleNumbers')} />
+        <Row label="Average period length" value={`${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
