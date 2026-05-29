@@ -4,20 +4,32 @@ Things to do/decide before opening Luna to the public. Keep this updated as item
 
 ## Status
 
-**Last review:** 2026-05-25
+**Last review:** 2026-05-29
 
 The core data layer is launch-ready. Several user-facing flows
-(billing, real legal review, server-side account deletion, monitoring)
-still need to be addressed before public launch. **Distribution is
-now App Store + Play Store** (decided 2026-05-25) — Luna will ship
-as a native app, not just a PWA. See "Native app distribution"
-section below for the work this entails.
+(billing, real legal review, monitoring) still need to be addressed
+before public launch. **Distribution is now App Store + Play Store**
+(decided 2026-05-25) — Luna will ship as a native app, not just a
+PWA. See "Native app distribution" section below for the work this
+entails.
 
 **Distribution + billing decisions (2026-05-27):** native via Capacitor
 (decided 2026-05-25) → in-app subscriptions via RevenueCat + native IAP
 (not Stripe, per Apple/Google rules for digital subscriptions sold in-app).
 
-## Security audit · 2026-05-25
+**Data architecture change (2026-05-29):** moved from on-device
+encrypted vault (passcode-derived key, never left the device) to
+server-side storage on Supabase, encrypted at rest by Supabase's
+infrastructure, gated to the signed-in user by Postgres row-level
+security. Rationale: the on-device model meant signing out, deleting
+the app, or switching devices wiped a user's cycle data — a hostile
+experience that contradicted what users expect from any modern app.
+The trade-off: Luna can technically decrypt user data to serve it,
+which is the same threat model as Flo / Clue / Apple Health / Strava
+and is reflected honestly in the rewritten Privacy Policy. See
+"Server-side storage" section below for what remains before launch.
+
+## Security audit · 2026-05-25 (updated 2026-05-29)
 
 Findings & status:
 
@@ -31,8 +43,11 @@ Findings & status:
 - [x] Input validation centralized in `src/lib/validation.js` with
       length caps, email format, BBT range. Used in Onboarding, Auth,
       Log.
-- [x] RLS policies now explicit: SELECT/UPDATE by owner, INSERT
-      restricted to self, DELETE denied entirely (server-side only).
+- [x] RLS policies updated 2026-05-29 for the server-side model:
+      `profiles` — SELECT/UPDATE/INSERT by owner, DELETE denied
+      (account deletion goes through the Edge Function).
+      `logs` — full CRUD by owner (users edit and delete their own
+      logs from the UI).
 - [x] Code splitting: most non-tab screens lazy-loaded via
       React.lazy. Main bundle reduced by ~30-40%.
 
@@ -54,7 +69,7 @@ Not done in this pass (require server or external services):
       - Onboarding shows "Check your email" note without blocking entry to Home
       - Settings has a Verify email resend row when user.email_confirmed_at is null
       - To activate: flip "Confirm email" ON in Supabase dashboard → Authentication → Providers → Email
-- [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
+- [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary, now load-bearing for user data after the 2026-05-29 architecture change). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
 - [x] **Domain live: `lunadiary.app`** (purchased + DNS configured + HTTPS enforced 2026-05-29). Luna serves at https://lunadiary.app with valid Let's Encrypt cert. Still need: update Supabase auth redirect URLs to use the new domain.
 - [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
 - [x] **PostHog product analytics** — DSN live 2026-05-29. Code in `src/lib/posthog.js`, Settings toggle wired, captures at onboarding_completed / log_saved / paywall_viewed / pro_subscribed. Strict privacy posture: opt-out by default, no user content sent. Reset on sign-out + account delete.
@@ -70,23 +85,19 @@ Not done in this pass (require server or external services):
   - Add a Settings row "Verify email" (only when `auth.user.email_confirmed_at` is null) that re-sends the confirmation link
   - Gate **recovery flows** behind a confirmed email:
     - Forgot password
-    - Sign in on a new device (when sync ships)
     - Account deletion
   - Optional: dismissible banner on Home until verified
   - Estimate: ~2 hours
 
-- [ ] **Recovery code / passcode reset path**
-  - Forgetting the vault passcode currently means data loss
-  - Generate a one-time recovery code at vault creation, prompt user to save it
-  - Recovery code can wrap a copy of the passcode (similar to how biometric wraps it)
-  - Alternative: server-side encrypted passcode escrow gated by email verification (more complex but no user-managed code)
+- [x] **Vault passcode recovery path** — no longer applicable. Data
+      lives on the server; sign-in is the gate. Standard "forgot
+      password" email reset works (already wired in Auth.jsx via
+      `requestPasswordReset`).
 
 ## Privacy / security
 
-- [ ] **Update privacy article copy** ([src/data/lunaData.js](src/data/lunaData.js) `id: 'privacy'`)
-  - Currently claims "stored on your phone in encrypted form" which is now true
-  - Update to mention the account/server split when sync ships
-  - Remove the "anonymised data sent to AI partner" line (no AI integration exists)
+- [x] **Update privacy article copy** ([src/data/lunaData.js](src/data/lunaData.js) `id: 'privacy'`) — rewritten 2026-05-29 to honestly reflect the server-side storage model.
+- [x] **Update Privacy Policy + Terms** ([src/screens/PrivacyPolicy.jsx](src/screens/PrivacyPolicy.jsx) + [src/screens/Terms.jsx](src/screens/Terms.jsx)) — rewritten 2026-05-29 to drop the on-device-encryption claim and disclose that data is server-side, encrypted at rest, and may be subject to lawful process.
 
 - [ ] **Rotate the Supabase anon key** (anon key was pasted into this conversation; safe to rotate before launch as a hygiene step)
 
@@ -119,13 +130,30 @@ Not done in this pass (require server or external services):
   - Stripe NOT used for in-app — kept as an option only for any future
     web-only checkout (luna.com sign-up flow, B2B sales, etc.)
 
-## Sync (Tier 1 E2EE)
+## Server-side storage (shipped 2026-05-29)
 
-- [ ] **Multi-device sync via E2EE**
-  - Server stores encrypted vault blob keyed to `auth.user.id`
-  - Decrypted only with passcode on each device
-  - Conflict resolution: last-write-wins with vector clocks per log day
-  - Big feature — design separately
+The on-device encrypted vault was replaced with Supabase-backed
+storage. `src/lib/cloud.js` is the data layer; `useLuna.hydrateFromCloud()`
+pulls profile + logs on signin; mutations write through to the
+server via `fireAndForget()` so the UI never waits on the network.
+Local storage is a cache for cold-paint speed; the server is the
+source of truth. Schema lives in `supabase-schema.sql`.
+
+Still open:
+- [ ] **Run the new schema in the live Supabase project** — apply
+      the `alter table public.profiles add column …` block and the
+      `create table public.logs …` block from `supabase-schema.sql`.
+      Idempotent (`if not exists` everywhere) so safe to re-run.
+- [ ] **Verify the `handle_new_user` trigger still fires** — it
+      already existed, but worth a smoke-test signup to confirm a
+      new `profiles` row lands.
+- [ ] **Real multi-device live sync** — current model is "sign-in
+      hydrates from cloud, writes go straight to cloud, no live
+      push." If a user has Luna open on two devices simultaneously,
+      writes don't propagate across until one re-signs in. Use case
+      is rare (cycle trackers are personal-device tools) but
+      Supabase Realtime subscriptions would close the gap if needed.
+      Defer to v1.1 unless users actually ask.
 
 ## Luna assistant (post-launch AI companion)
 

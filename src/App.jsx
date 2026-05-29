@@ -1,10 +1,8 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import useLuna from './store/useLuna'
-import { hasVault, hasLegacyData, getMemoryKey } from './lib/crypto'
 import { getSession, onAuthStateChange } from './lib/supabase'
 import { StatusView } from './components/StatusView'
-import Lock         from './screens/Lock'
 
 import Welcome      from './screens/Welcome'
 import Onboarding   from './screens/Onboarding'
@@ -15,7 +13,6 @@ import Insights     from './screens/Insights'
 import Library      from './screens/Library'
 import Settings     from './screens/Settings'
 import Auth         from './screens/Auth'
-import BiometricPrompt from './screens/BiometricPrompt'
 
 const PhaseDetail     = lazy(() => import('./screens/PhaseDetail'))
 const SymptomDetail   = lazy(() => import('./screens/SymptomDetail'))
@@ -30,46 +27,49 @@ const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
 const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
-const EnableBiometric = lazy(() => import('./screens/EnableBiometric'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
 export default function App() {
-  const initiallyLocked = (hasVault() || hasLegacyData()) && !getMemoryKey()
-  const [locked, setLocked] = useState(initiallyLocked)
-
   const { screen, go, onboarded } = useLuna()
   const setSession = useLuna((s) => s.setSession)
+  const hydrateFromCloud = useLuna((s) => s.hydrateFromCloud)
   const analyticsEnabled = useLuna((s) => s.settings?.analytics)
 
   useEffect(() => {
-    if (locked) return
-    getSession().then(setSession)
-    const unsub = onAuthStateChange(setSession)
+    // Restore the existing Supabase session on cold start. If present,
+    // pull fresh profile + logs from the cloud so we paint correct
+    // state even if the localStorage cache is stale.
+    getSession().then((s) => {
+      setSession(s)
+      if (s?.user) {
+        hydrateFromCloud().catch(() => {})
+      }
+    })
+    // On signin/signout events, sync the auth state and either hydrate
+    // or clear the local cache appropriately.
+    const unsub = onAuthStateChange((session) => {
+      setSession(session)
+      if (session?.user) {
+        hydrateFromCloud().catch(() => {})
+      }
+    })
     return unsub
-  }, [locked, setSession])
+  }, [setSession, hydrateFromCloud])
 
-  // Sync the persisted analytics-opt-in toggle into PostHog so users
-  // who opted in previously stay opted in across sessions.
   useEffect(() => {
-    if (locked) return
     import('./lib/posthog').then(({ syncAnalyticsState, capture }) => {
       syncAnalyticsState(Boolean(analyticsEnabled))
       if (analyticsEnabled) capture('app_opened')
     })
-  }, [locked, analyticsEnabled])
-
-  if (locked) {
-    return <AppShell><Lock onUnlocked={() => setLocked(false)} /></AppShell>
-  }
+  }, [analyticsEnabled])
 
   // Route to the right starting screen on each session.
   // - If not onboarded: allow Welcome, the onboarding steps, Auth (reached
   //   via "Already have an account?" on Welcome), and the legal screens
-  //   (linked from Welcome's "13+ / Terms / Privacy" line). Anything else
-  //   falls back to Welcome.
-  // - If onboarded but the session restored to 'welcome' (since screen isn't persisted)
-  //   or any onboarding step → Home
+  //   linked from Welcome. Anything else falls back to Welcome.
+  // - If onboarded but the session restored to 'welcome' (since screen
+  //   isn't persisted) or any onboarding step → Home.
   const resolvedScreen = !onboarded
     ? (['welcome','onb1','onb2','onb3','auth','terms','privacy'].includes(screen) ? screen : 'welcome')
     : (['welcome','onb1','onb2','onb3'].includes(screen) ? 'home' : screen)
@@ -111,7 +111,6 @@ function ScreenRenderer({ screen }) {
     case 'periodHistory': return <PeriodHistory />
     case 'editPeriodStart': return <EditPeriodStart />
     case 'birthControl': return <BirthControl />
-    case 'enableBiometric': return <EnableBiometric />
     case 'pregnancy': return <Pregnancy />
     default:         return <Home />
   }

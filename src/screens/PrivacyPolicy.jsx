@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Privacy" onBack={back} />
-        <Eyebrow color={T.accent}>POLICY · EFFECTIVE 2026-05-24</Eyebrow>
+        <Eyebrow color={T.accent}>POLICY · EFFECTIVE 2026-05-29</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
           Privacy Policy
         </div>
@@ -35,17 +35,22 @@ export default function PrivacyPolicy() {
 
         <H>What we collect</H>
         <P>
-          If you choose to create an account, we store the email address you provide. We also store an encrypted vault blob that contains the cycle data you log inside Luna. We do not collect anything else from your device.
+          To run Luna we collect: the email address you sign up with, the cycle data you enter (period start dates, cycle length, daily logs including mood, symptoms, flow, basal body temperature, cervical mucus, sexual activity, and any notes you write), your display name, and the settings you toggle. We do not collect anything from your device that you have not chosen to enter into Luna.
         </P>
 
         <H>What we do not collect</H>
         <P>
-          We do not collect your readable cycle data, location, contacts, advertising identifiers, browsing history, device sensors, or any health data you have not entered yourself. There are no third-party analytics or advertising SDKs embedded in Luna.
+          We do not collect your location, contacts, advertising identifiers, browsing history, device sensors, or any health data you have not entered yourself. There are no third-party analytics or advertising SDKs embedded in Luna.
         </P>
 
         <H>Where your data lives</H>
         <P>
-          Your cycle data is encrypted on your device using AES-256-GCM. The encryption key is derived from your passcode using PBKDF2 and never leaves the device. We never see or transmit your passcode. If you create an account, your email address is stored by Supabase, our authentication provider. The encrypted vault blob does not leave your device today. When multi-device sync ships, the vault will be transmitted only in its encrypted form and we will still be unable to read it.
+          Your data is stored on servers operated by Supabase, our database provider, and is encrypted at rest using industry-standard infrastructure-level encryption. Access is gated by row-level security so that only the signed-in user can read or modify their own data. We transmit data between your device and our servers over TLS. Luna is technically able to decrypt your data on the server in order to provide the service to you, your devices, and any account-recovery flows you initiate.
+        </P>
+
+        <H>Optional local cache</H>
+        <P>
+          For speed, the app keeps a copy of your most recent data in your browser's local storage so it can render immediately on startup. This cache is cleared when you sign out or delete your account.
         </P>
 
         <H>Children</H>
@@ -55,22 +60,22 @@ export default function PrivacyPolicy() {
 
         <H>Third parties</H>
         <P>
-          We rely on two third-party services: Supabase for account authentication, and Google Fonts for the typefaces used in the interface. We do not use analytics platforms, advertising networks, attribution SDKs, crash reporters that send your content, or social login providers.
+          We rely on three third-party services to operate Luna: Supabase for database and authentication, Sentry for error reporting (configured to strip likely-PII patterns before transmission), and Google Fonts for the typefaces used in the interface. If you opt in to anonymous analytics from Settings, PostHog receives event names and category data only (never the content of what you logged). We do not use advertising networks, attribution SDKs, or social login providers.
         </P>
 
         <H>Your rights</H>
         <P>
-          You can export your data as a CSV file from Settings. You can delete all data on your device from Settings, and request account deletion using the same screen. You can withdraw your consent at any time by deleting your account or removing the app. To exercise any right not directly available in the app, contact us at the address below.
+          You can export your full data as a CSV file from Settings. You can permanently delete your account and all associated data from Settings. You can withdraw your consent at any time by deleting your account. To exercise any right not directly available in the app, contact us at the address below.
         </P>
 
         <H>Law enforcement</H>
         <P>
-          Because we cannot decrypt your cycle data, we cannot comply with requests to share it. We retain only your account email and signup metadata, which may be subject to lawful process.
+          Because your data is stored on our servers in a form we can decrypt to provide the service to you, we may be compelled by valid legal process to disclose it. We will object to overbroad or unlawful requests, push for narrow scope where we are able, and notify affected users unless prohibited by law. We do not voluntarily share user data with anyone.
         </P>
 
         <H>Reproductive health</H>
         <P>
-          Luna was built specifically so that we cannot be compelled to disclose your cycle data, because we cannot read it. We consider this an essential property of the product rather than a feature.
+          We recognise that menstrual data carries specific legal and personal risk in jurisdictions where reproductive care is restricted. We try to limit collection to what Luna needs to work, never sell or share your data for marketing, never link it to advertising identifiers, and design our data retention so that account deletion is real and prompt. If you have an active concern, consider whether to track certain phases in Luna at all — the safest data is data that does not exist.
         </P>
 
         <H>Washington residents (MHMDA)</H>

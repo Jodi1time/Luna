@@ -1,10 +1,7 @@
-import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { BC_LABELS } from '../data/birthControl'
-import { wipeVault, lock } from '../lib/crypto'
-import { biometricSupported, biometricEnrolled, clearBiometric } from '../lib/biometric'
 import { signOut } from '../lib/supabase'
 import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
 
@@ -16,13 +13,6 @@ function csvCell(value) {
   const defused = /^[=+\-@\t\r]/.test(s) ? `\t${s}` : s
   if (/[",\n\r]/.test(defused)) return `"${defused.replace(/"/g, '""')}"`
   return defused
-}
-
-const wipeAndReload = () => {
-  if (window.confirm('This will permanently delete all your Luna data on this device. Continue?')) {
-    wipeVault()
-    window.location.reload()
-  }
 }
 
 function SectionLabel({ children }) {
@@ -44,6 +34,7 @@ function Row({ label, value, right, onTap, danger }) {
 
 export default function Settings() {
   const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName, birthControl, pregnancy } = useLuna()
+  const clearLocalData = useLuna((s) => s.clearLocalData)
   const methodLabel = BC_LABELS[birthControl?.method] || 'None'
   const pregLabel = (() => {
     if (!pregnancy?.active || !pregnancy?.lmp) return 'Not active'
@@ -55,24 +46,12 @@ export default function Settings() {
   })()
   const session = useLuna((s) => s.session)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
-  const [biometricOn, setBiometricOn] = useState(biometricEnrolled())
-  const handleBiometricToggle = (v) => {
-    if (v && !biometricEnrolled()) {
-      // Enroll path — go to a dedicated screen that re-asks for the
-      // passcode (needed to wrap it under PRF) and runs enrollment.
-      go('enableBiometric')
-      return
-    }
-    if (!v && biometricEnrolled()) {
-      if (window.confirm("Disable Face ID unlock? You'll need your passcode to unlock Luna.")) {
-        clearBiometric()
-        setBiometricOn(false)
-      }
-    }
-  }
+
   const handleSignOut = async () => {
     await signOut()
     resetAnalytics()
+    clearLocalData()
+    window.location.reload()
   }
 
   const exportCSV = () => {
@@ -116,9 +95,8 @@ export default function Settings() {
   }
 
   const deleteAccount = async () => {
-    if (!window.confirm('This permanently deletes your Luna account and all locally encrypted data. Continue?')) return
+    if (!window.confirm('This permanently deletes your Luna account and all your cycle data on our servers. Continue?')) return
 
-    // If signed in, ask the Edge Function to delete the server-side user
     if (session) {
       try {
         const { supabase } = await import('../lib/supabase')
@@ -134,21 +112,19 @@ export default function Settings() {
           })
           if (!res.ok) {
             const body = await res.text().catch(() => '')
-            if (!window.confirm(`Server-side deletion failed (${res.status}). Wipe local data anyway?\n\n${body}`)) {
-              return
-            }
+            window.alert(`Account deletion failed (${res.status}). ${body}`)
+            return
           }
         }
       } catch (e) {
-        if (!window.confirm(`Could not reach the server (${e?.message}). Wipe local data anyway?`)) {
-          return
-        }
+        window.alert(`Could not reach the server (${e?.message}). Try again in a moment.`)
+        return
       }
     }
 
     try { await signOut() } catch {}
     resetAnalytics()
-    wipeVault()
+    clearLocalData()
     window.location.reload()
   }
   return (
@@ -196,7 +172,7 @@ export default function Settings() {
           )}
         </div>
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-          For recovery only. Your data stays on this device.
+          Sign in on any device to access your cycle data.
         </div>
       </>}
 
@@ -212,18 +188,12 @@ export default function Settings() {
 
       <SectionLabel>Privacy & Data</SectionLabel>
       <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Storage" value="On-device · Encrypted" />
-        {biometricSupported() && (
-          <Row label="Face ID / Touch ID unlock"
-            right={<Toggle on={biometricOn} onChange={handleBiometricToggle} />} />
-        )}
+        <Row label="Storage" value="Encrypted at rest" />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
-        <Row label="Lock now" onTap={() => { lock(); window.location.reload() }} />
         <Row label="Export all data" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
         <Row label="Terms of Service" onTap={() => go('terms')} />
-        <Row label="Delete everything" onTap={wipeAndReload} danger />
       </div>
 
       <SectionLabel>Home Screen</SectionLabel>
@@ -246,7 +216,6 @@ export default function Settings() {
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
-        <Row label="Reset & start over" onTap={wipeAndReload} danger />
         <Row label="Delete my account"  onTap={deleteAccount} danger />
       </div>
 

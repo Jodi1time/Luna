@@ -24,7 +24,7 @@ export default function Terms() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Terms" onBack={back} />
-        <Eyebrow color={T.accent}>TERMS · EFFECTIVE 2026-05-24</Eyebrow>
+        <Eyebrow color={T.accent}>TERMS · EFFECTIVE 2026-05-29</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
           Terms of Service
         </div>
@@ -45,7 +45,7 @@ export default function Terms() {
 
         <H>Account responsibility</H>
         <P>
-          Your passcode is the key that encrypts your data on this device. We never see it, store it, or transmit it. If you forget your passcode, your data cannot be recovered. If you create an account, you are responsible for keeping the email and any recovery factors secure.
+          Your account email and password are how you access your cycle data on any device. You are responsible for keeping them secure and for the activity that occurs under your account. If you forget your password, you can reset it from the sign-in screen using the email tied to your account.
         </P>
 
         <H>Subscription</H>

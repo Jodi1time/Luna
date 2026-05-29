@@ -26,7 +26,7 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
 
 export default function Auth() {
   const { back, go } = useLuna()
-  const onboarded = useLuna((s) => s.onboarded)
+  const hydrateFromCloud = useLuna((s) => s.hydrateFromCloud)
   const [mode, setMode] = useState('signin') // 'signin' | 'signup' | 'reset'
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -43,7 +43,7 @@ export default function Auth() {
             Account sign-in isn't configured yet.
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55 }}>
-            Luna will work fully without an account — your data stays encrypted on this device. Adding an account later enables recovery on a new device and (in the future) multi-device sync. Ask the developer to set up <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>.
+            Luna needs Supabase to be configured before sign-in can work. Ask the developer to set up <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code>.
           </div>
         </div>
       </Screen>
@@ -62,14 +62,14 @@ export default function Auth() {
     try {
       if (mode === 'signin') {
         await signIn(email, password)
-        // If this device has no vault yet (fresh install, new browser,
-        // or different origin like the domain migration), jump straight
-        // to the final onboarding step to set a local passcode + name.
-        // Skipping onb1/onb2 (cycle date + length) — those use defaults
-        // for returning users and can be adjusted in Settings. The
-        // Supabase session carries through; Onboarding step 3 sees the
-        // existing session and skips the email/password fields.
-        go(onboarded ? 'home' : 'onb3')
+        // Pull the user's profile + logs from the cloud. If they had
+        // previously completed onboarding, their data is back in the
+        // store — route straight to Home. If they signed up but never
+        // finished onboarding (or this is a brand-new account), drop
+        // them at step 3 to set a display name.
+        await hydrateFromCloud().catch(() => {})
+        const profileOnboarded = useLuna.getState().onboarded
+        go(profileOnboarded ? 'home' : 'onb3')
       } else if (mode === 'signup') {
         await signUp(email, password)
         setInfo('Check your email to confirm your account.')
@@ -87,7 +87,7 @@ export default function Auth() {
   const headline = mode === 'signin' ? 'Welcome back.' : mode === 'signup' ? 'Create your account.' : 'Reset your password.'
   const sub = mode === 'reset'
     ? "We'll email you a reset link."
-    : "Your cycle data stays encrypted on your device — your account is only for recovery and (soon) syncing across devices."
+    : "Sign in to access your cycle data on any device. Your data is encrypted at rest and only you can read it."
 
   return (
     <Screen>
@@ -139,7 +139,7 @@ export default function Auth() {
         )}
 
         <div style={{ marginTop: 28, padding: 14, background: T.subtle, borderRadius: T.r, fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55 }}>
-          Your account password is separate from your device passcode. Your cycle data is encrypted with the passcode on this device and never sent to our servers — your account is only used for login and (soon) sync.
+          Your cycle data is stored on Luna's servers, encrypted at rest, and only accessible from your signed-in account. We do not sell or share it.
         </div>
       </div>
     </Screen>
