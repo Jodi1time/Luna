@@ -1,8 +1,9 @@
 // PostHog product analytics wrapper.
 //
-// Strict privacy posture:
-// - Only loads when VITE_POSTHOG_KEY is set AND user has toggled
-//   "Anonymous analytics" ON (default OFF) in Settings.
+// Privacy posture:
+// - Defaults ON now (was opt-out). Users can switch it off in
+//   Settings any time. Justification: only category-level events
+//   leave the device; nothing user-identifying or content-bearing.
 // - Anonymous IDs only — never sets user.id to email or anything PII.
 // - Captures event names + category-level properties only. NEVER sends:
 //     * cycle data (period dates, symptoms, mood, BBT, mucus, sex)
@@ -37,7 +38,7 @@ export function initPostHog() {
     disable_session_recording: true,
     disable_persistence: false,    // Anonymous distinct_id can persist
     persistence: 'localStorage',
-    opt_out_capturing_by_default: true, // Strict opt-out by default
+    opt_out_capturing_by_default: false, // Default ON — users can switch off in Settings
     bootstrap: {},
     loaded: () => {
       _initialized = true

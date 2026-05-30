@@ -6,9 +6,9 @@ import { initPostHog } from './lib/posthog'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-// Initialize PostHog. Capturing is opt-out by default — it will only
-// fire events once the user toggles 'Anonymous analytics' ON in
-// Settings (which calls setAnalyticsEnabled).
+// Initialize PostHog. Capturing is ON by default now — event-category
+// only, never user content. Users can turn it off in Settings via
+// the 'Anonymous analytics' row (which calls setAnalyticsEnabled).
 initPostHog()
 
 // Silent auto-update: as soon as a new service worker takes control,

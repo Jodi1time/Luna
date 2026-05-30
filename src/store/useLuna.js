@@ -26,7 +26,7 @@ const DEFAULT_SETTINGS = {
   notifyPeriod:  true,
   notifyLog:     true,
   notifyWeekly:  true,
-  analytics:     false,
+  analytics:     true,
   // Wellness tracking — small habits Luna nudges about.
   // Stored as ISO date strings ('YYYY-MM-DD') of the last completion.
   wellness: {

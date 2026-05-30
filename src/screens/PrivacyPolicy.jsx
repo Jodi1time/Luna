@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
 
         <H>Third parties</H>
         <P>
-          We rely on three third-party services to operate Luna: Supabase for database and authentication, Sentry for error reporting (configured to strip likely-PII patterns before transmission), and Google Fonts for the typefaces used in the interface. If you opt in to anonymous analytics from Settings, PostHog receives event names and category data only (never the content of what you logged). We do not use advertising networks, attribution SDKs, or social login providers.
+          We rely on three third-party services to operate Luna: Supabase for database and authentication, Sentry for error reporting (configured to strip likely-PII patterns before transmission), and Google Fonts for the typefaces used in the interface. We also send anonymous product analytics to PostHog by default — event names and category data only (for example, "log saved · 3 symptoms · BBT included"), never the content of what you logged, your name, email, or any identifier. You can switch this off in Settings → Privacy → Anonymous analytics. We do not use advertising networks, attribution SDKs, or social login providers.
         </P>
 
         <H>Your rights</H>

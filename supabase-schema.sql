@@ -35,7 +35,7 @@ alter table public.profiles
   add column if not exists settings          jsonb default '{
     "showEditorial":true,"showLibrary":true,"showWatch":true,
     "notifyPeriod":true,"notifyLog":true,"notifyWeekly":true,
-    "analytics":false
+    "analytics":true
   }'::jsonb,
   add column if not exists is_pro            boolean default true,
   add column if not exists trial_days_left   integer default 7,

@@ -181,7 +181,7 @@ export const ARTICLES = [
   },
   { id: 'privacy',  cat: 'Your Data',    tag: 'Read this',        read: '2 min', title: 'How Luna handles your cycle data — in plain English',  summary: 'Server-side, encrypted at rest, gated to your account. No selling, no tracking.', body: [
     'Your cycle data is stored on Luna\'s servers (run on Supabase) and encrypted at rest. Access is gated by row-level security so only your signed-in account can read or modify it.',
-    'No selling, no sharing. No third-party advertising trackers inside the app. Anonymous analytics is opt-in from Settings and never sends the content of what you logged — only event categories.',
+    'No selling, no sharing. No third-party advertising trackers inside the app. Anonymous analytics is on by default — it sends event categories only (like "log saved · 3 symptoms"), never the content of what you logged. Switch it off in Settings any time.',
     'Signing in on a new device pulls your data down over TLS. Signing out and deleting the app removes the local copy; the server copy stays so you can sign back in later.',
     'No AI in Luna today. Future AI features will be opt-in per conversation with clear consent.',
     'Export everything as CSV any time from Settings → Export all data.',
