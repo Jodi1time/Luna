@@ -83,6 +83,14 @@ export default function PrivacyPolicy() {
           If you are a Washington resident, we treat reproductive health data you enter as consumer health data under the My Health My Data Act. You can request access, deletion, or withdraw consent at any time using Settings, or by contacting us.
         </P>
 
+        <H>EU / UK residents (GDPR &amp; UK GDPR)</H>
+        <P>
+          If you access Luna from the EU or UK, you have rights of access, rectification, erasure, restriction, portability, and objection under the GDPR / UK GDPR. You can exercise most of these in-app: export your data as CSV from Settings, edit any field directly, and delete your account (which permanently removes your data from our servers within 30 days). The lawful basis for processing your account email and authentication data is contract performance; for the cycle data you enter, it is your consent — which you can withdraw at any time by deleting your account or signing out and asking us to remove the data via the contact below.
+        </P>
+        <P>
+          We are working toward an explicit, granular consent prompt on first use for EU / UK users specifically — covering analytics and error reporting — to satisfy ePrivacy requirements alongside GDPR. Until that prompt ships, EU / UK users can decline analytics and error reporting from Settings → Privacy at any time, and we will treat that as their consent decision. If you have a complaint, you may contact your local data protection authority.
+        </P>
+
         <H>Changes to this policy</H>
         <P>
           If we change this policy materially, we will notify you by email if you have an account, and through an in-app notice. The effective date at the top of this page will always reflect the current version.

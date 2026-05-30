@@ -73,6 +73,11 @@ export default function Terms() {
           These terms are governed by the law of the jurisdiction in which Luna is incorporated (to be finalized before launch). Any dispute arising under these terms will be resolved exclusively in the courts of that jurisdiction, unless otherwise required by law.
         </P>
 
+        <H>EU / UK residents</H>
+        <P>
+          If you access Luna from the European Union or the United Kingdom, additional rights apply to you under the GDPR / UK GDPR — including the rights to access, correct, erase, restrict, and port your data, and to object to processing or withdraw consent. These are described in detail in our Privacy Policy. Nothing in these Terms limits any non-waivable rights you have as a consumer under your local law.
+        </P>
+
         <H>Changes</H>
         <P>
           We may update these terms from time to time. Continued use of Luna after a change takes effect constitutes acceptance of the updated terms. The effective date at the top of this page will always reflect the current version.

@@ -72,7 +72,13 @@ Not done in this pass (require server or external services):
 - [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary, now load-bearing for user data after the 2026-05-29 architecture change). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
 - [x] **Domain live: `lunadiary.app`** (purchased + DNS configured + HTTPS enforced 2026-05-29). Luna serves at https://lunadiary.app with valid Let's Encrypt cert. Still need: update Supabase auth redirect URLs to use the new domain.
 - [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
-- [x] **PostHog product analytics** — DSN live 2026-05-29. Code in `src/lib/posthog.js`, Settings toggle wired, captures at onboarding_completed / log_saved / paywall_viewed / pro_subscribed. Strict privacy posture: opt-out by default, no user content sent. Reset on sign-out + account delete.
+- [x] **PostHog product analytics** — DSN live 2026-05-29. Code in `src/lib/posthog.js`, Settings toggle wired, captures at onboarding_completed / log_saved / paywall_viewed / pro_subscribed. Privacy posture: **on by default** (changed 2026-05-30 — event categories only, never user content), switchable in Settings → Privacy → Anonymous analytics. BLOCKED_KEYS scrub layer + 64-char string filter as defensive guardrails. Reset on sign-out + account delete.
+
+- [ ] **EU consent banner for analytics + Sentry (GDPR / ePrivacy)** — load-bearing for any EU launch. Even though our analytics is event-category-only and never sees user content, GDPR + ePrivacy require explicit opt-in consent for ANY analytics/tracking that persists state to the user's device. Implementation needed before EU traffic:
+      - Soft consent prompt on first launch ("We use anonymous product analytics to know what's working. Event names + categories only — never your cycle data, never your name. Accept / Decline.")
+      - Defaults: ON for non-EU; explicit choice for EU (we can geo-detect via Cloudflare's CF-IPCountry header or accept-language). For US-only soft launch this can be deferred; for any EU rollout it's required.
+      - Persist the consent choice in profiles.settings.analyticsConsent so we don't re-ask.
+      - Estimate: ~half day of work. Don't ship to EU users without it.
 - [ ] **Real iPhone/Android device testing pass** — particularly the Face ID PRF biometric unlock flow on actual hardware
 - [ ] **Wrap as native app via Capacitor for App Store + Play Store distribution** — see "Native app distribution" section below. Replaces the PWA-only path. Required so we can use native Face ID without the iOS WebAuthn sheet.
 
