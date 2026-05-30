@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { animated, useSpring, to } from '@react-spring/web'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -87,30 +86,17 @@ function useCountUp(target, duration = 900) {
 // than the on-rails CSS-transform feel of the previous attempt.
 // The blob layer sits behind the content layer; both are children of
 // the same main stage container so depth reads correctly.
-function BackgroundBlob({ color, effect, scrollY }) {
-  // Parallax with depth — three sprung dimensions drive the blob's
-  // transform from scrollY:
-  //   y      drifts the blob DOWN as the page scrolls down (the
-  //          "opposite direction" mirror you wanted)
-  //   scale  enlarges the blob slightly as you scroll deeper — feels
-  //          like it's drifting closer toward the viewer
-  //   rot    a small rotation per pixel of scroll so the morph reads
-  //          as a continuous unfurl rather than a fixed shape moving
-  // Spring config is snappy (tension 220, friction 24) so the motion
-  // tracks scroll quickly enough to be visible while you're scrolling.
-  const spring = useSpring({
-    y: scrollY * 1.25,
-    scale: 1 + Math.min(scrollY, 1000) * 0.0009,
-    rot: scrollY * 0.04,
-    config: { mass: 1, tension: 220, friction: 24 },
-  })
-  const transform = to(
-    [spring.y, spring.scale, spring.rot],
-    (y, s, r) => `translate(-50%, calc(-50% + ${y}px)) scale(${s}) rotate(${r}deg)`
-  )
-
+function BackgroundBlob({ color, effect }) {
+  // Truly stationary: NO scroll-driven transform. The blob is locked
+  // to the phone frame at top:34%, so it doesn't move at all as the
+  // user scrolls. The parallax illusion is purely relative motion:
+  // content scrolls past a fixed blob. That's what gives "blob is a
+  // separate entity behind the screen" feel.
+  //
+  // The visible "moving" sense comes from the idle morph animation
+  // (in CSS, dramatic now) — alive while still.
   return (
-    <animated.div className="blob-stage" style={{ transform }} aria-hidden="true">
+    <div className="blob-stage" aria-hidden="true">
       <div className="breathing-blob" style={{ '--phase-color': color }} />
       {effect?.name === 'ripple' && (
         <div key={effect.id} className="blob-ripple" style={{ '--phase-color': color }} />
@@ -118,7 +104,7 @@ function BackgroundBlob({ color, effect, scrollY }) {
       {effect?.name === 'bloom' && (
         <div key={effect.id} className="blob-bloom" style={{ '--phase-color': color }} />
       )}
-    </animated.div>
+    </div>
   )
 }
 
@@ -343,10 +329,9 @@ export default function Home() {
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
-  // Blob effect state + parallax scroll position lifted to the page
-  // so both the blob layer and the content layer can read them.
+  // Blob effect state — taps in the Home content fire one of two
+  // one-shot effects (ripple / bloom) on the blob.
   const [effect, setEffect] = useState(null)
-  const [scrollY, setScrollY] = useState(0)
   useEffect(() => {
     if (!effect) return
     const t = setTimeout(() => setEffect(null), 1600)
@@ -357,15 +342,9 @@ export default function Home() {
     const next = options[Math.floor(Math.random() * options.length)]
     setEffect({ id: Date.now(), name: next })
   }
-  // Click anywhere in the Home content fires a blob effect, unless
-  // the click landed on something interactive (button / link / input)
-  // which has its own click handler.
   const handleContentTap = (e) => {
     if (e.target.closest('button, a, input, [role="button"]')) return
     triggerBlobEffect()
-  }
-  const handleScroll = (e) => {
-    setScrollY(e.currentTarget.scrollTop)
   }
 
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -386,10 +365,10 @@ export default function Home() {
 
   return (
     <div className="home-stage">
-      {/* Blob layer — absolute, doesn't scroll. Spring-animated. */}
-      <BackgroundBlob color={blobColor} scrollY={scrollY} effect={effect} />
-      {/* Content layer — scrolls; emits scrollY to drive the blob. */}
-      <Screen onScroll={handleScroll}>
+      {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
+      <BackgroundBlob color={blobColor} effect={effect} />
+      {/* Content layer — scrolls past the stationary blob. */}
+      <Screen>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} />
 
