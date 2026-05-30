@@ -97,11 +97,13 @@ button.no-tap, button.no-tap:active { transform: none; }
   left: 50%;
   width: 360px;
   height: 360px;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);  /* default centering; React inline transform overrides during scroll */
   z-index: 0;
   pointer-events: none;              /* clicks go to the content; Home triggers effects from there */
   will-change: transform;
-  transition: transform 0.05s linear;
+  /* No transition here — react-spring drives the transform directly,
+     and a CSS transition would clash with the spring's high-frequency
+     updates. */
 }
 
 /* The morphing blob itself — slow, organic, painted-edge. 16s loop

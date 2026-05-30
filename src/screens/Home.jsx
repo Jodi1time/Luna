@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { animated, useSpring, config } from '@react-spring/web'
+import { animated, useSpring, to } from '@react-spring/web'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -88,15 +88,26 @@ function useCountUp(target, duration = 900) {
 // The blob layer sits behind the content layer; both are children of
 // the same main stage container so depth reads correctly.
 function BackgroundBlob({ color, effect, scrollY }) {
-  // Parallax: when the user scrolls down (scrollY positive), blob
-  // drifts down. The spring's friction/tension give it a brief lag
-  // and a soft settle so the motion reads as something physically
-  // behind glass rather than CSS-pegged to the scroll value.
+  // Parallax with depth — three sprung dimensions drive the blob's
+  // transform from scrollY:
+  //   y      drifts the blob DOWN as the page scrolls down (the
+  //          "opposite direction" mirror you wanted)
+  //   scale  enlarges the blob slightly as you scroll deeper — feels
+  //          like it's drifting closer toward the viewer
+  //   rot    a small rotation per pixel of scroll so the morph reads
+  //          as a continuous unfurl rather than a fixed shape moving
+  // Spring config is snappy (tension 220, friction 24) so the motion
+  // tracks scroll quickly enough to be visible while you're scrolling.
   const spring = useSpring({
-    y: scrollY * 0.55,
-    config: { mass: 1, tension: 90, friction: 26 },
+    y: scrollY * 1.25,
+    scale: 1 + Math.min(scrollY, 1000) * 0.0009,
+    rot: scrollY * 0.04,
+    config: { mass: 1, tension: 220, friction: 24 },
   })
-  const transform = spring.y.to((y) => `translate(-50%, calc(-50% + ${y}px))`)
+  const transform = to(
+    [spring.y, spring.scale, spring.rot],
+    (y, s, r) => `translate(-50%, calc(-50% + ${y}px)) scale(${s}) rotate(${r}deg)`
+  )
 
   return (
     <animated.div className="blob-stage" style={{ transform }} aria-hidden="true">
