@@ -2,9 +2,11 @@
 
 html, body, #root {
   height: 100%;
+  overflow: hidden;                /* only internal containers scroll; the body never does */
   background: #E8E3D8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;       /* no rubber-banding pulling parents */
 }
 
 /* Hide scrollbars globally in the app */
@@ -115,6 +117,20 @@ button.no-tap, button.no-tap:active { transform: none; }
   z-index: 0;
   pointer-events: none;
   will-change: transform;
+}
+
+/* Quieter blob for the inner tab screens (Insights, Library, Calendar
+   when we extend it later). Same shape and breath as Home's blob but
+   smaller, more transparent, sits a bit lower so the page title has
+   room to breathe above it. */
+.blob-stage.subtle {
+  width: 320px;
+  height: 320px;
+  top: 60%;
+}
+.blob-stage.subtle .breathing-blob {
+  opacity: 0.22;
+  filter: blur(20px) saturate(1.05);
 }
 
 /* The morphing blob itself — alive while still. 11s loop between six

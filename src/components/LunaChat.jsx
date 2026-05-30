@@ -15,6 +15,10 @@ export default function LunaChat({ open, onClose, opener, context }) {
   const [messages, setMessages] = useState([])
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
+  // Tracks how much of the bottom is being eaten by the soft keyboard
+  // on iOS / Android Chrome via the Visual Viewport API. We push the
+  // composer up by this amount so it never hides behind the keyboard.
+  const [keyboardInset, setKeyboardInset] = useState(0)
   const scrollRef = useRef(null)
 
   // Seed with the opener whenever a new conversation starts.
@@ -30,6 +34,26 @@ export default function LunaChat({ open, onClose, opener, context }) {
     if (!scrollRef.current) return
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight
   }, [messages, sending])
+
+  // Track keyboard via Visual Viewport so the composer follows it.
+  useEffect(() => {
+    if (!open) return
+    const vv = typeof window !== 'undefined' && window.visualViewport
+    if (!vv) return
+    const update = () => {
+      // The keyboard is the difference between window height and the
+      // visible viewport height. Clamp so we never push beyond.
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setKeyboardInset(inset)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [open])
 
   if (!open) return null
 
@@ -85,9 +109,14 @@ export default function LunaChat({ open, onClose, opener, context }) {
           width: '100%', maxWidth: 430,
           background: T.bg,
           borderTopLeftRadius: 16, borderTopRightRadius: 16,
-          maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+          /* Use dvh and lift by keyboard inset so the composer stays
+             visible even when the soft keyboard is open. */
+          maxHeight: `calc(85dvh - ${keyboardInset}px)`,
+          marginBottom: keyboardInset,
+          display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',
+          transition: 'margin-bottom 0.15s ease-out, max-height 0.15s ease-out',
         }}>
         {/* Header */}
         <div style={{ padding: '14px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}` }}>

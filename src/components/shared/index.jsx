@@ -18,17 +18,18 @@ export const Icons = {
 export function AppShell({ children }) {
   return (
     <div style={{
-      minHeight: '100dvh',
+      height: '100dvh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: '#E8E3D8',
       padding: '0',
+      overflow: 'hidden',
     }}>
       <div style={{
         width: '100%',
         maxWidth: 430,
-        minHeight: '100dvh',
+        height: '100dvh',
         background: T.bg,
         position: 'relative',
         overflow: 'hidden',
@@ -184,7 +185,9 @@ export function BrickList({ title, items, positive = false }) {
 export const Screen = forwardRef(function Screen({ children, padBottom = 96, style: s = {}, onScroll }, ref) {
   return (
     <div ref={ref} onScroll={onScroll} style={{
-      flex: 1, overflowY: 'auto', overflowX: 'hidden',
+      flex: 1,
+      minHeight: 0,                /* required for proper flex+overflow:auto behaviour */
+      overflowY: 'auto', overflowX: 'hidden',
       scrollbarWidth: 'none',
       paddingBottom: padBottom,
       animation: 'fadeUp .3s ease-out both',

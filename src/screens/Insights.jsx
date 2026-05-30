@@ -102,9 +102,17 @@ export default function Insights() {
   const bbtShift = !onHormonalBC ? detectBBTShift(logs, periodHistory, cycle.cycleLength) : null
   const cycleDay = cycle.cycleDay
 
+  const blobColor = (phase?.color) || T.accent
+
   return (
-    <Screen>
-      <div style={{ padding: '12px 22px 0', color: T.text }}>
+    <div className="home-stage">
+      {!onHormonalBC && (
+        <div className="blob-stage subtle" aria-hidden="true">
+          <div className="breathing-blob" style={{ '--phase-color': blobColor }} />
+        </div>
+      )}
+      <Screen>
+        <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginTop: 6, marginBottom: 10 }}>
           What we've noticed.
         </div>
@@ -225,6 +233,7 @@ export default function Insights() {
         )}
         <div style={{ height: 16 }} />
       </div>
-    </Screen>
+      </Screen>
+    </div>
   )
 }
