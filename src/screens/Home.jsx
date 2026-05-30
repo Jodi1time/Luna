@@ -314,7 +314,7 @@ function ForTodayRow({ phase, go, goArticle }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, logs, birthControl, displayName } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, logs, birthControl, displayName } = store
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
   const preg = usePregnancy(store)
@@ -357,7 +357,13 @@ export default function Home() {
   // varied by phase. Null when no phase is known yet.
   const moodInsight = (quickMood && phase) ? MOOD_INSIGHTS[phase.id]?.[quickMood] : null
   const logPeriodStart = () => {
-    saveLog(new Date(), { ...(todayLog || {}), flow: 'Medium' })
+    // Explicit user confirmation that today is day 1 — log the flow
+    // AND directly anchor lastPeriodStart so detection is immediate
+    // (the new 2+ flow days rule in detectPeriodStarts otherwise
+    // delays auto-detection until day 2).
+    const today = new Date()
+    saveLog(today, { ...(todayLog || {}), flow: 'Medium' })
+    setLastPeriodStart(today)
   }
 
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength }) : null

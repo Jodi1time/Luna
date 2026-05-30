@@ -82,8 +82,13 @@ export default function Calendar() {
 
   return (
     <Screen>
-      <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Your month" />
+      <div style={{ padding: '20px 22px 0', color: T.text }}>
+        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6 }}>
+          Your cycle, mapped.
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic' }}>
+          Logged days are filled; predicted days are outlined.
+        </div>
 
         {/* Month header with arrow nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>

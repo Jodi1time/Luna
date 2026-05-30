@@ -21,18 +21,36 @@ function daysBetween(aISO, bISO) {
 // (≥ Light), defined as: a flow-logged day with NO flow log in
 // the previous 7 days.
 // 'Spotting' is excluded — it doesn't count as a period start.
+// Detect period start days from the logs. A "start" is the first flow
+// day of a stretch — where stretch = 2+ flow days within ≤2 days of
+// each other. Requiring 2+ consecutive days protects against false
+// positives from single-day breakthrough bleeding (hormonal BC,
+// implantation, stress). The explicit period-CTA on Home bypasses
+// this by writing lastPeriodStart directly via setLastPeriodStart.
 export function detectPeriodStarts(logs) {
   const flowDays = Object.entries(logs || {})
     .filter(([_, l]) => l?.flow && l.flow !== 'Spotting')
     .map(([d]) => d)
     .sort()
-  const starts = []
-  for (let i = 0; i < flowDays.length; i++) {
-    if (i === 0) { starts.push(flowDays[i]); continue }
+  if (flowDays.length === 0) return []
+  // Group adjacent flow days into stretches (gap ≤ 2 days between adjacent).
+  const stretches = []
+  let current = [flowDays[0]]
+  for (let i = 1; i < flowDays.length; i++) {
     const gap = daysBetween(flowDays[i - 1], flowDays[i])
-    if (gap > 7) starts.push(flowDays[i])
+    if (gap <= 2) current.push(flowDays[i])
+    else { stretches.push(current); current = [flowDays[i]] }
   }
-  return starts
+  stretches.push(current)
+  // Today (for ongoing-stretch handling — keep an unfinished single-day
+  // stretch as a candidate if it's the user's most recent log, so the
+  // app responds immediately when someone logs day one).
+  const todayISO = new Date().toISOString().slice(0, 10)
+  // A stretch counts as a confirmed period start if it has 2+ days OR
+  // is the latest stretch and is still within today (probably ongoing).
+  return stretches
+    .filter((s) => s.length >= 2 || s[s.length - 1] === todayISO)
+    .map((s) => s[0])
 }
 
 // Merge detected starts with the onboarding-supplied lastPeriodStart

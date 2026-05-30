@@ -129,9 +129,11 @@ export default function Settings() {
   }
   return (
     <Screen>
-      <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="You" />
-        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName || 'Welcome'}.</div>
+      <div style={{ padding: '20px 22px 0', color: T.text }}>
+        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Welcome.'}</div>
+        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
+          Your account, your cycle, your preferences.
+        </div>
       </div>
 
       {/* Pro card */}

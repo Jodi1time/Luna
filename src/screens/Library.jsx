@@ -12,12 +12,15 @@ export default function Library() {
 
   return (
     <Screen>
-      <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="The Library" />
-        <Eyebrow>Doctor-sourced · plain English</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>The Library.</div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
-          Every article is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named, not hidden.
+      <div style={{ padding: '20px 22px 0', color: T.text }}>
+        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6 }}>
+          What to read.
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic' }}>
+          Doctor-sourced, plain-English pieces on what your body is doing — and why.
+        </div>
+        <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 4 }}>
+          Every piece is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named at the top of each article, not buried.
         </div>
 
         {/* Category filter */}
