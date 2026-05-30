@@ -146,7 +146,7 @@ function Greeting({ name }) {
 // Compact 7-day strip — Mon–Sun of the current week. Today is shown
 // with a soft pulsing accent ring and a filled disc; period days
 // (logged or predicted) get a small dot below the number.
-function WeekStrip({ go, cycle, logs }) {
+function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   const today = new Date()
   const dayOfWeek = (today.getDay() + 6) % 7  // 0 = Monday
   const monday = new Date(today)
@@ -185,7 +185,10 @@ function WeekStrip({ go, cycle, logs }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 18 }}>
       {cells.map(({ iso, day, label, isToday, hasLogged, hasPredicted }) => (
-        <button key={iso} onClick={() => go('calendar')}
+        <button key={iso} onClick={() => {
+          // Past or today → open Log for that day. Future → just go to Calendar.
+          if (iso <= todayISO) { setActiveLogDate(iso); go('log') } else { go('calendar') }
+        }}
           style={{ background: 'transparent', border: 'none', padding: 4, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: 'inherit' }}>
           <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>{label}</div>
           <div style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -495,7 +498,7 @@ function ForTodayRow({ phase, go, goArticle }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, markWellness, logs, birthControl, displayName, settings } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings } = store
   const wellness = settings?.wellness || {}
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
@@ -581,7 +584,7 @@ export default function Home() {
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} />
 
-          {!isPreg && <WeekStrip go={go} cycle={cycle} logs={logs} />}
+          {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
 
           {/* Cover — Pregnancy variant */}
           {isPreg && (

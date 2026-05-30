@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
@@ -23,11 +23,15 @@ const SEX_OPTIONS = [
 
 export default function Log() {
   const store = useLuna()
-  const { back, goArticle, goSymptom, saveLog, getLog } = store
+  const { back, goArticle, goSymptom, saveLog, getLog, activeLogDate, setActiveLogDate } = store
   const cycle = useCycle(store)
   const phase = cycle.phase
   const todayISO = new Date().toISOString().slice(0, 10)
-  const existing = getLog(todayISO) || {}
+  // The user can land on Log with an explicit past date (Calendar tap)
+  // — otherwise default to today. Never go past today.
+  const initialISO = activeLogDate && activeLogDate <= todayISO ? activeLogDate : todayISO
+  const [editingISO, setEditingISO] = useState(initialISO)
+  const existing = getLog(editingISO) || {}
   const [mood,     setMood]     = useState(existing.mood || null)
   const [symptoms, setSymptoms] = useState(existing.symptoms || [])
   const [flow,     setFlow]     = useState(existing.flow || null)
@@ -49,13 +53,50 @@ export default function Log() {
 
   const symInsight = (activeSym && phase) ? SYMPTOM_INSIGHTS[activeSym]?.[phase.id] : null
 
+  // When the user navigates to a different date in-screen, re-load
+  // that date's existing log into the form state so it shows as the
+  // user actually saved it (rather than carrying the previous day's
+  // values over).
+  useEffect(() => {
+    const log = getLog(editingISO) || {}
+    setMood(log.mood || null)
+    setSymptoms(log.symptoms || [])
+    setFlow(log.flow || null)
+    setBbt(log.bbt?.value ?? '')
+    setBbtUnit(log.bbt?.unit || 'F')
+    setMucus(log.mucus || null)
+    setSex(log.sex || null)
+    setSleep(log.sleep || null)
+    setNote(log.note || '')
+    setBbtError('')
+    setActiveSym(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingISO])
+
+  // Date navigation — bound to <= today.
+  const shiftDate = (delta) => {
+    const d = new Date(editingISO + 'T12:00:00')
+    d.setDate(d.getDate() + delta)
+    const next = d.toISOString().slice(0, 10)
+    if (next > todayISO) return
+    setEditingISO(next)
+  }
+  const canGoNext = editingISO < todayISO
+
+  // Clear the explicit-date intent when leaving Log so the next visit
+  // defaults to today (unless the user picks a date again).
+  const handleBack = () => {
+    setActiveLogDate(null)
+    back()
+  }
+
   const save = () => {
     const bbtErr = validateBBT(bbt, bbtUnit)
     if (bbtErr) { setBbtError(bbtErr); return }
     setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
-    saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
+    saveLog(editingISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
     // Analytics: which CATEGORIES of fields were filled, not contents.
     // Fire-and-forget — never block navigation on analytics.
     import('../lib/posthog').then(({ capture }) => capture('log_saved', {
@@ -68,26 +109,38 @@ export default function Log() {
       has_sleep: Boolean(sleep),
       has_note: Boolean((note || '').trim().length),
     })).catch(() => {})
+    setActiveLogDate(null)
     back()
   }
 
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateLabel = new Date(editingISO + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+  const isToday = editingISO === todayISO
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 22px 30px' }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans }}>
-          <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
-          <div style={{ fontSize: 12, color: T.muted, fontFamily: T.serif, fontStyle: 'italic' }}>{dateLabel}</div>
+          <button onClick={handleBack} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => shiftDate(-1)} aria-label="Previous day"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.text, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>‹</button>
+            <div style={{ fontSize: 12.5, color: isToday ? T.text : T.accent, fontFamily: T.serif, fontStyle: 'italic', minWidth: 140, textAlign: 'center', letterSpacing: -0.1 }}>
+              {isToday ? 'Today' : dateLabel}
+            </div>
+            <button onClick={() => shiftDate(1)} disabled={!canGoNext} aria-label="Next day"
+              style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : T.hair, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>›</button>
+          </div>
           <button onClick={save} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: 6, fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans }}>Save</button>
         </div>
 
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, margin: '16px 0 6px' }}>
-          Tell me about<br /><em>your day.</em>
+          {isToday ? <>Tell me about<br /><em>your day.</em></> : <>How was<br /><em>that day?</em></>}
         </div>
         <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
-          Whatever you noticed. None of these are required — tap the <span style={{ fontFamily: T.mono }}>?</span> on any symptom for the science behind it.
+          {isToday
+            ? <>Whatever you noticed. None of these are required — tap the <span style={{ fontFamily: T.mono }}>?</span> on any symptom for the science behind it.</>
+            : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
 
         {/* Mood */}

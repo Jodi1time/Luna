@@ -21,6 +21,11 @@ export default function Calendar() {
   const store = useLuna()
   const cycle = useCycle(store)
   const onHormonalBC = isOnHormonalBC(store.birthControl)
+  const { go, setActiveLogDate } = store
+  const openLogFor = (iso) => {
+    setActiveLogDate(iso)
+    go('log')
+  }
   const filteredPredictions = cycle.predictions
     ? (onHormonalBC ? cycle.predictions.filter((p) => p.label !== 'Fertile window') : cycle.predictions)
     : null
@@ -152,8 +157,15 @@ export default function Calendar() {
             const isToday = date === todayISO
             const showLoggedDot = isLoggedPeriod
             const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
+            // Past and today are tappable → open Log for that date.
+            // Future days are non-interactive (no log to make yet).
+            const tappable = !future
             return (
-              <div key={date} style={{
+              <button key={date}
+                onClick={tappable ? () => openLogFor(date) : undefined}
+                disabled={!tappable}
+                aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
+                style={{
                 position: 'relative',
                 aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
@@ -161,6 +173,9 @@ export default function Calendar() {
                 color: isToday && phase ? '#fff' : T.text,
                 border: future && phase ? `1px dashed ${phase.color}88` : 'none',
                 borderRadius: T.r,
+                cursor: tappable ? 'pointer' : 'default',
+                padding: 0,
+                fontFamily: T.serif,
               }}>
                 {day}
                 {showLoggedDot && (
@@ -169,7 +184,7 @@ export default function Calendar() {
                 {showPredictedDot && (
                   <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
                 )}
-              </div>
+              </button>
             )
           })}
         </div>

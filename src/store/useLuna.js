@@ -146,6 +146,11 @@ const useLuna = create(
       activePhaseId:  'ovulation',
       activeArticleId: 'pmdd',
       activeSymptomId: 'cramps',
+      // Date the Log screen is editing. Null means "today" — set
+      // explicitly when the user navigates to Log from a past day
+      // (Calendar tap, week strip tap).
+      activeLogDate: null,
+      setActiveLogDate: (iso) => set({ activeLogDate: iso }),
 
       go: (screen, params = {}) =>
         set((s) => ({
