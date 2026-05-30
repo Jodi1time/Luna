@@ -140,10 +140,7 @@ function WeekStrip({ go, cycle, logs }) {
           <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>{label}</div>
           <div style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isToday && (
-              <>
-                <div className="pulse-ring" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent }} />
-                <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent }} />
-              </>
+              <div className="today-disc" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent }} />
             )}
             <span style={{
               position: 'relative',
@@ -165,6 +162,62 @@ function WeekStrip({ go, cycle, logs }) {
           </div>
         </button>
       ))}
+    </div>
+  )
+}
+
+// Always-here essentials at the bottom of Home — surfaces support
+// features so users don't have to dig into Settings to find them
+// when something is off or needs attention.
+function AlwaysHere({ go }) {
+  const items = [
+    {
+      key: 'watch',
+      label: 'When something feels off',
+      sub: 'Spot the patterns. Take words to your doctor.',
+      onTap: () => go('watch'),
+    },
+    {
+      key: 'care',
+      label: 'Stay on top of care',
+      sub: 'Checkups, screenings, what’s due.',
+      onTap: () => go('care'),
+    },
+  ]
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
+        Always here.
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {items.map((it) => (
+          <button key={it.key} onClick={it.onTap}
+            style={{
+              textAlign: 'left',
+              background: T.card,
+              border: `1px solid ${T.hair}`,
+              borderRadius: T.r,
+              padding: '14px 16px',
+              cursor: 'pointer',
+              color: T.text,
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}>
+            <div>
+              <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
+                {it.label}
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.45 }}>
+                {it.sub}
+              </div>
+            </div>
+            <span style={{ fontFamily: T.sans, fontSize: 18, color: T.muted, lineHeight: 1, flexShrink: 0 }}>›</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -262,15 +315,10 @@ export default function Home() {
   }
 
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength }) : null
-  const phaseColor = isPreg ? trimColor : (phase?.color || T.accent)
 
   return (
     <Screen>
       <div style={{ position: 'relative', padding: '12px 22px 0', color: T.text }}>
-        {/* Soft phase-tinted wash at the top — quietly grounds the
-            page in the current phase's mood without copy. */}
-        {phaseColor && <div className="phase-wash" style={{ '--phase-color': phaseColor }} />}
-
         <div style={{ position: 'relative', zIndex: 1 }}>
           <Greeting name={displayName} />
 
@@ -282,9 +330,9 @@ export default function Home() {
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: trimColor, marginBottom: 6 }}>
                 Week {preg.week} · {preg.trimester?.name}
               </div>
-              <div style={{ position: 'relative' }}>
-                <div className="cover-halo" style={{ '--phase-color': trimColor }} />
-                <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor, lineHeight: 0.82, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+              <div style={{ position: 'relative', height: 150, marginTop: 12 }}>
+                <div className="breathing-blob" style={{ '--phase-color': trimColor }} />
+                <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor, lineHeight: 1, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
                   {animatedDay || '—'}
                 </div>
               </div>
@@ -320,9 +368,9 @@ export default function Home() {
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                 : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
             </div>
-            <div style={{ position: 'relative' }}>
-              {phase && <div className="cover-halo" style={{ '--phase-color': phase.color }} />}
-              <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 0.82, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+            <div style={{ position: 'relative', height: 150, marginTop: 12 }}>
+              {phase && <div className="breathing-blob" style={{ '--phase-color': phase.color }} />}
+              <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 1, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
                 {cycleDay ? animatedDay : '—'}
               </div>
             </div>
@@ -391,6 +439,9 @@ export default function Home() {
               <ForTodayRow phase={phase} go={go} goArticle={goArticle} />
             </div>
           )}
+
+          {/* Always here — essentials surfaced from Settings */}
+          {!isPreg && <AlwaysHere go={go} />}
 
           {/* How are you, today? */}
           <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '18px 0', marginTop: 24, marginBottom: 8 }}>
