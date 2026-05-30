@@ -650,7 +650,7 @@ export default function Home() {
               </div>
             )}
             {phase && !onHormonalBC && (
-              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: phase.color }}>
+              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
                 {phasePresence[phase.id]}
               </div>
             )}
