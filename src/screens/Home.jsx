@@ -80,6 +80,49 @@ function useCountUp(target, duration = 900) {
   return value
 }
 
+// Living blob centered behind the Home screen. Position is "fixed-ish"
+// — actually absolute inside the phone frame so on desktop it stays
+// inside the device window. Stays put as the user scrolls content
+// over it. Tapping triggers one of three cute one-shot effects.
+function BackgroundBlob({ color }) {
+  const [effect, setEffect] = useState(null)
+  const trigger = () => {
+    const options = ['ripple', 'bloom', 'sparkle']
+    const next = options[Math.floor(Math.random() * options.length)]
+    setEffect({ id: Date.now(), name: next })
+  }
+  // Clear effect after its animation completes — keeps the DOM clean.
+  useEffect(() => {
+    if (!effect) return
+    const t = setTimeout(() => setEffect(null), 1600)
+    return () => clearTimeout(t)
+  }, [effect])
+
+  const sparkles = effect?.name === 'sparkle' ? Array.from({ length: 8 }, (_, i) => {
+    const angle = (i / 8) * Math.PI * 2
+    return { tx: `${Math.cos(angle) * 120}px`, ty: `${Math.sin(angle) * 120}px` }
+  }) : null
+
+  return (
+    <div className="blob-stage" onClick={trigger} aria-hidden="true">
+      <div className="breathing-blob" style={{ '--phase-color': color }} />
+      {effect?.name === 'ripple' && (
+        <div key={effect.id} className="blob-ripple" style={{ '--phase-color': color }} />
+      )}
+      {effect?.name === 'bloom' && (
+        <div key={effect.id} className="blob-bloom" style={{ '--phase-color': color }} />
+      )}
+      {sparkles && (
+        <div key={effect.id} className="blob-sparkles">
+          {sparkles.map((s, i) => (
+            <span key={i} style={{ '--tx': s.tx, '--ty': s.ty, '--phase-color': color }} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Greeting({ name }) {
   const hour = new Date().getHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
@@ -315,11 +358,13 @@ export default function Home() {
   }
 
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength }) : null
+  const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
   return (
-    <Screen>
-      <div style={{ position: 'relative', padding: '12px 22px 0', color: T.text }}>
-        <div style={{ position: 'relative', zIndex: 1 }}>
+    <>
+      <BackgroundBlob color={blobColor} />
+      <Screen>
+        <div className="home-content" style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} />
 
           {!isPreg && <WeekStrip go={go} cycle={cycle} logs={logs} />}
@@ -330,11 +375,8 @@ export default function Home() {
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: trimColor, marginBottom: 6 }}>
                 Week {preg.week} · {preg.trimester?.name}
               </div>
-              <div style={{ position: 'relative', height: 150, marginTop: 12 }}>
-                <div className="breathing-blob" style={{ '--phase-color': trimColor }} />
-                <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor, lineHeight: 1, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
-                  {animatedDay || '—'}
-                </div>
+              <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+                {animatedDay || '—'}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
                 {preg.daysToDue > 0
@@ -368,11 +410,8 @@ export default function Home() {
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                 : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
             </div>
-            <div style={{ position: 'relative', height: 150, marginTop: 12 }}>
-              {phase && <div className="breathing-blob" style={{ '--phase-color': phase.color }} />}
-              <div className="ambient-breath" style={{ position: 'relative', fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 1, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
-                {cycleDay ? animatedDay : '—'}
-              </div>
+            <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase?.color || T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+              {cycleDay ? animatedDay : '—'}
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
               {phase?.name || 'Just getting started'}.
@@ -471,7 +510,7 @@ export default function Home() {
 
           <div style={{ height: 16 }} />
         </div>
-      </div>
-    </Screen>
+      </Screen>
+    </>
   )
 }

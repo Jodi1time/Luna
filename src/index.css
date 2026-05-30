@@ -71,29 +71,115 @@ button.no-tap, button.no-tap:active { transform: none; }
   transform-origin: center;
 }
 
-/* Breathing blob — a slowly morphing organic shape that lives behind
-   the cover day number on Home. Pure CSS: animates border-radius
-   between four organic 8-corner shapes plus a gentle rotation and
-   scale. Filter: blur softens to a painted edge. The Headspace-
-   bubble vocabulary, in Luna's phase color. */
+/* ── Background blob stage ─────────────────────────────────────
+   Ambient living shape that sits centered behind the Home screen.
+   Pinned to the phone frame (absolute, not fixed) so on desktop it
+   stays inside the device-frame instead of escaping. Receives tap
+   events to trigger a one-shot cute effect (ripple / bloom / sparkle).
+   The blob itself uses pointer-events: none so the *stage* is what
+   the user actually interacts with — gives a wider tap target. */
+.blob-stage {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  width: 340px;
+  height: 340px;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The morphing blob itself — slow, organic, painted-edge. 13s loop
+   between five distinct 8-corner shapes with gentle counter-rotation
+   and breath-scale. Pure CSS. */
 @keyframes blobMorph {
-  0%   { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: translate(-50%, -50%) rotate(0deg)  scale(1); }
-  25%  { border-radius: 48% 52% 65% 35% / 58% 42% 58% 42%; transform: translate(-50%, -50%) rotate(4deg)  scale(1.04); }
-  50%  { border-radius: 55% 45% 35% 65% / 42% 55% 45% 58%; transform: translate(-50%, -50%) rotate(-2deg) scale(0.98); }
-  75%  { border-radius: 40% 60% 55% 45% / 55% 40% 60% 45%; transform: translate(-50%, -50%) rotate(3deg)  scale(1.03); }
-  100% { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: translate(-50%, -50%) rotate(0deg)  scale(1); }
+  0%   { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: rotate(0deg)  scale(1);    }
+  20%  { border-radius: 45% 55% 68% 32% / 60% 38% 62% 40%; transform: rotate(5deg)  scale(1.05); }
+  40%  { border-radius: 58% 42% 32% 68% / 38% 62% 38% 62%; transform: rotate(-3deg) scale(0.96); }
+  60%  { border-radius: 38% 62% 58% 42% / 55% 40% 60% 45%; transform: rotate(4deg)  scale(1.04); }
+  80%  { border-radius: 52% 48% 45% 55% / 50% 52% 48% 50%; transform: rotate(-2deg) scale(0.99); }
+  100% { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: rotate(0deg)  scale(1);    }
 }
 .breathing-blob {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 260px; height: 260px;
+  inset: 0;
   background: var(--phase-color, currentColor);
-  filter: blur(14px);
-  opacity: 0.34;
+  filter: blur(18px);
+  opacity: 0.36;
   pointer-events: none;
-  animation: blobMorph 9s ease-in-out infinite;
-  z-index: 0;
+  animation: blobMorph 13s ease-in-out infinite;
   will-change: border-radius, transform;
+}
+
+/* ── Tap effects ───────────────────────────────────────────────
+   Each effect is a one-shot CSS animation triggered by a keyed
+   element. Effects are layered above the blob but still inside
+   the blob-stage container so they're centered with it. */
+
+/* 1. Ripple — soft concentric ring expanding outward */
+@keyframes blobRipple {
+  0%   { transform: scale(0.55); opacity: 0.55; border-width: 2.5px; }
+  100% { transform: scale(1.5);  opacity: 0;    border-width: 0.5px; }
+}
+.blob-ripple {
+  position: absolute;
+  inset: 0;
+  border: 2.5px solid var(--phase-color, currentColor);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: blobRipple 1.3s cubic-bezier(0.22, 0.7, 0.3, 1) both;
+}
+
+/* 2. Bloom — the blob brightens and gently expands then settles */
+@keyframes blobBloom {
+  0%   { transform: scale(0.85); opacity: 0;    }
+  35%  { transform: scale(1.18); opacity: 0.55; }
+  100% { transform: scale(1.35); opacity: 0;    }
+}
+.blob-bloom {
+  position: absolute;
+  inset: 0;
+  background: var(--phase-color, currentColor);
+  border-radius: 50%;
+  filter: blur(22px);
+  pointer-events: none;
+  animation: blobBloom 1.4s ease-out both;
+}
+
+/* 3. Sparkle — eight small dots scatter outward then fade up */
+@keyframes blobSparkle {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  25%  { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--tx, 0)), calc(-50% + var(--ty, 0))) scale(0.4); opacity: 0; }
+}
+.blob-sparkles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.blob-sparkles > span {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--phase-color, currentColor);
+  box-shadow: 0 0 8px var(--phase-color, currentColor);
+  animation: blobSparkle 1.5s cubic-bezier(0.18, 0.65, 0.36, 1) both;
+}
+
+/* Let Home's decorative areas pass clicks through to the blob behind
+   them. Interactive children (button, a, input) still receive their
+   own clicks because they have their own pointer-events: auto. */
+.home-content {
+  pointer-events: none;
+}
+.home-content button,
+.home-content a,
+.home-content input,
+.home-content [role="button"] {
+  pointer-events: auto;
 }
 
 /* Soft inner-glow breath for the "today" disc on the week strip —
