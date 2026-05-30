@@ -223,7 +223,11 @@ export default function Onboarding({ step }) {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both' }}>
+    <div className="home-stage">
+      <div className="blob-stage subtle" aria-hidden="true">
+        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
+      </div>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .3s ease-out both', overflowY: 'auto', minHeight: 0 }}>
       <ProgressBar step={step} />
 
       <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 3</div>
@@ -288,6 +292,7 @@ export default function Onboarding({ step }) {
           </CTAButton>
         </div>
 
+      </div>
       </div>
     </div>
   )

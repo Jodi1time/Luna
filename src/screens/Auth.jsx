@@ -90,9 +90,13 @@ export default function Auth() {
     : "Sign in to come back to your cycle on any device. Your data is encrypted at rest — only you can read it."
 
   return (
-    <Screen>
-      <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Account" onBack={back} />
+    <div className="home-stage">
+      <div className="blob-stage subtle" aria-hidden="true">
+        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
+      </div>
+      <Screen>
+        <div style={{ position: 'relative', zIndex: 1, padding: '12px 22px 0', color: T.text }}>
+          <Masthead issue="Account" onBack={back} />
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05, marginBottom: 10 }}>
           {headline}
         </div>
@@ -142,6 +146,7 @@ export default function Auth() {
           Your cycle data is stored on Luna's servers, encrypted at rest, and only accessible from your signed-in account. We do not sell or share it.
         </div>
       </div>
-    </Screen>
+      </Screen>
+    </div>
   )
 }

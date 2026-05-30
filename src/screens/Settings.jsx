@@ -128,8 +128,13 @@ export default function Settings() {
     window.location.reload()
   }
   return (
-    <Screen>
-      <div style={{ padding: '20px 22px 0', color: T.text }}>
+    <div className="home-stage">
+      <div className="blob-stage subtle" aria-hidden="true">
+        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
+      </div>
+      <Screen>
+        <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ padding: '20px 22px 0', color: T.text }}>
         <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Welcome.'}</div>
         <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
           Your account, your cycle, your preferences.
@@ -227,6 +232,8 @@ export default function Settings() {
       </div>
 
       <div style={{ height: 16 }} />
-    </Screen>
+      </div>
+      </Screen>
+    </div>
   )
 }

@@ -80,9 +80,16 @@ export default function Calendar() {
   const yearLabel = viewed.getFullYear()
   const isCurrentMonth = viewed.getFullYear() === now.getFullYear() && viewed.getMonth() === now.getMonth()
 
+  const blobColor = (cycle.phase?.color) || T.accent
   return (
-    <Screen>
-      <div style={{ padding: '20px 22px 0', color: T.text }}>
+    <div className="home-stage">
+      {!onHormonalBC && (
+        <div className="blob-stage subtle" aria-hidden="true">
+          <div className="breathing-blob" style={{ '--phase-color': blobColor }} />
+        </div>
+      )}
+      <Screen>
+        <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6 }}>
           Your cycle, mapped.
         </div>
@@ -224,6 +231,7 @@ export default function Calendar() {
         )}
         <div style={{ height: 16 }} />
       </div>
-    </Screen>
+      </Screen>
+    </div>
   )
 }

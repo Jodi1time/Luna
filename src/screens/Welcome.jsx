@@ -5,10 +5,14 @@ import useLuna from '../store/useLuna'
 export default function Welcome() {
   const go = useLuna((s) => s.go)
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', background: T.bg, color: T.text, animation: 'fadeUp .35s ease-out both' }}>
-      <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, marginBottom: 32, color: T.muted }}>
-        LUNA
+    <div className="home-stage" style={{ overflow: 'hidden' }}>
+      <div className="blob-stage subtle" aria-hidden="true">
+        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
       </div>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, marginBottom: 32, color: T.muted }}>
+          LUNA
+        </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.1 }}>
@@ -41,6 +45,7 @@ export default function Welcome() {
         <button onClick={() => go('auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, marginTop: 12, padding: 8, width: '100%' }}>
           Already with us? <span style={{ color: T.text, fontWeight: 600 }}>Sign in</span>
         </button>
+      </div>
       </div>
     </div>
   )
