@@ -107,10 +107,10 @@ button.no-tap, button.no-tap:active { transform: none; }
    frame instead of escaping. */
 .blob-stage {
   position: absolute;
-  top: 34%;                          /* anchored in the upper-mid of the phone frame, near the cover number */
+  top: 50%;                          /* true viewport center — stays centered regardless of scroll */
   left: 50%;
-  width: 420px;                      /* larger so it reads as a layer the content scrolls past */
-  height: 420px;
+  width: 440px;
+  height: 440px;
   transform: translate(-50%, -50%);
   z-index: 0;
   pointer-events: none;

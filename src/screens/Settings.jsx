@@ -22,7 +22,7 @@ function SectionLabel({ children }) {
 function Row({ label, value, right, onTap, danger }) {
   return (
     <div onClick={onTap}
-      style={{ background: T.card, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}`, cursor: onTap ? 'pointer' : 'default' }}>
+      style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}`, cursor: onTap ? 'pointer' : 'default' }}>
       <div style={{ fontSize: 14, color: danger ? T.accent : T.text, fontFamily: T.sans }}>{label}</div>
       <div style={{ fontSize: 13, color: T.muted, fontFamily: T.sans, display: 'flex', alignItems: 'center', gap: 6 }}>
         {value && <span>{value}</span>}
@@ -136,7 +136,7 @@ export default function Settings() {
 
       {/* Pro card */}
       <div style={{ padding: '20px 16px 8px' }}>
-        <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, display: 'flex', alignItems: 'center', gap: 14, borderRadius: T.r }}>
+        <div className="glass-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, borderRadius: T.r }}>
           <div style={{ width: 50, height: 50, background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 22, fontWeight: 500, borderRadius: T.r }}>{initial}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14, fontFamily: T.sans }}>{isPro ? 'Luna Pro' : 'Luna Free'}</div>
@@ -152,7 +152,7 @@ export default function Settings() {
 
       {session && <>
         <SectionLabel>Your account</SectionLabel>
-        <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+        <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
           <Row label="Signed in as" value={session.user.email} />
           <Row label="Sign out" onTap={handleSignOut} />
           {!session.user.email_confirmed_at && (
@@ -177,7 +177,7 @@ export default function Settings() {
       </>}
 
       <SectionLabel>Your cycle</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Average cycle length" value={`${cycleLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Average period length" value={`${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
@@ -187,7 +187,7 @@ export default function Settings() {
       </div>
 
       <SectionLabel>Privacy</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Storage" value="Encrypted at rest" />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
         <Row label="Export everything" onTap={exportCSV} />
@@ -197,14 +197,14 @@ export default function Settings() {
       </div>
 
       <SectionLabel>Gentle reminders</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Period reminder"  right={<Toggle on={settings.notifyPeriod} onChange={(v) => updateSetting('notifyPeriod', v)} />} />
         <Row label="Daily check-in"   right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
 
       <SectionLabel>More from Luna</SectionLabel>
-      <div style={{ margin: '0 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />

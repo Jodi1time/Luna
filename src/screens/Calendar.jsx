@@ -169,7 +169,7 @@ export default function Calendar() {
         {filteredPredictions ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
             {filteredPredictions.map((p, i) => (
-              <div key={i} style={{ padding: 14, background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r }}>
+              <div key={i} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ fontSize: 10, letterSpacing: 1.5, color: T.muted, fontWeight: 700, fontFamily: T.sans }}>{p.label.toUpperCase()}</span>
                   <span style={{ fontSize: 10, fontFamily: T.mono, color: T.accent }}>{p.conf}</span>
