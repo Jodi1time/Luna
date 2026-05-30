@@ -3,9 +3,10 @@ import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
-import { useCycle } from '../hooks/useCycle'
+import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
+import { chime, bloomSound } from '../lib/sounds'
 
 const MUCUS_OPTIONS = [
   { id: 'dry',      label: 'Dry',       sub: 'Low fertility' },
@@ -42,6 +43,7 @@ export default function Log() {
   const [sleep,    setSleep]    = useState(existing.sleep || null)
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
+  const [savedJustNow, setSavedJustNow] = useState(false)
   // Last-tapped symptom (for the inline insight). Cleared when the
   // user untaps the same symptom or taps a different one.
   const [activeSym, setActiveSym] = useState(null)
@@ -96,7 +98,32 @@ export default function Log() {
     setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
+    // Before saving, check whether this save will be a new period
+    // start (so we can fire the celebration). A new start = flow is
+    // set (not Spotting), wasn't a flow day before, and is the first
+    // day of a 1-day flow stretch that's >7 days after the previous.
+    const wasNewPeriodStart = (() => {
+      if (!flow || flow === 'Spotting') return false
+      if (existing.flow && existing.flow !== 'Spotting') return false
+      const allLogs = useLuna.getState().logs
+      const prevStarts = detectPeriodStarts(allLogs)
+      const latestStart = prevStarts[prevStarts.length - 1]
+      if (!latestStart) return true
+      const days = (new Date(editingISO + 'T00:00:00') - new Date(latestStart + 'T00:00:00')) / 86400000
+      return days > 7
+    })()
     saveLog(editingISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
+    // Sounds — gated on the user's settings.sounds toggle.
+    const soundsOn = Boolean(useLuna.getState().settings?.sounds)
+    if (wasNewPeriodStart) bloomSound(soundsOn)
+    else chime(soundsOn)
+    // Celebration — period day one only fires this overlay.
+    if (wasNewPeriodStart) {
+      useLuna.setState({ celebration: 'day-one' })
+    }
+    // Visual save-success pulse on the Save button briefly.
+    setSavedJustNow(true)
+    setTimeout(() => setSavedJustNow(false), 600)
     // Analytics: which CATEGORIES of fields were filled, not contents.
     // Fire-and-forget — never block navigation on analytics.
     import('../lib/posthog').then(({ capture }) => capture('log_saved', {
@@ -109,8 +136,12 @@ export default function Log() {
       has_sleep: Boolean(sleep),
       has_note: Boolean((note || '').trim().length),
     })).catch(() => {})
-    setActiveLogDate(null)
-    back()
+    // Brief delay so the save-pulse animation has time to play
+    // before we leave the screen.
+    setTimeout(() => {
+      setActiveLogDate(null)
+      back()
+    }, 480)
   }
 
   const dateLabel = new Date(editingISO + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -131,7 +162,10 @@ export default function Log() {
             <button onClick={() => shiftDate(1)} disabled={!canGoNext} aria-label="Next day"
               style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : T.hair, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>›</button>
           </div>
-          <button onClick={save} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: 6, fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans }}>Save</button>
+          <button onClick={save} className={savedJustNow ? 'success-pulse' : ''}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: '6px 10px', fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 6 }}>
+            {savedJustNow ? 'Saved' : 'Save'}
+          </button>
         </div>
 
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, margin: '16px 0 6px' }}>

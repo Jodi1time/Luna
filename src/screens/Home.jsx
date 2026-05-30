@@ -5,6 +5,8 @@ import { SymptomIcon } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, getReflectionPrompt } from '../data/lunaData'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
+import { PhaseFlourish } from '../components/phaseFlourishes'
+import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
@@ -130,14 +132,24 @@ function BackgroundBlob({ color, effect }) {
   )
 }
 
-function Greeting({ name }) {
+// Phase-aware tonal opener — the same time of day reads slightly
+// different depending on where the user is in her cycle.
+const PHASE_GREETING = {
+  menstrual:  'Quiet',
+  follicular: 'Bright',
+  ovulation:  'Warm',
+  luteal:     'Soft',
+}
+
+function Greeting({ name, phaseId }) {
   const hour = new Date().getHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const first = (name || '').split(' ')[0]
+  const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
   return (
     <div style={{ paddingTop: 6, marginBottom: 14 }}>
       <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
-        Good {timeOfDay}{first ? ', ' : ''}<span style={{ fontStyle: 'normal' }}>{first}</span>.
+        {opener} {timeOfDay}{first ? ', ' : ''}<span style={{ fontStyle: 'normal' }}>{first}</span>.
       </div>
     </div>
   )
@@ -570,7 +582,18 @@ export default function Home() {
     const today = new Date()
     saveLog(today, { ...(todayLog || {}), flow: 'Medium' })
     setLastPeriodStart(today)
+    // Soft milestone moment + bloom sound.
+    useLuna.getState().setCelebration('day-one')
+    // Lazy-load sounds to avoid pulling AudioContext into the eager path.
+    import('../lib/sounds').then(({ bloomSound }) => bloomSound(Boolean(settings?.sounds)))
   }
+  const celebration = useLuna((s) => s.celebration)
+  const setCelebration = useLuna((s) => s.setCelebration)
+  useEffect(() => {
+    if (!celebration) return
+    const t = setTimeout(() => setCelebration(null), 3200)
+    return () => clearTimeout(t)
+  }, [celebration, setCelebration])
 
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
@@ -582,7 +605,7 @@ export default function Home() {
       {/* Content layer — scrolls past the stationary blob. */}
       <Screen>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
-          <Greeting name={displayName} />
+          <Greeting name={displayName} phaseId={phase?.id} />
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
 
@@ -630,8 +653,15 @@ export default function Home() {
             <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
               {cycleDay ? animatedDay : '—'}
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
-              {phase?.name || 'Just getting started'}.
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05 }}>
+                {phase?.name || 'Just getting started'}.
+              </div>
+              {phase && (
+                <span style={{ color: phase.color, opacity: 0.75, display: 'inline-flex' }} aria-hidden="true">
+                  <PhaseFlourish phaseId={phase.id} size={26} />
+                </span>
+              )}
             </div>
 
             {contextLine && (
@@ -714,6 +744,10 @@ export default function Home() {
               </div>
             </button>
           )}
+
+          {/* Soft milestone moment — period day one, etc. Auto-clears
+              after ~3s via the useEffect above. */}
+          <Celebration kind={celebration} onClose={() => setCelebration(null)} />
 
           {/* Chat overlay — opens when the thought is tapped */}
           {phase && thoughtText && (

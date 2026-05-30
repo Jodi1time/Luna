@@ -196,6 +196,7 @@ export default function Settings() {
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Storage" value="Encrypted at rest" />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
+        <Row label="Soft sounds" right={<Toggle on={Boolean(settings.sounds)} onChange={(v) => updateSetting('sounds', v)} />} />
         <Row label="Export everything" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />

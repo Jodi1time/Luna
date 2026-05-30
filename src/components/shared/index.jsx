@@ -122,9 +122,12 @@ export function Masthead({ issue = 'No. 1', date, onBack }) {
 }
 
 // ── Eyebrow ──────────────────────────────────────────────────
+// Used as a small section label across the app. Switched from
+// uppercase sans-serif (tech-coded) to small-caps serif (warmer
+// editorial register) — same legibility, more literary feeling.
 export function Eyebrow({ children, color }) {
   return (
-    <div style={{ fontSize: 10, letterSpacing: 2, fontFamily: T.sans, fontWeight: 700, color: color || T.muted, textTransform: 'uppercase', marginBottom: 8 }}>
+    <div style={{ fontSize: 12, letterSpacing: 0.8, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, color: color || T.muted, marginBottom: 10 }}>
       {children}
     </div>
   )

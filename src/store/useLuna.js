@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS = {
   notifyLog:     true,
   notifyWeekly:  true,
   analytics:     true,
+  sounds:        false,             // soft chimes on save / milestones — opt-in
   // Wellness tracking — small habits Luna nudges about.
   // Stored as ISO date strings ('YYYY-MM-DD') of the last completion.
   wellness: {
@@ -151,6 +152,12 @@ const useLuna = create(
       // (Calendar tap, week strip tap).
       activeLogDate: null,
       setActiveLogDate: (iso) => set({ activeLogDate: iso }),
+
+      // Transient celebration trigger — Log writes this when a
+      // milestone happens (e.g. period day one); Home renders it
+      // and clears it after ~3s.
+      celebration: null,
+      setCelebration: (kind) => set({ celebration: kind }),
 
       go: (screen, params = {}) =>
         set((s) => ({
