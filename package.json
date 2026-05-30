@@ -19,6 +19,7 @@
     "@capacitor/android": "^8.3.4",
     "@capacitor/core": "^8.3.4",
     "@capacitor/ios": "^8.3.4",
+    "@react-spring/web": "^10.1.0",
     "@sentry/react": "^10.53.1",
     "@supabase/supabase-js": "^2.106.1",
     "posthog-js": "^1.376.4",

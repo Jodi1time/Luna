@@ -71,13 +71,26 @@ button.no-tap, button.no-tap:active { transform: none; }
   transform-origin: center;
 }
 
+/* ── Home stage (depth container) ───────────────────────────────
+   Wraps the Home screen as the parent stacking context for the blob
+   layer + the scrolling content layer. Two children:
+     1. .blob-stage — absolutely positioned, animated by react-spring
+        on scroll. Pinned to the stage, NOT to the scroll container,
+        so it stays in view while content slides past.
+     2. <Screen> — the content scroll surface, layered on top.
+   The stage itself fills the available phone-frame area. */
+.home-stage {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 /* ── Background blob stage ─────────────────────────────────────
    Ambient living shape that sits centered behind the Home screen.
-   Pinned to the phone frame (absolute, not fixed) so on desktop it
-   stays inside the device-frame instead of escaping. Receives tap
-   events to trigger a one-shot cute effect (ripple / bloom / sparkle).
-   The blob itself uses pointer-events: none so the *stage* is what
-   the user actually interacts with — gives a wider tap target. */
+   Pinned to .home-stage so on desktop it stays inside the device
+   frame instead of escaping. */
 .blob-stage {
   position: absolute;
   top: 32%;                          /* aligned with the natural number position */

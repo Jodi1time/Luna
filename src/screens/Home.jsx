@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { animated, useSpring, config } from '@react-spring/web'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -80,26 +81,25 @@ function useCountUp(target, duration = 900) {
   return value
 }
 
-// Living blob centered behind the Home screen. Lives in a separate
-// "layer" pinned to the phone frame, and its vertical position
-// reverse-mirrors the scroll position of the Home content — when the
-// user scrolls the page down, the blob drifts down too (parallax in
-// the opposite direction), giving the impression of two stacked
-// translucent surfaces gliding past each other.
-function BackgroundBlob({ color, scrollY, effect }) {
-  const sparkles = effect?.name === 'sparkle' ? Array.from({ length: 8 }, (_, i) => {
-    const angle = (i / 8) * Math.PI * 2
-    return { tx: `${Math.cos(angle) * 130}px`, ty: `${Math.sin(angle) * 130}px` }
-  }) : null
-
-  // Reverse parallax — page content moves up as user scrolls down,
-  // so the blob translates DOWN to "mirror" that motion. Coefficient
-  // tuned to feel like depth without flying off-screen too fast.
-  const parallaxY = scrollY * 0.45
-  const transform = `translate(-50%, calc(-50% + ${parallaxY}px))`
+// Living blob centered behind the Home screen. Wrapped in an animated
+// container whose vertical position is driven by a react-spring that
+// follows scrollY with physics — gives soft, lagged motion rather
+// than the on-rails CSS-transform feel of the previous attempt.
+// The blob layer sits behind the content layer; both are children of
+// the same main stage container so depth reads correctly.
+function BackgroundBlob({ color, effect, scrollY }) {
+  // Parallax: when the user scrolls down (scrollY positive), blob
+  // drifts down. The spring's friction/tension give it a brief lag
+  // and a soft settle so the motion reads as something physically
+  // behind glass rather than CSS-pegged to the scroll value.
+  const spring = useSpring({
+    y: scrollY * 0.55,
+    config: { mass: 1, tension: 90, friction: 26 },
+  })
+  const transform = spring.y.to((y) => `translate(-50%, calc(-50% + ${y}px))`)
 
   return (
-    <div className="blob-stage" style={{ transform }} aria-hidden="true">
+    <animated.div className="blob-stage" style={{ transform }} aria-hidden="true">
       <div className="breathing-blob" style={{ '--phase-color': color }} />
       {effect?.name === 'ripple' && (
         <div key={effect.id} className="blob-ripple" style={{ '--phase-color': color }} />
@@ -107,14 +107,7 @@ function BackgroundBlob({ color, scrollY, effect }) {
       {effect?.name === 'bloom' && (
         <div key={effect.id} className="blob-bloom" style={{ '--phase-color': color }} />
       )}
-      {sparkles && (
-        <div key={effect.id} className="blob-sparkles">
-          {sparkles.map((s, i) => (
-            <span key={i} style={{ '--tx': s.tx, '--ty': s.ty, '--phase-color': color }} />
-          ))}
-        </div>
-      )}
-    </div>
+    </animated.div>
   )
 }
 
@@ -349,7 +342,7 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [effect])
   const triggerBlobEffect = () => {
-    const options = ['ripple', 'bloom', 'sparkle']
+    const options = ['ripple', 'bloom']
     const next = options[Math.floor(Math.random() * options.length)]
     setEffect({ id: Date.now(), name: next })
   }
@@ -381,8 +374,10 @@ export default function Home() {
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
   return (
-    <>
+    <div className="home-stage">
+      {/* Blob layer — absolute, doesn't scroll. Spring-animated. */}
       <BackgroundBlob color={blobColor} scrollY={scrollY} effect={effect} />
+      {/* Content layer — scrolls; emits scrollY to drive the blob. */}
       <Screen onScroll={handleScroll}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} />
@@ -531,6 +526,6 @@ export default function Home() {
           <div style={{ height: 16 }} />
         </div>
       </Screen>
-    </>
+    </div>
   )
 }
