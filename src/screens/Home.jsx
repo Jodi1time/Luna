@@ -3,6 +3,8 @@ import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, getReflectionPrompt } from '../data/lunaData'
+import { dailyThought } from '../lib/lunaChat'
+import LunaChat from '../components/LunaChat'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
@@ -536,6 +538,27 @@ export default function Home() {
   // Insight surfaced when a mood is tapped — text + (optional) article id,
   // varied by phase. Null when no phase is known yet.
   const moodInsight = (quickMood && phase) ? MOOD_INSIGHTS[phase.id]?.[quickMood] : null
+
+  // Daily AI-generated reflection. Lives behind the Edge Function;
+  // falls back to the local static prompts when the function isn't
+  // deployed or the user is offline.
+  const session = useLuna((s) => s.session)
+  const [aiThought, setAiThought] = useState(null)
+  const [chatOpen, setChatOpen] = useState(false)
+  useEffect(() => {
+    if (!phase || !session?.user?.id) return
+    let cancelled = false
+    dailyThought({
+      userId: session.user.id,
+      phaseId: phase.id,
+      phaseName: phase.name,
+      cycleDay: cycle.cycleDay,
+      cycleLength: cycle.cycleLength,
+    }).then((text) => { if (!cancelled && text) setAiThought(text) })
+    return () => { cancelled = true }
+  }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id])
+  // Use the AI thought if we have one, otherwise the local static prompt.
+  const thoughtText = aiThought || (phase ? getReflectionPrompt(phase.id) : null)
   const logPeriodStart = () => {
     // Explicit user confirmation that today is day 1 — log the flow
     // AND directly anchor lastPeriodStart so detection is immediate
@@ -670,16 +693,38 @@ export default function Home() {
           </div>
           )}
 
-          {/* A small reflection — phase-aware, changes day to day, soft. */}
-          {!isPreg && phase && (
-            <div style={{ marginTop: 26, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-                A thought for this week
+          {/* A small reflection — phase-aware, changes day to day, soft.
+              Tap to open a brief conversation with Luna. */}
+          {!isPreg && phase && thoughtText && (
+            <button onClick={() => setChatOpen(true)}
+              style={{ marginTop: 26, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                  A thought for today
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+                  Talk it through →
+                </div>
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.2 }}>
-                {getReflectionPrompt(phase.id)}
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.2 }}>
+                {thoughtText}
               </div>
-            </div>
+            </button>
+          )}
+
+          {/* Chat overlay — opens when the thought is tapped */}
+          {phase && thoughtText && (
+            <LunaChat
+              open={chatOpen}
+              onClose={() => setChatOpen(false)}
+              opener={thoughtText}
+              context={{
+                phaseId: phase.id,
+                phaseName: phase.name,
+                cycleDay: cycle.cycleDay,
+                cycleLength: cycle.cycleLength,
+              }}
+            />
           )}
 
           {/* For today — horizontal scroll of curated phase-tuned cards */}
