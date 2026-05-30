@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
-import { PHASES, ARTICLES, MOOD_INSIGHTS } from '../data/lunaData'
+import { PHASES, ARTICLES, MOOD_INSIGHTS, getReflectionPrompt } from '../data/lunaData'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
@@ -508,6 +508,18 @@ export default function Home() {
               </div>
             )}
           </div>
+          )}
+
+          {/* A small reflection — phase-aware, changes day to day, soft. */}
+          {!isPreg && phase && (
+            <div style={{ marginTop: 26, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+                A thought for this week
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.2 }}>
+                {getReflectionPrompt(phase.id)}
+              </div>
+            </div>
           )}
 
           {/* For today — horizontal scroll of curated phase-tuned cards */}

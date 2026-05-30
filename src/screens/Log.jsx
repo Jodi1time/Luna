@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
-import { SYMPTOMS } from '../data/lunaData'
+import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
+import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 
@@ -21,7 +22,10 @@ const SEX_OPTIONS = [
 ]
 
 export default function Log() {
-  const { back, goSymptom, saveLog, getLog } = useLuna()
+  const store = useLuna()
+  const { back, goArticle, goSymptom, saveLog, getLog } = store
+  const cycle = useCycle(store)
+  const phase = cycle.phase
   const todayISO = new Date().toISOString().slice(0, 10)
   const existing = getLog(todayISO) || {}
   const [mood,     setMood]     = useState(existing.mood || null)
@@ -33,9 +37,16 @@ export default function Log() {
   const [sex,      setSex]      = useState(existing.sex || null)
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
+  // Last-tapped symptom (for the inline insight). Cleared when the
+  // user untaps the same symptom or taps a different one.
+  const [activeSym, setActiveSym] = useState(null)
 
-  const toggleSym = (id) =>
+  const toggleSym = (id) => {
     setSymptoms((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
+    setActiveSym(id)
+  }
+
+  const symInsight = (activeSym && phase) ? SYMPTOM_INSIGHTS[activeSym]?.[phase.id] : null
 
   const save = () => {
     const bbtErr = validateBBT(bbt, bbtUnit)
@@ -117,6 +128,23 @@ export default function Log() {
             )
           })}
         </div>
+
+        {/* Phase-aware insight for the last-tapped symptom — same pattern
+            as the mood-tap insights on Home. */}
+        {symInsight && (
+          <div key={`${phase?.id}-${activeSym}`}
+            style={{ marginTop: -14, marginBottom: 24, padding: '12px 14px', background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
+            <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.text }}>
+              {symInsight.text}
+            </div>
+            {symInsight.read && (
+              <button onClick={() => goArticle(symInsight.read)}
+                style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                Read more →
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Flow */}
         <Eyebrow>Bleeding</Eyebrow>

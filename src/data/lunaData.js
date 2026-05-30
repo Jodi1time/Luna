@@ -346,6 +346,91 @@ export const CHECKUPS = [
   },
 ]
 
+// ── Phase reflection prompts ───────────────────────────────────
+// One quiet, phase-appropriate question Luna sits with on Home.
+// Two per phase so the same question doesn't appear every visit;
+// pick by day-of-week to keep it predictable but not stale.
+export const REFLECTION_PROMPTS = {
+  menstrual: [
+    'What can you let yourself put down this week?',
+    'How does your body want to be cared for today?',
+  ],
+  follicular: [
+    'What feels newly possible this week?',
+    'What\'s one small thing you\'d like to start?',
+  ],
+  ovulation: [
+    'Who do you want to be close to today?',
+    'What\'s easier than it usually is, right now?',
+  ],
+  luteal: [
+    'What are you longing for this week?',
+    'Where do you need a little more softness?',
+  ],
+}
+
+// Pick a stable-per-day reflection so the same question doesn't
+// shuffle on every render but does change day to day.
+export function getReflectionPrompt(phaseId) {
+  const list = REFLECTION_PROMPTS[phaseId] || REFLECTION_PROMPTS.follicular
+  const day = Math.floor(Date.now() / 86400000)
+  return list[day % list.length]
+}
+
+// ── Symptom × phase insights ───────────────────────────────────
+// Tapping a symptom in Log surfaces this — a tip + optional
+// article link, phase-tuned. Same pattern as MOOD_INSIGHTS.
+export const SYMPTOM_INSIGHTS = {
+  cramps: {
+    menstrual:  { text: 'Cramps come from prostaglandins. Heat works as well as ibuprofen for many people. Magnesium can help too.', read: null },
+    follicular: { text: 'Cramps in follicular are unusual — sometimes mid-cycle pain (mittelschmerz) signals ovulation. If they\'re severe or growing, worth investigating.', read: 'endo' },
+    ovulation:  { text: 'A brief one-sided cramp at ovulation is normal — mittelschmerz, "middle pain." If it\'s severe or lasts more than a day, see a doctor.', read: null },
+    luteal:     { text: 'Cramps building before your period are PMS. If they\'re disabling or getting worse cycle to cycle, that can be endometriosis.', read: 'endo' },
+  },
+  headache: {
+    menstrual:  { text: 'Estrogen drops trigger menstrual migraines. Hydration, magnesium, and steady sleep help. Track to spot the pattern.', read: null },
+    follicular: { text: 'Headaches in follicular are often dehydration or stress, not hormonal. Worth ruling those out first.', read: null },
+    ovulation:  { text: 'A short-lived headache at ovulation can come from the estrogen peak. Notice if it repeats.', read: null },
+    luteal:     { text: 'Late-luteal headaches often respond to magnesium and stable sleep. Persistent ones can be hormonal — track them.', read: null },
+  },
+  bloating: {
+    menstrual:  { text: 'Bloating during your period is fluid retention from hormone shifts. Less salt, more water, gentle movement.', read: null },
+    follicular: { text: 'Persistent bloating outside your premenstrual window can point to gut health or food sensitivities. Worth tracking.', read: null },
+    ovulation:  { text: 'Mid-cycle bloating sometimes accompanies ovulation. Brief and mild is normal.', read: null },
+    luteal:     { text: 'Progesterone slows digestion — late-luteal bloating is biology, not what you ate. Magnesium and water help.', read: 'cravings' },
+  },
+  acne: {
+    menstrual:  { text: 'Menstrual acne is hormonal — usually along the jaw. It\'s not about your skincare. Be gentle with yourself.', read: null },
+    follicular: { text: 'Skin tends to be clearest in late follicular as estrogen rises. Lean in.', read: null },
+    ovulation:  { text: 'A small mid-cycle breakout can come from the testosterone bump at ovulation.', read: null },
+    luteal:     { text: 'Late-luteal acne is hormonal — progesterone stimulates oil glands. Spot treatments help; punishing your skin doesn\'t.', read: null },
+  },
+  fatigue: {
+    menstrual:  { text: 'Tiredness during your period is normal. Iron, warmth, slower mornings. If it\'s severe or with heavy flow — worth a ferritin test.', read: 'iron' },
+    follicular: { text: 'Tiredness in follicular is worth pausing on — sleep, stress, or low iron. Track if it persists.', read: 'iron' },
+    ovulation:  { text: 'Some feel a mid-cycle energy dip. Hydration and movement help more than caffeine.', read: null },
+    luteal:     { text: 'Progesterone is sedating. Luteal fatigue is biology, not laziness — protect your sleep and ease your workouts.', read: null },
+  },
+  backache: {
+    menstrual:  { text: 'Cramping radiates to the lower back — same prostaglandins, same heat-and-magnesium response.', read: null },
+    follicular: { text: 'Backache without obvious cause? Could be posture, sleep, or — rarely — endometriosis-related.', read: 'endo' },
+    ovulation:  { text: 'Some feel one-sided lower back pain at ovulation — mittelschmerz again. Brief is normal.', read: null },
+    luteal:     { text: 'Late-luteal lower back pain often pairs with cramps. Heat and gentle movement help.', read: null },
+  },
+  insomnia: {
+    menstrual:  { text: 'Sleep can fragment during your period — falling estrogen affects deep sleep. Magnesium glycinate and cool rooms help.', read: null },
+    follicular: { text: 'Insomnia in follicular is worth investigating beyond cycle — sleep hygiene, screen time, stress.', read: null },
+    ovulation:  { text: 'Mid-cycle insomnia can come from elevated estrogen/testosterone. Magnesium and a cool room.', read: null },
+    luteal:     { text: 'Progesterone usually helps sleep, but late-luteal hormone drops can wake you. Steady bedtime + magnesium help.', read: null },
+  },
+  nausea: {
+    menstrual:  { text: 'Prostaglandins can cause nausea during your period — ginger tea, small frequent meals, gentle stretching help.', read: null },
+    follicular: { text: 'Nausea in follicular without obvious cause is worth tracking — and ruling out pregnancy if relevant.', read: null },
+    ovulation:  { text: 'Some feel briefly nauseated at ovulation from the LH surge. Short and mild is normal.', read: null },
+    luteal:     { text: 'Late-luteal nausea is sometimes PMS, sometimes early pregnancy if conception happened this cycle. Track it.', read: null },
+  },
+}
+
 // ── Mood × phase insights ──────────────────────────────────────
 // When a user taps a mood in the Home check-in, surface a tiny
 // contextual note + optional link to a deeper article. The pairing
