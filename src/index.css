@@ -80,37 +80,39 @@ button.no-tap, button.no-tap:active { transform: none; }
    the user actually interacts with — gives a wider tap target. */
 .blob-stage {
   position: absolute;
-  top: 40%;
+  top: 32%;                          /* aligned with the natural number position */
   left: 50%;
-  width: 340px;
-  height: 340px;
+  width: 360px;
+  height: 360px;
   transform: translate(-50%, -50%);
   z-index: 0;
-  pointer-events: auto;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  pointer-events: none;              /* clicks go to the content; Home triggers effects from there */
+  will-change: transform;
+  transition: transform 0.05s linear;
 }
 
-/* The morphing blob itself — slow, organic, painted-edge. 13s loop
-   between five distinct 8-corner shapes with gentle counter-rotation
-   and breath-scale. Pure CSS. */
+/* The morphing blob itself — slow, organic, painted-edge. 16s loop
+   between six distinct 8-corner shapes. Pronounced scale swing
+   (0.88 → 1.12) and rotation (±9°) so the breathing is actually
+   visible. A subtle opacity pulse and slight horizontal drift add
+   to the "alive thing in the background" feel. */
 @keyframes blobMorph {
-  0%   { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: rotate(0deg)  scale(1);    }
-  20%  { border-radius: 45% 55% 68% 32% / 60% 38% 62% 40%; transform: rotate(5deg)  scale(1.05); }
-  40%  { border-radius: 58% 42% 32% 68% / 38% 62% 38% 62%; transform: rotate(-3deg) scale(0.96); }
-  60%  { border-radius: 38% 62% 58% 42% / 55% 40% 60% 45%; transform: rotate(4deg)  scale(1.04); }
-  80%  { border-radius: 52% 48% 45% 55% / 50% 52% 48% 50%; transform: rotate(-2deg) scale(0.99); }
-  100% { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: rotate(0deg)  scale(1);    }
+  0%   { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: translate(0,    0)    rotate(0deg)   scale(1.00); opacity: 0.36; }
+  16%  { border-radius: 42% 58% 70% 30% / 62% 38% 62% 38%; transform: translate(8px,  -4px) rotate(7deg)   scale(1.08); opacity: 0.42; }
+  33%  { border-radius: 58% 42% 30% 70% / 36% 64% 36% 64%; transform: translate(-6px, 6px)  rotate(-9deg)  scale(0.92); opacity: 0.33; }
+  50%  { border-radius: 35% 65% 60% 40% / 56% 36% 64% 44%; transform: translate(10px, 2px)  rotate(5deg)   scale(1.10); opacity: 0.40; }
+  66%  { border-radius: 70% 30% 45% 55% / 42% 60% 40% 58%; transform: translate(-4px, -8px) rotate(-6deg)  scale(0.96); opacity: 0.35; }
+  83%  { border-radius: 50% 50% 38% 62% / 64% 42% 58% 36%; transform: translate(6px,  4px)  rotate(8deg)   scale(1.06); opacity: 0.39; }
+  100% { border-radius: 62% 38% 51% 49% / 48% 60% 40% 52%; transform: translate(0,    0)    rotate(0deg)   scale(1.00); opacity: 0.36; }
 }
 .breathing-blob {
   position: absolute;
   inset: 0;
   background: var(--phase-color, currentColor);
-  filter: blur(18px);
-  opacity: 0.36;
+  filter: blur(22px) saturate(1.1);
   pointer-events: none;
-  animation: blobMorph 13s ease-in-out infinite;
-  will-change: border-radius, transform;
+  animation: blobMorph 16s ease-in-out infinite;
+  will-change: border-radius, transform, opacity;
 }
 
 /* ── Tap effects ───────────────────────────────────────────────
@@ -169,18 +171,6 @@ button.no-tap, button.no-tap:active { transform: none; }
   animation: blobSparkle 1.5s cubic-bezier(0.18, 0.65, 0.36, 1) both;
 }
 
-/* Let Home's decorative areas pass clicks through to the blob behind
-   them. Interactive children (button, a, input) still receive their
-   own clicks because they have their own pointer-events: auto. */
-.home-content {
-  pointer-events: none;
-}
-.home-content button,
-.home-content a,
-.home-content input,
-.home-content [role="button"] {
-  pointer-events: auto;
-}
 
 /* Soft inner-glow breath for the "today" disc on the week strip —
    gentler than the previous outward pulse-ring, which read like a

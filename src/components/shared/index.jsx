@@ -1,3 +1,4 @@
+import { forwardRef } from 'react'
 import { T } from '../../data/theme'
 
 // ── Icons ────────────────────────────────────────────────────
@@ -180,9 +181,9 @@ export function BrickList({ title, items, positive = false }) {
 }
 
 // ── Screen wrapper (scrollable, padded, fade-in) ─────────────
-export function Screen({ children, padBottom = 96, style: s = {} }) {
+export const Screen = forwardRef(function Screen({ children, padBottom = 96, style: s = {}, onScroll }, ref) {
   return (
-    <div style={{
+    <div ref={ref} onScroll={onScroll} style={{
       flex: 1, overflowY: 'auto', overflowX: 'hidden',
       scrollbarWidth: 'none',
       paddingBottom: padBottom,
@@ -192,7 +193,7 @@ export function Screen({ children, padBottom = 96, style: s = {} }) {
       {children}
     </div>
   )
-}
+})
 
 // ── Toggle ───────────────────────────────────────────────────
 export function Toggle({ on, onChange }) {

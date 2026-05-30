@@ -80,31 +80,26 @@ function useCountUp(target, duration = 900) {
   return value
 }
 
-// Living blob centered behind the Home screen. Position is "fixed-ish"
-// — actually absolute inside the phone frame so on desktop it stays
-// inside the device window. Stays put as the user scrolls content
-// over it. Tapping triggers one of three cute one-shot effects.
-function BackgroundBlob({ color }) {
-  const [effect, setEffect] = useState(null)
-  const trigger = () => {
-    const options = ['ripple', 'bloom', 'sparkle']
-    const next = options[Math.floor(Math.random() * options.length)]
-    setEffect({ id: Date.now(), name: next })
-  }
-  // Clear effect after its animation completes — keeps the DOM clean.
-  useEffect(() => {
-    if (!effect) return
-    const t = setTimeout(() => setEffect(null), 1600)
-    return () => clearTimeout(t)
-  }, [effect])
-
+// Living blob centered behind the Home screen. Lives in a separate
+// "layer" pinned to the phone frame, and its vertical position
+// reverse-mirrors the scroll position of the Home content — when the
+// user scrolls the page down, the blob drifts down too (parallax in
+// the opposite direction), giving the impression of two stacked
+// translucent surfaces gliding past each other.
+function BackgroundBlob({ color, scrollY, effect }) {
   const sparkles = effect?.name === 'sparkle' ? Array.from({ length: 8 }, (_, i) => {
     const angle = (i / 8) * Math.PI * 2
-    return { tx: `${Math.cos(angle) * 120}px`, ty: `${Math.sin(angle) * 120}px` }
+    return { tx: `${Math.cos(angle) * 130}px`, ty: `${Math.sin(angle) * 130}px` }
   }) : null
 
+  // Reverse parallax — page content moves up as user scrolls down,
+  // so the blob translates DOWN to "mirror" that motion. Coefficient
+  // tuned to feel like depth without flying off-screen too fast.
+  const parallaxY = scrollY * 0.45
+  const transform = `translate(-50%, calc(-50% + ${parallaxY}px))`
+
   return (
-    <div className="blob-stage" onClick={trigger} aria-hidden="true">
+    <div className="blob-stage" style={{ transform }} aria-hidden="true">
       <div className="breathing-blob" style={{ '--phase-color': color }} />
       {effect?.name === 'ripple' && (
         <div key={effect.id} className="blob-ripple" style={{ '--phase-color': color }} />
@@ -344,6 +339,31 @@ export default function Home() {
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
+  // Blob effect state + parallax scroll position lifted to the page
+  // so both the blob layer and the content layer can read them.
+  const [effect, setEffect] = useState(null)
+  const [scrollY, setScrollY] = useState(0)
+  useEffect(() => {
+    if (!effect) return
+    const t = setTimeout(() => setEffect(null), 1600)
+    return () => clearTimeout(t)
+  }, [effect])
+  const triggerBlobEffect = () => {
+    const options = ['ripple', 'bloom', 'sparkle']
+    const next = options[Math.floor(Math.random() * options.length)]
+    setEffect({ id: Date.now(), name: next })
+  }
+  // Click anywhere in the Home content fires a blob effect, unless
+  // the click landed on something interactive (button / link / input)
+  // which has its own click handler.
+  const handleContentTap = (e) => {
+    if (e.target.closest('button, a, input, [role="button"]')) return
+    triggerBlobEffect()
+  }
+  const handleScroll = (e) => {
+    setScrollY(e.currentTarget.scrollTop)
+  }
+
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
@@ -362,9 +382,9 @@ export default function Home() {
 
   return (
     <>
-      <BackgroundBlob color={blobColor} />
-      <Screen>
-        <div className="home-content" style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
+      <BackgroundBlob color={blobColor} scrollY={scrollY} effect={effect} />
+      <Screen onScroll={handleScroll}>
+        <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} />
 
           {!isPreg && <WeekStrip go={go} cycle={cycle} logs={logs} />}
