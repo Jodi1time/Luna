@@ -15,20 +15,19 @@ export default function Care() {
   return (
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Care" onBack={back} />
-        <Eyebrow>PREVENTION · YOUR CHECKLIST</Eyebrow>
+        <Masthead issue="care" onBack={back} />
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          Your health,<br /><em>maintained.</em>
+          Take care of the<br /><em>parts that ask for it.</em>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Checkups that matter. Tap to mark done.
+        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.6, marginBottom: 24 }}>
+          The checkups that quietly matter — tap to mark done.
         </div>
 
         <button onClick={findProvider}
           style={{ width: '100%', padding: 18, background: T.text, color: '#FAF4ED', border: 'none', borderRadius: T.r, cursor: 'pointer', textAlign: 'left', marginBottom: 28, fontFamily: 'inherit' }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 700, fontFamily: T.sans, color: T.accent, marginBottom: 6 }}>FIND CARE NEAR YOU</div>
-          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 4 }}>Find an OB/GYN near you →</div>
-          <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.4 }}>Opens Google Maps with providers near your current location.</div>
+          <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, fontFamily: T.sans, color: T.accent, marginBottom: 6 }}>Find someone nearby</div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 4 }}>An OB/GYN near you →</div>
+          <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.5 }}>Opens a map with providers near your current location.</div>
         </button>
 
         {CATEGORIES.map((cat) => {
@@ -37,19 +36,19 @@ export default function Care() {
           return (
             <div key={cat} style={{ marginBottom: 26 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Eyebrow>{cat.toUpperCase()}</Eyebrow>
+                <Eyebrow>{cat}</Eyebrow>
                 {doneCount > 0 && (
-                  <span style={{ fontSize: 10, fontFamily: T.mono, color: T.accent }}>{doneCount}/{items.length}</span>
+                  <span style={{ fontSize: 10, fontFamily: T.mono, color: T.accent }}>{doneCount}/{items.length} done</span>
                 )}
               </div>
-              <div style={{ border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+              <div className="glass-card" style={{ borderRadius: T.r, overflow: 'hidden' }}>
                 {items.map((item, idx) => {
                   const done = completedChecks?.includes(item.id)
                   return (
                     <button key={item.id} onClick={() => toggleCheck(item.id)}
                       style={{
                         width: '100%', padding: '14px 16px',
-                        background: done ? T.accent + '0A' : T.card,
+                        background: done ? T.accent + '0A' : 'transparent',
                         border: 'none',
                         borderBottom: idx < items.length - 1 ? `1px solid ${T.hair}` : 'none',
                         cursor: 'pointer', textAlign: 'left', display: 'flex', gap: 12,

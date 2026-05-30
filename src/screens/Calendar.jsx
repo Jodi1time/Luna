@@ -173,18 +173,30 @@ export default function Calendar() {
         <Eyebrow>What's coming next</Eyebrow>
         {filteredPredictions ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-            {filteredPredictions.map((p, i) => (
-              <div key={i} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: 10, letterSpacing: 1.5, color: T.muted, fontWeight: 700, fontFamily: T.sans }}>{p.label.toUpperCase()}</span>
-                  <span style={{ fontSize: 10, fontFamily: T.mono, color: T.accent }}>{p.conf}</span>
+            {filteredPredictions.map((p, i) => {
+              const confColor = p.conf === 'high' ? T.accent : (p.conf === 'medium' ? T.text : T.muted)
+              return (
+                <div key={i} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 10, letterSpacing: 1.2, color: T.muted, fontWeight: 600, fontFamily: T.sans }}>{p.label.toLowerCase()}</span>
+                    <span style={{ fontSize: 10, fontFamily: T.mono, color: confColor, letterSpacing: 0.3 }}>
+                      {p.conf} confidence
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                    <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500 }}>{p.date}</div>
+                    {p.range && (
+                      <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, letterSpacing: 0.3 }}>
+                        {p.range}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, marginTop: 8, lineHeight: 1.5 }}>
+                    {p.why}
+                  </div>
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, marginTop: 4 }}>{p.date}</div>
-                <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, marginTop: 6, lineHeight: 1.4 }}>
-                  <em>Why:</em> {p.why}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8 }}>

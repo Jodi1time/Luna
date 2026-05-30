@@ -65,9 +65,8 @@ export function allPeriodStarts(logs, onboardingStart) {
   return [onboardingStart, ...detected].sort()
 }
 
-// Average gap between consecutive period starts.
-// Falls back to the stored cycleLength when there's not enough data
-// or all detected gaps are outside the medically-normal 18–60 day range.
+// Average gap between consecutive period starts, kept around for any
+// legacy callers. Prefer weightedCycleLength below.
 export function dynamicCycleLength(starts, fallback) {
   if (!starts || starts.length < 2) return fallback
   const gaps = []
@@ -78,6 +77,75 @@ export function dynamicCycleLength(starts, fallback) {
   if (valid.length === 0) return fallback
   const avg = valid.reduce((a, b) => a + b, 0) / valid.length
   return Math.round(avg)
+}
+
+// Weighted-recency cycle length. Recent cycles dominate the average
+// because bodies change — the cycles of two years ago are weaker
+// signal than the last three. Weights decay from 1.0 (most recent
+// gap) to 0.25 (oldest), clamped to a 6-gap window so a long-time
+// user doesn't get pulled by ancient cycles.
+//
+// Returns { length, weights } so the caller knows what was used.
+export function weightedCycleLength(starts, fallback) {
+  if (!starts || starts.length < 2) return { length: fallback, samples: 0 }
+  const gaps = []
+  for (let i = 1; i < starts.length; i++) {
+    gaps.push(daysBetween(starts[i - 1], starts[i]))
+  }
+  // Drop medically-implausible gaps (sickness, breakthrough, missed period).
+  const valid = gaps.filter((g) => g >= 18 && g <= 60)
+  if (valid.length === 0) return { length: fallback, samples: 0 }
+  // Keep the most recent 6.
+  const recent = valid.slice(-6)
+  // Weights: newest first in our reversed view. Decay: 1.0, 0.85, 0.7, 0.55, 0.4, 0.25.
+  const weights = [1.0, 0.85, 0.7, 0.55, 0.4, 0.25].slice(0, recent.length)
+  // recent is oldest-to-newest; weights should align newest-to-oldest, so reverse.
+  const reversed = [...recent].reverse()
+  const weightedSum = reversed.reduce((acc, g, i) => acc + g * weights[i], 0)
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+  return { length: Math.round(weightedSum / totalWeight), samples: recent.length }
+}
+
+// Variance + confidence in the prediction. Returns:
+//   stdDev:  std deviation of recent gaps (days)
+//   range:   ± days to surface around any predicted date
+//   conf:    'high' | 'medium' | 'low' label for UI
+//   why:     a short human-readable explanation of the label
+//
+// A user with 5+ logged cycles and SD < 2 gets 'high'. New users
+// (0–1 cycles) get 'low' explicitly so the UI can frame predictions
+// as best-guess.
+export function cycleVariance(starts) {
+  if (!starts || starts.length < 2) {
+    return { stdDev: null, range: 4, conf: 'low', why: 'Predictions sharpen as you log more cycles.' }
+  }
+  const gaps = []
+  for (let i = 1; i < starts.length; i++) {
+    gaps.push(daysBetween(starts[i - 1], starts[i]))
+  }
+  const valid = gaps.filter((g) => g >= 18 && g <= 60).slice(-6)
+  if (valid.length === 0) {
+    return { stdDev: null, range: 4, conf: 'low', why: 'Predictions sharpen as you log more cycles.' }
+  }
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length
+  const variance = valid.reduce((acc, g) => acc + (g - mean) ** 2, 0) / valid.length
+  const stdDev = Math.sqrt(variance)
+  // Translate SD into a UI-friendly ± range (cap at 5 either way).
+  const range = Math.min(5, Math.max(1, Math.round(stdDev)))
+  let conf, why
+  if (valid.length >= 4 && stdDev < 2) {
+    conf = 'high'
+    why  = `Based on your last ${valid.length} cycles. They've been steady.`
+  } else if (valid.length >= 2 && stdDev < 4) {
+    conf = 'medium'
+    why  = `Based on your last ${valid.length} cycles — give it a day or two.`
+  } else {
+    conf = 'low'
+    why  = valid.length < 2
+      ? 'Best guess from your onboarding date — predictions sharpen as you log.'
+      : 'Your cycles have varied recently. Give the prediction some room.'
+  }
+  return { stdDev, range, conf, why }
 }
 
 // Average length of the actual bleeding stretches in the logs.
@@ -345,31 +413,65 @@ export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, period
   return grid
 }
 
-// Next period, fertile window, PMS window predictions
-export function getPredictions(lastPeriodStart, cycleLength, periodLength) {
+// Next period, fertile window, PMS window predictions — variance-aware.
+// Each prediction includes the date string + an optional ± range derived
+// from the user's actual cycle variance, plus a human-readable confidence
+// label and reason. If BBT data has detected an ovulation shift, the
+// fertile window uses that day instead of the cycle-length midpoint.
+export function getPredictions(lastPeriodStart, cycleLength, periodLength, variance, bbtShift) {
   if (!lastPeriodStart) return null
   const start = new Date(lastPeriodStart)
   start.setHours(0, 0, 0, 0)
 
-  // Find start of current cycle
   const now = new Date(); now.setHours(0,0,0,0)
   const daysSinceStart = Math.floor((now - start) / MS_PER_DAY)
   const cyclesElapsed  = Math.floor(daysSinceStart / cycleLength)
   const currentCycleStart = new Date(start.getTime() + cyclesElapsed * cycleLength * MS_PER_DAY)
 
   const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const rangeLabel = (r) => r <= 1 ? '± 1 day' : `± ${r} days`
 
-  const nextPeriod  = new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
-  const ovDay       = Math.round(cycleLength / 2) - 1
-  const fertileStart= new Date(currentCycleStart.getTime() + (ovDay - 2) * MS_PER_DAY)
-  const fertileEnd  = new Date(currentCycleStart.getTime() + (ovDay + 1) * MS_PER_DAY)
-  const pmsStart    = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * MS_PER_DAY)
-  const pmsEnd      = new Date(currentCycleStart.getTime() + (cycleLength - 1) * MS_PER_DAY)
+  const range = variance?.range ?? 3
+  const conf  = variance?.conf  ?? 'medium'
+
+  const nextPeriod = new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
+
+  // BBT fusion — if the user has logged enough BBT for a shift to be
+  // detected, anchor the ovulation prediction to that day-of-cycle.
+  // Otherwise fall back to the cycle-length midpoint.
+  const ovDay = bbtShift?.shiftDayMedian ?? (Math.round(cycleLength / 2) - 1)
+  const fertileStart = new Date(currentCycleStart.getTime() + (ovDay - 2) * MS_PER_DAY)
+  const fertileEnd   = new Date(currentCycleStart.getTime() + (ovDay + 1) * MS_PER_DAY)
+  const pmsStart     = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * MS_PER_DAY)
+  const pmsEnd       = new Date(currentCycleStart.getTime() + (cycleLength - 1) * MS_PER_DAY)
+
+  const periodWhy = variance?.why ?? `Based on your ${cycleLength}-day cycle.`
+  const fertileWhy = bbtShift
+    ? `Anchored to your detected ovulation day (~day ${ovDay}) from BBT.`
+    : 'Predicted from cycle length and ovulation timing.'
 
   return [
-    { label: 'Next period',    date: fmt(nextPeriod),                          conf: '95%', why: `Based on your ${cycleLength}-day cycle.` },
-    { label: 'Fertile window', date: `${fmt(fertileStart)} – ${fmt(fertileEnd)}`, conf: '88%', why: 'Predicted from cycle length and ovulation timing.' },
-    { label: 'PMS window',     date: `${fmt(pmsStart)} – ${fmt(pmsEnd)}`,         conf: '76%', why: `Late luteal phase — days ${cycleLength - periodLength - 4}–${cycleLength} of your cycle.` },
+    {
+      label: 'Next period',
+      date: fmt(nextPeriod),
+      range: rangeLabel(range),
+      conf,
+      why: periodWhy,
+    },
+    {
+      label: 'Fertile window',
+      date: `${fmt(fertileStart)} – ${fmt(fertileEnd)}`,
+      range: bbtShift ? null : rangeLabel(Math.min(range, 2)),
+      conf: bbtShift ? 'high' : conf,
+      why: fertileWhy,
+    },
+    {
+      label: 'PMS window',
+      date: `${fmt(pmsStart)} – ${fmt(pmsEnd)}`,
+      range: null,
+      conf,
+      why: `Late luteal — typically days ${cycleLength - periodLength - 4}–${cycleLength} of your cycle.`,
+    },
   ]
 }
 
@@ -386,17 +488,20 @@ export function daysOverdue(lastPeriodStart, cycleLength) {
 export function useCycle(store) {
   const { lastPeriodStart: storedStart, cycleLength: storedCycle, periodLength: storedPeriod, logs } = store
 
-  // Learn from the logs: detect period starts, then derive the most recent
-  // start + average cycle length from real data. Falls back to stored values
-  // when there's not enough history.
+  // Learn from the logs. Cycle length uses weighted recency now (recent
+  // cycles dominate older ones), with the simple average kept around for
+  // any legacy caller. Variance + BBT shift detection feed the predictor.
   const starts = allPeriodStarts(logs, storedStart)
-  const cycleLength = dynamicCycleLength(starts, storedCycle)
+  const weighted = weightedCycleLength(starts, storedCycle)
+  const cycleLength = weighted.length
   const periodLength = dynamicPeriodLength(logs, storedPeriod)
   const lastPeriodStart = starts.length > 0 ? starts[starts.length - 1] : storedStart
+  const variance = cycleVariance(starts)
+  const bbtShift = detectBBTShift(logs, starts, cycleLength)
 
   const cycleDay = getCycleDay(lastPeriodStart, cycleLength)
   const phase    = cycleDay ? getPhaseForDay(cycleDay, cycleLength, periodLength) : null
-  const predictions = getPredictions(lastPeriodStart, cycleLength, periodLength)
+  const predictions = getPredictions(lastPeriodStart, cycleLength, periodLength, variance, bbtShift)
   const now = new Date()
   const monthGrid = buildMonthGrid(now.getFullYear(), now.getMonth(), lastPeriodStart, cycleLength, periodLength, logs)
 
@@ -405,9 +510,12 @@ export function useCycle(store) {
     phase,
     predictions,
     monthGrid,
-    cycleLength,       // dynamic — use this in UI instead of store.cycleLength
-    periodLength,      // dynamic
-    lastPeriodStart,   // dynamic — most recent detected start, or onboarding fallback
-    periodHistory: starts, // for "your last N periods" display
+    cycleLength,           // weighted-recency length
+    periodLength,
+    lastPeriodStart,
+    periodHistory: starts,
+    variance,              // { stdDev, range, conf: 'high'|'medium'|'low', why }
+    bbtShift,              // null OR detected ovulation shift from BBT logs
+    cyclesLogged: starts.length,
   }
 }

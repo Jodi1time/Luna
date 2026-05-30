@@ -27,30 +27,50 @@ const phaseArticle = {
   luteal:     'cravings',
 }
 
-// A "what's next" sentence that gives the eye an answer Flo-style
-// without the optimisation framing. Returns null if there's nothing
-// confident to say (no period start logged yet).
-function contextualLine({ phase, cycleDay, cycleLength, periodLength }) {
+// A "what's next" sentence under the cover. Now confidence-aware:
+// adds a small reassurance / honesty tag based on how steady the
+// user's cycles have been. The peace-of-mind sale is the line that
+// follows: "You don't have to keep track."
+function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, bbtShift }) {
   if (!phase || cycleDay == null) return null
+  const conf = variance?.conf ?? 'low'
+
   if (phase.id === 'menstrual') {
     const total = periodLength || 5
-    if (cycleDay > total) return 'Your period is winding down.'
-    return `Day ${cycleDay} of your period.`
+    if (cycleDay > total) return { text: 'Your period is winding down.', sub: null }
+    return { text: `Day ${cycleDay} of your period.`, sub: null }
   }
+
   if (phase.id === 'follicular') {
-    const ovMid = Math.round(cycleLength / 2)
-    const days = ovMid - cycleDay
-    if (days <= 1) return 'Ovulation begins tomorrow.'
-    return `${days} days until ovulation.`
+    // Prefer BBT-detected ovulation day if we have it (more accurate than
+    // calendar math), otherwise fall back to midpoint.
+    const ovDay = bbtShift?.shiftDayMedian ?? Math.round(cycleLength / 2)
+    const days = ovDay - cycleDay
+    const sub = bbtShift ? 'Anchored to your BBT shift.' : null
+    if (days <= 1) return { text: 'Ovulation begins tomorrow.', sub }
+    return { text: `${days} days until ovulation.`, sub }
   }
+
   if (phase.id === 'ovulation') {
-    return 'You are in your fertile window.'
+    return { text: 'You\'re in your fertile window.', sub: bbtShift ? 'Confirmed by your BBT shift.' : null }
   }
+
   if (phase.id === 'luteal') {
     const days = cycleLength - cycleDay + 1
-    if (days <= 1) return 'Your period is expected tomorrow.'
-    if (days <= 0) return 'Your period is a little late.'
-    return `Period expected in ${days} days.`
+    if (days <= 0) {
+      return { text: 'Your period is a little late.', sub: 'Stress, sleep, and travel can shift a cycle by a few days. Try not to read it as a verdict.' }
+    }
+    if (days <= 1) {
+      return { text: 'Your period is expected tomorrow.', sub: null }
+    }
+    // Confidence-aware framing — the peace-of-mind line.
+    if (conf === 'high') {
+      return { text: `Your period is due in about ${days} days.`, sub: `${variance?.why} You don't have to keep track.` }
+    }
+    if (conf === 'medium') {
+      return { text: `Your period is likely in ${days} days (give it a day or two).`, sub: variance?.why }
+    }
+    return { text: `Your period might arrive in ${days} days.`, sub: variance?.why }
   }
   return null
 }
@@ -366,7 +386,7 @@ export default function Home() {
     setLastPeriodStart(today)
   }
 
-  const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength }) : null
+  const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
   return (
@@ -429,8 +449,15 @@ export default function Home() {
             </div>
 
             {contextLine && (
-              <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, marginTop: 8, letterSpacing: -0.1 }}>
-                {contextLine}
+              <div style={{ marginTop: 8 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
+                  {contextLine.text}
+                </div>
+                {contextLine.sub && (
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
+                    {contextLine.sub}
+                  </div>
+                )}
               </div>
             )}
 
