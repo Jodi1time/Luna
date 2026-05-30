@@ -14,10 +14,10 @@ export default function Library() {
     <Screen>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="The Library" />
-        <Eyebrow>EVIDENCE-LED · PLAIN ENGLISH</Eyebrow>
+        <Eyebrow>Doctor-sourced · plain English</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>The Library.</div>
         <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.muted, marginTop: 10 }}>
-          Every article cites peer-reviewed research or major medical bodies. Plain language, clearly sourced.
+          Every article is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named, not hidden.
         </div>
 
         {/* Category filter */}
@@ -42,11 +42,18 @@ export default function Library() {
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, lineHeight: 1.2, marginBottom: 6 }}>{a.title}</div>
               <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>{a.summary}</div>
-              {a.tag && (
-                <div style={{ marginTop: 8, display: 'inline-block', fontSize: 9, fontFamily: T.mono, color: T.accent, padding: '3px 6px', border: `1px solid ${T.accent}` }}>
-                  {a.tag.toUpperCase()}
-                </div>
-              )}
+              <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                {a.tag && (
+                  <div style={{ display: 'inline-block', fontSize: 9, fontFamily: T.mono, color: T.accent, padding: '3px 6px', border: `1px solid ${T.accent}` }}>
+                    {a.tag.toUpperCase()}
+                  </div>
+                )}
+                {a.sources?.length > 0 && (
+                  <div style={{ fontSize: 10, fontFamily: T.sans, color: T.muted, letterSpacing: 0.3 }}>
+                    {a.sources.length} reference{a.sources.length === 1 ? '' : 's'}
+                  </div>
+                )}
+              </div>
             </button>
           ))}
         </div>

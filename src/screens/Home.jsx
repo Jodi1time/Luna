@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
-import { PHASES, ARTICLES } from '../data/lunaData'
+import { PHASES, ARTICLES, MOOD_INSIGHTS } from '../data/lunaData'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
@@ -352,6 +352,10 @@ export default function Home() {
     setQuickMood(m)
     saveLog(new Date(), { mood: m })
   }
+
+  // Insight surfaced when a mood is tapped — text + (optional) article id,
+  // varied by phase. Null when no phase is known yet.
+  const moodInsight = (quickMood && phase) ? MOOD_INSIGHTS[phase.id]?.[quickMood] : null
   const logPeriodStart = () => {
     saveLog(new Date(), { ...(todayLog || {}), flow: 'Medium' })
   }
@@ -503,6 +507,20 @@ export default function Home() {
                 </button>
               ))}
             </div>
+            {moodInsight && (
+              <div key={`${phase?.id}-${quickMood}`}
+                style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
+                  {moodInsight.text}
+                </div>
+                {moodInsight.read && (
+                  <button onClick={() => goArticle(moodInsight.read)}
+                    style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                    Read more →
+                  </button>
+                )}
+              </div>
+            )}
             <button onClick={() => go('log')}
               style={{ marginTop: 14, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
               Log more →

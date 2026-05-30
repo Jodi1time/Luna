@@ -345,3 +345,41 @@ export const CHECKUPS = [
     source: 'ADA',
   },
 ]
+
+// ── Mood × phase insights ──────────────────────────────────────
+// When a user taps a mood in the Home check-in, surface a tiny
+// contextual note + optional link to a deeper article. The pairing
+// is what makes this distinctive — "Tired in luteal" is biology;
+// "Tired in follicular" is worth investigating. Doula tone, no
+// optimisation talk. `read` is the article id to deep-link to,
+// or null when there isn't a great match.
+export const MOOD_INSIGHTS = {
+  menstrual: {
+    Calm:   { text: "Calm during your period — your body is doing quiet, demanding work below the surface.", read: null },
+    Bright: { text: "Bright through bleeding is unusual and worth noticing — often a sign your iron stores are solid.", read: 'iron' },
+    Tired:  { text: "Tiredness now is expected. Iron, warmth, and slower mornings help — not laziness.", read: 'iron' },
+    Sore:   { text: "Cramps come from prostaglandins. Heat works as well as ibuprofen for many people; magnesium can help too.", read: null },
+    Low:    { text: "Serotonin dips with your hormones. Rest is the work this week — and complex carbs nudge serotonin back.", read: 'cravings' },
+  },
+  follicular: {
+    Calm:   { text: "Calm with rising energy. A steady week to plan from, gently.", read: null },
+    Bright: { text: "Estrogen is climbing — many feel sharper, lighter, more open this week.", read: 'basics' },
+    Tired:  { text: "Tired in follicular is worth pausing on — could be sleep, stress, or low iron. Worth a check.", read: 'iron' },
+    Sore:   { text: "Soreness here often points to sleep or tension, not the cycle itself.", read: null },
+    Low:    { text: "Feeling low in follicular is worth tracking. If it persists across cycles, talk to a provider.", read: null },
+  },
+  ovulation: {
+    Calm:   { text: "Steady through your peak — that's quiet strength, not flatness.", read: null },
+    Bright: { text: "Estrogen and testosterone peak right around now. Many feel their most outward-facing this week.", read: 'basics' },
+    Tired:  { text: "Some feel a mid-cycle dip. Hydration and a little extra rest go further than caffeine.", read: null },
+    Sore:   { text: "Mittelschmerz — some feel a brief one-sided pain at ovulation. Normal if short and one-sided.", read: null },
+    Low:    { text: "Low at ovulation is unusual — sometimes a hormonal fluctuation. Log it; patterns matter.", read: null },
+  },
+  luteal: {
+    Calm:   { text: "Calm in luteal is precious. Protect it where you can — and don't second-guess it.", read: null },
+    Bright: { text: "Bright in luteal is worth noting — log it. Your body is telling you what works for it.", read: null },
+    Tired:  { text: "Progesterone is sedating. Luteal tiredness is biology, not motivation.", read: 'cravings' },
+    Sore:   { text: "Tender breasts and aches build through luteal. Magnesium and less caffeine often soften them.", read: 'cravings' },
+    Low:    { text: "Late-luteal lows are common. If they're disabling — with hopelessness, panic, or thoughts of harm — PMDD is real and treatable.", read: 'pmdd' },
+  },
+}
