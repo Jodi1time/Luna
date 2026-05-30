@@ -586,10 +586,10 @@ export default function Home() {
           {/* Cover — Pregnancy variant */}
           {isPreg && (
             <div style={{ marginBottom: 4 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 35%)` : T.muted, marginBottom: 6 }}>
                 Week {preg.week} · {preg.trimester?.name}
               </div>
-              <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 45%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+              <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 35%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
                 {animatedDay || '—'}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
@@ -619,12 +619,12 @@ export default function Home() {
           {/* Cover — Cycle variant */}
           {!isPreg && (
           <div style={{ marginBottom: 4 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 6 }}>
               {onHormonalBC
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                 : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
             </div>
-            <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+            <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
               {cycleDay ? animatedDay : '—'}
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
@@ -650,7 +650,7 @@ export default function Home() {
               </div>
             )}
             {phase && !onHormonalBC && (
-              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
+              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` }}>
                 {phasePresence[phase.id]}
               </div>
             )}
