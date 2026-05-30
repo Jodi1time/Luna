@@ -27,6 +27,13 @@ const DEFAULT_SETTINGS = {
   notifyLog:     true,
   notifyWeekly:  true,
   analytics:     false,
+  // Wellness tracking — small habits Luna nudges about.
+  // Stored as ISO date strings ('YYYY-MM-DD') of the last completion.
+  wellness: {
+    bse:           null,            // breast self-exam (monthly)
+    pelvicFloor:   null,            // pelvic floor / Kegels (weekly)
+    hydration:     null,            // { date, glasses } — daily reset
+  },
 }
 
 const useLuna = create(
@@ -121,6 +128,16 @@ const useLuna = create(
         const next = { ...get().settings, [key]: val }
         set({ settings: next })
         fireAndForget(saveProfile({ settings: next }), 'updateSetting')
+      },
+
+      // Mark a wellness habit as done today (or replace with a partial
+      // value for habits like hydration that track an in-day counter).
+      markWellness: (key, value) => {
+        const cur = get().settings || {}
+        const wellness = { ...(cur.wellness || {}), [key]: value }
+        const next = { ...cur, wellness }
+        set({ settings: next })
+        fireAndForget(saveProfile({ settings: next }), 'markWellness')
       },
 
       // ── Navigation (in-app, never persisted) ─────────────────

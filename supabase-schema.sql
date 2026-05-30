@@ -92,6 +92,9 @@ create table if not exists public.logs (
   unique (user_id, date)
 );
 
+-- Add sleep column to logs (idempotent — safe to re-run).
+alter table public.logs add column if not exists sleep text;
+
 create index if not exists logs_user_date_idx on public.logs (user_id, date desc);
 
 alter table public.logs enable row level security;

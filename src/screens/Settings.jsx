@@ -205,6 +205,18 @@ export default function Settings() {
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
 
+      <SectionLabel>Coming as part of Luna Pro</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="Talk to Luna" value="Soon" />
+        <Row label="Pregnancy companion" value="v1.1" />
+        <Row label="Postpartum mode" value="v1.1" />
+        <Row label="Long-form journal" value="Soon" />
+        <Row label="Personalised monthly reflection" value="Soon" />
+      </div>
+      <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
+        Pro is for the depth — the AI companion, the deep life-stage modes, the long-form reflective tools. Everything you need to take care of yourself stays free.
+      </div>
+
       <SectionLabel>More from Luna</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="When something feels off" onTap={() => go('watch')} />

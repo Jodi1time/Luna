@@ -35,6 +35,7 @@ export default function Log() {
   const [bbtUnit,  setBbtUnit]  = useState(existing.bbt?.unit || 'F')
   const [mucus,    setMucus]    = useState(existing.mucus || null)
   const [sex,      setSex]      = useState(existing.sex || null)
+  const [sleep,    setSleep]    = useState(existing.sleep || null)
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
   // Last-tapped symptom (for the inline insight). Cleared when the
@@ -54,7 +55,7 @@ export default function Log() {
     setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
-    saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, note })
+    saveLog(todayISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
     // Analytics: which CATEGORIES of fields were filled, not contents.
     // Fire-and-forget — never block navigation on analytics.
     import('../lib/posthog').then(({ capture }) => capture('log_saved', {
@@ -64,6 +65,7 @@ export default function Log() {
       has_bbt: Boolean(bbtPayload),
       has_mucus: Boolean(mucus),
       has_sex: Boolean(sex),
+      has_sleep: Boolean(sleep),
       has_note: Boolean((note || '').trim().length),
     })).catch(() => {})
     back()
@@ -200,6 +202,20 @@ export default function Log() {
                 style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600, borderRadius: T.r, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <span style={{ fontSize: 11, fontWeight: 700 }}>{m.label}</span>
                 <span style={{ fontSize: 8.5, color: T.muted, letterSpacing: 0.3 }}>{m.sub}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Sleep */}
+        <Eyebrow>How you slept</Eyebrow>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+          {['Great','Okay','Restless','Poor'].map((s) => {
+            const on = sleep === s
+            return (
+              <button key={s} onClick={() => setSleep(on ? null : s)}
+                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
+                {s}
               </button>
             )
           })}

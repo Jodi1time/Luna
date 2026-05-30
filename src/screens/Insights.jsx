@@ -1,9 +1,73 @@
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
-import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC } from '../hooks/useCycle'
+import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import useLuna from '../store/useLuna'
+
+// Cycle wheel — a circular visualization of the cycle, divided into
+// segments per day, phase-colored. A small marker shows where the user
+// is today. Distinctly Luna: cycles are circles, not lists.
+function CycleWheel({ cycleDay, cycleLength, periodLength }) {
+  if (!cycleDay || !cycleLength) return null
+  const size = 240
+  const r = 100
+  const cx = size / 2
+  const cy = size / 2
+  // Build per-day arc segments around the circle. Each segment is
+  // 360/cycleLength degrees wide and colored by phase.
+  const segmentAngle = 360 / cycleLength
+  const segments = []
+  for (let d = 1; d <= cycleLength; d++) {
+    const phase = getPhaseForDay(d, cycleLength, periodLength)
+    const startAngle = (d - 1) * segmentAngle - 90 // start at top
+    const endAngle = d * segmentAngle - 90
+    const startRad = (startAngle * Math.PI) / 180
+    const endRad = (endAngle * Math.PI) / 180
+    const x1 = cx + r * Math.cos(startRad)
+    const y1 = cy + r * Math.sin(startRad)
+    const x2 = cx + r * Math.cos(endRad)
+    const y2 = cy + r * Math.sin(endRad)
+    const innerR = r - 18
+    const x3 = cx + innerR * Math.cos(endRad)
+    const y3 = cy + innerR * Math.sin(endRad)
+    const x4 = cx + innerR * Math.cos(startRad)
+    const y4 = cy + innerR * Math.sin(startRad)
+    const path = `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 0 0 ${x4} ${y4} Z`
+    segments.push({ d, path, color: phase.color, isToday: d === cycleDay })
+  }
+  // Marker position for "today" — at the centroid of today's segment.
+  const todayMidAngle = (cycleDay - 0.5) * segmentAngle - 90
+  const markerRad = (todayMidAngle * Math.PI) / 180
+  const markerR = r - 9
+  const mx = cx + markerR * Math.cos(markerRad)
+  const my = cy + markerR * Math.sin(markerRad)
+  const todayPhase = getPhaseForDay(cycleDay, cycleLength, periodLength)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 6 }}>
+      <svg width={size} height={size} style={{ overflow: 'visible' }}>
+        {segments.map((s) => (
+          <path key={s.d} d={s.path} fill={s.color} opacity={s.isToday ? 0.95 : 0.32}
+            style={{ transition: 'opacity 0.4s' }} />
+        ))}
+        {/* Today marker — small filled circle on top of the ring */}
+        <circle cx={mx} cy={my} r={6} fill="#fff" stroke={todayPhase.color} strokeWidth={2} />
+        {/* Center label */}
+        <text x={cx} y={cy - 4} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 400, fill: todayPhase.color, fontStyle: 'italic' }}>
+          {cycleDay}
+        </text>
+        <text x={cx} y={cy + 18} textAnchor="middle"
+          style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1, fill: T.muted, fontWeight: 600 }}>
+          DAY OF {cycleLength}
+        </text>
+      </svg>
+      <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, marginTop: 14, fontStyle: 'italic' }}>
+        You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
+      </div>
+    </div>
+  )
+}
 
 const PHASE_COLOR = {
   menstrual:  PHASES.menstrual.color,
@@ -36,6 +100,7 @@ export default function Insights() {
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
   const cyclesLogged = periodHistory ? periodHistory.length : 0
   const bbtShift = !onHormonalBC ? detectBBTShift(logs, periodHistory, cycle.cycleLength) : null
+  const cycleDay = cycle.cycleDay
 
   return (
     <Screen>
@@ -46,6 +111,13 @@ export default function Insights() {
         <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginBottom: 18, fontStyle: 'italic' }}>
           Patterns Luna sees across your cycles, gathered gently.
         </div>
+
+        {/* Cycle wheel — circular visualization of where you are */}
+        {!onHormonalBC && cycleDay && (
+          <div style={{ marginBottom: 22 }}>
+            <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} />
+          </div>
+        )}
 
         <Eyebrow>Where you are now</Eyebrow>
         {onHormonalBC ? (

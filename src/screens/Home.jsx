@@ -214,10 +214,154 @@ function WeekStrip({ go, cycle, logs }) {
   )
 }
 
+// Birth-control reminder for methods that need a daily action (pills).
+// Single tap to mark taken today. Disappears once marked.
+function BCReminder({ bcMethod, wellness, markWellness }) {
+  const dailyMethods = ['combined-pill', 'mini-pill']
+  if (!dailyMethods.includes(bcMethod)) return null
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const taken = wellness?.bcTakenToday === todayISO
+  if (taken) return null
+  return (
+    <div className="glass-card" style={{ marginTop: 22, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>
+          Have you taken your pill today?
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.45, fontStyle: 'italic' }}>
+          A small daily thing. Tap when it's done.
+        </div>
+      </div>
+      <button onClick={() => markWellness('bcTakenToday', todayISO)}
+        style={{ background: T.accent, color: '#fff', border: 'none', padding: '8px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, borderRadius: T.r, flexShrink: 0 }}>
+        Done
+      </button>
+    </div>
+  )
+}
+
+// Monthly recap — a quiet narrative summary on the 1st of the month
+// (or for the first 3 days of the month), looking back at the prior
+// 30 days of logs. "What we noticed."
+function buildMonthlyRecap(logs) {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const cutoff = new Date(today.getTime() - 30 * 86400000)
+  const recentLogs = Object.entries(logs || {})
+    .filter(([d]) => new Date(d + 'T00:00:00') >= cutoff)
+    .map(([d, l]) => ({ date: d, ...l }))
+  if (recentLogs.length < 5) return null
+  const moods = recentLogs.filter((l) => l.mood)
+  const moodCount = {}
+  moods.forEach((l) => { moodCount[l.mood] = (moodCount[l.mood] || 0) + 1 })
+  const topMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0]
+  const symptomCount = {}
+  recentLogs.forEach((l) => (l.symptoms || []).forEach((s) => {
+    symptomCount[s] = (symptomCount[s] || 0) + 1
+  }))
+  const topSymptom = Object.entries(symptomCount).sort((a, b) => b[1] - a[1])[0]
+  const periodDays = recentLogs.filter((l) => l.flow && l.flow !== 'Spotting').length
+  const loggedDays = recentLogs.length
+  // Compose a short narrative.
+  const bits = []
+  bits.push(`You showed up ${loggedDays} day${loggedDays === 1 ? '' : 's'} this month`)
+  if (topMood && topMood[1] >= 3) {
+    bits.push(`${topMood[0].toLowerCase()} came up most often`)
+  }
+  if (topSymptom && topSymptom[1] >= 3) {
+    bits.push(`${topSymptom[0]} repeated`)
+  }
+  if (periodDays > 0) {
+    bits.push(`${periodDays} period day${periodDays === 1 ? '' : 's'}`)
+  }
+  return { logged: loggedDays, sentence: bits.join(' · ') + '.' }
+}
+
+function MonthlyRecap({ recap }) {
+  if (!recap) return null
+  return (
+    <div className="glass-card" style={{ marginTop: 22, padding: 16, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+        The last 30 days
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, color: T.text, fontStyle: 'italic' }}>
+        {recap.sentence}
+      </div>
+    </div>
+  )
+}
+
+// Hydration micro-tracker — eight quiet glass icons in a row. Tap to
+// add a glass; tap again to remove. Resets daily. Lives on Home as a
+// small habit, not a goal.
+function Hydration({ wellness, markWellness }) {
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const today = wellness?.hydration
+  const glasses = (today && today.date === todayISO) ? (today.glasses || 0) : 0
+  const set = (n) => markWellness('hydration', { date: todayISO, glasses: n })
+  return (
+    <div style={{ marginTop: 26 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', letterSpacing: -0.2 }}>
+          A glass of water.
+        </div>
+        <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, letterSpacing: 0.3 }}>
+          {glasses} / 8 today
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between' }}>
+        {Array.from({ length: 8 }, (_, i) => {
+          const filled = i < glasses
+          return (
+            <button key={i}
+              onClick={() => set(filled ? i : i + 1)}
+              aria-label={`${i + 1} glasses`}
+              style={{
+                flex: 1, aspectRatio: '1 / 1.4', maxWidth: 28,
+                background: filled ? T.accent + '88' : 'transparent',
+                border: `1.5px solid ${filled ? T.accent : 'rgba(26,19,16,0.18)'}`,
+                borderRadius: '4px 4px 8px 8px',
+                cursor: 'pointer', padding: 0,
+                transition: 'background .2s, border-color .2s',
+              }} />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Compute the wellness habit nudges that should surface on Home —
+// only when overdue, so they don't always clutter the screen.
+function dueWellnessNudges(wellness) {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const daysSince = (iso) => iso ? Math.floor((today - new Date(iso + 'T00:00:00')) / 86400000) : Infinity
+  const nudges = []
+  // BSE — monthly. Show only when it's been ≥30 days (or never).
+  if (daysSince(wellness?.bse) >= 30) {
+    nudges.push({
+      key: 'bse',
+      label: 'Check your breasts',
+      sub: 'Once a month, in the shower. Looking for new lumps, dimpling, or changes.',
+      cta: 'Done this month',
+    })
+  }
+  // Pelvic floor — weekly. Show when ≥7 days since last.
+  if (daysSince(wellness?.pelvicFloor) >= 7) {
+    nudges.push({
+      key: 'pelvicFloor',
+      label: 'Pelvic floor, a moment',
+      sub: 'Three sets of ten gentle squeezes. Two minutes, anywhere.',
+      cta: 'Done this week',
+    })
+  }
+  return nudges
+}
+
 // Always-here essentials at the bottom of Home — surfaces support
-// features so users don't have to dig into Settings to find them
-// when something is off or needs attention.
-function AlwaysHere({ go }) {
+// features + any quiet wellness nudges that are due.
+function AlwaysHere({ go, wellness, markWellness }) {
+  const nudges = dueWellnessNudges(wellness)
+  const todayISO = new Date().toISOString().slice(0, 10)
   const items = [
     {
       key: 'watch',
@@ -238,6 +382,21 @@ function AlwaysHere({ go }) {
         Always here.
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {nudges.map((n) => (
+          <div key={n.key} className="glass-card"
+            style={{ padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+            <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
+              {n.label}
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5, marginBottom: 10 }}>
+              {n.sub}
+            </div>
+            <button onClick={() => markWellness(n.key, todayISO)}
+              style={{ background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '7px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3, borderRadius: T.r }}>
+              {n.cta}
+            </button>
+          </div>
+        ))}
         {items.map((it) => (
           <button key={it.key} onClick={it.onTap} className="glass-card"
             style={{
@@ -334,7 +493,8 @@ function ForTodayRow({ phase, go, goArticle }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, logs, birthControl, displayName } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, markWellness, logs, birthControl, displayName, settings } = store
+  const wellness = settings?.wellness || {}
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
   const preg = usePregnancy(store)
@@ -529,8 +689,17 @@ export default function Home() {
             </div>
           )}
 
-          {/* Always here — essentials surfaced from Settings */}
-          {!isPreg && <AlwaysHere go={go} />}
+          {/* Daily BC pill reminder, when applicable */}
+          {!isPreg && <BCReminder bcMethod={birthControl?.method} wellness={wellness} markWellness={markWellness} />}
+
+          {/* Hydration micro-tracker — daily small habit */}
+          {!isPreg && <Hydration wellness={wellness} markWellness={markWellness} />}
+
+          {/* Monthly recap — quiet narrative summary of the last 30 days */}
+          {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
+
+          {/* Always here — essentials + due wellness nudges */}
+          {!isPreg && <AlwaysHere go={go} wellness={wellness} markWellness={markWellness} />}
 
           {/* How are you, today? */}
           <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '18px 0', marginTop: 24, marginBottom: 8 }}>

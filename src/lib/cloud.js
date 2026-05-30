@@ -61,6 +61,7 @@ export async function loadLogs() {
       bbt: row.bbt != null ? Number(row.bbt) : null,
       mucus: row.mucus,
       sex: row.sex,
+      sleep: row.sleep,
       note: row.note,
     }
   }
@@ -82,6 +83,7 @@ export async function upsertLog(date, log) {
       bbt: log.bbt ?? null,
       mucus: log.mucus ?? null,
       sex: log.sex ?? null,
+      sleep: log.sleep ?? null,
       note: log.note ?? null,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id,date' })
