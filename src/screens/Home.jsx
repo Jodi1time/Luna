@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -86,16 +86,22 @@ const trimesterColor = (n) => {
   return T.accent
 }
 
+// Animates a value smoothly toward `target`. Day-to-day rollovers
+// animate from the previous day to the new one, not always from 0.
 function useCountUp(target, duration = 900) {
-  const [value, setValue] = useState(0)
+  const [value, setValue] = useState(target ?? 0)
+  const prevRef = useRef(target ?? 0)
   useEffect(() => {
-    if (target == null) { setValue(0); return }
+    if (target == null) { setValue(0); prevRef.current = 0; return }
+    const from = prevRef.current
+    prevRef.current = target
+    if (from === target) { setValue(target); return }
     let raf
     const start = performance.now()
     const tick = (now) => {
       const t = Math.min(1, (now - start) / duration)
       const eased = 1 - Math.pow(1 - t, 4)
-      setValue(Math.round(target * eased))
+      setValue(Math.round(from + (target - from) * eased))
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -334,12 +340,18 @@ function Hydration({ wellness, markWellness }) {
               aria-label={`${i + 1} glasses`}
               style={{
                 flex: 1, aspectRatio: '1 / 1.4', maxWidth: 28,
-                background: filled ? T.accent + '88' : 'transparent',
+                position: 'relative',
+                background: 'transparent',
                 border: `1.5px solid ${filled ? T.accent : 'rgba(26,19,16,0.18)'}`,
                 borderRadius: '4px 4px 8px 8px',
-                cursor: 'pointer', padding: 0,
-                transition: 'background .2s, border-color .2s',
-              }} />
+                cursor: 'pointer', padding: 0, overflow: 'hidden',
+                transition: 'border-color .2s',
+              }}>
+              {filled && (
+                <span key={`fill-${i}-${glasses}`} className="glass-fill"
+                  style={{ background: T.accent + '88' }} aria-hidden="true" />
+              )}
+            </button>
           )
         })}
       </div>
@@ -650,7 +662,9 @@ export default function Home() {
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                 : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
             </div>
-            <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+            <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
+              className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
+              style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
               {cycleDay ? animatedDay : '—'}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
@@ -789,19 +803,23 @@ export default function Home() {
               How are you, today?
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              {[['calm','Calm'],['energy','Bright'],['tired','Tired'],['cramps','Sore'],['low','Low']].map(([id, l]) => (
-                <button key={l} onClick={() => handleQuickMood(l)}
-                  style={{
-                    border: 'none', cursor: 'pointer', background: quickMood === l ? T.accent + '22' : 'transparent',
-                    outline: quickMood === l ? `1.5px solid ${T.accent}` : 'none',
-                    padding: '10px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                    minWidth: 56, borderRadius: T.r,
-                    color: quickMood === l ? T.accent : T.text, fontFamily: T.sans,
-                  }}>
-                  <SymptomIcon id={id} size={26} />
-                  <span style={{ fontSize: 11, fontWeight: 500 }}>{l}</span>
-                </button>
-              ))}
+              {[['calm','Calm'],['energy','Bright'],['tired','Tired'],['cramps','Sore'],['low','Low']].map(([id, l]) => {
+                const isSelected = quickMood === l
+                return (
+                  <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
+                    className={isSelected ? 'tap-bloom' : ''}
+                    style={{
+                      border: 'none', cursor: 'pointer', background: isSelected ? T.accent + '22' : 'transparent',
+                      outline: isSelected ? `1.5px solid ${T.accent}` : 'none',
+                      padding: '10px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                      minWidth: 56, borderRadius: T.r,
+                      color: isSelected ? T.accent : T.text, fontFamily: T.sans,
+                    }}>
+                    <SymptomIcon id={id} size={26} />
+                    <span style={{ fontSize: 11, fontWeight: 500 }}>{l}</span>
+                  </button>
+                )
+              })}
             </div>
             {moodInsight && (
               <div key={`${phase?.id}-${quickMood}`}

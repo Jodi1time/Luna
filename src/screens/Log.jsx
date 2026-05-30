@@ -203,7 +203,9 @@ export default function Log() {
           {Object.entries(SYMPTOMS).slice(0, 8).map(([id, s]) => {
             const on = symptoms.includes(id)
             return (
-              <div key={id} style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
+              <div key={`${id}-${on ? 'on' : 'off'}`}
+                className={on && activeSym === id ? 'tap-bloom' : ''}
+                style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
                 <button onClick={() => toggleSym(id)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: on ? T.accent : T.text, padding: 0, width: '100%' }}>
                   <SymptomIcon id={id} size={22} />

@@ -1,5 +1,14 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, lazy, Suspense, useState } from 'react'
 import { AppShell, TabBar } from './components/shared'
+
+// Pick a time-of-day class. Re-checked every 15 minutes.
+function timeClass() {
+  const h = new Date().getHours()
+  if (h < 11) return 'time-morning'
+  if (h < 17) return 'time-midday'
+  if (h < 21) return 'time-evening'
+  return 'time-night'
+}
 import useLuna from './store/useLuna'
 import { getSession, onAuthStateChange } from './lib/supabase'
 import { StatusView } from './components/StatusView'
@@ -36,6 +45,18 @@ export default function App() {
   const setSession = useLuna((s) => s.setSession)
   const hydrateFromCloud = useLuna((s) => s.hydrateFromCloud)
   const analyticsEnabled = useLuna((s) => s.settings?.analytics)
+  const [tod, setTod] = useState(timeClass())
+  useEffect(() => {
+    const id = setInterval(() => setTod(timeClass()), 15 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+  // Apply the time-of-day class to <body> so the page background
+  // shifts warmth subtly across the day.
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night')
+    document.body.classList.add(tod)
+  }, [tod])
 
   useEffect(() => {
     // Restore the existing Supabase session on cold start. If present,

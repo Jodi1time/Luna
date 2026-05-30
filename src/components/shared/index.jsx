@@ -193,7 +193,9 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 96, sty
       overflowY: 'auto', overflowX: 'hidden',
       scrollbarWidth: 'none',
       paddingBottom: padBottom,
-      animation: 'fadeUp .3s ease-out both',
+      /* screenEnter is a slightly longer + scale-touched fade so tab
+         changes feel less abrupt than a hard render swap. */
+      animation: 'screenEnter .45s cubic-bezier(0.32, 0.72, 0.36, 1) both',
       ...s,
     }}>
       {children}

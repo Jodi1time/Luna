@@ -6,6 +6,48 @@ import { T } from '../data/theme'
 import { PHASES } from '../data/lunaData'
 import { PhaseFlourish } from './phaseFlourishes'
 
+// A small petal silhouette for the falling-petal animation. Same
+// shape as the menstrual flourish but solid-filled and smaller, so
+// a handful of them drifting down feels like one quiet shower.
+function PetalSilhouette({ color, size = 14 }) {
+  return (
+    <svg width={size} height={size * 1.2} viewBox="0 0 32 38" aria-hidden="true">
+      <path
+        d="M16 4 C 11 8, 9 18, 13 28 Q 16 32, 19 28 C 23 18, 21 8, 16 4 Z"
+        fill={color} opacity={0.7}
+      />
+    </svg>
+  )
+}
+
+// Five petals at varied horizontal positions, drift offsets, spins,
+// and delays. Each uses the .petal-fall keyframe.
+function FallingPetals({ color }) {
+  const petals = [
+    { left: '10%',  delay: 0.0, drift: 18,  spin: 60, size: 14 },
+    { left: '32%',  delay: 0.4, drift: -22, spin: -90, size: 18 },
+    { left: '54%',  delay: 0.8, drift: 14,  spin: 120, size: 12 },
+    { left: '70%',  delay: 1.2, drift: -10, spin: -50, size: 16 },
+    { left: '88%',  delay: 1.6, drift: 24,  spin: 80,  size: 13 },
+  ]
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }} aria-hidden="true">
+      {petals.map((p, i) => (
+        <span key={i} className="petal-fall"
+          style={{
+            left: p.left,
+            top: -22,
+            animationDelay: `${p.delay}s`,
+            '--drift': `${p.drift}px`,
+            '--spin': `${p.spin}deg`,
+          }}>
+          <PetalSilhouette color={color} size={p.size} />
+        </span>
+      ))}
+    </div>
+  )
+}
+
 const COPY = {
   'day-one': {
     eyebrow: 'Day one',
@@ -35,6 +77,13 @@ export default function Celebration({ kind, onClose }) {
       }}
       aria-live="polite"
     >
+      {/* Falling petal shower — only on day-one moment. Sits behind
+          the card and quietly drifts down through the viewport. */}
+      {kind === 'day-one' && (
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <FallingPetals color={color} />
+        </div>
+      )}
       <div className="glass-card"
         style={{
           padding: '22px 28px',
@@ -44,6 +93,8 @@ export default function Celebration({ kind, onClose }) {
           borderLeft: `3px solid ${color}`,
           animation: 'celebrationBloom 3.2s ease-out both',
           pointerEvents: 'auto',
+          position: 'relative',
+          zIndex: 1,
         }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color }}>
           <PhaseFlourish phaseId={c.flourish} size={44} color={color} />
