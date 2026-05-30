@@ -219,11 +219,9 @@ function AlwaysHere({ go }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {items.map((it) => (
-          <button key={it.key} onClick={it.onTap}
+          <button key={it.key} onClick={it.onTap} className="glass-card"
             style={{
               textAlign: 'left',
-              background: T.card,
-              border: `1px solid ${T.hair}`,
               borderRadius: T.r,
               padding: '14px 16px',
               cursor: 'pointer',
@@ -287,14 +285,12 @@ function ForTodayRow({ phase, go, goArticle }) {
         scrollSnapType: 'x mandatory',
       }}>
         {items.map((it, idx) => (
-          <button key={it.key} onClick={it.onTap} className="stagger-card"
+          <button key={it.key} onClick={it.onTap} className="stagger-card glass-card"
             style={{
               flex: '0 0 64%',
               maxWidth: 220,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              background: T.card,
-              border: `1px solid ${T.hair}`,
               borderLeft: `3px solid ${phase.color}`,
               borderRadius: T.r,
               padding: '14px 14px 16px',
