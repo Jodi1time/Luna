@@ -63,31 +63,49 @@ export async function loadLogs() {
       sex: row.sex,
       sleep: row.sleep,
       note: row.note,
+      updated_at: row.updated_at,   // needed by useLuna merge logic
     }
   }
   return map
 }
 
 // Upsert a log row for a date. Matches the saveLog action shape.
+// Defensive: if the sleep column hasn't been added to the live
+// Supabase schema yet, retry without it. (The alter for `sleep` lives
+// in supabase-schema.sql — but if someone hasn't run the migration,
+// log saves would otherwise fail entirely and silently revert phase
+// state on the next hydrate.)
 export async function upsertLog(date, log) {
   const user = await currentUser()
   if (!user) return
-  const { error } = await supabase
+  const base = {
+    user_id: user.id,
+    date,
+    mood: log.mood ?? null,
+    symptoms: log.symptoms ?? [],
+    flow: log.flow ?? null,
+    bbt: log.bbt ?? null,
+    mucus: log.mucus ?? null,
+    sex: log.sex ?? null,
+    note: log.note ?? null,
+    updated_at: new Date().toISOString(),
+  }
+  const withSleep = { ...base, sleep: log.sleep ?? null }
+  const { error: firstError } = await supabase
     .from('logs')
-    .upsert({
-      user_id: user.id,
-      date,
-      mood: log.mood ?? null,
-      symptoms: log.symptoms ?? [],
-      flow: log.flow ?? null,
-      bbt: log.bbt ?? null,
-      mucus: log.mucus ?? null,
-      sex: log.sex ?? null,
-      sleep: log.sleep ?? null,
-      note: log.note ?? null,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id,date' })
-  if (error) throw error
+    .upsert(withSleep, { onConflict: 'user_id,date' })
+  if (!firstError) return
+  // If the failure looks like a missing-column error for `sleep`,
+  // retry without it. Otherwise surface the original error.
+  const msg = String(firstError.message || '').toLowerCase()
+  const isSleepColumnMissing = msg.includes('sleep') && (msg.includes('column') || msg.includes('not found'))
+  if (!isSleepColumnMissing) throw firstError
+  // eslint-disable-next-line no-console
+  console.warn('[cloud] sleep column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable sleep tracking server-side.')
+  const { error: retryError } = await supabase
+    .from('logs')
+    .upsert(base, { onConflict: 'user_id,date' })
+  if (retryError) throw retryError
 }
 
 export async function deleteLog(date) {

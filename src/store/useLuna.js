@@ -105,7 +105,11 @@ const useLuna = create(
 
       saveLog: (date, log) => {
         const iso = toISO(date)
-        const merged = { ...(get().logs[iso] || {}), ...log, date: iso }
+        const now = new Date().toISOString()
+        // Stamp every save with updated_at so hydrate can merge cloud
+        // vs local correctly — if a refresh happens before the cloud
+        // round-trip completes, we keep whichever record is newer.
+        const merged = { ...(get().logs[iso] || {}), ...log, date: iso, updated_at: now }
         set((s) => ({ logs: { ...s.logs, [iso]: merged } }))
         fireAndForget(upsertLog(iso, merged), 'saveLog')
       },
@@ -191,13 +195,30 @@ const useLuna = create(
       setSession: (session) => set({ session, user: session?.user || null }),
 
       // ── Cloud hydration ──────────────────────────────────────
-      // Load the user's profile + logs from Supabase and replace
-      // local state. Called on signin and on app boot if a session
-      // already exists. Local state may be stale (last cached) until
-      // this resolves; UI shows cached values in the meantime.
+      // Load the user's profile + logs from Supabase and merge them
+      // into local state. Logs are merged per-date by updated_at —
+      // whichever side has the newer record wins. This protects
+      // against a refresh during an in-flight cloud write: local
+      // edits aren't clobbered just because they haven't reached the
+      // server yet, and stale cloud rows don't overwrite fresher
+      // local ones.
       hydrateFromCloud: async () => {
         const [profile, logs] = await Promise.all([loadProfile(), loadLogs()])
         if (!profile) return
+        const localLogs = get().logs || {}
+        const cloudLogs = logs || {}
+        const merged = { ...cloudLogs }
+        for (const [iso, localLog] of Object.entries(localLogs)) {
+          const cloudLog = cloudLogs[iso]
+          // Take local if cloud doesn't have this date OR local is
+          // newer (by updated_at) OR local has updated_at and cloud
+          // doesn't.
+          if (!cloudLog) {
+            merged[iso] = localLog
+          } else if (localLog.updated_at && (!cloudLog.updated_at || localLog.updated_at > cloudLog.updated_at)) {
+            merged[iso] = localLog
+          }
+        }
         set({
           onboarded:       Boolean(profile.onboarded),
           displayName:     profile.display_name || '',
@@ -211,7 +232,7 @@ const useLuna = create(
           isPro:           profile.is_pro !== false,
           trialDaysLeft:   profile.trial_days_left ?? 7,
           account:         profile.email ? { email: profile.email } : null,
-          logs:            logs || {},
+          logs:            merged,
         })
       },
 
