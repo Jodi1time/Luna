@@ -231,6 +231,10 @@ export default function Settings() {
         <Row label="Delete my account"  onTap={deleteAccount} danger />
       </div>
 
+      <div style={{ padding: '24px 22px 12px', textAlign: 'center', fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, lineHeight: 1.6 }}>
+        Luna — a Gloria app.<br/>
+        <span style={{ fontStyle: 'normal', fontSize: 11, opacity: 0.7 }}>Named after a mother.</span>
+      </div>
       <div style={{ height: 16 }} />
       </div>
       </Screen>

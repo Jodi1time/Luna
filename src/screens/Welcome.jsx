@@ -10,8 +10,13 @@ export default function Welcome() {
         <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
       </div>
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, marginBottom: 32, color: T.muted }}>
-          LUNA
+        <div style={{ marginBottom: 32 }}>
+          <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, color: T.muted }}>
+            LUNA
+          </div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 10.5, color: T.muted, marginTop: 2, letterSpacing: 0.3 }}>
+            by Gloria
+          </div>
         </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

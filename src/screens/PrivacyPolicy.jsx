@@ -24,12 +24,12 @@ export default function PrivacyPolicy() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Privacy" onBack={back} />
-        <Eyebrow color={T.accent}>POLICY · EFFECTIVE 2026-05-29</Eyebrow>
+        <Eyebrow color={T.accent}>Policy · effective 2026-05-30</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
           Privacy Policy
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, color: T.muted, marginTop: 12, fontStyle: 'italic' }}>
-          What we collect, what we do not, and where your data lives.
+          What we collect, what we do not, and where your data lives. Luna is a product of Gloria, a small independent company.
         </div>
         <Rule />
 
@@ -98,11 +98,11 @@ export default function PrivacyPolicy() {
 
         <H>Contact</H>
         <P>
-          Reach us at privacy@luna.app (placeholder — to be replaced before launch).
+          Reach us at privacy@gloria.app (placeholder — to be replaced before launch). The data controller for Luna is Gloria, registered at an address to be finalised before public launch.
         </P>
 
-        <div style={{ marginTop: 24, paddingTop: 14, borderTop: `1px solid ${T.hair}`, fontSize: 11.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
-          This policy describes Luna's actual practices. Consult your own counsel for legal advice.
+        <div style={{ marginTop: 24, paddingTop: 14, borderTop: `1px solid ${T.hair}`, fontSize: 11.5, color: T.muted, fontFamily: T.serif, fontStyle: 'italic', lineHeight: 1.55 }}>
+          Luna is a product of Gloria. This policy describes our actual practices — consult your own counsel for legal advice.
         </div>
         <div style={{ height: 16 }} />
       </div>

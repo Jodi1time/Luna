@@ -1,6 +1,6 @@
 {
-  "appId": "com.luna.app",
-  "appName": "Luna",
+  "appId": "app.gloria.luna",
+  "appName": "Luna by Gloria",
   "webDir": "dist",
   "ios": {
     "contentInset": "automatic",

@@ -18,9 +18,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon-192.png', 'icon-512.png', 'splash/*.png'],
       manifest: {
-        name: 'Luna — Cycle Tracker',
+        name: 'Luna by Gloria — Cycle Companion',
         short_name: 'Luna',
-        description: 'A cycle tracker that interprets, not just logs.',
+        description: 'A companion for the body you live in. Doctor-sourced cycle tracking with privacy at the floor. Luna by Gloria.',
         theme_color: '#F4EFE5',
         background_color: '#F4EFE5',
         display: 'standalone',

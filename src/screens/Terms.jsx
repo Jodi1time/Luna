@@ -24,12 +24,12 @@ export default function Terms() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Terms" onBack={back} />
-        <Eyebrow color={T.accent}>TERMS · EFFECTIVE 2026-05-29</Eyebrow>
+        <Eyebrow color={T.accent}>Terms · effective 2026-05-30</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
           Terms of Service
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, color: T.muted, marginTop: 12, fontStyle: 'italic' }}>
-          The rules of the road for using Luna.
+          The rules of the road for using Luna. Luna is operated by Gloria.
         </div>
         <Rule />
 
@@ -70,7 +70,7 @@ export default function Terms() {
 
         <H>Governing law</H>
         <P>
-          These terms are governed by the law of the jurisdiction in which Luna is incorporated (to be finalized before launch). Any dispute arising under these terms will be resolved exclusively in the courts of that jurisdiction, unless otherwise required by law.
+          These terms are governed by the law of the jurisdiction in which Gloria, Luna's operating company, is incorporated (to be finalized before public launch). Any dispute arising under these terms will be resolved exclusively in the courts of that jurisdiction, unless otherwise required by law.
         </P>
 
         <H>EU / UK residents</H>
@@ -85,7 +85,7 @@ export default function Terms() {
 
         <H>Contact</H>
         <P>
-          Reach us at privacy@luna.app (placeholder — to be replaced before launch).
+          Reach us at privacy@gloria.app (placeholder — to be replaced before launch).
         </P>
 
         <div style={{ height: 16 }} />

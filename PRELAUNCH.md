@@ -2,6 +2,8 @@
 
 Things to do/decide before opening Luna to the public. Keep this updated as items land or new ones appear.
 
+**Branding decision (2026-05-30):** Luna is the product name; **Gloria** is the parent / operating company (named after the founder's mother). App Store listing reads **"Luna by Gloria"**, which solves the discoverability problem in a crowded "Luna" search space while keeping the product name simple. Bundle id moved from `com.luna.app` → `app.gloria.luna`. Contact email placeholder switched from `privacy@luna.app` → `privacy@gloria.app`. Legal docs (Privacy Policy + Terms) now name Gloria as data controller / operator.
+
 ## Status
 
 **Last review:** 2026-05-29
