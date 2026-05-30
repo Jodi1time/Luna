@@ -120,23 +120,28 @@ export default function Insights() {
           Patterns Luna sees across your cycles, gathered gently.
         </div>
 
-        {/* Cycle wheel — circular visualization of where you are. Shows
-            in all states (including no-data) so users can see what
-            their cycle will look like once Luna learns it. */}
-        {!onHormonalBC && (
-          <div style={{ marginBottom: 22 }}>
-            {cycleDay ? (
+        {/* Cycle wheel — circular visualization of where you are. Now
+            always renders so it's visible regardless of BC method or
+            whether the user has logged anything yet. */}
+        <div style={{ marginBottom: 22 }}>
+          {cycleDay ? (
+            <>
               <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} />
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
-                <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} />
-                <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
-                  Log your first period and Luna will mark where you are on the wheel.
+              {onHormonalBC && (
+                <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 280, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
+                  Your method softens the natural phase pattern — this is the underlying cycle Luna still tracks for you.
                 </div>
+              )}
+            </>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
+              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} />
+              <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
+                Log your first period and Luna will mark where you are on the wheel.
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         <Eyebrow>Where you are now</Eyebrow>
         {onHormonalBC ? (

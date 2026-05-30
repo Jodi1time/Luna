@@ -185,8 +185,7 @@ export default function Settings() {
 
       <SectionLabel>Your cycle</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Average cycle length" value={`${cycleLength} days`} onTap={() => go('editCycleNumbers')} />
-        <Row label="Average period length" value={`${periodLength} days`} onTap={() => go('editCycleNumbers')} />
+        <Row label="Cycle & period length" value={`${cycleLength} / ${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
