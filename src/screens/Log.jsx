@@ -58,7 +58,7 @@ export default function Log() {
     back()
   }
 
-  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase().replace(',', ' ·')
+  const dateLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
@@ -66,17 +66,19 @@ export default function Log() {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans }}>
           <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
-          <div style={{ fontSize: 11, color: T.muted, letterSpacing: 1.5, fontWeight: 700 }}>{dateLabel}</div>
-          <button onClick={save} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: 6, fontWeight: 700, fontSize: 11, letterSpacing: 1.5, fontFamily: T.sans }}>SAVE</button>
+          <div style={{ fontSize: 12, color: T.muted, fontFamily: T.serif, fontStyle: 'italic' }}>{dateLabel}</div>
+          <button onClick={save} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: 6, fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans }}>Save</button>
         </div>
 
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, margin: '16px 0 6px' }}>
-          How was<br /><em>today?</em>
+          Tell me about<br /><em>your day.</em>
         </div>
-        <div style={{ fontSize: 13, color: T.muted, marginBottom: 24, fontFamily: T.sans }}>Tap the ? on any symptom to see the evidence behind it.</div>
+        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
+          Whatever you noticed. None of these are required — tap the <span style={{ fontFamily: T.mono }}>?</span> on any symptom for the science behind it.
+        </div>
 
         {/* Mood */}
-        <Eyebrow>MOOD</Eyebrow>
+        <Eyebrow>How you're feeling</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
           {MOOD_IDS.map((id) => (
             <button key={id} onClick={() => setMood(id)}
@@ -96,7 +98,7 @@ export default function Log() {
         </div>
 
         {/* Symptoms */}
-        <Eyebrow>SYMPTOMS</Eyebrow>
+        <Eyebrow>What your body's telling you</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 24 }}>
           {Object.entries(SYMPTOMS).slice(0, 8).map(([id, s]) => {
             const on = symptoms.includes(id)
@@ -117,13 +119,13 @@ export default function Log() {
         </div>
 
         {/* Flow */}
-        <Eyebrow>FLOW</Eyebrow>
+        <Eyebrow>Bleeding</Eyebrow>
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
           {['Spotting','Light','Medium','Heavy'].map((f) => {
             const on = flow === f
             return (
               <button key={f} onClick={() => setFlow(f)}
-                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, letterSpacing: 0.8, fontWeight: 600, textTransform: 'uppercase', borderRadius: T.r }}>
+                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
                 {f}
               </button>
             )
@@ -131,7 +133,7 @@ export default function Log() {
         </div>
 
         {/* Temperature (BBT) */}
-        <Eyebrow>TEMPERATURE · OPTIONAL</Eyebrow>
+        <Eyebrow>Your morning temperature</Eyebrow>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
           <input
             type="number"
@@ -156,12 +158,12 @@ export default function Log() {
             {bbtError}
           </div>
         )}
-        <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4, marginBottom: 24 }}>
-          Basal body temperature — first thing in the morning, before getting up. Rises ~0.5°F after ovulation.
+        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, marginBottom: 24, fontStyle: 'italic' }}>
+          Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
         </div>
 
         {/* Discharge (cervical mucus internally — friendlier label here) */}
-        <Eyebrow>DISCHARGE · OPTIONAL</Eyebrow>
+        <Eyebrow>Discharge</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 24 }}>
           {MUCUS_OPTIONS.map((m) => {
             const on = mucus === m.id
@@ -176,7 +178,7 @@ export default function Log() {
         </div>
 
         {/* Sex */}
-        <Eyebrow>SEX · OPTIONAL</Eyebrow>
+        <Eyebrow>Sex</Eyebrow>
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
           {SEX_OPTIONS.map((s) => {
             const on = sex === s.id
@@ -190,17 +192,17 @@ export default function Log() {
         </div>
 
         {/* Note */}
-        <Eyebrow>NOTE</Eyebrow>
-        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="What was on your mind today?"
+        <Eyebrow>Anything else on your mind</Eyebrow>
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line, a sentence — whatever you want to remember."
           maxLength={2000}
-          style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, padding: 14, fontSize: 14, lineHeight: 1.5, color: T.text, minHeight: 80, borderRadius: T.r }} />
+          style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, padding: 14, fontSize: 14, lineHeight: 1.55, color: T.text, minHeight: 80, borderRadius: T.r, fontFamily: T.serif, fontStyle: 'italic' }} />
         {note.length > 1900 && (
           <div style={{ fontSize: 10, fontFamily: T.mono, color: T.muted, textAlign: 'right', marginTop: 4 }}>
             {note.length} / 2000
           </div>
         )}
 
-        <SourceLine>Daily symptom tracking improves diagnostic accuracy for PMDD & menstrual disorders — ACOG</SourceLine>
+        <SourceLine>Tracked over time, this is what gives a doctor something concrete to work with.</SourceLine>
       </div>
     </div>
   )

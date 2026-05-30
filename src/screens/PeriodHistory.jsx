@@ -33,9 +33,9 @@ export default function PeriodHistory() {
   return (
     <Screen padBottom={48}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead onBack={back} issue="Period History" />
+        <Masthead onBack={back} issue="your cycles" />
 
-        <Eyebrow>YOUR CYCLE · LAST {history.length} PERIOD{history.length === 1 ? '' : 'S'}</Eyebrow>
+        <Eyebrow>The last {history.length} period{history.length === 1 ? '' : 's'} you've logged</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>
           {headline}
         </div>
@@ -43,29 +43,29 @@ export default function PeriodHistory() {
         {history.length === 0 ? (
           <>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, color: T.muted, marginBottom: 16 }}>
-              Once you log flow for a few days, your period history will start to fill in here. Two cycles is enough to spot a rhythm.
+              When you log a few days of flow, your history starts filling in here. Two cycles is usually enough to see a rhythm.
             </div>
-            <CTAButton onClick={() => go('log')} full>LOG TODAY</CTAButton>
+            <CTAButton onClick={() => go('log')} full>Log today</CTAButton>
           </>
         ) : (
           <>
             {history.length >= 2 && (
-              <div style={{
-                background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r,
+              <div className="glass-card" style={{
+                borderRadius: T.r,
                 padding: '14px 16px', marginBottom: 18,
                 display: 'flex', flexDirection: 'column', gap: 8,
               }}>
-                <SummaryRow label="Average cycle" value={avgCycle ? `${avgCycle} days` : '—'} />
-                <SummaryRow label="Average period" value={avgPeriod ? `${avgPeriod} days` : '—'} />
+                <SummaryRow label="Your average cycle" value={avgCycle ? `${avgCycle} days` : '—'} />
+                <SummaryRow label="Your average period" value={avgPeriod ? `${avgPeriod} days` : '—'} />
                 <SummaryRow
-                  label="Variability range"
+                  label="Range we've seen"
                   value={minGap && maxGap ? (minGap === maxGap ? `${minGap} days` : `${minGap}–${maxGap} days`) : '—'}
                 />
               </div>
             )}
 
             <Rule />
-            <Eyebrow>EACH CYCLE</Eyebrow>
+            <Eyebrow>Each one, in order</Eyebrow>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
               {history.map((p) => {

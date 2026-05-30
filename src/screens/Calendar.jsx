@@ -169,29 +169,48 @@ export default function Calendar() {
 
         <Rule />
 
-        {/* Predictions */}
-        <Eyebrow>What's coming next</Eyebrow>
+        {/* Predictions — written like a friend, not a dashboard */}
+        <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4 }}>
+          Looking ahead.
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic' }}>
+          What's likely coming up, with how steady the call is.
+        </div>
         {filteredPredictions ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filteredPredictions.map((p, i) => {
-              const confColor = p.conf === 'high' ? T.accent : (p.conf === 'medium' ? T.text : T.muted)
+              // Conversational title + soft confidence wording per row.
+              const title =
+                p.label === 'Next period'    ? 'Your next period' :
+                p.label === 'Fertile window' ? 'Your fertile window' :
+                p.label === 'PMS window'     ? 'When PMS may show up' :
+                p.label
+              const accentColor =
+                p.label === 'Next period'    ? PHASES.menstrual.color :
+                p.label === 'Fertile window' ? PHASES.ovulation.color :
+                p.label === 'PMS window'     ? PHASES.luteal.color :
+                T.accent
+              const certaintyLabel =
+                p.conf === 'high'   ? 'Pretty sure'   :
+                p.conf === 'medium' ? 'Likely'        :
+                                      'Best guess'
+              const rangeLabel = p.range
+                ? p.range.replace('±', 'give or take').replace(/(\d+) days?/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
+                : null
               return (
-                <div key={i} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: 10, letterSpacing: 1.2, color: T.muted, fontWeight: 600, fontFamily: T.sans }}>{p.label.toLowerCase()}</span>
-                    <span style={{ fontSize: 10, fontFamily: T.mono, color: confColor, letterSpacing: 0.3 }}>
-                      {p.conf} confidence
-                    </span>
+                <div key={i} className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${accentColor}`, borderRadius: T.r }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
+                    {certaintyLabel}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                    <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500 }}>{p.date}</div>
-                    {p.range && (
-                      <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, letterSpacing: 0.3 }}>
-                        {p.range}
-                      </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
+                    {title} — <em style={{ color: accentColor }}>{p.date}</em>
+                    {rangeLabel && (
+                      <span style={{ fontFamily: T.sans, fontSize: 13, fontStyle: 'normal', color: T.muted, fontWeight: 400 }}>
+                        {' '}({rangeLabel})
+                      </span>
                     )}
                   </div>
-                  <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, marginTop: 8, lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
                     {p.why}
                   </div>
                 </div>
@@ -199,8 +218,8 @@ export default function Calendar() {
             })}
           </div>
         ) : (
-          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8 }}>
-            Log your first period start and Luna will begin predicting from there.
+          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8, lineHeight: 1.55 }}>
+            Log your first period and Luna will start learning your rhythm from there.
           </div>
         )}
         <div style={{ height: 16 }} />

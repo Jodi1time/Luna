@@ -14,13 +14,12 @@ export default function BirthControl() {
   return (
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Birth Control" onBack={back} />
-        <Eyebrow>BIRTH CONTROL · YOUR METHOD</Eyebrow>
+        <Masthead issue="birth control" onBack={back} />
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          What are you <em>using?</em>
+          What are you<br /><em>on?</em>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Your method shapes predictions and content. We won't track fertility windows that don't apply.
+        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.6, marginBottom: 24 }}>
+          Your method shapes what Luna predicts — we won't show fertility windows for methods that suppress ovulation.
         </div>
       </div>
 

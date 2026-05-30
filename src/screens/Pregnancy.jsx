@@ -115,16 +115,15 @@ function NotPregnantState() {
   return (
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Pregnancy" onBack={back} />
-        <Eyebrow>PREGNANCY MODE · OFF</Eyebrow>
+        <Masthead issue="pregnancy" onBack={back} />
         <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
-          Are you <em>pregnant?</em>
+          Are you <em>expecting?</em>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>
-          Pregnancy mode swaps cycle tracking for week-by-week guidance through the 40 weeks. Switch back any time.
+        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.6, marginBottom: 24 }}>
+          Pregnancy mode trades cycle tracking for week-by-week guidance through your 40 weeks. You can switch back anytime — bodies change.
         </div>
 
-        <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 10, textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.text, marginBottom: 10, fontStyle: 'italic' }}>
           When did your last period start?
         </div>
 
@@ -137,14 +136,14 @@ function NotPregnantState() {
         ))}
 
         {selected && inRange && due && (
-          <div style={{ background: T.subtle, padding: '14px 16px', border: `1px solid ${T.hair}`, borderRadius: T.r, marginBottom: 14 }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.accent, marginBottom: 6, textTransform: 'uppercase' }}>
-              Estimated due date
+          <div className="glass-card" style={{ padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+              You're due around
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
               {formatLongDate(due)}
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, marginTop: 4 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, marginTop: 4, fontStyle: 'italic' }}>
               {wks > 0 ? `${wks} week${wks === 1 ? '' : 's'} from today` : wks === 0 ? 'Right around today' : `${Math.abs(wks)} week${Math.abs(wks) === 1 ? '' : 's'} past`}
             </div>
           </div>
@@ -157,11 +156,11 @@ function NotPregnantState() {
         )}
 
         <CTAButton full onClick={activate} style={{ opacity: inRange ? 1 : 0.45, pointerEvents: inRange ? 'auto' : 'none' }}>
-          ACTIVATE PREGNANCY MODE {Icons.arrow}
+          Switch to pregnancy mode {Icons.arrow}
         </CTAButton>
 
-        <div style={{ marginTop: 18, fontFamily: T.mono, fontSize: 10, color: T.muted, lineHeight: 1.6, letterSpacing: 0.4 }}>
-          NAEGELE'S RULE — due date = last period + 280 days. Most deliveries happen between 37–42 weeks.
+        <div style={{ marginTop: 18, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.6, fontStyle: 'italic' }}>
+          Due date is last period + 280 days (Naegele's rule). Most babies arrive between weeks 37 and 42 — every body keeps its own time.
         </div>
       </div>
     </Screen>
@@ -196,8 +195,8 @@ function PregnantState() {
   return (
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="Pregnancy" onBack={back} />
-        <Eyebrow color={accent}>WEEK {week} · {trim?.name?.toUpperCase()}</Eyebrow>
+        <Masthead issue="pregnancy" onBack={back} />
+        <Eyebrow color={accent}>week {week} · {trim?.name?.toLowerCase()}</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 44, fontWeight: 500, letterSpacing: -1, lineHeight: 1.02, marginBottom: 4 }}>
           Week {week} <span style={{ color: T.muted, fontWeight: 400 }}>of 40</span>
         </div>
@@ -205,31 +204,28 @@ function PregnantState() {
           {dueLine}.
         </div>
 
-        <div style={{ background: T.card, padding: 14, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, textTransform: 'uppercase' }}>Due date</div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5 }}>LMP + 280</div>
-          </div>
+        <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
+          <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>You're due</div>
           <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
             {formatLongDate(preg.dueDate)}
           </div>
         </div>
 
         {content && (
-          <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: accent, marginBottom: 8, textTransform: 'uppercase' }}>
+          <div className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
               This week
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.25, marginBottom: 14, letterSpacing: -0.3 }}>
               About the size of {content.size}.
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 6, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               Baby
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text, marginBottom: 14 }}>
               {content.baby}
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, marginBottom: 6, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               You
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text }}>
@@ -249,11 +245,11 @@ function PregnantState() {
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             color: T.accent, fontFamily: T.sans, fontSize: 13, fontWeight: 600,
           }}>
-          <span>End pregnancy</span>
-          <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, opacity: 0.7 }}>RETURN TO CYCLE</span>
+          <span>End pregnancy mode</span>
+          <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>back to your cycle</span>
         </button>
-        <div style={{ marginTop: 10, fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.5 }}>
-          Your logs are preserved. Use this after birth, or if circumstances change.
+        <div style={{ marginTop: 10, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+          Your logs are kept. Use this after birth, or if circumstances change.
         </div>
       </div>
     </Screen>
