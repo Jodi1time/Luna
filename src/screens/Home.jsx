@@ -735,8 +735,12 @@ export default function Home() {
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
-    setQuickMood(m)
-    saveLog(new Date(), { mood: m })
+    // Tap an already-selected mood to clear it — the same gesture that
+    // sets a mood also takes it back, so a mistap is one tap away from
+    // undone. Saves `null` so the day's mood field actually clears.
+    const next = quickMood === m ? null : m
+    setQuickMood(next)
+    saveLog(new Date(), { mood: next })
   }
 
   // Insight surfaced when a mood is tapped — text + (optional) article id,

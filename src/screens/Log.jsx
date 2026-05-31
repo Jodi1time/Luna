@@ -24,7 +24,7 @@ const SEX_OPTIONS = [
 
 export default function Log() {
   const store = useLuna()
-  const { back, goArticle, goSymptom, saveLog, getLog, activeLogDate, setActiveLogDate } = store
+  const { back, goArticle, goSymptom, saveLog, removeLog, getLog, activeLogDate, setActiveLogDate } = store
   const cycle = useCycle(store)
   const phase = cycle.phase
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -181,7 +181,7 @@ export default function Log() {
         <Eyebrow>How you're feeling</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
           {MOOD_IDS.map((id) => (
-            <button key={id} onClick={() => setMood(id)}
+            <button key={id} onClick={() => setMood(mood === id ? null : id)}
               style={{
                 border: 'none', cursor: 'pointer',
                 flex: 1, padding: '8px 2px',
@@ -243,7 +243,7 @@ export default function Log() {
           {['Spotting','Light','Medium','Heavy'].map((f) => {
             const on = flow === f
             return (
-              <button key={f} onClick={() => setFlow(f)}
+              <button key={f} onClick={() => setFlow(on ? null : f)}
                 style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
                 {f}
               </button>
@@ -336,6 +336,26 @@ export default function Log() {
         )}
 
         <SourceLine>Tracked over time, this is what gives a doctor something concrete to work with.</SourceLine>
+
+        {/* Quiet undo path — if the user logged something on the wrong
+            day, or wants to start fresh, let them empty this day's
+            entry entirely. Confirmation prompt so it's not accidental. */}
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${T.hair}` }}>
+          <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 10 }}>
+            Tapped the wrong thing? Take it back — your future self won't mind.
+          </div>
+          <button
+            onClick={() => {
+              const friendly = isToday ? 'today' : dateLabel
+              if (!window.confirm(`Clear everything you have logged for ${friendly}? This removes the whole entry.`)) return
+              removeLog(editingISO)
+              setActiveLogDate(null)
+              back()
+            }}
+            style={{ width: '100%', background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+            Clear this day's entry
+          </button>
+        </div>
       </div>
     </div>
   )
