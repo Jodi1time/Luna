@@ -408,6 +408,67 @@ button.glass-card:active {
   animation-duration: 3.5s;
 }
 
+/* Word-by-word greeting fade-in. Each word/segment of the Home
+   greeting eases in with a small per-element delay applied inline
+   via animationDelay. Editorial register — like typewriter pacing
+   but without the typewriter character. */
+@keyframes wordIn {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0);   }
+}
+.word-in {
+  display: inline-block;
+  animation: wordIn 0.5s var(--ease-out) both;
+}
+
+/* CycleWheel segments draw-in. Each phase slice on the Insights
+   wheel fades in sequentially, like a hand-drawn diagram coming
+   alive. Stagger delay applied inline per segment. Final opacity
+   per segment is set via a --final-opacity CSS variable on the
+   inline style so each segment lands at its correct mood. SVG paths
+   don't scale predictably without coordinate hacks, so opacity-only
+   is the safe + clean choice here. */
+@keyframes arcDraw {
+  from { opacity: 0; }
+  to   { opacity: var(--final-opacity, 0.32); }
+}
+.arc-draw {
+  animation: arcDraw 0.45s var(--ease-out) both;
+}
+
+/* Editorial breathing dots — used in LunaChat while the AI is
+   thinking. Three small dots, each delayed, rising and softening
+   like inhales. Replaces the generic "…" ellipsis. */
+@keyframes chatDotBreath {
+  0%, 70%, 100% { opacity: 0.2;  transform: translateY(0);    }
+  35%           { opacity: 0.85; transform: translateY(-3px); }
+}
+.chat-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 11px 14px;
+}
+.chat-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(26,19,16,0.45);
+  display: inline-block;
+  animation: chatDotBreath 1.4s var(--ease-in-out) infinite;
+}
+
+/* Smart helper card arrival glow — single-shot soft accent halo
+   around the border when a contextual card first appears. Says
+   "Luna noticed this for you" without nagging. 1.4s, never repeats. */
+@keyframes arrivalHalo {
+  0%   { box-shadow: 0 0 0 0 rgba(200, 78, 46, 0);    }
+  35%  { box-shadow: 0 0 20px 4px rgba(200, 78, 46, 0.28); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 78, 46, 0);    }
+}
+.smart-arrival {
+  animation: arrivalHalo 1.4s var(--ease-out) both;
+}
+
 /* StickyNote settle — when the sticky note first mounts on Home, it
    drops in with a tiny overshoot wobble on the OUTER wrapper, like
    a real piece of paper being pressed onto the wall. Inner element

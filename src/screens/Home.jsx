@@ -123,19 +123,23 @@ function BackgroundBlob({ color, effect }) {
   // Truly stationary: NO scroll-driven transform. The blob is locked
   // to the phone frame at top:34%, so it doesn't move at all as the
   // user scrolls. The parallax illusion is purely relative motion:
-  // content scrolls past a fixed blob. That's what gives "blob is a
-  // separate entity behind the screen" feel.
+  // content scrolls past a fixed blob.
   //
   // The visible "moving" sense comes from the idle morph animation
-  // (in CSS, dramatic now) — alive while still.
+  // (in CSS) — alive while still.
+  //
+  // An effect can override the ripple/bloom color via effect.color,
+  // which lets mood-taps tint the feedback bloom in that mood's
+  // emotional color without changing the resting blob.
+  const effectColor = effect?.color || color
   return (
     <div className="blob-stage" aria-hidden="true">
       <div className="breathing-blob" style={{ '--phase-color': color }} />
       {effect?.name === 'ripple' && (
-        <div key={effect.id} className="blob-ripple" style={{ '--phase-color': color }} />
+        <div key={effect.id} className="blob-ripple" style={{ '--phase-color': effectColor }} />
       )}
       {effect?.name === 'bloom' && (
-        <div key={effect.id} className="blob-bloom" style={{ '--phase-color': color }} />
+        <div key={effect.id} className="blob-bloom" style={{ '--phase-color': effectColor }} />
       )}
     </div>
   )
@@ -155,10 +159,28 @@ function Greeting({ name, phaseId }) {
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const first = (name || '').split(' ')[0]
   const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
+  // Build the greeting as discrete segments so each can fade in with
+  // its own delay. Each segment includes a trailing space where
+  // appropriate to preserve the visual rhythm.
+  const segments = first
+    ? [`${opener} `, `${timeOfDay}, `, { text: first, italic: false }, '.']
+    : [`${opener} `, `${timeOfDay}`, '.']
   return (
     <div style={{ paddingTop: 6, marginBottom: 14 }}>
       <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
-        {opener} {timeOfDay}{first ? ', ' : ''}<span style={{ fontStyle: 'normal' }}>{first}</span>.
+        {segments.map((seg, i) => {
+          const text = typeof seg === 'string' ? seg : seg.text
+          const italic = typeof seg === 'string' ? true : seg.italic !== false
+          return (
+            <span key={i} className="word-in"
+              style={{
+                animationDelay: `${i * 110}ms`,
+                fontStyle: italic ? 'italic' : 'normal',
+              }}>
+              {text}
+            </span>
+          )
+        })}
       </div>
     </div>
   )
@@ -524,7 +546,9 @@ function weeklyHealthCheck(date = new Date()) {
 // helpers. Only mounted when a relevant signal is in today's log.
 function SmartHelperCard({ onTap, eyebrow, line }) {
   return (
-    <button onClick={onTap} className="glass-card"
+    // smart-arrival glows the border with a one-shot accent halo on mount —
+    // says "Luna noticed this for you" without nagging.
+    <button onClick={onTap} className="glass-card smart-arrival"
       style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
         {eyebrow}
@@ -731,15 +755,48 @@ export default function Home() {
     const t = setTimeout(() => setEffect(null), 1600)
     return () => clearTimeout(t)
   }, [effect])
-  const triggerBlobEffect = () => {
+  // Effect name + optional color override. Mood taps pass the mood's
+  // emotional color so the bloom reads as "Luna received what you
+  // said" — a tiny rippling acknowledgement in the right hue.
+  const triggerBlobEffect = (override = {}) => {
     const options = ['ripple', 'bloom']
-    const next = options[Math.floor(Math.random() * options.length)]
-    setEffect({ id: Date.now(), name: next })
+    const next = override.name || options[Math.floor(Math.random() * options.length)]
+    setEffect({ id: Date.now(), name: next, color: override.color || null })
   }
   const handleContentTap = (e) => {
     if (e.target.closest('button, a, input, [role="button"]')) return
     triggerBlobEffect()
   }
+
+  // Parallax — the cover drifts a hair slower than the rest of the
+  // content as the user scrolls, so the day number and phase feel
+  // like they sit on a layer behind the rest. Throttled via rAF and
+  // applied directly to the DOM node (no React re-render on scroll).
+  const screenRef = useRef(null)
+  const coverRef = useRef(null)
+  useEffect(() => {
+    const el = screenRef.current
+    if (!el) return
+    let rafId = null
+    let lastY = 0
+    const update = () => {
+      rafId = null
+      if (coverRef.current) {
+        // 0.18 multiplier — subtle enough to be felt, not seen.
+        coverRef.current.style.transform = `translateY(${lastY * 0.18}px)`
+      }
+    }
+    const onScroll = () => {
+      lastY = el.scrollTop
+      if (rafId) return
+      rafId = requestAnimationFrame(update)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+  }, [])
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
@@ -768,6 +825,17 @@ export default function Home() {
   const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
+  // Mood → emotional color. Used to tint the blob ripple when she
+  // taps a mood — Luna's quiet way of saying "I received that, in
+  // your color." Soft Luna palette tones; never neon.
+  const MOOD_COLORS = {
+    Calm:   '#9D6F8C', // soft luteal purple — settled, internal
+    Bright: '#E8B765', // ovulation gold — energy, outward
+    Tired:  '#7D7269', // muted neutral — quiet
+    Sore:   '#C84E2E', // accent terra cotta — pain
+    Low:    '#5A4A72', // deep purple — heaviness
+  }
+
   const handleQuickMood = (m) => {
     // Tap an already-selected mood to clear it — the same gesture that
     // sets a mood also takes it back, so a mistap is one tap away from
@@ -775,6 +843,11 @@ export default function Home() {
     const next = quickMood === m ? null : m
     setQuickMood(next)
     saveLog(new Date(), { mood: next })
+    if (next) {
+      // Light blob bloom in the mood's color — acknowledges the tap
+      // visually without saying anything.
+      triggerBlobEffect({ name: 'bloom', color: MOOD_COLORS[next] || null })
+    }
   }
 
   // Insight surfaced when a mood is tapped — text + (optional) article id,
@@ -886,7 +959,7 @@ export default function Home() {
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
       <BackgroundBlob color={blobColor} effect={effect} />
       {/* Content layer — scrolls past the stationary blob. */}
-      <Screen>
+      <Screen ref={screenRef}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} phaseId={phase?.id} />
 
@@ -944,7 +1017,7 @@ export default function Home() {
 
           {/* Cover — Cycle variant */}
           {!isPreg && (
-          <div style={{ marginBottom: 4 }}>
+          <div ref={coverRef} style={{ marginBottom: 4, willChange: 'transform' }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
               {onHormonalBC
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`

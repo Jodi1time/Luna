@@ -222,8 +222,10 @@ export default function LunaChat({ open, onClose, opener, context }) {
             </div>
           ))}
           {sending && (
-            <div style={{ alignSelf: 'flex-start', padding: '11px 14px', color: T.muted, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, opacity: 0.7 }}>
-              …
+            <div className="chat-dots" style={{ alignSelf: 'flex-start' }} aria-label="Luna is thinking">
+              <span style={{ animationDelay: '0ms' }} />
+              <span style={{ animationDelay: '180ms' }} />
+              <span style={{ animationDelay: '360ms' }} />
             </div>
           )}
           {reachedCap && !sending && (

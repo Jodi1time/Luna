@@ -46,9 +46,13 @@ function CycleWheel({ cycleDay, cycleLength, periodLength }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 6 }}>
       <svg width={size} height={size} style={{ overflow: 'visible' }}>
-        {segments.map((s) => (
-          <path key={s.d} d={s.path} fill={s.color} opacity={s.isToday ? 0.95 : 0.32}
-            style={{ transition: 'opacity 0.4s' }} />
+        {segments.map((s, idx) => (
+          <path key={s.d} d={s.path} fill={s.color}
+            className="arc-draw"
+            style={{
+              animationDelay: `${idx * 22}ms`,
+              '--final-opacity': s.isToday ? 0.95 : 0.32,
+            }} />
         ))}
         {/* Today marker — small filled circle on top of the ring */}
         <circle cx={mx} cy={my} r={6} fill="#fff" stroke={todayPhase.color} strokeWidth={2} />
