@@ -389,13 +389,12 @@ function dueWellnessNudges(wellness) {
   return nudges
 }
 
-// Three compact shortcuts that sit just under the cover. Mirrors the
-// pattern Flo uses with high engagement: the most common log entries
-// at the user's thumb, one tap away. Doula-toned labels (no "+").
-// Each action goes somewhere distinct — "A note" opens its own
-// bottom-sheet (not the full Log form) so the label matches what
-// happens.
-function QuickActions({ go, setActiveLogDate, onQuickNote }) {
+// Horizontal scroll wheel of quick entries under the phase cover.
+// Two "log/edit" actions first, then the navigation cards that used
+// to live in AlwaysHere. "A note" used to be here too — removed,
+// because the sticky note in the corner of Home now covers that
+// gimmick and a dedicated card became redundant.
+function QuickActions({ go, setActiveLogDate }) {
   const todayISO = new Date().toISOString().slice(0, 10)
   const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
   const items = [
@@ -423,39 +422,84 @@ function QuickActions({ go, setActiveLogDate, onQuickNote }) {
       onTap: () => go('editPeriodStart'),
     },
     {
-      key: 'note',
-      label: 'A note',
-      sub: 'For your future self',
+      key: 'intimate',
+      label: 'Your sexual life',
+      sub: 'Desire, lubrication, pleasure',
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 4h12v9l-4 4H4z" />
-          <path d="M16 13h-4v4" />
+          <path d="M10 4c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6z" />
+          <circle cx="10" cy="11" r="1" fill="currentColor" stroke="none" />
         </svg>
       ),
-      onTap: onQuickNote,
+      onTap: () => go('intimate'),
+    },
+    {
+      key: 'watch',
+      label: 'When something feels off',
+      sub: 'Spot the patterns',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="9" r="5" />
+          <path d="M13 13l4 4" />
+        </svg>
+      ),
+      onTap: () => go('watch'),
+    },
+    {
+      key: 'cheatsheet',
+      label: 'For your next visit',
+      sub: 'Talking points ready',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="3" width="12" height="14" rx="1.5" />
+          <path d="M7 7h6M7 10h6M7 13h4" />
+        </svg>
+      ),
+      onTap: () => go('cheatsheet'),
+    },
+    {
+      key: 'care',
+      label: 'Care checklist',
+      sub: 'Checkups, screenings',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="14" height="14" rx="2" />
+          <path d="M3 8h14M6 12l2 2 4-4" />
+        </svg>
+      ),
+      onTap: () => go('care'),
     },
   ]
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 20 }}>
-      {items.map((it) => (
-        <button key={it.key} onClick={it.onTap} className="glass-card"
+    <div style={{
+      display: 'flex', gap: 8, overflowX: 'auto', overflowY: 'hidden',
+      marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
+      scrollSnapType: 'x mandatory',
+      marginTop: 20,
+    }}>
+      {items.map((it, idx) => (
+        <button key={it.key} onClick={it.onTap} className="glass-card stagger-card"
           style={{
+            flex: '0 0 44%',
+            maxWidth: 180,
+            scrollSnapAlign: 'start',
             textAlign: 'left',
             borderRadius: T.r,
-            padding: '12px 12px 13px',
+            padding: '14px 14px 14px',
             cursor: 'pointer',
             color: T.text,
             fontFamily: 'inherit',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            gap: 6,
+            gap: 8,
+            animationDelay: `${idx * 50}ms`,
           }}>
           <span style={{ color: T.accent, display: 'inline-flex' }}>{it.icon}</span>
-          <span style={{ fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, lineHeight: 1.15, letterSpacing: -0.1 }}>
+          <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1 }}>
             {it.label}
           </span>
-          <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.3, letterSpacing: 0.1 }}>
+          <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
             {it.sub}
           </span>
         </button>
@@ -565,40 +609,16 @@ function WeeklyHealthCheckCard({ go }) {
   )
 }
 
-// Always-here essentials at the bottom of Home — surfaces support
-// features + any quiet wellness nudges that are due.
-function AlwaysHere({ go, wellness, markWellness }) {
+// Always-here surfaces only the wellness nudges that are due
+// (monthly breast self-exam, weekly pelvic floor). The navigation
+// cards that used to live here (intimate / watch / cheatsheet / care)
+// are now part of the QuickActions horizontal scroll under the cover,
+// so this section is for body-care nudges only. Renders nothing when
+// nothing is due.
+function AlwaysHere({ wellness, markWellness }) {
   const nudges = dueWellnessNudges(wellness)
   const todayISO = new Date().toISOString().slice(0, 10)
-  const items = [
-    // Note: Reflect + Talk-to-Luna live on the prominent card under the
-    // daily thought, not here, to avoid double entries that confuse
-    // discovery.
-    {
-      key: 'intimate',
-      label: 'Your sexual life, your way',
-      sub: 'Desire, lubrication, pleasure, pain — all of it.',
-      onTap: () => go('intimate'),
-    },
-    {
-      key: 'watch',
-      label: 'When something feels off',
-      sub: 'Spot the patterns. Take words to your doctor.',
-      onTap: () => go('watch'),
-    },
-    {
-      key: 'cheatsheet',
-      label: 'For your next visit',
-      sub: 'The wording, ready when you walk in.',
-      onTap: () => go('cheatsheet'),
-    },
-    {
-      key: 'care',
-      label: 'Stay on top of care',
-      sub: 'Checkups, screenings, what’s due.',
-      onTap: () => go('care'),
-    },
-  ].filter(Boolean)
+  if (nudges.length === 0) return null
   return (
     <div style={{ marginTop: 28 }}>
       <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
@@ -619,31 +639,6 @@ function AlwaysHere({ go, wellness, markWellness }) {
               {n.cta}
             </button>
           </div>
-        ))}
-        {items.map((it) => (
-          <button key={it.key} onClick={it.onTap} className="glass-card"
-            style={{
-              textAlign: 'left',
-              borderRadius: T.r,
-              padding: '14px 16px',
-              cursor: 'pointer',
-              color: T.text,
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-            }}>
-            <div>
-              <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
-                {it.label}
-              </div>
-              <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.45 }}>
-                {it.sub}
-              </div>
-            </div>
-            <span style={{ fontFamily: T.sans, fontSize: 18, color: T.muted, lineHeight: 1, flexShrink: 0 }}>›</span>
-          </button>
         ))}
       </div>
     </div>
@@ -1033,13 +1028,16 @@ export default function Home() {
           </div>
           )}
 
-          {/* Three quick-action shortcuts under the cover. The most-common
-              entries one tap away — Flo's high-engagement pattern, doula-toned. */}
+          {/* Quick actions — a horizontal scroll wheel of the most
+              common entries (Log today, Edit period) plus the four
+              navigation cards that used to live in AlwaysHere
+              (intimate / watch / cheatsheet / care). "A note" used to
+              be here but is now covered by the sticky note in the
+              corner, so removed to avoid redundancy. */}
           {!isPreg && (
             <QuickActions
               go={go}
               setActiveLogDate={setActiveLogDate}
-              onQuickNote={() => setQuickNoteOpen(true)}
             />
           )}
 
@@ -1197,10 +1195,10 @@ export default function Home() {
               promotes our existing screener out of Settings burial. */}
           {!isPreg && <WeeklyHealthCheckCard go={go} />}
 
-          {/* Always here — essentials + due wellness nudges */}
+          {/* Always here — wellness nudges only (BSE / pelvic floor when
+              due). Navigation cards now live in the QuickActions scroll. */}
           {!isPreg && (
             <AlwaysHere
-              go={go}
               wellness={wellness}
               markWellness={markWellness}
             />

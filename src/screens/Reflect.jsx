@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import useLuna from '../store/useLuna'
@@ -1074,14 +1074,30 @@ export default function Reflect() {
 
   // Auto-open a deep-linked practice (e.g. when HeavyHelper sends the
   // user here pointed at compassion or reframe), then clear the
-  // request so it doesn't fire again on re-render.
+  // request so it doesn't fire again on re-render. We also mark this
+  // visit as "came for a practice" so that when the user closes the
+  // practice sheet, we navigate back to the originating screen instead
+  // of stranding her on the Reflect screen she never asked to see.
+  const cameForPractice = useRef(false)
+  const lastOpenPractice = useRef(null)
   useEffect(() => {
     if (activeReflectPractice) {
       setOpenPractice(activeReflectPractice)
       setActiveReflectPractice(null)
+      cameForPractice.current = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeReflectPractice])
+
+  // When the deep-linked practice closes, walk back to where she came
+  // from. Guard so this doesn't fire on the initial null state.
+  useEffect(() => {
+    if (lastOpenPractice.current && openPractice === null && cameForPractice.current) {
+      cameForPractice.current = false
+      back()
+    }
+    lastOpenPractice.current = openPractice
+  }, [openPractice, back])
 
   // The phase-aware recommendation for this week.
   const recommendation = phase ? PHASE_PRACTICE[phase.id] : null
