@@ -36,12 +36,11 @@ export default function StickyNote({
         style={{
           background: 'transparent', border: 'none', cursor: 'pointer',
           padding: 0, fontFamily: 'inherit',
-          transition: 'transform 0.25s ease-out',
-        }}
-        onMouseDown={(e) => { e.currentTarget.style.transform = 'scale(0.97)' }}
-        onMouseUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
-        onTouchStart={(e) => { e.currentTarget.style.transform = 'scale(0.97)' }}
-        onTouchEnd={(e) => { e.currentTarget.style.transform = 'scale(1)' }}>
+          /* Settle wobble on mount — paper landing on the wall.
+             Lives on the outer wrapper so the inner rotation tilt
+             stays intact when the animation ends. */
+          animation: 'stickyNoteSettle 0.7s var(--ease-spring) both',
+        }}>
         <div style={{
           position: 'relative',
           background: 'linear-gradient(135deg, #FBEFC2 0%, #F5DE7E 100%)',

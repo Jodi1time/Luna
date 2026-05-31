@@ -1,5 +1,23 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Custom easing curves — the built-in CSS easings (ease, ease-in,
+   ease-out, ease-in-out) are too weak. A strong ease-out has the
+   "punch" that makes an animation feel intentional; ease-in is
+   actively bad for UI because it delays the moment the user is
+   watching most closely.
+
+   --ease-out      : strong out-curve for entries, exits, button feedback
+   --ease-in-out   : strong S-curve for on-screen movement (modals, drawers)
+   --ease-drawer   : iOS-like drawer curve (Ionic Framework)
+   --ease-spring   : slight overshoot — for things that should feel "alive"
+   References: easing.dev, easings.co. */
+:root {
+  --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 html, body, #root {
   height: 100%;
   overflow: hidden;                /* only internal containers scroll; the body never does */
@@ -7,7 +25,7 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;       /* no rubber-banding pulling parents */
-  transition: background-color 1.2s ease-in-out;  /* time-of-day tint */
+  transition: background-color 1.2s var(--ease-in-out);  /* time-of-day tint */
 }
 
 /* Time-of-day ambient tint on the page background. Very subtle —
@@ -53,24 +71,33 @@ html, body, #root {
 
 button {
   font-family: inherit;
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
-              background-color 0.18s ease-out,
-              border-color 0.18s ease-out,
-              opacity 0.15s ease-out;
+  /* Press feedback: a slight overshoot when releasing (var(--ease-spring))
+     gives the "alive" hand-shake feel Luna's editorial voice asks for —
+     scaled subtly enough that it never reads as cartoony. Color and
+     opacity transitions are the strong ease-out for crisp state changes. */
+  transition: transform 0.18s var(--ease-spring),
+              background-color 0.18s var(--ease-out),
+              border-color 0.18s var(--ease-out),
+              opacity 0.15s var(--ease-out);
+  transform-origin: center;
 }
 button:active { transform: scale(0.97); }
 button.no-tap, button.no-tap:active { transform: none; }
 
+/* fadeUp — the workhorse entry. Now with a touch of blur on the way in,
+   which (per Emil) bridges the visual gap between "not there" and
+   "there" — the eye reads it as a single soft emergence instead of
+   two states swapping. Kept the blur small so it doesn't add cost. */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); filter: blur(2px); }
+  to   { opacity: 1; transform: translateY(0);   filter: blur(0);   }
 }
 
-/* Screen-level entry — a softer, slightly longer fade for tab
-   changes so the swap feels less transactional. */
+/* Screen-level entry — slightly longer than fadeUp, with the iOS
+   drawer curve so tab changes feel like a single confident gesture. */
 @keyframes screenEnter {
-  from { opacity: 0; transform: translateY(6px) scale(0.995); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
+  from { opacity: 0; transform: translateY(6px) scale(0.995); filter: blur(3px); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);     filter: blur(0);   }
 }
 
 @keyframes fadeIn {
@@ -130,6 +157,19 @@ button.no-tap, button.no-tap:active { transform: none; }
   -webkit-backdrop-filter: blur(10px) saturate(1.15);
           backdrop-filter: blur(10px) saturate(1.15);
   border: 1px solid rgba(26, 19, 16, 0.08);
+  /* When inside a button, the global button:active scale(0.97)
+     handles press feedback. This transition softens the glass itself
+     on press — the background brightens a touch, the border deepens
+     slightly. Together with the scale it reads as the card pressing
+     into the page rather than just shrinking. */
+  transition: background-color 0.2s var(--ease-out),
+              border-color    0.2s var(--ease-out),
+              box-shadow      0.2s var(--ease-out);
+}
+button:active .glass-card,
+button.glass-card:active {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(26, 19, 16, 0.12);
 }
 
 /* ── Home stage (depth container) ───────────────────────────────
@@ -297,9 +337,10 @@ button.no-tap, button.no-tap:active { transform: none; }
 }
 
 /* Per-card stagger via inline animationDelay. Used on the "For today"
-   horizontal row on Home — each card slides up with its own delay. */
+   horizontal row on Home — each card slides up with its own delay.
+   Strong ease-out gives the card an immediate, confident entry. */
 .stagger-card {
-  animation: fadeUp 0.5s ease-out both;
+  animation: fadeUp 0.45s var(--ease-out) both;
 }
 
 /* Cycle milestone bloom — used by Celebration component. The card
@@ -320,7 +361,7 @@ button.no-tap, button.no-tap:active { transform: none; }
   100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(200, 78, 46, 0); }
 }
 .success-pulse {
-  animation: successPulse 0.6s ease-out both;
+  animation: successPulse 0.55s var(--ease-out) both;
 }
 
 /* Tap-bloom — for when a mood or symptom is selected. Tiny scale-up
@@ -365,6 +406,18 @@ button.no-tap, button.no-tap:active { transform: none; }
    ambient breath (5.5s) gently quickens to 3.5s, never frantic. */
 .ambient-breath.countdown {
   animation-duration: 3.5s;
+}
+
+/* StickyNote settle — when the sticky note first mounts on Home, it
+   drops in with a tiny overshoot wobble on the OUTER wrapper, like
+   a real piece of paper being pressed onto the wall. Inner element
+   keeps its rotation tilt unchanged. Translate + scale only —
+   rotation belongs to the static element. */
+@keyframes stickyNoteSettle {
+  0%   { opacity: 0; transform: translateY(-14px) scale(0.94); }
+  55%  { opacity: 1; transform: translateY(3px)   scale(1.018); }
+  78%  {             transform: translateY(-1px)  scale(0.998); }
+  100% { opacity: 1; transform: translateY(0)     scale(1);     }
 }
 
 /* 4-7-8 breathing loop — used in the Bedtime Release practice in
