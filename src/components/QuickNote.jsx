@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { T } from '../data/theme'
 import useLuna from '../store/useLuna'
 import { useScrollLock } from '../lib/useScrollLock'
+import Portal from '../lib/Portal'
 
 // A tiny bottom-sheet for the "A note" quick action — opens straight
 // to a focused textarea, saves to today's log, and closes. Designed
@@ -72,18 +73,22 @@ export default function QuickNote({ open, onClose }) {
   }
 
   return (
-    <div onClick={onClose}
+    <Portal>
+    <div
+      data-luna-overlay="true"
+      onClick={onClose}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(26,19,16,0.72)',
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(26,19,16,0.78)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
         overscrollBehavior: 'contain',
+        padding: 16,
       }}>
       <div onClick={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
@@ -91,10 +96,11 @@ export default function QuickNote({ open, onClose }) {
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,
-          borderTopLeftRadius: 16, borderTopRightRadius: 16,
+          borderRadius: 18,
+          boxShadow: '0 24px 60px -12px rgba(0,0,0,0.45)',
           maxHeight: `calc(88dvh - ${keyboardInset}px)`,
           minHeight: `min(420px, calc(70dvh - ${keyboardInset}px))`,
-          marginBottom: keyboardInset,
+          marginBottom: keyboardInset / 2,
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',
@@ -169,5 +175,6 @@ export default function QuickNote({ open, onClose }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

@@ -7,6 +7,7 @@ import QuickNote from '../components/QuickNote'
 import LunaChat from '../components/LunaChat'
 import { useScrollLock } from '../lib/useScrollLock'
 import { breathTone } from '../lib/sounds'
+import Portal from '../lib/Portal'
 
 // "When it feels heavy" — a hub, not a single-helper screen. Different
 // roots need different supports, and routing "Heavy today" to the
@@ -48,13 +49,16 @@ function QuickBreathOverlay({ onClose, soundsOn }) {
               : 'Breathe out — long.'
 
   return (
-    <div onClick={onClose}
+    <Portal>
+    <div
+      data-luna-overlay="true"
+      onClick={onClose}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 250,
-        background: 'rgba(26,19,16,0.85)',
-        backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+        position: 'fixed', inset: 0, zIndex: 1100,
+        background: 'rgba(26,19,16,0.92)',
+        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.4s ease-out both',
         color: '#FAF4ED', padding: 24,
@@ -77,6 +81,7 @@ function QuickBreathOverlay({ onClose, soundsOn }) {
         I'm done
       </button>
     </div>
+    </Portal>
   )
 }
 

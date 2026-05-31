@@ -205,6 +205,29 @@ button.no-tap, button.no-tap:active { transform: none; }
   transition: background-color 2.4s ease-in-out;
 }
 
+/* Fallback for browsers without filter:blur — render as a soft
+   radial gradient instead. Affects ~1% of users (very old Firefox
+   on Android) but ensures the blob never DISAPPEARS, it just
+   degrades gracefully. */
+@supports not (filter: blur(16px)) {
+  .breathing-blob {
+    filter: none;
+    opacity: 0.35;
+    background: radial-gradient(circle, var(--phase-color, currentColor) 0%,
+                                         color-mix(in srgb, var(--phase-color, currentColor), transparent 60%) 50%,
+                                         transparent 80%);
+  }
+}
+
+/* Performance fallback for older Android Chrome — disables the
+   expensive filter:blur when prefers-reduced-data is set (some
+   data-saver modes also flip this). The breath animation stays. */
+@media (prefers-reduced-data: reduce) {
+  .breathing-blob {
+    filter: blur(8px) saturate(1.05);
+  }
+}
+
 /* ── Tap effects ───────────────────────────────────────────────
    Each effect is a one-shot CSS animation triggered by a keyed
    element. Effects are layered above the blob but still inside

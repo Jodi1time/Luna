@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { chat } from '../lib/lunaChat'
 import { detectCrisis, CRISIS_RESOURCES } from '../lib/crisis'
 import { useScrollLock } from '../lib/useScrollLock'
+import Portal from '../lib/Portal'
 
 // Small chat overlay that slides up from the bottom. Opens either with
 // today's reflection seeded as Luna's first message, or — when there
@@ -107,19 +108,22 @@ export default function LunaChat({ open, onClose, opener, context }) {
   }
 
   return (
+    <Portal>
     <div
+      data-luna-overlay="true"
       onClick={onClose}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(26,19,16,0.72)',
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(26,19,16,0.78)',
         backdropFilter: 'blur(14px)',
         WebkitBackdropFilter: 'blur(14px)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
         overscrollBehavior: 'contain',
+        padding: 16,
       }}>
       <div
         onClick={(e) => e.stopPropagation()}
@@ -128,12 +132,13 @@ export default function LunaChat({ open, onClose, opener, context }) {
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,
-          borderTopLeftRadius: 16, borderTopRightRadius: 16,
+          borderRadius: 18,
+          boxShadow: '0 24px 60px -12px rgba(0,0,0,0.45)',
           /* Use dvh and lift by keyboard inset so the composer stays
              visible even when the soft keyboard is open. */
-          maxHeight: `calc(90dvh - ${keyboardInset}px)`,
-          minHeight: `min(${440 + 'px'}, calc(75dvh - ${keyboardInset}px))`,
-          marginBottom: keyboardInset,
+          maxHeight: `calc(88dvh - ${keyboardInset}px)`,
+          minHeight: `min(440px, calc(70dvh - ${keyboardInset}px))`,
+          marginBottom: keyboardInset / 2,
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',
@@ -276,5 +281,6 @@ export default function LunaChat({ open, onClose, opener, context }) {
         </div>
       </div>
     </div>
+    </Portal>
   )
 }

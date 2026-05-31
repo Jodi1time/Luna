@@ -4,6 +4,7 @@ import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { breathTone } from '../lib/sounds'
 import { useScrollLock } from '../lib/useScrollLock'
+import Portal from '../lib/Portal'
 
 // Cramps Helper — Luna's first true "what now?" surface.
 // The prototype for the pattern that turns Luna from logger into
@@ -91,14 +92,17 @@ function BreathingOverlay({ onClose, soundsOn }) {
               : 'Breathe out…'
 
   return (
-    <div onClick={onClose}
+    <Portal>
+    <div
+      data-luna-overlay="true"
+      onClick={onClose}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 250,
-        background: 'rgba(26,19,16,0.85)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        position: 'fixed', inset: 0, zIndex: 1100,
+        background: 'rgba(26,19,16,0.92)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.4s ease-out both',
         color: '#FAF4ED',
@@ -126,6 +130,7 @@ function BreathingOverlay({ onClose, soundsOn }) {
         I'm done
       </button>
     </div>
+    </Portal>
   )
 }
 

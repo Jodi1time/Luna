@@ -6,6 +6,7 @@ import { useCycle } from '../hooks/useCycle'
 import QuickNote from '../components/QuickNote'
 import LunaChat from '../components/LunaChat'
 import { useScrollLock } from '../lib/useScrollLock'
+import Portal from '../lib/Portal'
 
 // Reflect — interactive journaling + short guided practices for
 // emotional and mental health. Takes traits from meditation apps
@@ -591,17 +592,21 @@ function BedtimeSheet({ open, onClose, onSave }) {
 function SheetShell({ onClose, title, sub, children }) {
   useScrollLock(true)
   return (
-    <div onClick={onClose}
+    <Portal>
+    <div
+      data-luna-overlay="true"
+      onClick={onClose}
       onTouchMove={(e) => e.preventDefault()}
       onWheel={(e) => e.preventDefault()}
       style={{
-        position: 'fixed', inset: 0, zIndex: 220,
-        background: 'rgba(26,19,16,0.72)',
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(26,19,16,0.78)',
         backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
         overscrollBehavior: 'contain',
+        padding: 16,
       }}>
       <div onClick={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
@@ -609,9 +614,10 @@ function SheetShell({ onClose, title, sub, children }) {
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,
-          borderTopLeftRadius: 16, borderTopRightRadius: 16,
-          maxHeight: '90dvh',
-          minHeight: 'min(480px, 75dvh)',
+          borderRadius: 18,
+          boxShadow: '0 24px 60px -12px rgba(0,0,0,0.45)',
+          maxHeight: '88dvh',
+          minHeight: 'min(440px, 70dvh)',
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',
@@ -629,6 +635,7 @@ function SheetShell({ onClose, title, sub, children }) {
         <div style={{ padding: '16px 18px', overflowY: 'auto', flex: 1 }}>{children}</div>
       </div>
     </div>
+    </Portal>
   )
 }
 

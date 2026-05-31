@@ -1,47 +1,72 @@
 import { useEffect } from 'react'
 
-// Lock the page from scrolling when an overlay is open. Without this,
-// touch/scroll/wheel events on the overlay backdrop can pass through
-// to underlying content (especially on iOS Safari and some Chrome
-// builds), so the user sees Home scrolling behind a "modal" that
-// is supposed to be blocking.
+// Lock the page from scrolling when an overlay is open.
 //
-// Strategy:
-//   1. Save the body's current overflow + touch-action.
-//   2. Pin them to 'hidden' / 'none' so nothing pans.
-//   3. Restore on cleanup. Pin/unpin is keyed off `active` so an
-//      overlay closing immediately frees the page back up.
+// The body already has overflow:hidden (set in index.css), so locking
+// `document.body` does almost nothing — the actual scrolling happens
+// inside the .home-stage > <Screen> container which has overflowY:auto.
+// To stop a touch/wheel/swipe in the dim area behind a modal from
+// scrolling underlying content, we have to lock THAT scroller, not the
+// body.
 //
-// `<html>` and `<body>` already have `overflow: hidden` in index.css —
-// belt + suspenders here, plus the touch-action that index.css
-// doesn't set. Stackable: if two overlays open at once (e.g. Reflect
-// practice + LunaChat), each gets its own ref count via a module-level
-// counter so the LAST close is the one that actually unlocks.
+// Approach: when active, find every scrolling div in the page that is
+// NOT inside an overlay (overlays mark themselves with
+// data-luna-overlay="true"), record its current overflow style, and
+// pin it to 'hidden'. On cleanup we restore.
+//
+// Also sets data-overlay-open on body so CSS can target it for any
+// additional belt-and-suspenders rules. Ref-counted so stacked overlays
+// (e.g. Reflect practice sheet + LunaChat) only unlock when the LAST
+// one closes.
 let _locks = 0
-let _origOverflow = ''
-let _origTouchAction = ''
-let _origOverscroll = ''
+let _records = []  // [[element, originalOverflowY, originalOverflowX]]
+let _origBodyOverflow = ''
+let _origBodyTouchAction = ''
 
 export function useScrollLock(active) {
   useEffect(() => {
     if (!active) return
     if (typeof document === 'undefined') return
+
     if (_locks === 0) {
-      _origOverflow = document.body.style.overflow
-      _origTouchAction = document.body.style.touchAction
-      _origOverscroll = document.body.style.overscrollBehavior
+      _origBodyOverflow = document.body.style.overflow
+      _origBodyTouchAction = document.body.style.touchAction
       document.body.style.overflow = 'hidden'
       document.body.style.touchAction = 'none'
-      document.body.style.overscrollBehavior = 'none'
+      document.body.setAttribute('data-overlay-open', 'true')
+
+      // Find every scrollable element outside an overlay and lock it.
+      // We re-scan each time because the DOM may have changed (new
+      // screens mounted, etc.).
+      const scrollables = document.querySelectorAll('div')
+      _records = []
+      scrollables.forEach((el) => {
+        // Skip anything inside a luna overlay — those need to scroll.
+        if (el.closest('[data-luna-overlay="true"]')) return
+        const style = window.getComputedStyle(el)
+        const scrolly = style.overflowY
+        const scrollx = style.overflowX
+        if (scrolly === 'auto' || scrolly === 'scroll' || scrollx === 'auto' || scrollx === 'scroll') {
+          _records.push([el, el.style.overflowY, el.style.overflowX])
+          el.style.overflowY = 'hidden'
+          el.style.overflowX = 'hidden'
+        }
+      })
     }
     _locks += 1
+
     return () => {
       _locks -= 1
       if (_locks <= 0) {
         _locks = 0
-        document.body.style.overflow = _origOverflow
-        document.body.style.touchAction = _origTouchAction
-        document.body.style.overscrollBehavior = _origOverscroll
+        document.body.style.overflow = _origBodyOverflow
+        document.body.style.touchAction = _origBodyTouchAction
+        document.body.removeAttribute('data-overlay-open')
+        _records.forEach(([el, y, x]) => {
+          el.style.overflowY = y
+          el.style.overflowX = x
+        })
+        _records = []
       }
     }
   }, [active])
