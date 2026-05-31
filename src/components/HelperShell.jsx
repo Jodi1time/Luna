@@ -79,8 +79,8 @@ function BreathingOverlay({ onClose, soundsOn, pattern }) {
       onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 1100,
-        background: 'rgba(26,19,16,0.92)',
-        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(26,19,16,0.7)',
+        backdropFilter: 'blur(20px) saturate(1.15)', WebkitBackdropFilter: 'blur(20px) saturate(1.15)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.4s ease-out both',
         color: '#FAF4ED', padding: 24,

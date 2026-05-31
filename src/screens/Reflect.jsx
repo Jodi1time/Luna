@@ -600,8 +600,8 @@ function SheetShell({ onClose, title, sub, children }) {
       onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(26,19,16,0.78)',
-        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+        background: 'rgba(26,19,16,0.55)',
+        backdropFilter: 'blur(18px) saturate(1.2)', WebkitBackdropFilter: 'blur(18px) saturate(1.2)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
