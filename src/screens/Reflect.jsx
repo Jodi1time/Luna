@@ -26,6 +26,14 @@ import { useScrollLock } from '../lib/useScrollLock'
 
 const PRACTICES = [
   {
+    id: 'intention',
+    title: 'A morning intention',
+    sub: 'For the day that hasn\'t happened yet.',
+    blurb: 'One sentence about what today is really about — chosen by you before the day chooses for you. Thirty seconds, the most efficient practice in this list.',
+    cta: 'Set today\'s one thing',
+    kind: 'intention',
+  },
+  {
     id: 'gratitude',
     title: 'Three small things',
     sub: 'For the days that felt heavier than they were.',
@@ -42,6 +50,14 @@ const PRACTICES = [
     kind: 'feeling',
   },
   {
+    id: 'bodyscan',
+    title: 'A quick body scan',
+    sub: 'For the tension you didn\'t notice you were holding.',
+    blurb: 'Three minutes of guided attention from the top of your head to the soles of your feet. Mindfulness research calls this "interoception" — the practice of returning to the body before the mind has had its way.',
+    cta: 'Begin the scan',
+    kind: 'bodyscan',
+  },
+  {
     id: 'compassion',
     title: 'A self-compassion pause',
     sub: 'For the moments you\'re hardest on yourself.',
@@ -56,6 +72,14 @@ const PRACTICES = [
     blurb: 'Cognitive reframing — writing the worry, asking whether it\'s the whole picture, and offering the kindness you\'d give a friend. The strongest single tool in CBT.',
     cta: 'Write the worry',
     kind: 'reframe',
+  },
+  {
+    id: 'bedtime',
+    title: 'A bedtime release',
+    sub: 'For the night that still has thoughts in it.',
+    blurb: 'A short ritual to close the day — write the loop that\'s still spinning, then sit with a paced breath that signals "rest now" to the nervous system.',
+    cta: 'Begin the release',
+    kind: 'bedtime',
   },
 ]
 
@@ -357,6 +381,181 @@ function Field({ label, children }) {
   )
 }
 
+// ── Morning intention practice ──────────────────────────────────
+function IntentionSheet({ open, onClose, onSave }) {
+  const [text, setText] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  if (!open) return null
+
+  const save = () => {
+    if (!text.trim()) return
+    onSave({ kind: 'intention', content: text.trim() })
+    setSaved(true)
+    setTimeout(() => { setText(''); setSaved(false); onClose() }, 1000)
+  }
+
+  return (
+    <SheetShell onClose={onClose} title="A morning intention" sub="One sentence. Today, in your own words.">
+      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', color: T.text, lineHeight: 1.65, marginBottom: 14 }}>
+        What is today really about? Not the to-do list — the one thing underneath it.
+      </div>
+      <textarea value={text} onChange={(e) => setText(e.target.value)}
+        placeholder="Today is about…"
+        rows={3} maxLength={300}
+        style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '14px 16px', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.text, lineHeight: 1.55, outline: 'none' }} />
+      <SheetFooter onSave={save} disabled={!text.trim()} saved={saved} label="Set the intention" savedLabel="Set" helper={!text.trim() ? 'One short line is plenty.' : null} />
+    </SheetShell>
+  )
+}
+
+// ── Body scan practice ──────────────────────────────────────────
+// Three-minute guided text-walk down the body. Tap "next" or it
+// auto-advances every ~25s. End with a reflection invitation.
+const BODY_SCAN_STEPS = [
+  {
+    title: 'The crown of your head.',
+    body: 'Notice the very top of your head — the soft pressure of air on skin, the warmth of hair, the very faint tug of your scalp. You don\'t need to change anything; just notice.',
+  },
+  {
+    title: 'Your face and jaw.',
+    body: 'Move attention down. Forehead, around the eyes, between the brows. Soften, if it wants to. Now the jaw — most of us hold the day there. Let your teeth part, just barely.',
+  },
+  {
+    title: 'Your shoulders and chest.',
+    body: 'Drop into your shoulders. They\'re probably an inch higher than they need to be. Exhale them down. Your chest rises and falls all by itself — let it.',
+  },
+  {
+    title: 'Your belly and lower back.',
+    body: 'Soften the belly. Most of us hold it in all day. Let it round on the inhale, sink on the exhale. Your lower back is doing all the carrying — say thank you.',
+  },
+  {
+    title: 'Your hands and arms.',
+    body: 'Notice your hands. Are they curled? Open them. Let your arms hang heavy, or rest where they are. The weight of an arm is the body asking for rest.',
+  },
+  {
+    title: 'Your hips and pelvis.',
+    body: 'Move attention to your pelvis. Whether you\'re sitting, lying, standing — let your hips be soft. The pelvic floor is part of this too; it doesn\'t need to brace right now.',
+  },
+  {
+    title: 'Your legs and feet.',
+    body: 'Down through thighs, knees, calves. Into the feet. The soles of your feet are touching something — the floor, the bed, a shoe. Feel that contact.',
+  },
+  {
+    title: 'The whole body, at once.',
+    body: 'Now hold the whole body in attention for a moment. Just here. Just this body, just today. You don\'t have to fix anything. Just noticed is enough.',
+  },
+]
+
+function BodyScanSheet({ open, onClose, onSave }) {
+  const [step, setStep] = useState(0)
+  const [saved, setSaved] = useState(false)
+
+  if (!open) return null
+
+  const isLast = step >= BODY_SCAN_STEPS.length
+
+  const save = () => {
+    onSave({ kind: 'bodyscan', content: null })
+    setSaved(true)
+    setTimeout(() => { setStep(0); setSaved(false); onClose() }, 1000)
+  }
+
+  if (isLast) {
+    return (
+      <SheetShell onClose={onClose} title="A quick body scan" sub="Done.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
+            Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed. You can carry that softness with you for a while.
+          </div>
+        </div>
+        <SheetFooter onSave={save} disabled={false} saved={saved} label="Keep this practice" savedLabel="Saved" helper={null} />
+      </SheetShell>
+    )
+  }
+
+  const s = BODY_SCAN_STEPS[step]
+  return (
+    <SheetShell onClose={onClose} title="A quick body scan" sub={`${step + 1} of ${BODY_SCAN_STEPS.length}`}>
+      <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.4, color: T.text, marginBottom: 10, letterSpacing: -0.2 }}>
+          {s.title}
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.65, color: T.text }}>
+          {s.body}
+        </div>
+      </div>
+      <button onClick={() => setStep(step + 1)}
+        style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+        {step === BODY_SCAN_STEPS.length - 1 ? 'Hold the whole body' : 'Move on, slowly'}
+      </button>
+    </SheetShell>
+  )
+}
+
+// ── Bedtime release practice ────────────────────────────────────
+function BedtimeSheet({ open, onClose, onSave }) {
+  const [stage, setStage] = useState('write')  // 'write' | 'breath' | 'done'
+  const [text, setText] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  if (!open) return null
+
+  const save = () => {
+    onSave({ kind: 'bedtime', content: text.trim() || null })
+    setSaved(true)
+    setTimeout(() => { setStage('write'); setText(''); setSaved(false); onClose() }, 1000)
+  }
+
+  if (stage === 'write') {
+    return (
+      <SheetShell onClose={onClose} title="A bedtime release" sub="Put the loop down before sleep.">
+        <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', color: T.text, lineHeight: 1.65, marginBottom: 14 }}>
+          Anything still rattling around — write it down. Your future self will know what to do tomorrow. You don't have to carry it overnight.
+        </div>
+        <textarea value={text} onChange={(e) => setText(e.target.value)}
+          placeholder="The thing the brain won't let go of…"
+          rows={4} maxLength={1500}
+          style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '14px 16px', fontFamily: T.serif, fontStyle: 'italic', fontSize: 15, color: T.text, lineHeight: 1.55, outline: 'none' }} />
+        <button onClick={() => setStage('breath')}
+          style={{ width: '100%', marginTop: 14, background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+          Now, breathe with me
+        </button>
+      </SheetShell>
+    )
+  }
+
+  if (stage === 'breath') {
+    return (
+      <SheetShell onClose={onClose} title="A bedtime release" sub="Slow exhale signals 'rest now' to the nervous system.">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0 4px' }}>
+          <div className="breath-circle" data-phase="exhale"
+            style={{
+              width: 180, height: 180, borderRadius: '50%',
+              background: `radial-gradient(circle, ${T.accent}30 0%, ${T.accent}10 60%, transparent 100%)`,
+              border: `1px solid ${T.hair}`,
+              transformOrigin: 'center', marginBottom: 18,
+              animation: 'breathLoop 12s ease-in-out infinite',
+            }} />
+          <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', color: T.text, marginBottom: 6 }}>
+            In for four. Hold for seven. Out for eight.
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.muted, marginBottom: 18, textAlign: 'center', lineHeight: 1.55 }}>
+            Four cycles is enough to start the wind-down. More if it feels right.
+          </div>
+        </div>
+        <button onClick={save}
+          className={saved ? 'success-pulse' : ''}
+          style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+          {saved ? 'Released' : 'Done — keep this practice'}
+        </button>
+      </SheetShell>
+    )
+  }
+
+  return null
+}
+
 // ── Sheet shell + footer ────────────────────────────────────────
 function SheetShell({ onClose, title, sub, children }) {
   useScrollLock(true)
@@ -551,21 +750,24 @@ export default function Reflect() {
       </div>
 
       {/* Practice overlays */}
+      <IntentionSheet  open={openPractice === 'intention'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
       <GratitudeSheet  open={openPractice === 'gratitude'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
       <FeelingSheet    open={openPractice === 'feeling'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
+      <BodyScanSheet   open={openPractice === 'bodyscan'}   onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
       <CompassionSheet open={openPractice === 'compassion'} onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
       <ReframeSheet    open={openPractice === 'reframe'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
+      <BedtimeSheet    open={openPractice === 'bedtime'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
 
       {/* Existing overlays */}
       <QuickNote open={quickNoteOpen} onClose={() => setQuickNoteOpen(false)} />
-      {phase && session?.user?.id && (
-        <LunaChat
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-          opener={null}
-          context={{ phaseId: phase.id, phaseName: phase.name, cycleDay: cycle.cycleDay, cycleLength: cycle.cycleLength }}
-        />
-      )}
+      {/* Chat mounted unconditionally so the button always responds.
+          Phase context only passed when available. */}
+      <LunaChat
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        opener={null}
+        context={phase ? { phaseId: phase.id, phaseName: phase.name, cycleDay: cycle.cycleDay, cycleLength: cycle.cycleLength } : {}}
+      />
     </Screen>
   )
 }

@@ -47,6 +47,11 @@ const DEFAULT_SETTINGS = {
   // helped, recordedAt }. Shared across CrampsHelper / Anxiety / Insomnia /
   // UTI / etc. via HelperShell so each helper recalls its own pattern.
   helperHistory: [],
+  // Active life stage. Drives how Home + Insights frame the cycle:
+  //   'cycle'    — default cycle tracking
+  //   'ttc'      — trying to conceive; fertile-window emphasis
+  // Pregnancy + Postpartum continue to use the `pregnancy` field above.
+  lifecycle: 'cycle',
 }
 
 const useLuna = create(

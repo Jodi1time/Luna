@@ -566,22 +566,13 @@ function WeeklyHealthCheckCard({ go }) {
 
 // Always-here essentials at the bottom of Home — surfaces support
 // features + any quiet wellness nudges that are due.
-function AlwaysHere({ go, wellness, markWellness, onTalk }) {
+function AlwaysHere({ go, wellness, markWellness }) {
   const nudges = dueWellnessNudges(wellness)
   const todayISO = new Date().toISOString().slice(0, 10)
   const items = [
-    onTalk && {
-      key: 'talk',
-      label: 'Talk something through',
-      sub: 'A few quiet minutes with Luna, any time.',
-      onTap: onTalk,
-    },
-    {
-      key: 'reflect',
-      label: 'For your mind and heart',
-      sub: 'Write freely, or sit with a short practice.',
-      onTap: () => go('reflect'),
-    },
+    // Note: Reflect + Talk-to-Luna live on the prominent card under the
+    // daily thought, not here, to avoid double entries that confuse
+    // discovery.
     {
       key: 'intimate',
       label: 'Your sexual life, your way',
@@ -766,6 +757,14 @@ export default function Home() {
   const hasAnxietyToday = todayLog?.mood === 'low' || todayLog?.mood === 'frustrated'
   const hasInsomniaToday = todayLog?.sleep === 'Poor' || todayLog?.sleep === 'Restless' || (todayLog?.symptoms || []).includes('insomnia') || (todayLog?.symptoms || []).includes('sleep')
   const hasUTIToday = (todayLog?.symptoms || []).includes('uti')
+  const isTTC = settings?.lifecycle === 'ttc'
+  // Morning intention surface: visible before noon, only if she
+  // hasn't already set today's intention via Reflect.
+  const reflectHistory = settings?.reflectHistory || []
+  const hour = new Date().getHours()
+  const beforeNoon = hour < 12
+  const hasMorningIntentionToday = reflectHistory.some((e) => e.kind === 'intention' && e.dateISO === todayISO)
+  const showMorningIntention = !isPreg && beforeNoon && !hasMorningIntentionToday
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
@@ -978,33 +977,48 @@ export default function Home() {
           )}
 
           {/* Smart helper surfaces — only appear when she has told us
-              something is happening today. Quiet by default. */}
+              something is happening today. Each gets its own eyebrow
+              so the page reads as conversation, not a status bar. */}
           {!isPreg && hasCrampsToday && (
             <SmartHelperCard
               onTap={() => go('cramps')}
-              eyebrow="Today, with care"
-              line="Cramps today. Luna has a few things that help."
+              eyebrow="Cramping today"
+              line="Sit with it — Luna has a few small things that help."
             />
           )}
           {!isPreg && hasAnxietyToday && (
             <SmartHelperCard
               onTap={() => go('anxiety')}
-              eyebrow="Today, with care"
-              line="Heavy or tense today. A few minutes to slow it down?"
+              eyebrow="Heavy today"
+              line="A few minutes to slow the body down?"
             />
           )}
           {!isPreg && hasInsomniaToday && (
             <SmartHelperCard
               onTap={() => go('insomnia')}
-              eyebrow="Today, with care"
-              line="Sleep was rough. Tonight, Luna will help wind down."
+              eyebrow="Sleep was rough"
+              line="Tonight, Luna will help you wind down sooner."
             />
           )}
           {!isPreg && hasUTIToday && (
             <SmartHelperCard
               onTap={() => go('utiHelper')}
-              eyebrow="Today, with care"
-              line="UTI signs. Catch it early — here's the playbook."
+              eyebrow="UTI signs"
+              line="Catch it early — here's the playbook for tonight."
+            />
+          )}
+          {!isPreg && isTTC && (
+            <SmartHelperCard
+              onTap={() => go('ttc')}
+              eyebrow="Trying to conceive"
+              line="Your fertile-window read for today."
+            />
+          )}
+          {showMorningIntention && (
+            <SmartHelperCard
+              onTap={() => go('reflect')}
+              eyebrow="This morning"
+              line="One sentence about what today is really about?"
             />
           )}
 
@@ -1066,22 +1080,20 @@ export default function Home() {
             />
           )}
 
-          {/* Chat overlay — opens from the daily thought (with opener)
-              or from the Always-Here "Talk something through" entry
-              (no opener, free conversation). */}
-          {phase && (
-            <LunaChat
-              open={chatOpen}
-              onClose={() => { setChatOpen(false); setChatOpener(null) }}
-              opener={chatOpener}
-              context={{
-                phaseId: phase.id,
-                phaseName: phase.name,
-                cycleDay: cycle.cycleDay,
-                cycleLength: cycle.cycleLength,
-              }}
-            />
-          )}
+          {/* Chat overlay — mounted unconditionally so it can open from
+              any button regardless of whether a phase has been computed.
+              Phase context is passed when available, omitted otherwise. */}
+          <LunaChat
+            open={chatOpen}
+            onClose={() => { setChatOpen(false); setChatOpener(null) }}
+            opener={chatOpener}
+            context={phase ? {
+              phaseId: phase.id,
+              phaseName: phase.name,
+              cycleDay: cycle.cycleDay,
+              cycleLength: cycle.cycleLength,
+            } : {}}
+          />
 
           {/* For today — horizontal scroll of curated phase-tuned cards */}
           {!isPreg && phase && (
@@ -1119,7 +1131,6 @@ export default function Home() {
               go={go}
               wellness={wellness}
               markWellness={markWellness}
-              onTalk={phase ? () => { setChatOpener(null); setChatOpen(true) } : null}
             />
           )}
 

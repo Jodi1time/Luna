@@ -132,11 +132,21 @@ export default function Settings() {
 
       <SectionLabel>Your life stage</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Cycle tracking" value="Active" />
+        <Row label="Cycle tracking"
+             value={settings?.lifecycle === 'ttc' ? 'Underlying' : 'Active'} />
         <Row label="Pregnancy"
              value={pregnancy?.active ? pregLabel : 'Available'}
              onTap={() => go('pregnancy')} />
-        <Row label="Trying to conceive" value="Coming soon" />
+        <Row label="Trying to conceive"
+             value={settings?.lifecycle === 'ttc' ? 'Active' : 'Available'}
+             onTap={() => {
+               if (settings?.lifecycle === 'ttc') {
+                 go('ttc')
+               } else {
+                 updateSetting('lifecycle', 'ttc')
+                 go('ttc')
+               }
+             }} />
         <Row label="Perimenopause / menopause" value="Coming soon" />
       </div>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
@@ -163,6 +173,8 @@ export default function Settings() {
         <Row label="UTI symptoms" onTap={() => go('utiHelper')} />
         <Row label="Period feels late" onTap={() => go('latePeriod')} />
         <Row label="Missed a pill" onTap={() => go('missedPill')} />
+        <Row label="Sex has been hurting" onTap={() => go('painfulSex')} />
+        <Row label="Postpartum bleeding" onTap={() => go('postpartumBleeding')} />
       </div>
 
       <SectionLabel>More from Luna</SectionLabel>

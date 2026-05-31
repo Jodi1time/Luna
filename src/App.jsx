@@ -49,6 +49,9 @@ const InsomniaHelper  = lazy(() => import('./screens/InsomniaHelper'))
 const UTIHelper       = lazy(() => import('./screens/UTIHelper'))
 const LatePeriodHelper = lazy(() => import('./screens/LatePeriodHelper'))
 const MissedPillHelper = lazy(() => import('./screens/MissedPillHelper'))
+const TTC             = lazy(() => import('./screens/TTC'))
+const PainfulSexHelper = lazy(() => import('./screens/PainfulSexHelper'))
+const PostpartumBleedingHelper = lazy(() => import('./screens/PostpartumBleedingHelper'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -159,6 +162,9 @@ function ScreenRenderer({ screen }) {
     case 'utiHelper': return <UTIHelper />
     case 'latePeriod': return <LatePeriodHelper />
     case 'missedPill': return <MissedPillHelper />
+    case 'ttc': return <TTC />
+    case 'painfulSex': return <PainfulSexHelper />
+    case 'postpartumBleeding': return <PostpartumBleedingHelper />
     default:         return <Home />
   }
 }

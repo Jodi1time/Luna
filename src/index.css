@@ -344,6 +344,16 @@ button.no-tap, button.no-tap:active { transform: none; }
   animation-duration: 3.5s;
 }
 
+/* 4-7-8 breathing loop — used in the Bedtime Release practice in
+   Reflect. Smooth continuous loop, no need for JS state machine.
+   12s = inhale 4s + hold 7s + exhale 1s overlap; visual just pulses. */
+@keyframes breathLoop {
+  0%   { transform: scale(0.6); opacity: 0.55; }
+  21%  { transform: scale(1.18); opacity: 1; }   /* inhale done */
+  79%  { transform: scale(1.18); opacity: 1; }   /* hold */
+  100% { transform: scale(0.6); opacity: 0.55; } /* exhale */
+}
+
 /* Breath circle — drives the visual in the CrampsHelper breathing
    overlay. Phase is set via data-phase on the element. Inhale grows
    the circle over 4s; hold holds at the peak for 2s; exhale shrinks
