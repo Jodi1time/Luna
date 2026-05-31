@@ -953,10 +953,10 @@ export default function Home() {
             <button onClick={() => go('cramps')} className="glass-card"
               style={{ marginTop: 20, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
               <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
-                I see you
+                Today, with care
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
-                Cramps today. Sit with me — I'll help.
+                Cramps today. Luna has a few things that help.
               </div>
               <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 6, letterSpacing: 0.2 }}>
                 Open the helper →

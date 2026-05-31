@@ -6,12 +6,13 @@ import { breathTone } from '../lib/sounds'
 
 // Cramps Helper — Luna's first true "what now?" surface.
 // The prototype for the pattern that turns Luna from logger into
-// companion. Gloria's voice throughout: notice → hold → help → remember.
+// companion. Warm motherly tone throughout, but Luna is the speaker —
+// never a character. Gloria built Luna; users only ever meet Luna.
 //
-// This screen has three movements:
+// Three movements:
 //   1. A soft triage — where / how loud (both optional)
-//   2. The mother card — "Here. Put a heating pad here..." plus a
-//      breathing visual that the user can sit with for two minutes
+//   2. The action card — what helps right now, plus a breathing visual
+//      to sit with for two minutes
 //   3. The afterward — once she's through it, tap what helped. Luna
 //      keeps a personal playbook so next month she can say
 //      "Last time the heat made the biggest difference."
@@ -177,10 +178,10 @@ export default function CrampsHelper() {
         </div>
         <Rule />
 
-        {/* The mother card — the heart of this screen */}
+        {/* The action card — the heart of this screen */}
         <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18 }}>
           <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
-            Here, sweetheart
+            What helps right now
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.65, color: T.text, letterSpacing: -0.1 }}>
             <p style={{ margin: '0 0 12px 0' }}>
