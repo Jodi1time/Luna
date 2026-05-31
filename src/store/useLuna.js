@@ -35,6 +35,10 @@ const DEFAULT_SETTINGS = {
     pelvicFloor:   null,            // pelvic floor / Kegels (weekly)
     hydration:     null,            // { date, glasses } — daily reset
   },
+  // Personal cramps playbook — each entry: { dateISO, where, intensity,
+  // helped: [...], note?  }. Append-only via the Cramps Helper screen.
+  // Lives in settings (already jsonb) so no new schema column needed.
+  crampsHistory: [],
 }
 
 const useLuna = create(

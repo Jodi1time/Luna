@@ -732,6 +732,10 @@ export default function Home() {
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
+  // Smart cramps surface: if today's log has cramps as a mood OR as a
+  // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
+  // She doesn't have to dig for help when she already told us it hurts.
+  const hasCrampsToday = todayLog?.mood === 'cramps' || (todayLog?.symptoms || []).includes('cramps')
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
@@ -941,6 +945,23 @@ export default function Home() {
               setActiveLogDate={setActiveLogDate}
               onQuickNote={() => setQuickNoteOpen(true)}
             />
+          )}
+
+          {/* Smart cramps surface — only appears when she has told us it
+              hurts today. Mother voice, single tap to the helper. */}
+          {!isPreg && hasCrampsToday && (
+            <button onClick={() => go('cramps')} className="glass-card"
+              style={{ marginTop: 20, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+                I see you
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
+                Cramps today. Sit with me — I'll help.
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 6, letterSpacing: 0.2 }}>
+                Open the helper →
+              </div>
+            </button>
           )}
 
           {/* A small reflection — phase-aware, changes day to day, soft.

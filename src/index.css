@@ -344,6 +344,32 @@ button.no-tap, button.no-tap:active { transform: none; }
   animation-duration: 3.5s;
 }
 
+/* Breath circle — drives the visual in the CrampsHelper breathing
+   overlay. Phase is set via data-phase on the element. Inhale grows
+   the circle over 4s; hold holds at the peak for 2s; exhale shrinks
+   it back over 6s. Reduced motion users see a still circle. */
+.breath-circle {
+  transition: transform 4s cubic-bezier(0.45, 0.05, 0.45, 0.95),
+              opacity   1.2s ease-out;
+  transform: scale(0.55);
+  opacity: 0.55;
+}
+.breath-circle[data-phase="inhale"] {
+  transform: scale(1.18);
+  opacity: 1;
+  transition-duration: 4s, 4s;
+}
+.breath-circle[data-phase="hold"] {
+  transform: scale(1.18);
+  opacity: 1;
+  transition-duration: 2s, 2s;
+}
+.breath-circle[data-phase="exhale"] {
+  transform: scale(0.55);
+  opacity: 0.55;
+  transition-duration: 6s, 6s;
+}
+
 /* Glass fill — water rising animation for the hydration tracker. */
 @keyframes glassRise {
   from { height: 0%; }

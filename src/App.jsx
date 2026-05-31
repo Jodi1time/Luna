@@ -42,6 +42,7 @@ const PrivacyDashboard = lazy(() => import('./screens/PrivacyDashboard'))
 const YourYear        = lazy(() => import('./screens/YourYear'))
 const IntimateHealth  = lazy(() => import('./screens/IntimateHealth'))
 const PregnancyLoss   = lazy(() => import('./screens/PregnancyLoss'))
+const CrampsHelper    = lazy(() => import('./screens/CrampsHelper'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -145,6 +146,7 @@ function ScreenRenderer({ screen }) {
     case 'yourYear': return <YourYear />
     case 'intimate': return <IntimateHealth />
     case 'pregnancyLoss': return <PregnancyLoss />
+    case 'cramps': return <CrampsHelper />
     default:         return <Home />
   }
 }

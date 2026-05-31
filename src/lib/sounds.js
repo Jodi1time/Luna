@@ -54,3 +54,11 @@ export function bloomSound(enabled) {
   const notes = [440, 554, 660]
   notes.forEach((f, i) => setTimeout(() => tone({ freq: f, duration: 0.6, volume: 0.035, attack: 0.06, decay: 0.5 }), i * 110))
 }
+
+// Long, very soft fade — used to accompany the breathing visual in
+// CrampsHelper. One call = one full inhale-hold-exhale cycle (~10s).
+// Lower fundamental for grounding; sub-perceptual when sounds are off.
+export function breathTone(enabled) {
+  if (!enabled) return
+  tone({ freq: 196, duration: 4.0, type: 'sine', volume: 0.025, attack: 1.6, decay: 2.0 })
+}

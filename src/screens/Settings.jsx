@@ -157,6 +157,7 @@ export default function Settings() {
 
       <SectionLabel>More from Luna</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="When cramps hit" onTap={() => go('cramps')} />
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
         <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
