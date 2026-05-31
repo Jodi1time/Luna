@@ -768,10 +768,14 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Parallax — the cover drifts a hair slower than the rest of the
-  // content as the user scrolls, so the day number and phase feel
-  // like they sit on a layer behind the rest. Throttled via rAF and
-  // applied directly to the DOM node (no React re-render on scroll).
+  // Parallax + scroll-fade — the cover drifts a hair slower than
+  // the rest of the content AND fades out before the user scrolls
+  // over it. The fade is what prevents the cover's content (big
+  // day number, phase) from bleeding through the frosted glass
+  // cards below it as they pass over.
+  //
+  // Throttled via rAF and applied directly to the DOM node so we
+  // don't re-render on every scroll event.
   const screenRef = useRef(null)
   const coverRef = useRef(null)
   useEffect(() => {
@@ -779,12 +783,25 @@ export default function Home() {
     if (!el) return
     let rafId = null
     let lastY = 0
+    // Fade band: stays full opacity for the first 60px of scroll
+    // (so the gentle parallax reads clean), then linearly fades to
+    // 0 by 240px — which is roughly when content starts overlapping
+    // visually with the cover area through the frosted cards.
+    const FADE_START = 60
+    const FADE_END = 240
     const update = () => {
       rafId = null
-      if (coverRef.current) {
-        // 0.18 multiplier — subtle enough to be felt, not seen.
-        coverRef.current.style.transform = `translateY(${lastY * 0.18}px)`
-      }
+      const cover = coverRef.current
+      if (!cover) return
+      // 0.18 multiplier on the parallax shift — subtle, never seen.
+      cover.style.transform = `translateY(${lastY * 0.18}px)`
+      // Opacity fade — clamped to [0, 1].
+      const t = (lastY - FADE_START) / (FADE_END - FADE_START)
+      const fade = Math.min(1, Math.max(0, t))
+      cover.style.opacity = String(1 - fade)
+      // Disable pointer events when nearly invisible so users can't
+      // accidentally tap something they can no longer see.
+      cover.style.pointerEvents = fade > 0.92 ? 'none' : 'auto'
     }
     const onScroll = () => {
       lastY = el.scrollTop
@@ -1015,9 +1032,16 @@ export default function Home() {
             </div>
           )}
 
-          {/* Cover — Cycle variant */}
+          {/* Cover — Cycle variant. willChange hints the GPU that
+              transform + opacity are about to be animated; transition
+              softens both the parallax drift and the scroll-fade so
+              they read as one smooth motion. */}
           {!isPreg && (
-          <div ref={coverRef} style={{ marginBottom: 4, willChange: 'transform' }}>
+          <div ref={coverRef} style={{
+            marginBottom: 4,
+            willChange: 'transform, opacity',
+            transition: 'transform 90ms linear, opacity 200ms var(--ease-out)',
+          }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
               {onHormonalBC
                 ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
