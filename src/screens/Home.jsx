@@ -843,16 +843,15 @@ export default function Home() {
     : null
 
   // Sticky note content — what the user wants to remember, made
-  // visible. Priority: today's own note (most recently written, most
-  // alive) > a resurfaced past note (anniversary / cycle-day / phase).
-  // Nothing if she has no notes at all yet. Sticky note is now
-  // small and tucked into the corner near the week strip — and
-  // tapping opens QuickNote so she can write/edit (not the Log form).
+  // visible. Priority: today's own note > resurfaced past note >
+  // empty-state CTA ("Leave a note for your future self"). Always
+  // present unless the user has disabled it in Settings, so Luna's
+  // sticky-note gimmick is reliably on the wall.
+  const stickyNoteEnabled = settings?.stickyNoteEnabled !== false
   const todayNoteText = todayLog?.note ? String(todayLog.note).trim() : null
   const todayMD = new Date(); todayMD.setHours(0,0,0,0)
   const stickyNote = (() => {
-    if (isPreg) return null
-    // Note is shorter on the corner sticky (it's small) — cap at ~110 chars.
+    if (isPreg || !stickyNoteEnabled) return null
     const cap = (s) => s.length > 110 ? s.slice(0, 107) + '…' : s
     if (todayNoteText && todayNoteText.length > 0) {
       return {
@@ -860,6 +859,7 @@ export default function Home() {
         eyebrow: 'For me, today',
         signature: 'me, today',
         seed: todayMD.getDate(),
+        isEmpty: false,
         onTap: () => setQuickNoteOpen(true),
       }
     }
@@ -871,10 +871,19 @@ export default function Home() {
                  'From past me',
         signature: surfacedNote.label,
         seed: new Date(surfacedNote.dateISO + 'T12:00:00').getDate(),
+        isEmpty: false,
         onTap: () => setQuickNoteOpen(true),
       }
     }
-    return null
+    // Empty state — sticky note still shows, as a soft invitation.
+    return {
+      body: 'Leave a note for your future self.',
+      eyebrow: 'A blank page',
+      signature: null,
+      seed: todayMD.getDate(),
+      isEmpty: true,
+      onTap: () => setQuickNoteOpen(true),
+    }
   })()
 
   return (
@@ -889,10 +898,10 @@ export default function Home() {
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
 
           {/* Sticky note — tucked into the top-right corner just under
-              the Sunday cell of the week strip. Hand-drawn paper with
-              what she wanted to remember. Today's own note > a meaningful
-              past note (anniversary / cycle-day / phase). Tap → opens
-              QuickNote so she can write or edit a note. */}
+              the Sunday cell of the week strip. Always present (unless
+              the user has disabled it in Settings), so the gimmick is
+              reliable. Today's note > resurfaced past note > soft empty
+              CTA with attention arrows. Tap → opens QuickNote. */}
           {stickyNote && (
             <StickyNote
               body={stickyNote.body}
@@ -900,6 +909,7 @@ export default function Home() {
               signature={stickyNote.signature}
               tapeColor={phase?.color || T.accent}
               seed={stickyNote.seed}
+              isEmpty={stickyNote.isEmpty}
               onTap={stickyNote.onTap}
             />
           )}

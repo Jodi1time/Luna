@@ -130,6 +130,14 @@ export default function Settings() {
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
 
+      <SectionLabel>On your Home screen</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="Sticky note in the corner" right={<Toggle on={settings.stickyNoteEnabled !== false} onChange={(v) => updateSetting('stickyNoteEnabled', v)} />} />
+      </div>
+      <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
+        The little hand-drawn paper that holds whatever you want to remember. Off if you'd rather a cleaner Home.
+      </div>
+
       <SectionLabel>Your life stage</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Cycle tracking"

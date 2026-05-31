@@ -172,6 +172,29 @@ export default function QuickNote({ open, onClose }) {
             }}>
             {saving ? 'Saved' : (existing.note ? 'Update note' : 'Save note')}
           </button>
+          {existing.note && !saving && (
+            <button onClick={() => {
+              if (!window.confirm('Remove the note for today? You can write a new one any time.')) return
+              saveLog(new Date(), { note: null })
+              setText('')
+              setTimeout(() => onClose(), 200)
+            }}
+              style={{
+                width: '100%', marginTop: 8,
+                background: 'transparent',
+                color: T.muted,
+                border: `1px solid ${T.hair}`,
+                padding: '11px 16px',
+                borderRadius: T.r,
+                cursor: 'pointer',
+                fontFamily: T.sans,
+                fontSize: 12,
+                fontWeight: 500,
+                letterSpacing: 0.3,
+              }}>
+              Remove this note
+            </button>
+          )}
         </div>
       </div>
     </div>

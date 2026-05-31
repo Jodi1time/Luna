@@ -23,6 +23,10 @@ const DEFAULT_SETTINGS = {
   showEditorial: true,
   showLibrary:   true,
   showWatch:     true,
+  // The hand-drawn sticky note in the top-right corner of Home.
+  // On by default — it's Luna's editorial gimmick. Users who don't
+  // want it can flip this off in Settings.
+  stickyNoteEnabled: true,
   notifyPeriod:  true,
   notifyLog:     true,
   notifyWeekly:  true,
