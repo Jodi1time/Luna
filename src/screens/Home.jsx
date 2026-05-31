@@ -845,31 +845,33 @@ export default function Home() {
   // Sticky note content — what the user wants to remember, made
   // visible. Priority: today's own note (most recently written, most
   // alive) > a resurfaced past note (anniversary / cycle-day / phase).
-  // Nothing if she has no notes at all yet.
+  // Nothing if she has no notes at all yet. Sticky note is now
+  // small and tucked into the corner near the week strip — and
+  // tapping opens QuickNote so she can write/edit (not the Log form).
   const todayNoteText = todayLog?.note ? String(todayLog.note).trim() : null
   const todayMD = new Date(); todayMD.setHours(0,0,0,0)
   const stickyNote = (() => {
     if (isPreg) return null
+    // Note is shorter on the corner sticky (it's small) — cap at ~110 chars.
+    const cap = (s) => s.length > 110 ? s.slice(0, 107) + '…' : s
     if (todayNoteText && todayNoteText.length > 0) {
-      const trimmed = todayNoteText.length > 220 ? todayNoteText.slice(0, 217) + '…' : todayNoteText
       return {
-        body: trimmed,
+        body: cap(todayNoteText),
         eyebrow: 'For me, today',
         signature: 'me, today',
         seed: todayMD.getDate(),
-        onTap: () => { setActiveLogDate(todayISO); go('log') },
+        onTap: () => setQuickNoteOpen(true),
       }
     }
     if (surfacedNote) {
-      const trimmed = surfacedNote.note.length > 220 ? surfacedNote.note.slice(0, 217) + '…' : surfacedNote.note
       return {
-        body: trimmed,
-        eyebrow: surfacedNote.kind === 'anniversary' ? 'From a year ago today' :
-                 surfacedNote.kind === 'same-cycle-day' ? 'From a previous cycle' :
-                 'From your past self',
+        body: cap(surfacedNote.note),
+        eyebrow: surfacedNote.kind === 'anniversary' ? 'A year ago today' :
+                 surfacedNote.kind === 'same-cycle-day' ? 'A previous cycle' :
+                 'From past me',
         signature: surfacedNote.label,
         seed: new Date(surfacedNote.dateISO + 'T12:00:00').getDate(),
-        onTap: () => { setActiveLogDate(surfacedNote.dateISO); go('log') },
+        onTap: () => setQuickNoteOpen(true),
       }
     }
     return null
@@ -885,6 +887,22 @@ export default function Home() {
           <Greeting name={displayName} phaseId={phase?.id} />
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
+
+          {/* Sticky note — tucked into the top-right corner just under
+              the Sunday cell of the week strip. Hand-drawn paper with
+              what she wanted to remember. Today's own note > a meaningful
+              past note (anniversary / cycle-day / phase). Tap → opens
+              QuickNote so she can write or edit a note. */}
+          {stickyNote && (
+            <StickyNote
+              body={stickyNote.body}
+              eyebrow={stickyNote.eyebrow}
+              signature={stickyNote.signature}
+              tapeColor={phase?.color || T.accent}
+              seed={stickyNote.seed}
+              onTap={stickyNote.onTap}
+            />
+          )}
 
           {/* Cover — Pregnancy variant */}
           {isPreg && (
@@ -1164,20 +1182,6 @@ export default function Home() {
           {/* Monthly recap — quiet narrative summary of the last 30 days */}
           {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
 
-          {/* Sticky note — a small hand-drawn paper with whatever the
-              user wanted to remember. Today's own note takes precedence;
-              past notes resurface on anniversaries / cycle days when no
-              fresh note exists. */}
-          {stickyNote && (
-            <StickyNote
-              body={stickyNote.body}
-              eyebrow={stickyNote.eyebrow}
-              signature={stickyNote.signature}
-              tapeColor={phase?.color || T.accent}
-              seed={stickyNote.seed}
-              onTap={stickyNote.onTap}
-            />
-          )}
 
           {/* A rotating Health Watch prompt — one per week, doula-toned,
               promotes our existing screener out of Settings burial. */}

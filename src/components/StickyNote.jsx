@@ -19,11 +19,15 @@ function tiltFromSeed(seed) {
 }
 
 export default function StickyNote({ eyebrow, body, signature, tapeColor = T.accent, seed = 1, onTap }) {
-  const tilt = tiltFromSeed(seed)
-  const tapeTilt = -tilt * 1.8  // tape tilts opposite for charm
+  // Stronger tilt for the corner-tucked layout — looks pinned in, not flat.
+  const baseTilt = tiltFromSeed(seed)
+  const tilt = baseTilt > 0 ? baseTilt + 4 : baseTilt - 4
+  const tapeTilt = -tilt * 0.4
 
   return (
-    <div style={{ padding: '24px 4px 14px', display: 'flex', justifyContent: 'center' }}>
+    // Right-aligned container — sticky note hugs the right edge,
+    // peeking out into the corner like it's tucked there.
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4, marginBottom: 8, marginRight: -10 }}>
       <button onClick={onTap}
         style={{
           background: 'transparent', border: 'none', cursor: 'pointer',
@@ -37,11 +41,11 @@ export default function StickyNote({ eyebrow, body, signature, tapeColor = T.acc
         <div style={{
           position: 'relative',
           background: 'linear-gradient(135deg, #FBEFC2 0%, #F5DE7E 100%)',
-          padding: '28px 24px 22px',
+          padding: '22px 18px 16px',
           transform: `rotate(${tilt}deg)`,
-          boxShadow: '0 14px 28px -12px rgba(26,19,16,0.32), 0 4px 8px -2px rgba(26,19,16,0.12), inset 0 1px 0 rgba(255,255,255,0.4)',
-          width: 280,
-          minHeight: 110,
+          boxShadow: '0 16px 32px -14px rgba(26,19,16,0.38), 0 4px 10px -2px rgba(26,19,16,0.16), inset 0 1px 0 rgba(255,255,255,0.4)',
+          width: 200,
+          minHeight: 96,
           borderRadius: 2,
           textAlign: 'left',
           color: '#2A1A14',
@@ -51,9 +55,9 @@ export default function StickyNote({ eyebrow, body, signature, tapeColor = T.acc
               the paper for hand-placed feel. */}
           <div aria-hidden="true" style={{
             position: 'absolute',
-            top: -11, left: '50%',
+            top: -9, left: '50%',
             transform: `translateX(-50%) rotate(${tapeTilt}deg)`,
-            width: 100, height: 22,
+            width: 78, height: 18,
             background: `linear-gradient(180deg, ${tapeColor}55 0%, ${tapeColor}28 100%)`,
             borderRadius: 1,
             boxShadow: '0 2px 4px rgba(26,19,16,0.08)',
@@ -61,16 +65,16 @@ export default function StickyNote({ eyebrow, body, signature, tapeColor = T.acc
 
           {eyebrow && (
             <div style={{
-              fontFamily: T.mono, fontSize: 9.5,
-              letterSpacing: 1.2, fontWeight: 600,
-              color: 'rgba(26,19,16,0.55)', marginBottom: 8,
+              fontFamily: T.mono, fontSize: 8.5,
+              letterSpacing: 1.1, fontWeight: 600,
+              color: 'rgba(26,19,16,0.55)', marginBottom: 6,
             }}>
               {eyebrow}
             </div>
           )}
           <div style={{
-            fontFamily: T.serif, fontSize: 16,
-            fontStyle: 'italic', lineHeight: 1.5,
+            fontFamily: T.serif, fontSize: 13.5,
+            fontStyle: 'italic', lineHeight: 1.45,
             color: '#2A1A14', letterSpacing: -0.1,
             wordBreak: 'break-word',
           }}>
@@ -78,10 +82,10 @@ export default function StickyNote({ eyebrow, body, signature, tapeColor = T.acc
           </div>
           {signature && (
             <div style={{
-              fontFamily: T.serif, fontSize: 12,
+              fontFamily: T.serif, fontSize: 10.5,
               fontStyle: 'italic',
               color: 'rgba(26,19,16,0.5)',
-              marginTop: 12, textAlign: 'right',
+              marginTop: 8, textAlign: 'right',
             }}>
               — {signature}
             </div>
