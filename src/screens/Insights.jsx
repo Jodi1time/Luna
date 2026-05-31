@@ -155,6 +155,7 @@ export default function Insights() {
   const { phase, periodHistory } = cycle
   const logs = useLuna((s) => s.logs)
   const birthControl = useLuna((s) => s.birthControl)
+  const go = useLuna((s) => s.go)
   const onHormonalBC = isOnHormonalBC(birthControl)
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
   const cyclesLogged = periodHistory ? periodHistory.length : 0
@@ -303,6 +304,25 @@ export default function Insights() {
             })}
           </div>
         )}
+
+        {/* Long-form reflection — only shown once there's something
+            real to look back on. The gate lives in buildYearNarrative. */}
+        {(cycle.cyclesLogged >= 2 || Object.keys(logs || {}).length >= 30) && (
+          <button onClick={() => go('yourYear')}
+            className="glass-card"
+            style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+              A longer look back
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
+              Your year with Luna →
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55 }}>
+              The narrative version — what your body taught Luna this year, in long form.
+            </div>
+          </button>
+        )}
+
         <div style={{ height: 16 }} />
       </div>
       </Screen>

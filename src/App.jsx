@@ -37,6 +37,9 @@ const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
 const EditCycleNumbers = lazy(() => import('./screens/EditCycleNumbers'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
+const Cheatsheet      = lazy(() => import('./screens/Cheatsheet'))
+const PrivacyDashboard = lazy(() => import('./screens/PrivacyDashboard'))
+const YourYear        = lazy(() => import('./screens/YourYear'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -135,6 +138,9 @@ function ScreenRenderer({ screen }) {
     case 'editCycleNumbers': return <EditCycleNumbers />
     case 'birthControl': return <BirthControl />
     case 'pregnancy': return <Pregnancy />
+    case 'cheatsheet': return <Cheatsheet />
+    case 'privacyDashboard': return <PrivacyDashboard />
+    case 'yourYear': return <YourYear />
     default:         return <Home />
   }
 }

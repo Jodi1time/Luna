@@ -4,16 +4,7 @@ import useLuna from '../store/useLuna'
 import { BC_LABELS } from '../data/birthControl'
 import { signOut } from '../lib/supabase'
 import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
-
-// Defuse CSV formula-injection prefixes (=, +, -, @, tab, CR) by prepending
-// a tab. Then quote-escape if the cell contains quotes, commas, or newlines.
-function csvCell(value) {
-  if (value == null || value === '') return ''
-  const s = String(value)
-  const defused = /^[=+\-@\t\r]/.test(s) ? `\t${s}` : s
-  if (/[",\n\r]/.test(defused)) return `"${defused.replace(/"/g, '""')}"`
-  return defused
-}
+import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
 
 function SectionLabel({ children }) {
   return <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, fontFamily: T.sans, padding: '20px 22px 8px', textTransform: 'uppercase' }}>{children}</div>
@@ -54,79 +45,8 @@ export default function Settings() {
     window.location.reload()
   }
 
-  const exportCSV = () => {
-    const store = useLuna.getState()
-    const lines = ['Luna data export']
-    lines.push(`Generated,${csvCell(new Date().toISOString())}`)
-    if (store.displayName) lines.push(`Name,${csvCell(store.displayName)}`)
-    lines.push(`Last period start,${csvCell(store.lastPeriodStart || '')}`)
-    lines.push(`Cycle length (days),${csvCell(store.cycleLength)}`)
-    lines.push(`Period length (days),${csvCell(store.periodLength)}`)
-    lines.push('')
-    lines.push('Date,Mood,Symptoms,Flow,BBT,BBT_Unit,Mucus,Sex,Note')
-    const sortedLogs = Object.entries(store.logs).sort(([a], [b]) => a.localeCompare(b))
-    for (const [date, log] of sortedLogs) {
-      const symptoms = (log.symptoms || []).join('; ')
-      const note = (log.note || '').replace(/\n/g, ' ')
-      const bbtVal = log.bbt?.value ?? ''
-      const bbtUnit = log.bbt ? `°${log.bbt.unit}` : ''
-      lines.push([
-        csvCell(date),
-        csvCell(log.mood || ''),
-        csvCell(symptoms),
-        csvCell(log.flow || ''),
-        csvCell(bbtVal),
-        csvCell(bbtUnit),
-        csvCell(log.mucus || ''),
-        csvCell(log.sex || ''),
-        csvCell(note),
-      ].join(','))
-    }
-    const csv = lines.join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `luna-export-${new Date().toISOString().slice(0, 10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
-  const deleteAccount = async () => {
-    if (!window.confirm('This permanently deletes your Luna account and all your cycle data on our servers. Continue?')) return
-
-    if (session) {
-      try {
-        const { supabase } = await import('../lib/supabase')
-        const { data: { session: s } } = await supabase.auth.getSession()
-        if (s) {
-          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-account`
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${s.access_token}`,
-              'Content-Type': 'application/json',
-            },
-          })
-          if (!res.ok) {
-            const body = await res.text().catch(() => '')
-            window.alert(`Account deletion failed (${res.status}). ${body}`)
-            return
-          }
-        }
-      } catch (e) {
-        window.alert(`Could not reach the server (${e?.message}). Try again in a moment.`)
-        return
-      }
-    }
-
-    try { await signOut() } catch {}
-    resetAnalytics()
-    clearLocalData()
-    window.location.reload()
-  }
+  const exportCSV = () => exportLunaCSV(useLuna.getState())
+  const deleteAccount = () => deleteLunaAccount({ session, clearLocalData })
   return (
     <div className="home-stage">
       <div className="blob-stage subtle" aria-hidden="true">
@@ -194,7 +114,7 @@ export default function Settings() {
 
       <SectionLabel>Privacy</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="Storage" value="Encrypted at rest" />
+        <Row label="Your data, in the open" onTap={() => go('privacyDashboard')} />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
         <Row label="Soft sounds" right={<Toggle on={Boolean(settings.sounds)} onChange={(v) => updateSetting('sounds', v)} />} />
         <Row label="Export everything" onTap={exportCSV} />
@@ -238,6 +158,8 @@ export default function Settings() {
       <SectionLabel>More from Luna</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="When something feels off" onTap={() => go('watch')} />
+        <Row label="For your next visit" onTap={() => go('cheatsheet')} />
+        <Row label="Your year with Luna" onTap={() => go('yourYear')} />
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />

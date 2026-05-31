@@ -502,10 +502,16 @@ function WeeklyHealthCheckCard({ go }) {
 
 // Always-here essentials at the bottom of Home — surfaces support
 // features + any quiet wellness nudges that are due.
-function AlwaysHere({ go, wellness, markWellness }) {
+function AlwaysHere({ go, wellness, markWellness, onTalk }) {
   const nudges = dueWellnessNudges(wellness)
   const todayISO = new Date().toISOString().slice(0, 10)
   const items = [
+    onTalk && {
+      key: 'talk',
+      label: 'Talk something through',
+      sub: 'A few quiet minutes with Luna, any time.',
+      onTap: onTalk,
+    },
     {
       key: 'watch',
       label: 'When something feels off',
@@ -513,12 +519,18 @@ function AlwaysHere({ go, wellness, markWellness }) {
       onTap: () => go('watch'),
     },
     {
+      key: 'cheatsheet',
+      label: 'For your next visit',
+      sub: 'The wording, ready when you walk in.',
+      onTap: () => go('cheatsheet'),
+    },
+    {
       key: 'care',
       label: 'Stay on top of care',
       sub: 'Checkups, screenings, what’s due.',
       onTap: () => go('care'),
     },
-  ]
+  ].filter(Boolean)
   return (
     <div style={{ marginTop: 28 }}>
       <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
@@ -686,6 +698,10 @@ export default function Home() {
   const session = useLuna((s) => s.session)
   const [aiThought, setAiThought] = useState(null)
   const [chatOpen, setChatOpen] = useState(false)
+  // Opener is set when chat is launched from the daily thought (seeded
+  // first message); null when launched from "Talk something through"
+  // so the user starts a fresh, unprompted conversation.
+  const [chatOpener, setChatOpener] = useState(null)
   useEffect(() => {
     if (!phase || !session?.user?.id) return
     let cancelled = false
@@ -861,7 +877,7 @@ export default function Home() {
           {/* A small reflection — phase-aware, changes day to day, soft.
               Tap to open a brief conversation with Luna. */}
           {!isPreg && phase && thoughtText && (
-            <button onClick={() => setChatOpen(true)}
+            <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
               style={{ marginTop: 26, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
@@ -881,12 +897,14 @@ export default function Home() {
               after ~3s via the useEffect above. */}
           <Celebration kind={celebration} onClose={() => setCelebration(null)} />
 
-          {/* Chat overlay — opens when the thought is tapped */}
-          {phase && thoughtText && (
+          {/* Chat overlay — opens from the daily thought (with opener)
+              or from the Always-Here "Talk something through" entry
+              (no opener, free conversation). */}
+          {phase && (
             <LunaChat
               open={chatOpen}
-              onClose={() => setChatOpen(false)}
-              opener={thoughtText}
+              onClose={() => { setChatOpen(false); setChatOpener(null) }}
+              opener={chatOpener}
               context={{
                 phaseId: phase.id,
                 phaseName: phase.name,
@@ -917,7 +935,14 @@ export default function Home() {
           {!isPreg && <WeeklyHealthCheckCard go={go} />}
 
           {/* Always here — essentials + due wellness nudges */}
-          {!isPreg && <AlwaysHere go={go} wellness={wellness} markWellness={markWellness} />}
+          {!isPreg && (
+            <AlwaysHere
+              go={go}
+              wellness={wellness}
+              markWellness={markWellness}
+              onTalk={phase ? () => { setChatOpener(null); setChatOpen(true) } : null}
+            />
+          )}
 
           {/* How are you, today? */}
           <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '18px 0', marginTop: 24, marginBottom: 8 }}>

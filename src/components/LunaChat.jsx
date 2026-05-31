@@ -1,18 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import { T } from '../data/theme'
 import { chat } from '../lib/lunaChat'
+import { detectCrisis, CRISIS_RESOURCES } from '../lib/crisis'
 
-// Small chat overlay that slides up from the bottom. Opens with Luna's
-// reflection as the first message, then lets the user reply a few
-// times. Hard-capped at 6 user turns so we don't run away on cost or
-// emotional weight — at the cap Luna gently closes the conversation
-// with a warm note.
+// Small chat overlay that slides up from the bottom. Opens either with
+// today's reflection seeded as Luna's first message, or — when there
+// is no opener — as a clean conversation the user can start cold.
+// Hard-capped at 6 user turns so we don't run away on cost or
+// emotional weight; at the cap Luna gently closes with a warm note.
+// A client-side crisis-keyword tripwire surfaces helpline resources
+// the moment a user message suggests imminent self-harm.
 
 const MAX_USER_TURNS = 6
 
 export default function LunaChat({ open, onClose, opener, context }) {
   // messages: { role: 'assistant'|'user', content: string, error?: boolean }[]
   const [messages, setMessages] = useState([])
+  const [crisisSurfaced, setCrisisSurfaced] = useState(false)
   const [draft, setDraft] = useState('')
   const [sending, setSending] = useState(false)
   // Tracks how much of the bottom is being eaten by the soft keyboard
@@ -21,10 +25,13 @@ export default function LunaChat({ open, onClose, opener, context }) {
   const [keyboardInset, setKeyboardInset] = useState(0)
   const scrollRef = useRef(null)
 
-  // Seed with the opener whenever a new conversation starts.
+  // Seed when a new conversation starts. With an opener (today's
+  // reflection), Luna's first bubble is the prompt; without one, we
+  // start empty and rely on the textarea's gentle invitation.
   useEffect(() => {
-    if (open && opener) {
-      setMessages([{ role: 'assistant', content: opener }])
+    if (open) {
+      setMessages(opener ? [{ role: 'assistant', content: opener }] : [])
+      setCrisisSurfaced(false)
       setDraft('')
     }
   }, [open, opener])
@@ -64,6 +71,7 @@ export default function LunaChat({ open, onClose, opener, context }) {
     const text = draft.trim()
     if (!text || sending || reachedCap) return
     setDraft('')
+    if (detectCrisis(text)) setCrisisSurfaced(true)
     const nextMessages = [...messages, { role: 'user', content: text }]
     setMessages(nextMessages)
     setSending(true)
@@ -134,8 +142,34 @@ export default function LunaChat({ open, onClose, opener, context }) {
           </button>
         </div>
 
+        {/* Crisis resource panel — surfaces above the thread the moment
+            a user message trips the keyword tripwire. Stays for the
+            rest of the session so it can't scroll out of reach. */}
+        {crisisSurfaced && (
+          <div style={{ margin: '12px 14px 0', padding: 14, background: T.text, color: '#FAF4ED', borderRadius: T.r, animation: 'fadeUp 0.3s ease-out both' }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, fontWeight: 700, marginBottom: 6 }}>
+              You don't have to be alone with this
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.5, marginBottom: 10 }}>
+              I'll keep listening — and if you'd like to talk to someone trained for this, here are people who answer at any hour.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {CRISIS_RESOURCES.map((r) => (
+                <div key={r.label} style={{ fontFamily: T.sans, fontSize: 11.5, lineHeight: 1.5, color: 'rgba(250,244,237,0.92)' }}>
+                  <span style={{ color: '#FAF4ED', fontWeight: 600 }}>{r.label} — </span>{r.detail}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Messages */}
         <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {messages.length === 0 && !sending && (
+            <div style={{ alignSelf: 'center', textAlign: 'center', padding: '12px 16px', fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, maxWidth: 280 }}>
+              A small reflective space. Whatever's on your mind — write a sentence, or a single word.
+            </div>
+          )}
           {messages.map((m, i) => (
             <div key={i} style={{
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
