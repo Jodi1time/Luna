@@ -10,6 +10,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { resurfaceNote } from '../lib/noteResurface'
+import StickyNote from '../components/StickyNote'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -841,6 +842,39 @@ export default function Home() {
     ? resurfaceNote({ logs, cycle, todayPhaseId: phase?.id, todayISO })
     : null
 
+  // Sticky note content — what the user wants to remember, made
+  // visible. Priority: today's own note (most recently written, most
+  // alive) > a resurfaced past note (anniversary / cycle-day / phase).
+  // Nothing if she has no notes at all yet.
+  const todayNoteText = todayLog?.note ? String(todayLog.note).trim() : null
+  const todayMD = new Date(); todayMD.setHours(0,0,0,0)
+  const stickyNote = (() => {
+    if (isPreg) return null
+    if (todayNoteText && todayNoteText.length > 0) {
+      const trimmed = todayNoteText.length > 220 ? todayNoteText.slice(0, 217) + '…' : todayNoteText
+      return {
+        body: trimmed,
+        eyebrow: 'For me, today',
+        signature: 'me, today',
+        seed: todayMD.getDate(),
+        onTap: () => { setActiveLogDate(todayISO); go('log') },
+      }
+    }
+    if (surfacedNote) {
+      const trimmed = surfacedNote.note.length > 220 ? surfacedNote.note.slice(0, 217) + '…' : surfacedNote.note
+      return {
+        body: trimmed,
+        eyebrow: surfacedNote.kind === 'anniversary' ? 'From a year ago today' :
+                 surfacedNote.kind === 'same-cycle-day' ? 'From a previous cycle' :
+                 'From your past self',
+        signature: surfacedNote.label,
+        seed: new Date(surfacedNote.dateISO + 'T12:00:00').getDate(),
+        onTap: () => { setActiveLogDate(surfacedNote.dateISO); go('log') },
+      }
+    }
+    return null
+  })()
+
   return (
     <div className="home-stage">
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
@@ -1130,13 +1164,18 @@ export default function Home() {
           {/* Monthly recap — quiet narrative summary of the last 30 days */}
           {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
 
-          {/* From your past self — anniversary / cycle-day / phase callback
-              for an old note. Quiet, opens that day's Log on tap. */}
-          {!isPreg && (
-            <FromYourPastSelfCard
-              surfaced={surfacedNote}
-              go={go}
-              setActiveLogDate={setActiveLogDate}
+          {/* Sticky note — a small hand-drawn paper with whatever the
+              user wanted to remember. Today's own note takes precedence;
+              past notes resurface on anniversaries / cycle days when no
+              fresh note exists. */}
+          {stickyNote && (
+            <StickyNote
+              body={stickyNote.body}
+              eyebrow={stickyNote.eyebrow}
+              signature={stickyNote.signature}
+              tapeColor={phase?.color || T.accent}
+              seed={stickyNote.seed}
+              onTap={stickyNote.onTap}
             />
           )}
 
