@@ -988,9 +988,9 @@ export default function Home() {
           )}
           {!isPreg && hasAnxietyToday && (
             <SmartHelperCard
-              onTap={() => go('anxiety')}
+              onTap={() => go('heavy')}
               eyebrow="Heavy today"
-              line="A few minutes to slow the body down?"
+              line="A few ways in — body, words, breath, or someone to talk to."
             />
           )}
           {!isPreg && hasInsomniaToday && (

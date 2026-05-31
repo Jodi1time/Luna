@@ -167,6 +167,7 @@ export default function Settings() {
 
       <SectionLabel>When something is happening</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="When it feels heavy" onTap={() => go('heavy')} />
         <Row label="Cramps right now" onTap={() => go('cramps')} />
         <Row label="Anxiety tonight" onTap={() => go('anxiety')} />
         <Row label="Can't sleep" onTap={() => go('insomnia')} />
