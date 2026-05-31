@@ -125,9 +125,10 @@ const PHASE_PRACTICE = {
 }
 
 // ── Gratitude practice ──────────────────────────────────────────
-function GratitudeSheet({ open, onClose, onSave }) {
+function GratitudeSheet({ open, onClose, onSave, history = [], onOpenNote, onOpenChat }) {
   const [items, setItems] = useState(['', '', ''])
-  const [saved, setSaved] = useState(false)
+  const [stage, setStage] = useState('write')  // 'write' | 'done'
+  const [savedItems, setSavedItems] = useState([])
 
   if (!open) return null
 
@@ -136,12 +137,61 @@ function GratitudeSheet({ open, onClose, onSave }) {
 
   const save = () => {
     if (filled === 0) return
-    onSave({
-      kind: 'gratitude',
-      content: items.filter((t) => t.trim()).map((t) => t.trim()),
-    })
-    setSaved(true)
-    setTimeout(() => { setItems(['', '', '']); setSaved(false); onClose() }, 1100)
+    const list = items.filter((t) => t.trim()).map((t) => t.trim())
+    onSave({ kind: 'gratitude', content: list })
+    setSavedItems(list)
+    setStage('done')
+  }
+
+  const reset = () => { setItems(['', '', '']); setStage('write'); setSavedItems([]); onClose() }
+
+  if (stage === 'done') {
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30)
+    const recent = history.filter((e) => e.kind === 'gratitude' && new Date(e.dateISO + 'T12:00:00') >= cutoff).length
+    return (
+      <SheetShell onClose={reset} title="Three small things" sub="Done.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 12 }}>
+            You named {savedItems.length} thing{savedItems.length === 1 ? '' : 's'} that landed today.
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.muted, fontStyle: 'italic' }}>
+            The brain notices what we point it at. In a 2005 trial, six months of this practice measurably lifted mood and reduced depression — durable, not a feeling. {recent >= 3 && <strong style={{ fontWeight: 600, fontStyle: 'normal', color: T.accent }}>{recent} rounds of this in the last month.</strong>}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, background: 'rgba(200,78,46,0.04)' }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+            What you wrote
+          </div>
+          {savedItems.map((it, i) => (
+            <div key={i} style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, marginBottom: i === savedItems.length - 1 ? 0 : 8 }}>
+              · {it}
+            </div>
+          ))}
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10, fontStyle: 'italic' }}>
+            Protect what just landed — write a note about the day so future-you can come back to it.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => { reset(); onOpenNote?.() }}
+              style={{ background: 'transparent', color: T.accent, border: `1px solid ${T.accent}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+              Write a note about today →
+            </button>
+            <button onClick={() => { reset(); onOpenChat?.() }}
+              style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 500, borderRadius: T.r, letterSpacing: 0.3 }}>
+              Talk to Luna →
+            </button>
+          </div>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+          Close
+        </button>
+      </SheetShell>
+    )
   }
 
   return (
@@ -165,7 +215,7 @@ function GratitudeSheet({ open, onClose, onSave }) {
       <SheetFooter
         onSave={save}
         disabled={filled === 0}
-        saved={saved}
+        saved={false}
         label={`Save ${filled || ''}`.trim()}
         savedLabel="Saved"
         helper={filled === 0 ? 'Write at least one — there\'s always something.' : null}
@@ -199,11 +249,69 @@ const FEELING_NOTES = {
   Longing: 'Longing is a quiet teacher — it shows you what matters before you can do anything about it.',
 }
 
-function FeelingSheet({ open, onClose, onSave }) {
+// Context-aware help routing per emotion word. Each entry maps to a
+// concrete next action — the screen the user should land on if she
+// wants to do something about what she just named.
+function feelingHelp(word, phaseId) {
+  const w = (word || '').toLowerCase()
+  if (['anxious', 'restless', 'worried', 'overwhelmed', 'irritable'].includes(w)) {
+    return {
+      line: w === 'overwhelmed'
+        ? "Overwhelm is too many open loops. The brain needs a list. Want to put them down?"
+        : "Want to sit with anxiety, specifically? Paced breath is the most effective first move.",
+      primary: { label: 'Sit with anxiety →', action: 'anxiety' },
+      secondary: { label: 'Write it out', action: 'note' },
+    }
+  }
+  if (['lonely', 'empty', 'disconnected'].includes(w)) {
+    return {
+      line: "Want company? Luna's here — or you can write to someone you might call later.",
+      primary: { label: 'Talk to Luna →', action: 'chat' },
+      secondary: { label: 'Write a note', action: 'note' },
+    }
+  }
+  if (['sad', 'grief', 'disappointed', 'aching', 'longing'].includes(w)) {
+    return {
+      line: "Heavy feelings don't ask to be fixed. They ask to be held. Want a self-compassion pause?",
+      primary: { label: 'A pause →', action: 'compassion' },
+      secondary: { label: 'Talk to Luna', action: 'chat' },
+    }
+  }
+  if (['numb', 'flat', 'detached', 'bored'].includes(w)) {
+    return {
+      line: "Numb is the body protecting you. A body scan can gently bring you back to yourself.",
+      primary: { label: 'Body scan →', action: 'bodyscan' },
+      secondary: { label: 'Write a note', action: 'note' },
+    }
+  }
+  if (['tired'].includes(w)) {
+    return {
+      line: "Tired is data, not a verdict. Want to look at what tonight could be?",
+      primary: { label: 'Tonight, wind down →', action: 'insomnia' },
+      secondary: { label: 'Write a note', action: 'note' },
+    }
+  }
+  if (['hopeful', 'curious', 'energized', 'grateful', 'joyful', 'confident', 'playful', 'in love', 'proud', 'settled'].includes(w)) {
+    return {
+      line: "These are worth marking. Future-you will want to read this back.",
+      primary: { label: 'Write a note →', action: 'note' },
+      secondary: phaseId === 'follicular' || phaseId === 'ovulation'
+        ? { label: 'Set an intention', action: 'intention' }
+        : { label: 'Talk to Luna', action: 'chat' },
+    }
+  }
+  return {
+    line: "Naming it was the work. Want to do more?",
+    primary: { label: 'Write a note →', action: 'note' },
+    secondary: { label: 'Talk to Luna', action: 'chat' },
+  }
+}
+
+function FeelingSheet({ open, onClose, onSave, phase, history = [], onOpenNote, onOpenChat, onOpenHelper, onOpenPractice }) {
   const [stage, setStage] = useState('top')
   const [topPick, setTopPick] = useState(null)
   const [picked, setPicked] = useState(null)
-  const [saved, setSaved] = useState(false)
+  const [doneAt, setDoneAt] = useState(null)
 
   if (!open) return null
 
@@ -213,10 +321,68 @@ function FeelingSheet({ open, onClose, onSave }) {
   const save = () => {
     if (!picked) return
     onSave({ kind: 'feeling', content: { top: topPick, word: picked } })
-    setSaved(true)
+    setDoneAt(picked)
+    setStage('done')
+  }
+
+  const reset = () => { setStage('top'); setTopPick(null); setPicked(null); setDoneAt(null); onClose() }
+  const handleHelp = (action) => {
+    reset()
     setTimeout(() => {
-      setStage('top'); setTopPick(null); setPicked(null); setSaved(false); onClose()
-    }, 1100)
+      if (action === 'note') onOpenNote?.()
+      else if (action === 'chat') onOpenChat?.()
+      else if (['anxiety', 'insomnia', 'cramps'].includes(action)) onOpenHelper?.(action)
+      else if (['compassion', 'bodyscan', 'intention', 'reframe'].includes(action)) onOpenPractice?.(action)
+    }, 50)
+  }
+
+  if (stage === 'done' && doneAt) {
+    const lutealNote = phase?.id === 'luteal'
+      ? "Late-luteal serotonin drops can make every feeling louder. You named it precisely — that itself reduces the intensity a little."
+      : null
+    const recentFeelings = history.filter((e) => e.kind === 'feeling').slice(-5).length
+    const help = feelingHelp(doneAt, phase?.id)
+    return (
+      <SheetShell onClose={reset} title="Named." sub={`You wrote: ${doneAt.toLowerCase()}.`}>
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
+            {doneAt} — named. The body usually relaxes a fraction the moment you name precisely.
+          </div>
+          {lutealNote && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.muted, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {lutealNote}
+            </div>
+          )}
+          {recentFeelings >= 3 && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.accent, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {recentFeelings} feelings named this stretch — emotional granularity in practice.
+            </div>
+          )}
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
+            {help.line}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => handleHelp(help.primary.action)}
+              style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+              {help.primary.label}
+            </button>
+            <button onClick={() => handleHelp(help.secondary.action)}
+              style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 500, borderRadius: T.r, letterSpacing: 0.3 }}>
+              {help.secondary.label}
+            </button>
+          </div>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close
+        </button>
+      </SheetShell>
+    )
   }
 
   return (
@@ -273,7 +439,7 @@ function FeelingSheet({ open, onClose, onSave }) {
       <SheetFooter
         onSave={save}
         disabled={!picked}
-        saved={saved}
+        saved={false}
         label="Save the word"
         savedLabel="Named"
         helper={!picked && stage === 'inner' ? 'Pick the word that fits.' : null}
@@ -283,10 +449,10 @@ function FeelingSheet({ open, onClose, onSave }) {
 }
 
 // ── Self-compassion practice (Neff three-step) ──────────────────
-function CompassionSheet({ open, onClose, onSave }) {
+function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNote, onOpenChat }) {
   const [step, setStep] = useState(0)
   const [reflection, setReflection] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [savedReflection, setSavedReflection] = useState('')
 
   if (!open) return null
 
@@ -307,8 +473,68 @@ function CompassionSheet({ open, onClose, onSave }) {
 
   const save = () => {
     onSave({ kind: 'compassion', content: reflection.trim() || null })
-    setSaved(true)
-    setTimeout(() => { setStep(0); setReflection(''); setSaved(false); onClose() }, 1100)
+    setSavedReflection(reflection.trim())
+    setStep(lines.length + 1)  // done state
+  }
+
+  const reset = () => { setStep(0); setReflection(''); setSavedReflection(''); onClose() }
+
+  if (step === lines.length + 1) {
+    const recent = history.filter((e) => e.kind === 'compassion').length
+    const lutealNote = phase?.id === 'luteal'
+      ? "In luteal, this is the single most protective practice for your week. Serotonin drops; the inner voice gets sharper. You picked the right tool."
+      : null
+    return (
+      <SheetShell onClose={reset} title="Held." sub="A small kindness landed.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
+            Two minutes of softness toward yourself. The body registers that, even when you don't feel it.
+          </div>
+          {lutealNote && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.muted, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {lutealNote}
+            </div>
+          )}
+          {recent >= 3 && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.accent, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {recent} pauses like this so far — the inner voice is being trained, even when you can't tell yet.
+            </div>
+          )}
+        </div>
+        {savedReflection && (
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, background: 'rgba(200,78,46,0.04)' }}>
+            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+              You wrote
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.text }}>
+              {savedReflection}
+            </div>
+          </div>
+        )}
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
+            One small kindness toward yourself in the next hour — a snack, five minutes outside, a stretch, a slower next thing. The practice extends into the day when you let it.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => { reset(); onOpenChat?.() }}
+              style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+              Talk to Luna →
+            </button>
+            <button onClick={() => { reset(); onOpenNote?.() }}
+              style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 500, borderRadius: T.r, letterSpacing: 0.3 }}>
+              A note to your future self
+            </button>
+          </div>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close
+        </button>
+      </SheetShell>
+    )
   }
 
   if (step < lines.length) {
@@ -342,32 +568,76 @@ function CompassionSheet({ open, onClose, onSave }) {
           fontFamily: T.serif, fontStyle: 'italic', fontSize: 15,
           color: T.text, lineHeight: 1.55, outline: 'none',
         }} />
-      <SheetFooter onSave={save} disabled={false} saved={saved} label="Save the pause" savedLabel="Held" helper={null} />
+      <SheetFooter onSave={save} disabled={false} saved={false} label="Save the pause" savedLabel="Held" helper={null} />
     </SheetShell>
   )
 }
 
 // ── Worry reframe practice (CBT) ────────────────────────────────
-function ReframeSheet({ open, onClose, onSave }) {
+function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
   const [worry, setWorry] = useState('')
   const [alternative, setAlternative] = useState('')
   const [friend, setFriend] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [stage, setStage] = useState('write')  // 'write' | 'done'
+  const [savedTriple, setSavedTriple] = useState(null)
 
   if (!open) return null
 
   const save = () => {
     if (!worry.trim()) return
-    onSave({
-      kind: 'reframe',
-      content: {
-        worry: worry.trim(),
-        alternative: alternative.trim() || null,
-        friend: friend.trim() || null,
-      },
-    })
-    setSaved(true)
-    setTimeout(() => { setWorry(''); setAlternative(''); setFriend(''); setSaved(false); onClose() }, 1100)
+    const triple = { worry: worry.trim(), alternative: alternative.trim() || null, friend: friend.trim() || null }
+    onSave({ kind: 'reframe', content: triple })
+    setSavedTriple(triple)
+    setStage('done')
+  }
+
+  const reset = () => { setWorry(''); setAlternative(''); setFriend(''); setStage('write'); setSavedTriple(null); onClose() }
+
+  if (stage === 'done' && savedTriple) {
+    const recent = history.filter((e) => e.kind === 'reframe').length
+    return (
+      <SheetShell onClose={reset} title="Reframed." sub="Two voices, side by side.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+              The worry, as it lives
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.text }}>
+              "{savedTriple.worry}"
+            </div>
+          </div>
+          {savedTriple.friend && (
+            <div style={{ paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+                The voice you'd offer a friend
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.accent }}>
+                "{savedTriple.friend}"
+              </div>
+            </div>
+          )}
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, color: T.text, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}` }}>
+            <strong style={{ fontWeight: 600 }}>The second voice is the truer one</strong> — and the one you usually withhold from yourself. Read both back when the worry returns. {recent >= 3 && <span style={{ color: T.muted, fontStyle: 'italic' }}>{recent} reframes saved so far — they accumulate.</span>}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
+            When the worry comes back tonight or tomorrow — your reframes are kept in Reflect. The friend-voice is yours to come back to.
+          </div>
+          <button onClick={() => { reset(); onOpenChat?.() }}
+            style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+            Talk this through with Luna →
+          </button>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close
+        </button>
+      </SheetShell>
+    )
   }
 
   return (
@@ -390,7 +660,7 @@ function ReframeSheet({ open, onClose, onSave }) {
           rows={3} maxLength={1000}
           style={fieldStyle} />
       </Field>
-      <SheetFooter onSave={save} disabled={!worry.trim()} saved={saved} label="Save the reframe" savedLabel="Reframed" helper={!worry.trim() ? 'Start with the worry itself.' : null} />
+      <SheetFooter onSave={save} disabled={!worry.trim()} saved={false} label="Save the reframe" savedLabel="Reframed" helper={!worry.trim() ? 'Start with the worry itself.' : null} />
     </SheetShell>
   )
 }
@@ -414,17 +684,61 @@ function Field({ label, children }) {
 }
 
 // ── Morning intention practice ──────────────────────────────────
-function IntentionSheet({ open, onClose, onSave }) {
+function IntentionSheet({ open, onClose, onSave, history = [], onOpenNote, onOpenChat }) {
   const [text, setText] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [stage, setStage] = useState('write')
+  const [savedText, setSavedText] = useState('')
 
   if (!open) return null
 
   const save = () => {
     if (!text.trim()) return
     onSave({ kind: 'intention', content: text.trim() })
-    setSaved(true)
-    setTimeout(() => { setText(''); setSaved(false); onClose() }, 1000)
+    setSavedText(text.trim())
+    setStage('done')
+  }
+
+  const reset = () => { setText(''); setStage('write'); setSavedText(''); onClose() }
+
+  if (stage === 'done') {
+    const recent = history.filter((e) => e.kind === 'intention').length
+    return (
+      <SheetShell onClose={reset} title="Set." sub="Luna will hold this for you today.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+            Today is about
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.2, marginBottom: 14 }}>
+            "{savedText}"
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.muted, fontStyle: 'italic' }}>
+            Luna will bring this back this evening — to ask how the day landed against it. {recent >= 4 && <strong style={{ fontWeight: 600, fontStyle: 'normal', color: T.accent }}>{recent} intentions set so far — a real practice.</strong>}
+          </div>
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
+            Move into the day with this. If a decision comes up that doesn't match — that's a signal worth following.
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => { reset(); onOpenNote?.() }}
+              style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+              Add a note about why →
+            </button>
+            <button onClick={() => { reset(); onOpenChat?.() }}
+              style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 500, borderRadius: T.r, letterSpacing: 0.3 }}>
+              Talk to Luna
+            </button>
+          </div>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close — carry it with you
+        </button>
+      </SheetShell>
+    )
   }
 
   return (
@@ -436,7 +750,7 @@ function IntentionSheet({ open, onClose, onSave }) {
         placeholder="Today is about…"
         rows={3} maxLength={300}
         style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '14px 16px', fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, color: T.text, lineHeight: 1.55, outline: 'none' }} />
-      <SheetFooter onSave={save} disabled={!text.trim()} saved={saved} label="Set the intention" savedLabel="Set" helper={!text.trim() ? 'One short line is plenty.' : null} />
+      <SheetFooter onSave={save} disabled={!text.trim()} saved={false} label="Set the intention" savedLabel="Set" helper={!text.trim() ? 'One short line is plenty.' : null} />
     </SheetShell>
   )
 }
@@ -479,9 +793,9 @@ const BODY_SCAN_STEPS = [
   },
 ]
 
-function BodyScanSheet({ open, onClose, onSave }) {
+function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote }) {
   const [step, setStep] = useState(0)
-  const [saved, setSaved] = useState(false)
+  const [stage, setStage] = useState('walk')  // 'walk' | 'done'
 
   if (!open) return null
 
@@ -489,19 +803,67 @@ function BodyScanSheet({ open, onClose, onSave }) {
 
   const save = () => {
     onSave({ kind: 'bodyscan', content: null })
-    setSaved(true)
-    setTimeout(() => { setStep(0); setSaved(false); onClose() }, 1000)
+    setStage('done')
+  }
+
+  const reset = () => { setStep(0); setStage('walk'); onClose() }
+
+  if (stage === 'done') {
+    const recent = history.filter((e) => e.kind === 'bodyscan').length
+    const phaseNote =
+      phase?.id === 'menstrual'
+        ? "Your body is doing real work this week. This practice lands deeper now — the system is already in protective mode."
+        : phase?.id === 'luteal'
+          ? "Late luteal often makes the body feel louder. This is exactly the practice the week asks for."
+          : phase?.id === 'follicular'
+            ? "Estrogen is rising — the body's window for new movement opens here. This scan + a short walk is a small ritual worth keeping."
+            : null
+    return (
+      <SheetShell onClose={reset} title="Held." sub="The body was noticed.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
+            Eight stops on the body's tour. Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed.
+          </div>
+          {phaseNote && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.muted, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {phaseNote}
+            </div>
+          )}
+          {recent >= 3 && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.accent, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              {recent} scans like this so far — the body remembers it's allowed to be soft.
+            </div>
+          )}
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
+            A short walk (5–10 min, no headphones) consolidates this. The body learns the softness was allowed.
+          </div>
+          <button onClick={() => { reset(); onOpenNote?.() }}
+            style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+            Note what you noticed →
+          </button>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close
+        </button>
+      </SheetShell>
+    )
   }
 
   if (isLast) {
     return (
-      <SheetShell onClose={onClose} title="A quick body scan" sub="Done.">
+      <SheetShell onClose={onClose} title="A quick body scan" sub="Last step.">
         <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
-            Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed. You can carry that softness with you for a while.
+            Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed.
           </div>
         </div>
-        <SheetFooter onSave={save} disabled={false} saved={saved} label="Keep this practice" savedLabel="Saved" helper={null} />
+        <SheetFooter onSave={save} disabled={false} saved={false} label="Keep this practice" savedLabel="Saved" helper={null} />
       </SheetShell>
     )
   }
@@ -526,18 +888,20 @@ function BodyScanSheet({ open, onClose, onSave }) {
 }
 
 // ── Bedtime release practice ────────────────────────────────────
-function BedtimeSheet({ open, onClose, onSave }) {
+function BedtimeSheet({ open, onClose, onSave, history = [], onOpenHelper }) {
   const [stage, setStage] = useState('write')  // 'write' | 'breath' | 'done'
   const [text, setText] = useState('')
-  const [saved, setSaved] = useState(false)
+  const [savedText, setSavedText] = useState('')
 
   if (!open) return null
 
   const save = () => {
     onSave({ kind: 'bedtime', content: text.trim() || null })
-    setSaved(true)
-    setTimeout(() => { setStage('write'); setText(''); setSaved(false); onClose() }, 1000)
+    setSavedText(text.trim())
+    setStage('done')
   }
+
+  const reset = () => { setStage('write'); setText(''); setSavedText(''); onClose() }
 
   if (stage === 'write') {
     return (
@@ -577,9 +941,42 @@ function BedtimeSheet({ open, onClose, onSave }) {
           </div>
         </div>
         <button onClick={save}
-          className={saved ? 'success-pulse' : ''}
           style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
-          {saved ? 'Released' : 'Done — keep this practice'}
+          Done — keep this practice
+        </button>
+      </SheetShell>
+    )
+  }
+
+  if (stage === 'done') {
+    const recent = history.filter((e) => e.kind === 'bedtime').length
+    return (
+      <SheetShell onClose={reset} title="Released." sub="The day is closing.">
+        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
+            You put it down. {savedText ? 'Whatever you wrote will be there if you need it tomorrow.' : 'The breath did its work — the body knows it can rest now.'}
+          </div>
+          {recent >= 3 && (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.6, color: T.accent, fontStyle: 'italic', paddingTop: 8, borderTop: `1px solid ${T.hair}`, marginTop: 12 }}>
+              {recent} bedtime releases so far — sleep is paying attention.
+            </div>
+          )}
+        </div>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            What helps next
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, color: T.text, marginBottom: 10 }}>
+            Phone away or face-down. Cool room — around 65°F if you can. Soft pages, dim lights. If sleep still won't come in twenty minutes, get up briefly, sit somewhere boring, come back when it feels close.
+          </div>
+          <button onClick={() => { reset(); onOpenHelper?.('insomnia') }}
+            style={{ background: 'transparent', color: T.accent, border: `1px solid ${T.accent}`, padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, borderRadius: T.r, letterSpacing: 0.3 }}>
+            If sleep won't come — full playbook →
+          </button>
+        </div>
+        <button onClick={reset}
+          style={{ width: '100%', background: 'transparent', border: `1px solid ${T.hair}`, color: T.muted, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 500 }}>
+          Close — off the screen now
         </button>
       </SheetShell>
     )
@@ -696,6 +1093,14 @@ export default function Reflect() {
     ].slice(-60)  // keep last ~2 months
     updateSetting('reflectHistory', next)
   }
+
+  // Helper-routing callbacks the practices can call from their
+  // completion views — Luna doesn't stop at witnessing; it helps.
+  const go = useLuna((s) => s.go)
+  const handleOpenHelper = (id) => { setOpenPractice(null); go(id) }
+  const handleOpenPractice = (id) => setOpenPractice(id)
+  const handleOpenNote = () => { setOpenPractice(null); setQuickNoteOpen(true) }
+  const handleOpenChat = () => { setOpenPractice(null); setChatOpen(true) }
 
   // Practice count by kind for the recap card.
   const counts = useMemo(() => {
@@ -827,14 +1232,25 @@ export default function Reflect() {
         <div style={{ height: 16 }} />
       </div>
 
-      {/* Practice overlays */}
-      <IntentionSheet  open={openPractice === 'intention'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <GratitudeSheet  open={openPractice === 'gratitude'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <FeelingSheet    open={openPractice === 'feeling'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <BodyScanSheet   open={openPractice === 'bodyscan'}   onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <CompassionSheet open={openPractice === 'compassion'} onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <ReframeSheet    open={openPractice === 'reframe'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
-      <BedtimeSheet    open={openPractice === 'bedtime'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice} />
+      {/* Practice overlays — each receives history + phase + helper
+          callbacks so its completion view can route to real next
+          actions (note, chat, helper screen, sibling practice). */}
+      <IntentionSheet  open={openPractice === 'intention'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       history={history} onOpenNote={handleOpenNote} onOpenChat={handleOpenChat} />
+      <GratitudeSheet  open={openPractice === 'gratitude'}  onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       history={history} onOpenNote={handleOpenNote} onOpenChat={handleOpenChat} />
+      <FeelingSheet    open={openPractice === 'feeling'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       phase={phase} history={history}
+                       onOpenNote={handleOpenNote} onOpenChat={handleOpenChat}
+                       onOpenHelper={handleOpenHelper} onOpenPractice={handleOpenPractice} />
+      <BodyScanSheet   open={openPractice === 'bodyscan'}   onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       phase={phase} history={history} onOpenNote={handleOpenNote} />
+      <CompassionSheet open={openPractice === 'compassion'} onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       phase={phase} history={history} onOpenNote={handleOpenNote} onOpenChat={handleOpenChat} />
+      <ReframeSheet    open={openPractice === 'reframe'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       history={history} onOpenChat={handleOpenChat} />
+      <BedtimeSheet    open={openPractice === 'bedtime'}    onClose={() => setOpenPractice(null)} onSave={handleSavePractice}
+                       history={history} onOpenHelper={handleOpenHelper} />
 
       {/* Existing overlays */}
       <QuickNote open={quickNoteOpen} onClose={() => setQuickNoteOpen(false)} />

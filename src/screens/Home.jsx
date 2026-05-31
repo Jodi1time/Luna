@@ -763,8 +763,13 @@ export default function Home() {
   const reflectHistory = settings?.reflectHistory || []
   const hour = new Date().getHours()
   const beforeNoon = hour < 12
-  const hasMorningIntentionToday = reflectHistory.some((e) => e.kind === 'intention' && e.dateISO === todayISO)
+  const afterSix = hour >= 18
+  const todayIntention = reflectHistory.find((e) => e.kind === 'intention' && e.dateISO === todayISO)
+  const hasMorningIntentionToday = Boolean(todayIntention)
   const showMorningIntention = !isPreg && beforeNoon && !hasMorningIntentionToday
+  // Evening callback — fulfill the promise Luna made this morning.
+  // After 6pm, if she set an intention today, surface a check-in.
+  const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
@@ -1020,6 +1025,20 @@ export default function Home() {
               eyebrow="This morning"
               line="One sentence about what today is really about?"
             />
+          )}
+          {showEveningIntention && todayIntention && (
+            <button onClick={() => go('reflect')} className="glass-card"
+              style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+                You set this morning
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1, marginBottom: 6 }}>
+                "{Array.isArray(todayIntention.content) ? todayIntention.content[0] : todayIntention.content}"
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, letterSpacing: 0.2 }}>
+                How did the day land against it? →
+              </div>
+            </button>
           )}
 
           {/* "For your mind and heart" — promoted entry to Reflect.
