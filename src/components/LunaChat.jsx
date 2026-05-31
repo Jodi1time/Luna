@@ -113,9 +113,9 @@ export default function LunaChat({ open, onClose, opener, context }) {
       onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(26,19,16,0.45)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(26,19,16,0.72)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
@@ -131,7 +131,8 @@ export default function LunaChat({ open, onClose, opener, context }) {
           borderTopLeftRadius: 16, borderTopRightRadius: 16,
           /* Use dvh and lift by keyboard inset so the composer stays
              visible even when the soft keyboard is open. */
-          maxHeight: `calc(85dvh - ${keyboardInset}px)`,
+          maxHeight: `calc(90dvh - ${keyboardInset}px)`,
+          minHeight: `min(${440 + 'px'}, calc(75dvh - ${keyboardInset}px))`,
           marginBottom: keyboardInset,
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',

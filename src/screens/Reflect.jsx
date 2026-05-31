@@ -596,8 +596,8 @@ function SheetShell({ onClose, title, sub, children }) {
       onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
-        background: 'rgba(26,19,16,0.45)',
-        backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(26,19,16,0.72)',
+        backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
@@ -610,7 +610,8 @@ function SheetShell({ onClose, title, sub, children }) {
           width: '100%', maxWidth: 430,
           background: T.bg,
           borderTopLeftRadius: 16, borderTopRightRadius: 16,
-          maxHeight: '88dvh',
+          maxHeight: '90dvh',
+          minHeight: 'min(480px, 75dvh)',
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',

@@ -77,9 +77,9 @@ export default function QuickNote({ open, onClose }) {
       onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'rgba(26,19,16,0.45)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        background: 'rgba(26,19,16,0.72)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
         touchAction: 'none',
@@ -92,7 +92,8 @@ export default function QuickNote({ open, onClose }) {
           width: '100%', maxWidth: 430,
           background: T.bg,
           borderTopLeftRadius: 16, borderTopRightRadius: 16,
-          maxHeight: `calc(70dvh - ${keyboardInset}px)`,
+          maxHeight: `calc(88dvh - ${keyboardInset}px)`,
+          minHeight: `min(420px, calc(70dvh - ${keyboardInset}px))`,
           marginBottom: keyboardInset,
           display: 'flex', flexDirection: 'column',
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
