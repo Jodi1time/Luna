@@ -210,6 +210,19 @@ export default function Settings() {
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
 
+      <SectionLabel>Your life stage</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="Cycle tracking" value="Active" />
+        <Row label="Pregnancy"
+             value={pregnancy?.active ? pregLabel : 'Available'}
+             onTap={() => go('pregnancy')} />
+        <Row label="Trying to conceive" value="Coming soon" />
+        <Row label="Perimenopause / menopause" value="Coming soon" />
+      </div>
+      <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
+        Luna grows with you. Each stage gets its own thoughtful mode — built for the body you're in, not optimised against it.
+      </div>
+
       <SectionLabel>Coming as part of Luna Pro</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Talk to Luna" value="Soon" />

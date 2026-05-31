@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
-import { PHASES, ARTICLES, MOOD_INSIGHTS, getReflectionPrompt } from '../data/lunaData'
+import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import { PhaseFlourish } from '../components/phaseFlourishes'
@@ -386,6 +386,120 @@ function dueWellnessNudges(wellness) {
   return nudges
 }
 
+// Three compact shortcuts that sit just under the cover. Mirrors the
+// pattern Flo uses with high engagement: the most common log entries
+// at the user's thumb, one tap away. Doula-toned labels (no "+").
+function QuickActions({ go, setActiveLogDate }) {
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
+  const items = [
+    {
+      key: 'log',
+      label: 'Log today',
+      sub: 'Mood, flow, anything',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 5h14M3 10h14M3 15h9" />
+        </svg>
+      ),
+      onTap: openLogToday,
+    },
+    {
+      key: 'period',
+      label: 'Edit period',
+      sub: 'When it really started',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 2a6 6 0 0 1 5 9.5C13.5 14 10 18 10 18s-3.5-4-5-6.5A6 6 0 0 1 10 2z" />
+          <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+      onTap: () => go('editPeriodStart'),
+    },
+    {
+      key: 'note',
+      label: 'A note',
+      sub: 'For your future self',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 4h12v9l-4 4H4z" />
+          <path d="M16 13h-4v4" />
+        </svg>
+      ),
+      onTap: openLogToday,
+    },
+  ]
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 20 }}>
+      {items.map((it) => (
+        <button key={it.key} onClick={it.onTap} className="glass-card"
+          style={{
+            textAlign: 'left',
+            borderRadius: T.r,
+            padding: '12px 12px 13px',
+            cursor: 'pointer',
+            color: T.text,
+            fontFamily: 'inherit',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            gap: 6,
+          }}>
+          <span style={{ color: T.accent, display: 'inline-flex' }}>{it.icon}</span>
+          <span style={{ fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, lineHeight: 1.15, letterSpacing: -0.1 }}>
+            {it.label}
+          </span>
+          <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.3, letterSpacing: 0.1 }}>
+            {it.sub}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// Rotating Health Watch self-check — one RED_FLAGS prompt per week,
+// surfaced as a soft "worth noticing" card. Brings Health Watch up
+// from Settings burial into the daily surface, without becoming spammy.
+// Selection is deterministic per-week so the user sees the same question
+// for seven days, then it changes.
+function weeklyHealthCheck(date = new Date()) {
+  if (!RED_FLAGS?.length) return null
+  const start = new Date(date.getFullYear(), 0, 1)
+  const week = Math.floor((date - start) / (1000 * 60 * 60 * 24 * 7))
+  return RED_FLAGS[((week % RED_FLAGS.length) + RED_FLAGS.length) % RED_FLAGS.length]
+}
+
+function WeeklyHealthCheckCard({ go }) {
+  const item = weeklyHealthCheck()
+  if (!item) return null
+  return (
+    <button onClick={() => go('watch')} className="glass-card"
+      style={{
+        marginTop: 22,
+        padding: '14px 16px',
+        borderLeft: `3px solid ${T.accent}`,
+        borderRadius: T.r,
+        textAlign: 'left',
+        cursor: 'pointer',
+        width: '100%',
+        color: T.text,
+        fontFamily: 'inherit',
+        display: 'block',
+      }}>
+      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+        Worth noticing this week
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.35, letterSpacing: -0.1, marginBottom: 6 }}>
+        {item.q}?
+      </div>
+      <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5 }}>
+        If it sounds familiar, Luna can help you gather the words for a visit.
+      </div>
+    </button>
+  )
+}
+
 // Always-here essentials at the bottom of Home — surfaces support
 // features + any quiet wellness nudges that are due.
 function AlwaysHere({ go, wellness, markWellness }) {
@@ -740,6 +854,10 @@ export default function Home() {
           </div>
           )}
 
+          {/* Three quick-action shortcuts under the cover. The most-common
+              entries one tap away — Flo's high-engagement pattern, doula-toned. */}
+          {!isPreg && <QuickActions go={go} setActiveLogDate={setActiveLogDate} />}
+
           {/* A small reflection — phase-aware, changes day to day, soft.
               Tap to open a brief conversation with Luna. */}
           {!isPreg && phase && thoughtText && (
@@ -793,6 +911,10 @@ export default function Home() {
 
           {/* Monthly recap — quiet narrative summary of the last 30 days */}
           {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
+
+          {/* A rotating Health Watch prompt — one per week, doula-toned,
+              promotes our existing screener out of Settings burial. */}
+          {!isPreg && <WeeklyHealthCheckCard go={go} />}
 
           {/* Always here — essentials + due wellness nudges */}
           {!isPreg && <AlwaysHere go={go} wellness={wellness} markWellness={markWellness} />}

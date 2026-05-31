@@ -76,6 +76,65 @@ const PHASE_COLOR = {
   luteal:     PHASES.luteal.color,
 }
 
+// Plain-language tags for cycle/period length + variance. The numbers
+// alone are anxiety-inducing ("am I weird?"); pairing them with a
+// doula-toned "within typical range" / "on the shorter side" lets the
+// summary card actually reassure.
+function cycleLengthTag(n) {
+  if (n == null) return null
+  if (n < 21) return 'on the shorter side'
+  if (n > 35) return 'on the longer side'
+  return 'within typical range'
+}
+function periodLengthTag(n) {
+  if (n == null) return null
+  if (n < 3) return 'on the lighter side'
+  if (n > 7) return 'on the longer side'
+  return 'typical'
+}
+function varianceTag(conf) {
+  if (conf === 'high') return 'Steady'
+  if (conf === 'medium') return 'Some variation'
+  return 'Variable'
+}
+
+// Cycle summary card — pulls together what the engine already knows
+// (cycle length, period length, variance + reason) into one quiet
+// glass card the user can recognise themselves in. This is the kind
+// of plain-English "you are normal" surface no period app does well.
+function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged }) {
+  if (!cycleLength) return null
+  const clTag = cycleLengthTag(cycleLength)
+  const plTag = periodLengthTag(periodLength)
+  const vTag  = varianceTag(variance?.conf)
+  return (
+    <div className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 22 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+        Your cycles
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 400, lineHeight: 1.45, color: T.text, letterSpacing: -0.2 }}>
+        About <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{cycleLength} days</em>, end to end — {clTag}. Your bleed runs about <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{periodLength} day{periodLength === 1 ? '' : 's'}</em> — {plTag}.
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.hair}` }}>
+        <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>RHYTHM</span>
+        <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.text, fontWeight: 500 }}>
+          {vTag}
+        </span>
+        {cyclesLogged > 0 && (
+          <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, marginLeft: 'auto' }}>
+            {cyclesLogged} CYCLE{cyclesLogged === 1 ? '' : 'S'} LOGGED
+          </span>
+        )}
+      </div>
+      {variance?.why && (
+        <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8 }}>
+          {variance.why}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Resolve a pattern's icon id + human label from the raw key the store records.
 // Moods are stored as their id ('calm', 'energy', …) — looked up in MOOD_LABELS
 // for display, and used directly as the SymptomIcon path key. Symptoms are
@@ -142,6 +201,14 @@ export default function Insights() {
             </div>
           )}
         </div>
+
+        {/* Cycle summary — the "you are normal" surface most apps don't do. */}
+        <CycleSummaryCard
+          cycleLength={cycle.cycleLength}
+          periodLength={cycle.periodLength}
+          variance={cycle.variance}
+          cyclesLogged={cyclesLogged}
+        />
 
         <Eyebrow>Where you are now</Eyebrow>
         {onHormonalBC ? (
