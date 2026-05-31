@@ -160,11 +160,14 @@ function Greeting({ name, phaseId }) {
   const first = (name || '').split(' ')[0]
   const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
   // Build the greeting as discrete segments so each can fade in with
-  // its own delay. Each segment includes a trailing space where
-  // appropriate to preserve the visual rhythm.
+  // its own delay. We use a non-breaking space ( ) for trailing
+  // gaps — `display: inline-block` collapses trailing whitespace from
+  // text content, which made the greeting render as e.g. "Quietevening"
+  // instead of "Quiet evening". NBSP is non-collapsible.
+  const NBSP = ' '
   const segments = first
-    ? [`${opener} `, `${timeOfDay}, `, { text: first, italic: false }, '.']
-    : [`${opener} `, `${timeOfDay}`, '.']
+    ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
+    : [`${opener}${NBSP}`, timeOfDay, '.']
   return (
     <div style={{ paddingTop: 6, marginBottom: 14 }}>
       <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
