@@ -137,6 +137,43 @@ const PATHS = {
       <path d="M8 5h4.5M7.5 8h5M7.5 11h5M8 14h4.5" />
     </>
   ),
+
+  // uti — droplet with a small radiating burn line
+  uti: (
+    <>
+      <path d="M10 3c-2.5 3.5-4 6-4 8a4 4 0 0 0 8 0c0-2-1.5-4.5-4-8z" />
+      <path d="M15 14l2 1.5M15 11.5h2.5M14 17l1.5 1.5" />
+    </>
+  ),
+
+  // yeast — fungal-ish branching curls
+  yeast: (
+    <>
+      <path d="M5 16c2-1.5 3-4 3-7s-1.5-3.5-1.5-3.5" />
+      <path d="M11 16c-1-1.5-1.5-4 0-7s3-3 3-3" />
+      <circle cx="6.5" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="14" cy="6" r="1" fill="currentColor" stroke="none" />
+      <circle cx="10" cy="11" r="0.8" fill="currentColor" stroke="none" />
+    </>
+  ),
+
+  // bv — wavy water with subtle ripple
+  bv: (
+    <>
+      <path d="M3 7c1.5-2 3-2 4.5 0S10.5 9 12 7s3-2 4.5 0" />
+      <path d="M3 12c1.5-2 3-2 4.5 0S10.5 14 12 12s3-2 4.5 0" />
+      <path d="M3 17c1.5-1.5 3-1.5 4.5 0" opacity="0.5" />
+    </>
+  ),
+
+  // vulvarPain — soft petal with focal dot
+  vulvarPain: (
+    <>
+      <path d="M10 4c-3.5 2-5 5-5 7s2 5 5 5 5-3 5-5-1.5-5-5-7z" />
+      <circle cx="10" cy="11" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M10 11l-2 -1.5M10 11l2 -1.5" opacity="0.5" />
+    </>
+  ),
 }
 
 export function SymptomIcon({ id, size = 20, color }) {

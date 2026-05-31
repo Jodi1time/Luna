@@ -9,6 +9,7 @@ import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { resurfaceNote } from '../lib/noteResurface'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -474,6 +475,46 @@ function weeklyHealthCheck(date = new Date()) {
   return RED_FLAGS[((week % RED_FLAGS.length) + RED_FLAGS.length) % RED_FLAGS.length]
 }
 
+// From-the-archive card — surfaces a meaningful old note when one fits
+// (anniversary today, same cycle day previously, same phase). Quiet
+// editorial register, never instructive. Tap goes to that day's Log.
+function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
+  if (!surfaced) return null
+  const open = () => { setActiveLogDate(surfaced.dateISO); go('log') }
+  // Trim very long notes so the card stays a card.
+  const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
+  return (
+    <button onClick={open} className="glass-card"
+      style={{
+        marginTop: 22,
+        padding: '14px 16px',
+        borderLeft: `3px solid ${T.accent}`,
+        borderRadius: T.r,
+        textAlign: 'left',
+        cursor: 'pointer',
+        width: '100%',
+        color: T.text,
+        fontFamily: 'inherit',
+        display: 'block',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+          From your past self
+        </div>
+        <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+          Open the day →
+        </div>
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.1, marginBottom: 8 }}>
+        "{text}"
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 12, color: T.muted, fontStyle: 'italic' }}>
+        — {surfaced.label}
+      </div>
+    </button>
+  )
+}
+
 function WeeklyHealthCheckCard({ go }) {
   const item = weeklyHealthCheck()
   if (!item) return null
@@ -515,6 +556,12 @@ function AlwaysHere({ go, wellness, markWellness, onTalk }) {
       label: 'Talk something through',
       sub: 'A few quiet minutes with Luna, any time.',
       onTap: onTalk,
+    },
+    {
+      key: 'intimate',
+      label: 'Your sexual life, your way',
+      sub: 'Desire, lubrication, pleasure, pain — all of it.',
+      onTap: () => go('intimate'),
     },
     {
       key: 'watch',
@@ -747,6 +794,11 @@ export default function Home() {
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
+  // Resurface a meaningful old note when one fits today.
+  const surfacedNote = !isPreg
+    ? resurfaceNote({ logs, cycle, todayPhaseId: phase?.id, todayISO })
+    : null
+
   return (
     <div className="home-stage">
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
@@ -952,6 +1004,16 @@ export default function Home() {
 
           {/* Monthly recap — quiet narrative summary of the last 30 days */}
           {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
+
+          {/* From your past self — anniversary / cycle-day / phase callback
+              for an old note. Quiet, opens that day's Log on tap. */}
+          {!isPreg && (
+            <FromYourPastSelfCard
+              surfaced={surfacedNote}
+              go={go}
+              setActiveLogDate={setActiveLogDate}
+            />
+          )}
 
           {/* A rotating Health Watch prompt — one per week, doula-toned,
               promotes our existing screener out of Settings burial. */}

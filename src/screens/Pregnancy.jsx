@@ -169,7 +169,7 @@ function NotPregnantState() {
 
 function PregnantState() {
   const store = useLuna()
-  const { back, endPregnancy } = store
+  const { back, endPregnancy, go, addPregnancyLoss } = store
   const preg = usePregnancy(store)
 
   const week = preg.week
@@ -190,6 +190,22 @@ function PregnantState() {
       endPregnancy()
       back()
     }
+  }
+
+  // Distinct path for pregnancy ending in loss — records a gentle entry
+  // in pregnancy history (with today's date as the loss date and the
+  // current gestational week, both editable later), then opens the
+  // dedicated PregnancyLoss screen for resources + reflection.
+  const handleLoss = () => {
+    const ok = window.confirm('Mark this pregnancy as ended in loss? Luna will record a private entry you can edit any time, then open the pregnancy-loss support space.')
+    if (!ok) return
+    addPregnancyLoss({
+      type: week >= 20 ? 'stillbirth' : 'miscarriage',
+      dateISO: new Date().toISOString().slice(0, 10),
+      gestationWeeks: week || null,
+    })
+    endPregnancy()
+    go('pregnancyLoss')
   }
 
   return (
@@ -250,6 +266,22 @@ function PregnantState() {
         </button>
         <div style={{ marginTop: 10, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
           Your logs are kept. Use this after birth, or if circumstances change.
+        </div>
+
+        <button onClick={handleLoss}
+          style={{
+            width: '100%', textAlign: 'left',
+            background: 'transparent', border: `1px solid ${T.hair}`,
+            padding: '14px 16px', borderRadius: T.r, cursor: 'pointer',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            color: T.text, fontFamily: T.sans, fontSize: 13, fontWeight: 500,
+            marginTop: 14,
+          }}>
+          <span>If this pregnancy ended in loss</span>
+          <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>support + resources</span>
+        </button>
+        <div style={{ marginTop: 10, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+          You don't have to fill anything in. Opens a quiet room with helplines and reflection.
         </div>
       </div>
     </Screen>

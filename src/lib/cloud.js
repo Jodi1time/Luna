@@ -62,6 +62,7 @@ export async function loadLogs() {
       mucus: row.mucus,
       sex: row.sex,
       sleep: row.sleep,
+      intimate: row.intimate || null,
       note: row.note,
       updated_at: row.updated_at,   // needed by useLuna merge logic
     }
@@ -90,16 +91,30 @@ export async function upsertLog(date, log) {
     note: log.note ?? null,
     updated_at: new Date().toISOString(),
   }
-  const withSleep = { ...base, sleep: log.sleep ?? null }
+  // Try full payload first, then defensively drop columns that may
+  // not be migrated server-side yet. Each newer optional column lives
+  // in its own retry tier so an older Supabase instance can still
+  // accept what it does know about.
+  const withSleepAndIntimate = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null }
   const { error: firstError } = await supabase
     .from('logs')
-    .upsert(withSleep, { onConflict: 'user_id,date' })
+    .upsert(withSleepAndIntimate, { onConflict: 'user_id,date' })
   if (!firstError) return
-  // If the failure looks like a missing-column error for `sleep`,
-  // retry without it. Otherwise surface the original error.
   const msg = String(firstError.message || '').toLowerCase()
-  const isSleepColumnMissing = msg.includes('sleep') && (msg.includes('column') || msg.includes('not found'))
-  if (!isSleepColumnMissing) throw firstError
+  const isMissingColumn = (col) => msg.includes(col) && (msg.includes('column') || msg.includes('not found'))
+  if (!isMissingColumn('intimate') && !isMissingColumn('sleep')) throw firstError
+  // Drop intimate first (newest), retry. Then drop sleep too if needed.
+  if (isMissingColumn('intimate')) {
+    // eslint-disable-next-line no-console
+    console.warn('[cloud] intimate column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable intimate tracking server-side.')
+    const withSleepOnly = { ...base, sleep: log.sleep ?? null }
+    const { error: secondError } = await supabase
+      .from('logs')
+      .upsert(withSleepOnly, { onConflict: 'user_id,date' })
+    if (!secondError) return
+    const msg2 = String(secondError.message || '').toLowerCase()
+    if (!(msg2.includes('sleep') && (msg2.includes('column') || msg2.includes('not found')))) throw secondError
+  }
   // eslint-disable-next-line no-console
   console.warn('[cloud] sleep column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable sleep tracking server-side.')
   const { error: retryError } = await supabase

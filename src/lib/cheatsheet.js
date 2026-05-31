@@ -161,7 +161,75 @@ export function buildCheatsheet({ logs, cycle, patterns = [] }) {
     })
   }
 
-  // 8. BBT shift detected — reassurance / supports fertility convos.
+  // 8a. Intimate health — painful sex repeating, dry lubrication, low
+  // libido cluster. Pulled from the new `intimate` field on logs.
+  const intimateLogs = recent.filter((l) => l.intimate)
+  const painfulSexCount = intimateLogs.filter((l) => l.intimate?.painful_sex === 'significant').length
+  if (painfulSexCount >= 2) {
+    points.push({
+      id: 'intimate-painful-sex',
+      title: 'Painful sex is recurring',
+      say: `I have logged painful sex on ${painfulSexCount} separate occasions in the past few months.`,
+      why: 'Dyspareunia is common and treatable — pelvic floor PT, vaginal estrogen, or evaluation for endometriosis are all on the table.',
+      source: 'ACOG — Female Sexual Pain; International Pelvic Pain Society',
+    })
+  }
+  const dryCount = intimateLogs.filter((l) => l.intimate?.lubrication === 'dry').length
+  if (dryCount >= 3) {
+    points.push({
+      id: 'intimate-dryness',
+      title: 'Vaginal dryness has been frequent',
+      say: `Lubrication has been low across ${dryCount} entries — it doesn't feel like just a one-off.`,
+      why: 'Persistent dryness can be hormonal (perimenopause, postpartum, breastfeeding) or medication-related (SSRIs, hormonal BC). Real treatments exist including vaginal estrogen.',
+      source: 'ACOG — Vaginal Atrophy; Endocrine Society',
+    })
+  }
+
+  // 8b. Vaginal-health symptoms — count UTI / yeast / BV / vulvar pain
+  // ticks across the window. Three or more = a real pattern.
+  const symCount = (id) => recent.filter((l) => (l.symptoms || []).includes(id)).length
+  const utiCount = symCount('uti')
+  const yeastCount = symCount('yeast')
+  const bvCount = symCount('bv')
+  const vulvarCount = symCount('vulvarPain')
+  if (utiCount >= 3) {
+    points.push({
+      id: 'recurrent-uti',
+      title: 'UTI symptoms keep coming back',
+      say: `I have logged UTI symptoms ${utiCount} times in the past few months.`,
+      why: 'Recurrent UTIs (3+ in a year) deserve a workup — post-sex voiding, D-mannose, vaginal estrogen for perimenopause, low-dose prophylaxis, or imaging are all options.',
+      source: 'American Urological Association',
+    })
+  }
+  if (yeastCount >= 3) {
+    points.push({
+      id: 'recurrent-yeast',
+      title: 'Yeast infections keep recurring',
+      say: `I have had yeast symptoms ${yeastCount} times recently.`,
+      why: 'Four-plus episodes a year warrants investigation — diabetes screening, non-albicans candida testing, or longer suppressive treatment are all considered.',
+      source: 'CDC — Vaginitis',
+    })
+  }
+  if (bvCount >= 3) {
+    points.push({
+      id: 'recurrent-bv',
+      title: 'BV symptoms keep recurring',
+      say: `I have had BV symptoms ${bvCount} times in recent months.`,
+      why: 'Recurrent BV needs a different strategy — extended antibiotics, boric acid suppositories, or addressing triggers like douching or new partners.',
+      source: 'ACOG Practice Bulletin 215',
+    })
+  }
+  if (vulvarCount >= 2) {
+    points.push({
+      id: 'vulvar-pain',
+      title: 'Vulvar pain is persistent',
+      say: `I have logged vulvar pain ${vulvarCount} times — it isn't a one-off.`,
+      why: 'Vulvodynia, pelvic floor tension, or hormonal thinning are all treatable — a sex-positive gynaecologist or pelvic pain specialist is the right room.',
+      source: 'International Pelvic Pain Society',
+    })
+  }
+
+  // 9. BBT shift detected — reassurance / supports fertility convos.
   if (bbtShift?.shiftDayMedian) {
     points.push({
       id: 'bbt-confirmed',

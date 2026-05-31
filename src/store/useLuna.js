@@ -50,6 +50,10 @@ const useLuna = create(
       completedChecks: [],
       birthControl: { method: 'none', startDate: null },
       pregnancy: { active: false, lmp: null, dueDate: null, startedAt: null },
+      // Past pregnancy outcomes — gentle record, additive only.
+      // Each entry: { id, type, dateISO, gestationWeeks?, note? }
+      // type ∈ 'miscarriage' | 'stillbirth' | 'abortion' | 'ectopic' | 'chemical' | 'live-birth'
+      pregnancyHistory: [],
 
       setOnboarding: (data) => {
         set({ ...data, onboarded: true })
@@ -92,6 +96,29 @@ const useLuna = create(
         const next = { active: false, lmp: null, dueDate: null, startedAt: null }
         set({ pregnancy: next })
         fireAndForget(saveProfile({ pregnancy: next }), 'endPregnancy')
+      },
+      // Record a pregnancy outcome — typically called when ending
+      // pregnancy mode with a loss, or to backfill a past loss.
+      // Always appends, never overwrites — gentle history only grows.
+      addPregnancyLoss: (loss) => {
+        const id = loss?.id || `pl_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        const entry = {
+          id,
+          type: loss?.type || 'miscarriage',
+          dateISO: loss?.dateISO || new Date().toISOString().slice(0, 10),
+          gestationWeeks: loss?.gestationWeeks ?? null,
+          note: (loss?.note || '').trim() || null,
+          recordedAt: new Date().toISOString(),
+        }
+        const next = [...(get().pregnancyHistory || []), entry]
+        set({ pregnancyHistory: next })
+        fireAndForget(saveProfile({ pregnancy_history: next }), 'addPregnancyLoss')
+        return entry
+      },
+      removePregnancyLossEntry: (id) => {
+        const next = (get().pregnancyHistory || []).filter((e) => e.id !== id)
+        set({ pregnancyHistory: next })
+        fireAndForget(saveProfile({ pregnancy_history: next }), 'removePregnancyLossEntry')
       },
       toggleCheck: (id) => {
         const cur = get().completedChecks
@@ -227,6 +254,7 @@ const useLuna = create(
           periodLength:    profile.period_length || 5,
           birthControl:    profile.birth_control || { method: 'none', startDate: null },
           pregnancy:       profile.pregnancy || { active: false, lmp: null, dueDate: null, startedAt: null },
+          pregnancyHistory: profile.pregnancy_history || [],
           completedChecks: profile.completed_checks || [],
           settings:        { ...DEFAULT_SETTINGS, ...(profile.settings || {}) },
           isPro:           profile.is_pro !== false,
@@ -249,6 +277,7 @@ const useLuna = create(
         completedChecks: [],
         birthControl:    { method: 'none', startDate: null },
         pregnancy:       { active: false, lmp: null, dueDate: null, startedAt: null },
+        pregnancyHistory: [],
         logs:            {},
         settings:        DEFAULT_SETTINGS,
         isPro:           true,
@@ -276,6 +305,7 @@ const useLuna = create(
         completedChecks: s.completedChecks,
         birthControl:    s.birthControl,
         pregnancy:       s.pregnancy,
+        pregnancyHistory: s.pregnancyHistory,
         logs:            s.logs,
         settings:        s.settings,
         isPro:           s.isPro,

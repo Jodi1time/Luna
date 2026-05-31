@@ -95,6 +95,19 @@ create table if not exists public.logs (
 -- Add sleep column to logs (idempotent — safe to re-run).
 alter table public.logs add column if not exists sleep text;
 
+-- Add intimate jsonb to logs — covers libido, lubrication, painful_sex,
+-- and orgasm_count in a single column so future intimate-health fields
+-- don't each need a schema migration. Defaults to null.
+alter table public.logs add column if not exists intimate jsonb;
+
+-- Add pregnancy_history jsonb array to profiles — gentle record of
+-- pregnancy outcomes (miscarriage / stillbirth / abortion / ectopic /
+-- chemical / live birth) so we can both honour what happened and
+-- provide tailored support without forcing the data into the active
+-- pregnancy field. Defaults to an empty array.
+alter table public.profiles
+  add column if not exists pregnancy_history jsonb default '[]'::jsonb;
+
 create index if not exists logs_user_date_idx on public.logs (user_id, date desc);
 
 alter table public.logs enable row level security;
