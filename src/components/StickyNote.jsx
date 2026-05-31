@@ -1,14 +1,11 @@
 import { T } from '../data/theme'
 
 // A small hand-drawn sticky note tucked into the top-right corner of
-// Home. Cream-yellow paper with a strip of washi tape, a rolled-up
-// bottom-right corner showing the paper's underside, and a gentle
-// tilt. Editorial register; not a card. When the user has something
-// to remember (today's own note, a resurfaced past note), the body
-// is the content. When she hasn't written anything, the sticky note
-// becomes a soft empty-state CTA — "Leave a note for your future
-// self" — with two faint hand-drawn arrows pulsing toward it to
-// invite the tap.
+// Home. Cream-yellow paper, washi tape that extends past the edges as
+// if stuck onto the home screen behind it, a rolled-up bottom-right
+// corner showing the paper's underside, and a gentle tilt. When the
+// user hasn't written anything, the sticky note becomes a soft empty-
+// state CTA with a hand-drawn doodle arrow arcing toward it.
 //
 // The tilt is deterministic per day-of-month so it doesn't jitter
 // on every render.
@@ -24,55 +21,44 @@ export default function StickyNote({
   tapeColor = T.accent,
   seed = 1,
   onTap,
-  isEmpty = false,         // when true, render attention arrows
+  isEmpty = false,
 }) {
   const baseTilt = tiltFromSeed(seed)
   const tilt = baseTilt > 0 ? baseTilt + 4 : baseTilt - 4
   const tapeTilt = -tilt * 0.4
+  const paperWidth = 200
+  const tapeWidth = 240  // wider than the paper so it visibly extends past both edges, like real tape
 
   return (
     <div style={{
       position: 'relative',
       display: 'flex', justifyContent: 'flex-end',
-      marginTop: 4, marginBottom: 8, marginRight: -10,
+      marginTop: 8, marginBottom: 10, marginRight: -10,
+      paddingTop: 12,  // gives the tape room to rise above
     }}>
 
-      {/* Attention arrows — only shown when the note is empty.
-          Two tiny hand-drawn curls pointing at the paper, breathing
-          softly so they catch the eye without nagging. */}
+      {/* Hand-drawn doodle arrow — only when the note is empty.
+          One curved arc from below-left up to the sticky note, like
+          someone scribbled "look here" on the page behind it. */}
       {isEmpty && (
-        <>
-          <svg width="42" height="36" viewBox="0 0 42 36" aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: 28, left: 16,
-              opacity: 0.55,
-              color: tapeColor,
-              animation: 'stickyArrowBreath 3s ease-in-out infinite',
-            }}>
-            <path d="M 4 6 Q 18 4 30 18 Q 32 20 33 23"
-              fill="none" stroke="currentColor" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M 30 18 L 36 22 M 30 18 L 33 12"
-              fill="none" stroke="currentColor" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <svg width="34" height="48" viewBox="0 0 34 48" aria-hidden="true"
-            style={{
-              position: 'absolute',
-              bottom: -6, left: 36,
-              opacity: 0.45,
-              color: tapeColor,
-              animation: 'stickyArrowBreath 3s ease-in-out infinite 0.6s',
-            }}>
-            <path d="M 6 44 Q 4 26 18 14 Q 22 11 26 9"
-              fill="none" stroke="currentColor" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M 26 9 L 21 9 M 26 9 L 25 14"
-              fill="none" stroke="currentColor" strokeWidth="1.5"
-              strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </>
+        <svg width="72" height="64" viewBox="0 0 72 64" aria-hidden="true"
+          style={{
+            position: 'absolute',
+            bottom: -16, left: 4,
+            color: tapeColor,
+            opacity: 0.55,
+            animation: 'stickyArrowBreath 3s ease-in-out infinite',
+            pointerEvents: 'none',
+          }}>
+          {/* The arc body — quadratic curves for a hand-drawn feel */}
+          <path d="M 8 56 Q 12 38 28 26 Q 44 14 58 10"
+            fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" strokeLinejoin="round" />
+          {/* The arrowhead — two short strokes off the arc tip */}
+          <path d="M 58 10 L 51 11 M 58 10 L 55 17"
+            fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       )}
 
       <button onClick={onTap}
@@ -90,34 +76,21 @@ export default function StickyNote({
           position: 'relative',
           transform: `rotate(${tilt}deg)`,
           filter: 'drop-shadow(0 16px 24px rgba(26,19,16,0.28)) drop-shadow(0 4px 8px rgba(26,19,16,0.14))',
+          width: paperWidth,
         }}>
-          {/* Paper — bottom-right corner clipped so the rolled-up curl
-              underneath can peek through. */}
+          {/* Paper — bottom-right corner clipped so the curl beneath can show through. */}
           <div style={{
             position: 'relative',
             background: 'linear-gradient(135deg, #FBEFC2 0%, #F5DE7E 100%)',
             padding: '22px 18px 16px',
-            width: 200,
+            width: '100%',
             minHeight: 96,
             borderRadius: 2,
             textAlign: 'left',
             color: '#2A1A14',
-            clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)',
+            clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%)',
             boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.4)',
           }}>
-            {/* Washi tape strip across the top — semi-translucent so the
-                paper texture below shows through, tilted slightly opposite
-                the paper for hand-placed feel. */}
-            <div aria-hidden="true" style={{
-              position: 'absolute',
-              top: -9, left: '50%',
-              transform: `translateX(-50%) rotate(${tapeTilt}deg)`,
-              width: 78, height: 18,
-              background: `linear-gradient(180deg, ${tapeColor}55 0%, ${tapeColor}28 100%)`,
-              borderRadius: 1,
-              boxShadow: '0 2px 4px rgba(26,19,16,0.08)',
-            }} />
-
             {eyebrow && (
               <div style={{
                 fontFamily: T.mono, fontSize: 8.5,
@@ -149,16 +122,42 @@ export default function StickyNote({
             )}
           </div>
 
-          {/* The curled-up bottom-right corner. A small triangle showing
-              the underside of the paper — slightly darker amber with a
-              soft inner shadow so it reads as folded back. */}
+          {/* The curled-up bottom-right corner. SVG path with a curved
+              leading edge (not a flat triangle) and a gradient running
+              from light at the fold edge to a deeper amber at the
+              folded underside. drop-shadow casts onto the paper below. */}
+          <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: -2, right: -2,
+              filter: 'drop-shadow(-2px -2px 2px rgba(26,19,16,0.28))',
+            }}>
+            <defs>
+              <linearGradient id={`curl-grad-${seed}`} x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#5A4A12" />
+                <stop offset="35%" stopColor="#A8852B" />
+                <stop offset="75%" stopColor="#D8B548" />
+                <stop offset="100%" stopColor="#F5DE7E" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 2 26 Q 9 22 14 17 Q 19 12 24 4 L 26 26 Z"
+              fill={`url(#curl-grad-${seed})`}
+            />
+          </svg>
+
+          {/* Washi tape strip across the top — extends past both edges
+              of the paper so it visually anchors onto the screen behind. */}
           <div aria-hidden="true" style={{
             position: 'absolute',
-            bottom: 0, right: 0,
-            width: 16, height: 16,
-            background: 'linear-gradient(135deg, #D8B548 0%, #B89627 100%)',
-            clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
-            boxShadow: 'inset 1px 1px 2px rgba(26,19,16,0.18)',
+            top: -16, left: '50%',
+            transform: `translate(-50%, 0) rotate(${tapeTilt}deg)`,
+            width: tapeWidth, height: 26,
+            background: `linear-gradient(180deg, ${tapeColor}50 0%, ${tapeColor}35 50%, ${tapeColor}20 100%)`,
+            borderRadius: 1,
+            boxShadow: '0 2px 4px rgba(26,19,16,0.12)',
+            // Slight ridges via repeating gradient — like real washi tape grain
+            backgroundImage: `linear-gradient(180deg, ${tapeColor}50 0%, ${tapeColor}30 100%), repeating-linear-gradient(90deg, transparent 0, transparent 4px, rgba(255,255,255,0.04) 4px, rgba(255,255,255,0.04) 5px)`,
           }} />
         </div>
       </button>
