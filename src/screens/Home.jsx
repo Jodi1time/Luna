@@ -5,6 +5,7 @@ import { SymptomIcon } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
+import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
@@ -389,7 +390,10 @@ function dueWellnessNudges(wellness) {
 // Three compact shortcuts that sit just under the cover. Mirrors the
 // pattern Flo uses with high engagement: the most common log entries
 // at the user's thumb, one tap away. Doula-toned labels (no "+").
-function QuickActions({ go, setActiveLogDate }) {
+// Each action goes somewhere distinct — "A note" opens its own
+// bottom-sheet (not the full Log form) so the label matches what
+// happens.
+function QuickActions({ go, setActiveLogDate, onQuickNote }) {
   const todayISO = new Date().toISOString().slice(0, 10)
   const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
   const items = [
@@ -426,7 +430,7 @@ function QuickActions({ go, setActiveLogDate }) {
           <path d="M16 13h-4v4" />
         </svg>
       ),
-      onTap: openLogToday,
+      onTap: onQuickNote,
     },
   ]
   return (
@@ -702,6 +706,9 @@ export default function Home() {
   // first message); null when launched from "Talk something through"
   // so the user starts a fresh, unprompted conversation.
   const [chatOpener, setChatOpener] = useState(null)
+  // Bottom-sheet for the "A note" quick action — focused textarea
+  // that saves into today's log without opening the full Log form.
+  const [quickNoteOpen, setQuickNoteOpen] = useState(false)
   useEffect(() => {
     if (!phase || !session?.user?.id) return
     let cancelled = false
@@ -872,7 +879,13 @@ export default function Home() {
 
           {/* Three quick-action shortcuts under the cover. The most-common
               entries one tap away — Flo's high-engagement pattern, doula-toned. */}
-          {!isPreg && <QuickActions go={go} setActiveLogDate={setActiveLogDate} />}
+          {!isPreg && (
+            <QuickActions
+              go={go}
+              setActiveLogDate={setActiveLogDate}
+              onQuickNote={() => setQuickNoteOpen(true)}
+            />
+          )}
 
           {/* A small reflection — phase-aware, changes day to day, soft.
               Tap to open a brief conversation with Luna. */}
@@ -896,6 +909,16 @@ export default function Home() {
           {/* Soft milestone moment — period day one, etc. Auto-clears
               after ~3s via the useEffect above. */}
           <Celebration kind={celebration} onClose={() => setCelebration(null)} />
+
+          {/* Quick-note bottom-sheet — opens from the "A note" quick
+              action, focuses straight to a textarea, saves to today's
+              log and closes. Distinct from the full Log form. */}
+          {!isPreg && (
+            <QuickNote
+              open={quickNoteOpen}
+              onClose={() => setQuickNoteOpen(false)}
+            />
+          )}
 
           {/* Chat overlay — opens from the daily thought (with opener)
               or from the Always-Here "Talk something through" entry
