@@ -39,6 +39,10 @@ const DEFAULT_SETTINGS = {
   // helped: [...], note?  }. Append-only via the Cramps Helper screen.
   // Lives in settings (already jsonb) so no new schema column needed.
   crampsHistory: [],
+  // Interactive journaling history — each entry: { dateISO, kind, content,
+  // recordedAt }. kind ∈ 'gratitude' | 'feeling' | 'compassion' | 'reframe' |
+  // 'freewrite'. Used for recall on the Reflect screen and pattern.
+  reflectHistory: [],
 }
 
 const useLuna = create(

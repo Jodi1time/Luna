@@ -558,6 +558,12 @@ function AlwaysHere({ go, wellness, markWellness, onTalk }) {
       onTap: onTalk,
     },
     {
+      key: 'reflect',
+      label: 'For your mind and heart',
+      sub: 'Write freely, or sit with a short practice.',
+      onTap: () => go('reflect'),
+    },
+    {
       key: 'intimate',
       label: 'Your sexual life, your way',
       sub: 'Desire, lubrication, pleasure, pain — all of it.',
