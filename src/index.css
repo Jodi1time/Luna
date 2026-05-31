@@ -367,13 +367,6 @@ button.no-tap, button.no-tap:active { transform: none; }
   animation-duration: 3.5s;
 }
 
-/* Hand-drawn attention arrows pointing at the empty StickyNote on
-   Home — a gentle breath so they catch the eye without nagging. */
-@keyframes stickyArrowBreath {
-  0%, 100% { opacity: 0.32; transform: scale(1); }
-  50%      { opacity: 0.62; transform: scale(1.05); }
-}
-
 /* 4-7-8 breathing loop — used in the Bedtime Release practice in
    Reflect. Smooth continuous loop, no need for JS state machine.
    12s = inhale 4s + hold 7s + exhale 1s overlap; visual just pulses. */
