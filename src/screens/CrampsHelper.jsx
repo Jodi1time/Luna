@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { breathTone } from '../lib/sounds'
+import { useScrollLock } from '../lib/useScrollLock'
 
 // Cramps Helper — Luna's first true "what now?" surface.
 // The prototype for the pattern that turns Luna from logger into
@@ -60,6 +61,7 @@ function topPriorHelpers(history) {
 // numbers aren't shown to the user; they live in the timing of the
 // circle. Cycle continues until the user taps "I'm done."
 function BreathingOverlay({ onClose, soundsOn }) {
+  useScrollLock(true)
   const [phase, setPhase] = useState('inhale')  // 'inhale' | 'hold' | 'exhale'
   const [cyclesDone, setCyclesDone] = useState(0)
 
@@ -90,6 +92,8 @@ function BreathingOverlay({ onClose, soundsOn }) {
 
   return (
     <div onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+      onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 250,
         background: 'rgba(26,19,16,0.85)',
@@ -99,6 +103,8 @@ function BreathingOverlay({ onClose, soundsOn }) {
         animation: 'fadeIn 0.4s ease-out both',
         color: '#FAF4ED',
         padding: 24,
+        touchAction: 'none',
+        overscrollBehavior: 'contain',
       }}>
       <div className="breath-circle"
         data-phase={phase}

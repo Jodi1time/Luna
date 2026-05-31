@@ -43,6 +43,10 @@ const DEFAULT_SETTINGS = {
   // recordedAt }. kind ∈ 'gratitude' | 'feeling' | 'compassion' | 'reframe' |
   // 'freewrite'. Used for recall on the Reflect screen and pattern.
   reflectHistory: [],
+  // Cross-helper episode log — each entry: { helperKey, dateISO, triage,
+  // helped, recordedAt }. Shared across CrampsHelper / Anxiety / Insomnia /
+  // UTI / etc. via HelperShell so each helper recalls its own pattern.
+  helperHistory: [],
 }
 
 const useLuna = create(

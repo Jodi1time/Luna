@@ -475,6 +475,25 @@ function weeklyHealthCheck(date = new Date()) {
   return RED_FLAGS[((week % RED_FLAGS.length) + RED_FLAGS.length) % RED_FLAGS.length]
 }
 
+// Smart helper card — reusable Home surface for any of the "what now"
+// helpers. Only mounted when a relevant signal is in today's log.
+function SmartHelperCard({ onTap, eyebrow, line }) {
+  return (
+    <button onClick={onTap} className="glass-card"
+      style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+        {eyebrow}
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
+        {line}
+      </div>
+      <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 6, letterSpacing: 0.2 }}>
+        Open the helper →
+      </div>
+    </button>
+  )
+}
+
 // From-the-archive card — surfaces a meaningful old note when one fits
 // (anniversary today, same cycle day previously, same phase). Quiet
 // editorial register, never instructive. Tap goes to that day's Log.
@@ -742,6 +761,11 @@ export default function Home() {
   // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
   // She doesn't have to dig for help when she already told us it hurts.
   const hasCrampsToday = todayLog?.mood === 'cramps' || (todayLog?.symptoms || []).includes('cramps')
+  // Other smart helper surfaces — only show when she's already told us
+  // something is happening. Quiet by default; act when relevant.
+  const hasAnxietyToday = todayLog?.mood === 'low' || todayLog?.mood === 'frustrated'
+  const hasInsomniaToday = todayLog?.sleep === 'Poor' || todayLog?.sleep === 'Restless' || (todayLog?.symptoms || []).includes('insomnia') || (todayLog?.symptoms || []).includes('sleep')
+  const hasUTIToday = (todayLog?.symptoms || []).includes('uti')
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
   const handleQuickMood = (m) => {
@@ -953,19 +977,58 @@ export default function Home() {
             />
           )}
 
-          {/* Smart cramps surface — only appears when she has told us it
-              hurts today. Mother voice, single tap to the helper. */}
+          {/* Smart helper surfaces — only appear when she has told us
+              something is happening today. Quiet by default. */}
           {!isPreg && hasCrampsToday && (
-            <button onClick={() => go('cramps')} className="glass-card"
-              style={{ marginTop: 20, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
-                Today, with care
+            <SmartHelperCard
+              onTap={() => go('cramps')}
+              eyebrow="Today, with care"
+              line="Cramps today. Luna has a few things that help."
+            />
+          )}
+          {!isPreg && hasAnxietyToday && (
+            <SmartHelperCard
+              onTap={() => go('anxiety')}
+              eyebrow="Today, with care"
+              line="Heavy or tense today. A few minutes to slow it down?"
+            />
+          )}
+          {!isPreg && hasInsomniaToday && (
+            <SmartHelperCard
+              onTap={() => go('insomnia')}
+              eyebrow="Today, with care"
+              line="Sleep was rough. Tonight, Luna will help wind down."
+            />
+          )}
+          {!isPreg && hasUTIToday && (
+            <SmartHelperCard
+              onTap={() => go('utiHelper')}
+              eyebrow="Today, with care"
+              line="UTI signs. Catch it early — here's the playbook."
+            />
+          )}
+
+          {/* "For your mind and heart" — promoted entry to Reflect.
+              Lives right next to the daily thought so the journaling
+              practices are first-class, not buried in Always Here. */}
+          {!isPreg && phase && (
+            <button onClick={() => go('reflect')} className="glass-card"
+              style={{
+                marginTop: 26, padding: '14px 16px',
+                borderLeft: `3px solid ${phase.color}`, borderRadius: T.r,
+                textAlign: 'left', cursor: 'pointer', width: '100%',
+                color: T.text, fontFamily: 'inherit', display: 'block',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                  For your mind and heart
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+                  Reflect →
+                </div>
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
-                Cramps today. Luna has a few things that help.
-              </div>
-              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 6, letterSpacing: 0.2 }}>
-                Open the helper →
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
+                Write freely, sit with a practice, or talk it through with Luna.
               </div>
             </button>
           )}
@@ -974,7 +1037,7 @@ export default function Home() {
               Tap to open a brief conversation with Luna. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              style={{ marginTop: 26, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
+              style={{ marginTop: 14, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
                   A thought for today

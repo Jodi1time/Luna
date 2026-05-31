@@ -155,9 +155,18 @@ export default function Settings() {
         Pro is for the depth — the AI companion, the deep life-stage modes, the long-form reflective tools. Everything you need to take care of yourself stays free.
       </div>
 
+      <SectionLabel>When something is happening</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="Cramps right now" onTap={() => go('cramps')} />
+        <Row label="Anxiety tonight" onTap={() => go('anxiety')} />
+        <Row label="Can't sleep" onTap={() => go('insomnia')} />
+        <Row label="UTI symptoms" onTap={() => go('utiHelper')} />
+        <Row label="Period feels late" onTap={() => go('latePeriod')} />
+        <Row label="Missed a pill" onTap={() => go('missedPill')} />
+      </div>
+
       <SectionLabel>More from Luna</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
-        <Row label="When cramps hit" onTap={() => go('cramps')} />
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="Your sexual life, your way" onTap={() => go('intimate')} />

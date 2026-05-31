@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { T } from '../data/theme'
 import useLuna from '../store/useLuna'
+import { useScrollLock } from '../lib/useScrollLock'
 
 // A tiny bottom-sheet for the "A note" quick action — opens straight
 // to a focused textarea, saves to today's log, and closes. Designed
@@ -11,6 +12,7 @@ import useLuna from '../store/useLuna'
 // existing day's log, so writing a note here never clobbers a flow /
 // mood / symptom that was already there.
 export default function QuickNote({ open, onClose }) {
+  useScrollLock(open)
   const saveLog = useLuna((s) => s.saveLog)
   const getLog = useLuna((s) => s.getLog)
   const soundsOn = useLuna((s) => Boolean(s.settings?.sounds))
@@ -71,6 +73,8 @@ export default function QuickNote({ open, onClose }) {
 
   return (
     <div onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+      onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(26,19,16,0.45)',
@@ -78,8 +82,12 @@ export default function QuickNote({ open, onClose }) {
         WebkitBackdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
+        touchAction: 'none',
+        overscrollBehavior: 'contain',
       }}>
       <div onClick={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,

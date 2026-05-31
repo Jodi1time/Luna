@@ -5,6 +5,7 @@ import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
 import QuickNote from '../components/QuickNote'
 import LunaChat from '../components/LunaChat'
+import { useScrollLock } from '../lib/useScrollLock'
 
 // Reflect — interactive journaling + short guided practices for
 // emotional and mental health. Takes traits from meditation apps
@@ -358,16 +359,23 @@ function Field({ label, children }) {
 
 // ── Sheet shell + footer ────────────────────────────────────────
 function SheetShell({ onClose, title, sub, children }) {
+  useScrollLock(true)
   return (
     <div onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+      onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 220,
         background: 'rgba(26,19,16,0.45)',
         backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
+        touchAction: 'none',
+        overscrollBehavior: 'contain',
       }}>
       <div onClick={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,

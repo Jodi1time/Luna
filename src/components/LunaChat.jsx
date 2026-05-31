@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { T } from '../data/theme'
 import { chat } from '../lib/lunaChat'
 import { detectCrisis, CRISIS_RESOURCES } from '../lib/crisis'
+import { useScrollLock } from '../lib/useScrollLock'
 
 // Small chat overlay that slides up from the bottom. Opens either with
 // today's reflection seeded as Luna's first message, or — when there
@@ -14,6 +15,7 @@ import { detectCrisis, CRISIS_RESOURCES } from '../lib/crisis'
 const MAX_USER_TURNS = 6
 
 export default function LunaChat({ open, onClose, opener, context }) {
+  useScrollLock(open)
   // messages: { role: 'assistant'|'user', content: string, error?: boolean }[]
   const [messages, setMessages] = useState([])
   const [crisisSurfaced, setCrisisSurfaced] = useState(false)
@@ -86,7 +88,11 @@ export default function LunaChat({ open, onClose, opener, context }) {
       if (reply) {
         setMessages([...nextMessages, { role: 'assistant', content: reply }])
       } else {
-        setMessages([...nextMessages, { role: 'assistant', content: "I can't reach myself right now — try again in a moment. Either way, I'm glad you stopped by.", error: true }])
+        // Edge Function isn't deployed yet OR the user isn't signed in.
+        // Keep the space useful instead of just showing an error — Luna
+        // will hold what she wrote, and the conversational layer turns
+        // on once the API is connected.
+        setMessages([...nextMessages, { role: 'assistant', content: "Luna's conversational companion is being prepared — your words are kept here. When she's ready, we'll pick up right from this thread.", error: true }])
       }
     } finally {
       setSending(false)
@@ -103,6 +109,8 @@ export default function LunaChat({ open, onClose, opener, context }) {
   return (
     <div
       onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+      onWheel={(e) => e.preventDefault()}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(26,19,16,0.45)',
@@ -110,9 +118,13 @@ export default function LunaChat({ open, onClose, opener, context }) {
         WebkitBackdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         animation: 'fadeIn 0.25s ease-out both',
+        touchAction: 'none',
+        overscrollBehavior: 'contain',
       }}>
       <div
         onClick={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 430,
           background: T.bg,
@@ -125,6 +137,7 @@ export default function LunaChat({ open, onClose, opener, context }) {
           animation: 'fadeUp 0.32s cubic-bezier(0.34, 1.36, 0.64, 1) both',
           overflow: 'hidden',
           transition: 'margin-bottom 0.15s ease-out, max-height 0.15s ease-out',
+          touchAction: 'auto',
         }}>
         {/* Header */}
         <div style={{ padding: '14px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}` }}>
@@ -166,8 +179,16 @@ export default function LunaChat({ open, onClose, opener, context }) {
         {/* Messages */}
         <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {messages.length === 0 && !sending && (
-            <div style={{ alignSelf: 'center', textAlign: 'center', padding: '12px 16px', fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, maxWidth: 280 }}>
-              A small reflective space. Whatever's on your mind — write a sentence, or a single word.
+            <div style={{ alignSelf: 'center', textAlign: 'center', padding: '20px 16px', maxWidth: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: T.accent + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${T.accent}40` }}>
+                <span style={{ fontFamily: T.serif, fontSize: 26, fontStyle: 'italic', color: T.accent }}>L</span>
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', color: T.text, lineHeight: 1.45, letterSpacing: -0.2 }}>
+                A small space to think out loud.
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.6 }}>
+                Write a sentence — or a single word. Luna will sit with it.
+              </div>
             </div>
           )}
           {messages.map((m, i) => (
