@@ -195,6 +195,12 @@ const useLuna = create(
       activePhaseId:  'ovulation',
       activeArticleId: 'pmdd',
       activeSymptomId: 'cramps',
+      // When set, the Reflect screen auto-opens this practice on mount
+      // and then clears the value. Lets any helper / surface deep-link
+      // straight into the right exercise instead of dumping the user
+      // on the practice list.
+      activeReflectPractice: null,
+      setActiveReflectPractice: (id) => set({ activeReflectPractice: id }),
       // Date the Log screen is editing. Null means "today" — set
       // explicitly when the user navigates to Log from a past day
       // (Calendar tap, week strip tap).

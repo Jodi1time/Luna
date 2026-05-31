@@ -106,7 +106,7 @@ function PathCard({ eyebrow, title, blurb, onTap }) {
 
 export default function HeavyHelper() {
   const store = useLuna()
-  const { back, go, settings, displayName } = store
+  const { back, go, settings, displayName, setActiveReflectPractice } = store
   const cycle = useCycle(store)
   const soundsOn = Boolean(settings?.sounds)
   const phase = cycle.phase
@@ -117,6 +117,14 @@ export default function HeavyHelper() {
   const [chatOpen, setChatOpen] = useState(false)
 
   const isLuteal = phase?.id === 'luteal'
+
+  // Deep-link into a specific Reflect practice. Sets the active
+  // practice in the store, then navigates — Reflect picks it up on
+  // mount and auto-opens it, then clears the value.
+  const openReflectPractice = (id) => {
+    setActiveReflectPractice(id)
+    go('reflect')
+  }
 
   return (
     <Screen padBottom={40}>
@@ -152,41 +160,62 @@ export default function HeavyHelper() {
           </div>
         )}
 
-        {/* The paths */}
-        <Eyebrow>Pick a way in</Eyebrow>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
+        {/* The paths — eight distinct ways in, each going to a real
+            destination. No path falls through to a generic list. */}
+        <Eyebrow>Start with the body</Eyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
           <PathCard
-            eyebrow="The body first"
-            title="Breathe — two minutes"
-            blurb="A long exhale tells the nervous system the storm is passing. It works before the thought does."
+            eyebrow="Two minutes"
+            title="Breathe — slow, long exhale"
+            blurb="A longer exhale signals 'rest now' to the nervous system. It works before the thought does."
             onTap={() => setBreathOpen(true)}
           />
           <PathCard
-            eyebrow="The thoughts"
-            title="Sit with anxiety, specifically"
+            eyebrow="Three minutes"
+            title="A body scan"
+            blurb="Guided attention from the top of your head to the soles of your feet. Returns you to the body before the mind gets its way."
+            onTap={() => openReflectPractice('bodyscan')}
+          />
+        </div>
+
+        <Eyebrow>Work with the thoughts</Eyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          <PathCard
+            eyebrow="When it's anxiety, specifically"
+            title="Sit with anxiety"
             blurb="Grounding, paced breath, and a triage that asks where this lives most — body or mind."
             onTap={() => go('anxiety')}
           />
           <PathCard
-            eyebrow="The word"
-            title="Name what you're feeling"
-            blurb="Specific words for emotions reduce their intensity. 'Disappointed' is gentler than 'bad'."
-            onTap={() => go('reflect')}
+            eyebrow="When a worry won't let go"
+            title="Reframe the thought"
+            blurb="The strongest single tool in CBT — write the worry, ask if it's the whole picture, offer the kindness you'd give a friend."
+            onTap={() => openReflectPractice('reframe')}
           />
           <PathCard
-            eyebrow="The kindness"
+            eyebrow="When 'fine' isn't accurate"
+            title="Name what you're feeling"
+            blurb="Specific emotion words reduce their intensity — affect-labelling research. 'Disappointed' is gentler than 'bad'."
+            onTap={() => openReflectPractice('feeling')}
+          />
+          <PathCard
+            eyebrow="When the inner voice is harsh"
             title="A self-compassion pause"
             blurb="Three short steps — notice it's hard, remember others have felt this, offer yourself warmth. Two minutes."
-            onTap={() => go('reflect')}
+            onTap={() => openReflectPractice('compassion')}
           />
+        </div>
+
+        <Eyebrow>Reach for someone</Eyebrow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
           <PathCard
-            eyebrow="The talking"
-            title="Talk it through with Luna"
-            blurb="A quiet, reflective space — no judgement, no advice unless you ask."
+            eyebrow="Talk it through"
+            title="A few minutes with Luna"
+            blurb="A quiet, reflective space — no judgement, no advice unless you ask for it."
             onTap={() => setChatOpen(true)}
           />
           <PathCard
-            eyebrow="The paper"
+            eyebrow="On paper"
             title="Put it down in a note"
             blurb="One sentence to your future self. The act of writing alone takes some weight off."
             onTap={() => setNoteOpen(true)}

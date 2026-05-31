@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import useLuna from '../store/useLuna'
@@ -90,6 +90,37 @@ const PHASE_OPENING = {
   follicular: 'A lifting week. What feels closer to possible than it did last week?',
   ovulation:  'A more outward-facing week. What\'s easier than usual — and what does that tell you?',
   luteal:     'Softer week, sharper edges. Practices that meet you where you are, not where you wish you were.',
+}
+
+// Phase-aware practice recommendation. THE feature that makes Luna's
+// wellness distinctly female: which short practice fits THIS week of
+// her cycle, grounded in what the science of cyclical hormones and
+// female mental health tells us is helpful in each phase.
+//   menstrual  — the body is doing real work; rest/compassion supports the system
+//   follicular — estrogen rising; intention-setting + gratitude land best here
+//   ovulation  — outward window; naming what's actually present (vs imagined)
+//   luteal     — serotonin/dopamine drop; self-compassion and reframe are most protective
+const PHASE_PRACTICE = {
+  menstrual: {
+    id: 'compassion',
+    eyebrow: 'For your menstrual week',
+    line: 'A self-compassion pause — the body is doing real work this week.',
+  },
+  follicular: {
+    id: 'intention',
+    eyebrow: 'For your follicular week',
+    line: 'A morning intention — estrogen is lifting, the brain notices what we point it at.',
+  },
+  ovulation: {
+    id: 'feeling',
+    eyebrow: 'For your ovulation week',
+    line: 'Name what you\'re feeling — the outward window is when specific words land cleanest.',
+  },
+  luteal: {
+    id: 'reframe',
+    eyebrow: 'For your luteal week',
+    line: 'Sit with a worry — late-luteal serotonin drops make the inner voice harsher than it has to be.',
+  },
 }
 
 // ── Gratitude practice ──────────────────────────────────────────
@@ -627,7 +658,7 @@ function SheetFooter({ onSave, disabled, saved, label, savedLabel, helper }) {
 // ── Reflect screen ──────────────────────────────────────────────
 export default function Reflect() {
   const store = useLuna()
-  const { back, settings, updateSetting, displayName, session } = store
+  const { back, settings, updateSetting, displayName, session, activeReflectPractice, setActiveReflectPractice } = store
   const cycle = useCycle(store)
   const phase = cycle.phase
   const history = settings?.reflectHistory || []
@@ -635,6 +666,20 @@ export default function Reflect() {
   const [openPractice, setOpenPractice] = useState(null)
   const [quickNoteOpen, setQuickNoteOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+
+  // Auto-open a deep-linked practice (e.g. when HeavyHelper sends the
+  // user here pointed at compassion or reframe), then clear the
+  // request so it doesn't fire again on re-render.
+  useEffect(() => {
+    if (activeReflectPractice) {
+      setOpenPractice(activeReflectPractice)
+      setActiveReflectPractice(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeReflectPractice])
+
+  // The phase-aware recommendation for this week.
+  const recommendation = phase ? PHASE_PRACTICE[phase.id] : null
 
   const handleSavePractice = (entry) => {
     const next = [
@@ -666,6 +711,31 @@ export default function Reflect() {
           {opening || 'Write what wants to be written. Or pick a practice — short, gentle, evidence-grown.'}
         </div>
         <Rule />
+
+        {/* Phase-aware practice recommendation — the feature that makes
+            Luna's wellness distinctly female. Grounded in cycle-phase
+            psychology. */}
+        {recommendation && (
+          <button onClick={() => setOpenPractice(recommendation.id)} className="glass-card"
+            style={{
+              width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
+              borderLeft: `3px solid ${phase.color}`,
+              cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
+              marginBottom: 22,
+            }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: phase.color }}>
+                {recommendation.eyebrow}
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+                Start the practice →
+              </div>
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.1 }}>
+              {recommendation.line}
+            </div>
+          </button>
+        )}
 
         {/* Write freely */}
         <Eyebrow>Write</Eyebrow>
