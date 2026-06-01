@@ -6,6 +6,9 @@ import { useCycle } from '../hooks/useCycle'
 import { resolveTheme, DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
 import JournalDecorations from '../components/JournalDecorations'
 import JournalCustomizer from '../components/JournalCustomizer'
+import Polaroid, { makePhotoMeta } from '../components/Polaroid'
+import PhotoPermissionSheet from '../components/PhotoPermissionSheet'
+import { compressImage } from '../lib/imageCompress'
 import useLuna from '../store/useLuna'
 
 const LINE_H = 28
@@ -35,8 +38,9 @@ function paperBackground(theme) {
 // New-entry composer — a notebook page that's empty until the user
 // writes. Save commits it as its own entry (with timestamp), clears
 // the input so they can start the next page.
-function EntryComposer({ theme, decorations, onSave, phaseId }) {
+function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   const [text, setText] = useState('')
+  const [photos, setPhotos] = useState([])
   const taRef = useRef(null)
   useEffect(() => {
     const el = taRef.current
@@ -45,12 +49,21 @@ function EntryComposer({ theme, decorations, onSave, phaseId }) {
     const min = LINE_H * 5
     el.style.height = `${Math.max(min, el.scrollHeight)}px`
   }, [text])
-  const canSave = text.trim().length > 0
+  // A page is savable when it has text OR at least one photo —
+  // sometimes a picture is the whole entry.
+  const canSave = text.trim().length > 0 || photos.length > 0
   const handleSave = () => {
     if (!canSave) return
-    onSave(text)
+    onSave(text, photos)
     setText('')
+    setPhotos([])
     if (taRef.current) taRef.current.style.height = `${LINE_H * 5}px`
+  }
+  const handleAddPhoto = () => {
+    onPickPhoto((photo) => { setPhotos((cur) => [...cur, photo]) })
+  }
+  const removePhoto = (id) => {
+    setPhotos((cur) => cur.filter((p) => p.id !== id))
   }
   return (
     <div style={{
@@ -90,7 +103,30 @@ function EntryComposer({ theme, decorations, onSave, phaseId }) {
             display: 'block',
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+        {/* Polaroid attachments — rendered between the text and the
+            actions row. Each gets a remove button while in compose. */}
+        {photos.length > 0 && (
+          <div style={{ marginTop: 8, paddingBottom: 4 }}>
+            {photos.map((p, idx) => (
+              <Polaroid key={p.id} photo={p} index={idx} editable onRemove={() => removePhoto(p.id)} />
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 }}>
+          <button onClick={handleAddPhoto}
+            style={{
+              background: 'transparent',
+              color: theme.accent,
+              border: `1px solid ${theme.accent}55`,
+              padding: '8px 12px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+            }}>
+            <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
+            PHOTO
+          </button>
           <button onClick={handleSave} disabled={!canSave}
             style={{
               background: canSave ? theme.accent : 'rgba(26,19,16,0.08)',
@@ -111,8 +147,9 @@ function EntryComposer({ theme, decorations, onSave, phaseId }) {
 }
 
 // A past entry — read mode by default, tap to edit in place. Trash
-// icon in the corner deletes after a single confirm.
-function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete }) {
+// icon in the corner deletes after a single confirm. In edit mode,
+// text becomes a textarea AND photos become removable + addable.
+function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, onPickPhoto }) {
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState(entry.body)
   const taRef = useRef(null)
@@ -125,14 +162,21 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete }) 
     const min = LINE_H * 4
     el.style.height = `${Math.max(min, el.scrollHeight)}px`
   }, [editing, text])
+  const photos = entry.photos || []
   const save = () => {
-    if (text.trim() && text !== entry.body) onUpdate({ body: text.trim() })
+    if (text !== entry.body) onUpdate({ body: text.trim() })
     setEditing(false)
   }
   const handleDelete = (e) => {
     e.stopPropagation()
     if (!window.confirm('Tear this page out? This cannot be undone.')) return
     onDelete()
+  }
+  const removePhoto = (id) => {
+    onUpdate({ photos: photos.filter((p) => p.id !== id) })
+  }
+  const addPhoto = () => {
+    onPickPhoto((photo) => { onUpdate({ photos: [...photos, photo] }) })
   }
   return (
     <div
@@ -183,12 +227,44 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete }) 
             </div>
           </>
         ) : (
-          <div style={{
-            fontFamily: T.serif, fontStyle: 'italic', fontSize: 15.5,
-            lineHeight: `${LINE_H}px`, color: theme.text,
-            whiteSpace: 'pre-wrap',
-          }}>
-            {entry.body}
+          entry.body && (
+            <div style={{
+              fontFamily: T.serif, fontStyle: 'italic', fontSize: 15.5,
+              lineHeight: `${LINE_H}px`, color: theme.text,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {entry.body}
+            </div>
+          )
+        )}
+        {/* Polaroids — always rendered (read or edit). Editable mode
+            shows a remove button on each + an "+ photo" affordance
+            at the bottom. */}
+        {photos.length > 0 && (
+          <div style={{ marginTop: editing || entry.body ? 8 : 0, paddingBottom: 4 }}
+            onClick={(e) => editing && e.stopPropagation()}>
+            {photos.map((p, idx) => (
+              <Polaroid key={p.id} photo={p} index={idx} editable={editing} onRemove={() => removePhoto(p.id)} />
+            ))}
+          </div>
+        )}
+        {editing && (
+          <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-start' }}
+            onClick={(e) => e.stopPropagation()}>
+            <button onClick={addPhoto}
+              style={{
+                background: 'transparent',
+                color: theme.accent,
+                border: `1px solid ${theme.accent}55`,
+                padding: '7px 12px',
+                borderRadius: 999,
+                cursor: 'pointer',
+                fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}>
+              <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
+              ADD A PHOTO
+            </button>
           </div>
         )}
       </div>
@@ -198,7 +274,7 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete }) 
 
 export default function Journal() {
   const store = useLuna()
-  const { back, saveJournalEntry, updateJournalEntry, deleteJournalEntry, updateJournalTheme } = store
+  const { back, saveJournalEntry, updateJournalEntry, deleteJournalEntry, updateJournalTheme, updateSetting } = store
   const settings = useLuna((s) => s.settings)
   const cycle = useCycle(store)
   const phase = cycle?.phase
@@ -211,7 +287,73 @@ export default function Journal() {
   const todayISO = new Date().toISOString().slice(0, 10)
   const [customizing, setCustomizing] = useState(false)
 
-  const handleSaveEntry = (body) => { saveJournalEntry(body) }
+  // Photo picker — shared between the new-page composer and any
+  // editing past page. We keep one hidden <input type="file"> for
+  // the whole screen and stash the requesting callback so the
+  // post-pick handler knows where to deliver the photo. The OS
+  // picker itself handles the permission grant; we show a one-time
+  // explainer the first time so the user understands what tapping
+  // means + that photos stay inside Luna.
+  const fileInputRef = useRef(null)
+  const pendingCallback = useRef(null)
+  const [permissionPrompt, setPermissionPrompt] = useState(false)
+  const [picking, setPicking] = useState(false)
+  const [pickError, setPickError] = useState('')
+  const askedPhotoAccess = settings?.askedPhotoAccess === true
+
+  const openSystemPicker = () => {
+    const el = fileInputRef.current
+    if (!el) return
+    el.value = '' // ensure 'change' fires even on same-file re-pick
+    el.click()
+  }
+  const requestPickPhoto = (cb) => {
+    pendingCallback.current = cb
+    setPickError('')
+    if (!askedPhotoAccess) {
+      setPermissionPrompt(true)
+    } else {
+      openSystemPicker()
+    }
+  }
+  const handlePermissionContinue = () => {
+    updateSetting('askedPhotoAccess', true)
+    setPermissionPrompt(false)
+    // Defer to the next tick so the modal can unmount before the
+    // system picker steals focus.
+    setTimeout(openSystemPicker, 60)
+  }
+  const handlePermissionCancel = () => {
+    pendingCallback.current = null
+    setPermissionPrompt(false)
+  }
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPicking(true)
+    setPickError('')
+    try {
+      const { dataUrl, width, height } = await compressImage(file, { maxDim: 900, quality: 0.78 })
+      const meta = makePhotoMeta()
+      const photo = {
+        id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        dataUrl,
+        w: width,
+        h: height,
+        rot: meta.rot,
+        offset: meta.offset,
+      }
+      const cb = pendingCallback.current
+      pendingCallback.current = null
+      cb?.(photo)
+    } catch (err) {
+      setPickError(err?.message || "Couldn't read that photo. Try another.")
+    } finally {
+      setPicking(false)
+    }
+  }
+
+  const handleSaveEntry = (body, photos = []) => { saveJournalEntry(body, photos) }
   const handleChangeTheme = (themeId) => { updateJournalTheme({ themeId }) }
   const handleToggleDecoration = (id) => {
     const cur = journalTheme.decorations || []
@@ -248,9 +390,27 @@ export default function Journal() {
               theme={theme}
               decorations={journalTheme.decorations || []}
               onSave={handleSaveEntry}
+              onPickPhoto={requestPickPhoto}
               phaseId={phase?.id}
             />
           </div>
+
+          {/* Picker status — quietly surfaced if compression fails or
+              while a large photo is being processed. */}
+          {(picking || pickError) && (
+            <div style={{
+              marginBottom: 14,
+              padding: '8px 12px',
+              background: pickError ? T.accent + '12' : theme.accent + '10',
+              border: `1px solid ${pickError ? T.accent + '40' : theme.accent + '40'}`,
+              borderRadius: T.r,
+              fontFamily: T.sans, fontSize: 11.5,
+              color: pickError ? T.accent : theme.text,
+              lineHeight: 1.5,
+            }}>
+              {pickError ? pickError : 'Tucking the photo onto the page…'}
+            </div>
+          )}
 
           {/* Earlier entries */}
           {entries.length > 0 && (
@@ -271,6 +431,7 @@ export default function Journal() {
                     todayISO={todayISO}
                     onUpdate={(p) => updateJournalEntry(entry.id, p)}
                     onDelete={() => deleteJournalEntry(entry.id)}
+                    onPickPhoto={requestPickPhoto}
                   />
                 </div>
               ))}
@@ -299,6 +460,29 @@ export default function Journal() {
         onToggleDecoration={handleToggleDecoration}
         onToggleApplyToApp={handleToggleApplyToApp}
         onChangeBackdrop={handleChangeBackdrop}
+      />
+
+      {/* First-time camera-roll explainer. The OS picker handles the
+          actual permission grant; this sheet sets expectations before
+          the system dialog appears. */}
+      <PhotoPermissionSheet
+        open={permissionPrompt}
+        accent={theme.accent}
+        onContinue={handlePermissionContinue}
+        onCancel={handlePermissionCancel}
+      />
+
+      {/* Hidden file input — one for the whole screen. Programmatically
+          clicked by openSystemPicker(); the change handler compresses
+          the chosen file and routes it to whichever component asked
+          via pendingCallback. */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}
+        aria-hidden="true"
       />
     </div>
   )

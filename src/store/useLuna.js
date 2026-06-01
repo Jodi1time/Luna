@@ -35,6 +35,11 @@ const DEFAULT_SETTINGS = {
   // 4-card welcome tour. Set true once the user dismisses it; never
   // re-shows after that.
   tutorialSeen: false,
+  // True after the user has seen the "Luna needs your camera roll"
+  // explainer at least once. Browsers handle the actual permission
+  // grant via the native file picker; this flag just prevents the
+  // explainer from showing twice.
+  askedPhotoAccess: false,
   // Wellness tracking — small habits Luna nudges about.
   // Stored as ISO date strings ('YYYY-MM-DD') of the last completion.
   wellness: {
@@ -61,8 +66,11 @@ const DEFAULT_SETTINGS = {
   lifecycle: 'cycle',
   // Diary entries — the user's freeform writing, separate from
   // log.note (which is the per-day sticky-note style memo). Each
-  // entry is its own page: { id, body, createdAt, updatedAt }.
-  // Multiple per day are fine.
+  // entry is its own page:
+  //   { id, body, photos: [{ id, dataUrl, w, h, rot, offset }],
+  //     createdAt, updatedAt }
+  // Multiple per day are fine. Photos are stored inline as
+  // compressed JPEG data URLs (see lib/imageCompress.js).
   journalEntries: [],
   // Diary customisation — themeId picks the palette, decorations is
   // a list of decoration keys ('hearts' | 'stars' | etc.), and
@@ -215,13 +223,16 @@ const useLuna = create(
       // entry (saveJournalEntry), update an existing one in place
       // (updateJournalEntry), or remove it (deleteJournalEntry).
       // Theme + decorations live under settings.journalTheme.
-      saveJournalEntry: (body) => {
+      saveJournalEntry: (body, photos = []) => {
         const trimmed = String(body || '').trim()
-        if (!trimmed) return null
+        // Allow photo-only entries (no body text) — sometimes a picture
+        // is the whole thing. Reject only when BOTH are empty.
+        if (!trimmed && (!photos || photos.length === 0)) return null
         const now = new Date().toISOString()
         const entry = {
           id: `j_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           body: trimmed,
+          photos: photos || [],
           createdAt: now,
           updatedAt: now,
         }
