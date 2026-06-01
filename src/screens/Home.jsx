@@ -13,7 +13,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
-import Backdrop, { KindTapEffect, useBackdropKind } from '../components/Backdrop'
+import Backdrop, { useBackdropKind } from '../components/Backdrop'
 import Tutorial from '../components/Tutorial'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
@@ -747,11 +747,9 @@ export default function Home() {
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
-  // Backdrop tap-effect state. Each kind has its own reaction —
-  // blob: ripple/bloom centered; moons: sparkle burst at tap point;
-  // aurora: colored ring; petals: petal scatter; constellation:
-  // flash + ring. Position is captured from the tap so the effect
-  // floats where the user touched.
+  // Blob tap effects — ripple/bloom only fire when the user's
+  // chosen backdrop IS the blob. Other backdrops (moons, aurora,
+  // petals, stars) are visual atmospheres; they don't react to taps.
   const backdropKind = useBackdropKind()
   const [effect, setEffect] = useState(null)
   useEffect(() => {
@@ -760,19 +758,14 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [effect])
   const triggerBlobEffect = (override = {}) => {
+    if (backdropKind !== 'blob') return
     const options = ['ripple', 'bloom']
     const next = override.name || options[Math.floor(Math.random() * options.length)]
-    setEffect({
-      id: Date.now(),
-      name: next,
-      color: override.color || null,
-      x: override.x ?? null,
-      y: override.y ?? null,
-    })
+    setEffect({ id: Date.now(), name: next, color: override.color || null })
   }
   const handleContentTap = (e) => {
     if (e.target.closest('button, a, input, [role="button"]')) return
-    triggerBlobEffect({ x: e.clientX, y: e.clientY })
+    triggerBlobEffect()
   }
 
   // Collapse-in-place scroll behaviour. The cover does NOT slide
@@ -1014,10 +1007,6 @@ export default function Home() {
     <div className="home-stage">
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
       <BackgroundBlob color={blobColor} effect={effect} />
-      {/* Non-blob backdrops get a kind-specific tap reaction rendered
-          at the tap coordinates. For 'blob', the ripple/bloom are
-          drawn inside BackgroundBlob itself. */}
-      <KindTapEffect kind={backdropKind} effect={effect && effect.x != null ? { ...effect, color: effect.color || blobColor } : null} />
       {/* Content layer — scrolls past the stationary blob. */}
       <Screen ref={screenRef}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
