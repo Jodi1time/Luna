@@ -64,9 +64,23 @@ export async function signOut() {
 
 export async function requestPasswordReset(email) {
   if (!supabaseEnabled) throw new Error('Auth not configured')
+  // Supabase appends its own URL fragment (access_token, refresh_token,
+  // type=recovery, etc) to the redirectTo. We send users back to the
+  // app root and let App.jsx route to the reset screen when it sees
+  // either a PASSWORD_RECOVERY auth event OR type=recovery in the
+  // hash on cold start.
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}${import.meta.env.BASE_URL || '/'}#reset`,
+    redirectTo: `${window.location.origin}${import.meta.env.BASE_URL || '/'}`,
   })
+  if (error) throw error
+}
+
+// Update the password for the currently-authenticated user. After a
+// reset-link click Supabase gives the user a temporary recovery
+// session — this call sets the new password on that session.
+export async function updateUserPassword(newPassword) {
+  if (!supabaseEnabled) throw new Error('Auth not configured')
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
   if (error) throw error
 }
 
@@ -76,8 +90,10 @@ export async function getSession() {
   return data.session
 }
 
+// Handler is invoked with (session, event) so callers can branch on
+// PASSWORD_RECOVERY / SIGNED_IN / SIGNED_OUT etc.
 export function onAuthStateChange(handler) {
   if (!supabaseEnabled) return () => {}
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => handler(session))
+  const { data } = supabase.auth.onAuthStateChange((event, session) => handler(session, event))
   return () => data.subscription.unsubscribe()
 }

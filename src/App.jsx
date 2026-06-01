@@ -54,6 +54,7 @@ const PainfulSexHelper = lazy(() => import('./screens/PainfulSexHelper'))
 const PostpartumBleedingHelper = lazy(() => import('./screens/PostpartumBleedingHelper'))
 const HeavyHelper     = lazy(() => import('./screens/HeavyHelper'))
 const Journal         = lazy(() => import('./screens/Journal'))
+const ResetPassword   = lazy(() => import('./screens/ResetPassword'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -76,19 +77,35 @@ export default function App() {
   }, [tod])
 
   useEffect(() => {
+    // Detect a password-reset deep-link on cold start. Supabase
+    // appends type=recovery (plus access/refresh tokens) to the URL
+    // hash when the user clicks the email link. We route them to
+    // the reset screen before doing anything else.
+    const hash = window.location.hash || ''
+    const isRecovery = hash.includes('type=recovery')
+    if (isRecovery) {
+      useLuna.getState().go('resetPassword')
+    }
     // Restore the existing Supabase session on cold start. If present,
     // pull fresh profile + logs from the cloud so we paint correct
     // state even if the localStorage cache is stale.
     getSession().then((s) => {
       setSession(s)
-      if (s?.user) {
+      // Skip auto-hydrate during a recovery flow — the temporary
+      // recovery session shouldn't pull the user's data into the
+      // local store. We just want them to set a new password.
+      if (s?.user && !isRecovery) {
         hydrateFromCloud().catch(() => {})
       }
     })
-    // On signin/signout events, sync the auth state and either hydrate
-    // or clear the local cache appropriately.
-    const unsub = onAuthStateChange((session) => {
+    // On signin/signout/recovery events, sync the auth state and
+    // either hydrate or route to the reset screen.
+    const unsub = onAuthStateChange((session, event) => {
       setSession(session)
+      if (event === 'PASSWORD_RECOVERY') {
+        useLuna.getState().go('resetPassword')
+        return
+      }
       if (session?.user) {
         hydrateFromCloud().catch(() => {})
       }
@@ -110,7 +127,7 @@ export default function App() {
   // - If onboarded but the session restored to 'welcome' (since screen
   //   isn't persisted) or any onboarding step → Home.
   const resolvedScreen = !onboarded
-    ? (['welcome','onb1','onb2','onb3','auth','terms','privacy'].includes(screen) ? screen : 'welcome')
+    ? (['welcome','onb1','onb2','onb3','auth','terms','privacy','resetPassword'].includes(screen) ? screen : 'welcome')
     : (['welcome','onb1','onb2','onb3'].includes(screen) ? 'home' : screen)
 
   return (
@@ -169,6 +186,7 @@ function ScreenRenderer({ screen }) {
     case 'postpartumBleeding': return <PostpartumBleedingHelper />
     case 'heavy': return <HeavyHelper />
     case 'journal': return <Journal />
+    case 'resetPassword': return <ResetPassword />
     default:         return <Home />
   }
 }
