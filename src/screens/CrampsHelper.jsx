@@ -5,6 +5,7 @@ import useLuna from '../store/useLuna'
 import { breathTone } from '../lib/sounds'
 import { useScrollLock } from '../lib/useScrollLock'
 import Portal from '../lib/Portal'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 // Cramps Helper — Luna's first true "what now?" surface.
 // The prototype for the pattern that turns Luna from logger into
@@ -189,9 +190,17 @@ export default function CrampsHelper() {
         </div>
         <Rule />
 
-        {/* The action card — the heart of this screen */}
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        {/* The action card — the heart of this screen. Cramps wears
+            'urgent' (warm rose) — the body has the pain right now. */}
+        <div className="alive-card" style={{
+          padding: 18,
+          background: sectionPaper('urgent'),
+          border: `1px solid ${sectionColors('urgent').accent}22`,
+          borderLeft: `3px solid ${sectionColors('urgent').accent}`,
+          boxShadow: `0 1px 0 ${sectionColors('urgent').accent}10, 0 12px 24px -18px ${sectionColors('urgent').accent}30`,
+          borderRadius: T.r, marginBottom: 18,
+        }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: sectionColors('urgent').accent, marginBottom: 10 }}>
             What helps right now
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.65, color: T.text, letterSpacing: -0.1 }}>

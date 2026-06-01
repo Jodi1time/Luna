@@ -8,6 +8,7 @@ import LunaChat from '../components/LunaChat'
 import { useScrollLock } from '../lib/useScrollLock'
 import { breathTone } from '../lib/sounds'
 import Portal from '../lib/Portal'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 // "When it feels heavy" — a hub, not a single-helper screen. Different
 // roots need different supports, and routing "Heavy today" to the
@@ -85,12 +86,16 @@ function QuickBreathOverlay({ onClose, soundsOn }) {
   )
 }
 
-function PathCard({ eyebrow, title, blurb, onTap }) {
+function PathCard({ eyebrow, title, blurb, onTap, category = 'reflect' }) {
+  const c = sectionColors(category)
   return (
-    <button onClick={onTap} className="glass-card"
+    <button onClick={onTap} className="alive-card"
       style={{
         width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-        borderLeft: `3px solid ${T.accent}`,
+        background: sectionPaper(category),
+        border: `1px solid ${c.accent}22`,
+        borderLeft: `3px solid ${c.accent}`,
+        boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
         cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
       }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -169,13 +174,13 @@ export default function HeavyHelper() {
             destination. No path falls through to a generic list. */}
         <Eyebrow>Start with the body</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-          <PathCard
+          <PathCard category="body"
             eyebrow="Two minutes"
             title="Breathe — slow, long exhale"
             blurb="A longer exhale signals 'rest now' to the nervous system. It works before the thought does."
             onTap={() => setBreathOpen(true)}
           />
-          <PathCard
+          <PathCard category="body"
             eyebrow="Three minutes"
             title="A body scan"
             blurb="Guided attention from the top of your head to the soles of your feet. Returns you to the body before the mind gets its way."
@@ -185,25 +190,25 @@ export default function HeavyHelper() {
 
         <Eyebrow>Work with the thoughts</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-          <PathCard
+          <PathCard category="reflect"
             eyebrow="When it's anxiety, specifically"
             title="Sit with anxiety"
             blurb="Grounding, paced breath, and a triage that asks where this lives most — body or mind."
             onTap={() => go('anxiety')}
           />
-          <PathCard
+          <PathCard category="read"
             eyebrow="When a worry won't let go"
             title="Reframe the thought"
             blurb="The strongest single tool in CBT — write the worry, ask if it's the whole picture, offer the kindness you'd give a friend."
             onTap={() => openReflectPractice('reframe')}
           />
-          <PathCard
+          <PathCard category="reflect"
             eyebrow="When 'fine' isn't accurate"
             title="Name what you're feeling"
             blurb="Specific emotion words reduce their intensity — affect-labelling research. 'Disappointed' is gentler than 'bad'."
             onTap={() => openReflectPractice('feeling')}
           />
-          <PathCard
+          <PathCard category="intimate"
             eyebrow="When the inner voice is harsh"
             title="A self-compassion pause"
             blurb="Three short steps — notice it's hard, remember others have felt this, offer yourself warmth. Two minutes."
@@ -213,13 +218,13 @@ export default function HeavyHelper() {
 
         <Eyebrow>Reach for someone</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-          <PathCard
+          <PathCard category="reflect"
             eyebrow="Talk it through"
             title="A few minutes with Luna"
             blurb="A quiet, reflective space — no judgement, no advice unless you ask for it."
             onTap={() => setChatOpen(true)}
           />
-          <PathCard
+          <PathCard category="care"
             eyebrow="On paper"
             title="Put it down in a note"
             blurb="One sentence to your future self. The act of writing alone takes some weight off."

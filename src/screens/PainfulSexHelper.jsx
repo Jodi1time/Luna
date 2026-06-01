@@ -9,6 +9,7 @@ export default function PainfulSexHelper() {
   const go = useLuna((s) => s.go)
   return (
     <HelperShell
+      category="intimate"
       helperKey="painful_sex"
       title="Sex has been hurting."
       subtitle="It's common, it's not your fault, and there's usually something to do."

@@ -410,7 +410,7 @@ export default function Insights() {
                 : `You often feel '${display}' in your ${p.phase} phase — ${dayLabel}`
               const concentration = Math.round((p.concentration || 0) * 100)
               return (
-                <div key={p.id} className="insight-stagger" style={{ padding: 14, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 10px 22px -18px ${color}30`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
+                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 14, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 10px 22px -18px ${color}30`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
                       <SymptomIcon id={iconId} size={32} />

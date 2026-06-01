@@ -1215,6 +1215,7 @@ export default function Reflect() {
             const c = sectionColors(PRACTICE_SECTION[p.id] || 'reflect')
             return (
               <button key={p.id} onClick={() => setOpenPractice(p.id)}
+                className="alive-card"
                 style={{
                   width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
                   cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',

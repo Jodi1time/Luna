@@ -5,6 +5,7 @@ import useLuna from '../store/useLuna'
 import { breathTone } from '../lib/sounds'
 import { useScrollLock } from '../lib/useScrollLock'
 import Portal from '../lib/Portal'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 // Shared scaffold for all "what now" helper screens. Each helper
 // provides its content via props; the shell handles the layout,
@@ -120,6 +121,11 @@ export default function HelperShell({
   escalation,
   resources,
   bottomCopy,
+  // Section category for the action card's chromatic identity.
+  // Defaults to 'urgent' (warm rose) since most helpers are physical-
+  // acute moments; emotional helpers (Heavy, Insomnia) override with
+  // 'reflect' or 'plan' from their screen.
+  category = 'urgent',
 }) {
   const store = useLuna()
   const { back, settings, updateSetting } = store
@@ -182,9 +188,21 @@ export default function HelperShell({
         )}
         <Rule />
 
-        {/* Action card — what helps right now */}
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        {/* Action card — what helps right now. Background carries
+            the helper's category tint so the moment reads instantly. */}
+        {(() => {
+          const c = sectionColors(category)
+          return (
+        <div className="alive-card" style={{
+          padding: 18,
+          background: sectionPaper(category),
+          border: `1px solid ${c.accent}22`,
+          borderLeft: `3px solid ${c.accent}`,
+          boxShadow: `0 1px 0 ${c.accent}10, 0 12px 24px -18px ${c.accent}30`,
+          borderRadius: T.r,
+          marginBottom: 18,
+        }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: c.accent, marginBottom: 10 }}>
             {eyebrow}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 16.5, lineHeight: 1.65, color: T.text, letterSpacing: -0.1 }}>
@@ -195,11 +213,13 @@ export default function HelperShell({
             ))}
           </div>
           {recall && (
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`, fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.accent, lineHeight: 1.5 }}>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${c.accent}22`, fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: c.accent, lineHeight: 1.5 }}>
               {recall}
             </div>
           )}
         </div>
+          )
+        })()}
 
         {breath && (
           <button onClick={() => setBreathOpen(true)}

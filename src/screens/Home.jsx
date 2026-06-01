@@ -444,7 +444,7 @@ function QuickActions({ go, setActiveLogDate }) {
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
         return (
-          <button key={it.key} onClick={it.onTap} className="stagger-card"
+          <button key={it.key} onClick={it.onTap} className="stagger-card alive-card"
             style={{
               flex: '0 0 44%',
               maxWidth: 180,
@@ -500,7 +500,7 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
   // lavender too. Tells the user at a glance what KIND of nudge this is.
   const colors = sectionColors(category)
   return (
-    <button onClick={onTap} className="smart-arrival"
+    <button onClick={onTap} className="smart-arrival alive-card"
       style={{
         marginTop: 14, padding: '14px 16px',
         background: sectionPaper(category),
@@ -657,7 +657,7 @@ function ForTodayRow({ phase, go, goArticle }) {
         {items.map((it, idx) => {
           const c = sectionColors(it.category)
           return (
-            <button key={it.key} onClick={it.onTap} className="stagger-card"
+            <button key={it.key} onClick={it.onTap} className="stagger-card alive-card"
               style={{
                 flex: '0 0 64%',
                 maxWidth: 220,

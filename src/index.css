@@ -524,6 +524,51 @@ button.glass-card:active {
   animation: fadeUp 0.55s var(--ease-out) both;
 }
 
+/* ── Alive cards ──────────────────────────────────────────────────
+   Adds responsive touch feedback to any card. Lifts on hover (desktop),
+   presses down on tap (mobile + desktop), and a faint shadow growth on
+   hover so the surface reads as touchable. Honors reduced-motion. */
+.alive-card {
+  transition:
+    transform 0.22s var(--ease-out),
+    box-shadow 0.22s var(--ease-out),
+    border-color 0.22s var(--ease-out);
+  will-change: transform;
+}
+@media (hover: hover) {
+  .alive-card:hover {
+    transform: translateY(-2px);
+    /* shadow expansion handled inline per-card so the accent hue
+       lands right; this fallback just adds depth. */
+    box-shadow: 0 4px 0 rgba(26,19,16,0.04), 0 18px 32px -20px rgba(26,19,16,0.22);
+  }
+}
+.alive-card:active {
+  transform: translateY(0) scale(0.985);
+  transition: transform 0.08s var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .alive-card { transition: none !important; }
+  .alive-card:hover, .alive-card:active { transform: none !important; }
+}
+
+/* ── Card breathing (for KEY surfaces only) ──────────────────────
+   Very slow opacity + scale breath. Use sparingly — only on cards
+   that genuinely benefit from feeling "alive" (the today cell on
+   the wheel, a featured hero card). Too much of this on every
+   surface makes the app feel restless. */
+@keyframes cardBreathe {
+  0%, 100% { transform: scale(1);     opacity: 1;    }
+  50%      { transform: scale(1.008); opacity: 0.97; }
+}
+.card-breathe {
+  animation: cardBreathe 6.5s ease-in-out infinite;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-breathe { animation: none !important; }
+}
+
 /* ── Alternative backdrops ──────────────────────────────────────
    Each is opt-in via Settings → Make it yours. Honor
    prefers-reduced-motion by going still. */

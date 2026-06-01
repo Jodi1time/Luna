@@ -6,6 +6,7 @@ import HelperShell from '../components/HelperShell'
 export default function InsomniaHelper() {
   return (
     <HelperShell
+      category="plan"
       helperKey="insomnia"
       title="Awake — and shouldn't be."
       subtitle="A handful of small things will help. Pick one."

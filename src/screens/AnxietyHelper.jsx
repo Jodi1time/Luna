@@ -9,6 +9,7 @@ export default function AnxietyHelper() {
   const go = useLuna((s) => s.go)
   return (
     <HelperShell
+      category="reflect"
       helperKey="anxiety"
       title="Anxiety, right now?"
       subtitle="Let's slow it down — one thing at a time."

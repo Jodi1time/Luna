@@ -7,6 +7,7 @@ import HelperShell from '../components/HelperShell'
 export default function UTIHelper() {
   return (
     <HelperShell
+      category="urgent"
       helperKey="uti"
       title="Burning. Already?"
       subtitle="Catch it early — here's the playbook."

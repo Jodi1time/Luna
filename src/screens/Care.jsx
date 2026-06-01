@@ -4,6 +4,7 @@ import { CHECKUPS } from '../data/lunaData'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 const CATEGORIES = [...new Set(CHECKUPS.map((c) => c.category))]
 
@@ -55,7 +56,7 @@ export default function Care() {
                   <span style={{ fontSize: 10, fontFamily: T.mono, color: acc, fontWeight: 600 }}>{doneCount}/{items.length} done</span>
                 )}
               </div>
-              <div className="glass-card" style={{ borderRadius: T.r, overflow: 'hidden' }}>
+              <div style={{ background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, overflow: 'hidden' }}>
                 {items.map((item, idx) => {
                   const done = completedChecks?.includes(item.id)
                   return (

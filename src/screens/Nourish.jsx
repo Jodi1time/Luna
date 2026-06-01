@@ -5,6 +5,7 @@ import { PHASES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 const PHASE_ORDER = ['menstrual', 'follicular', 'ovulation', 'luteal']
 
@@ -33,7 +34,7 @@ export default function Nourish() {
         </div>
       </div>
 
-      <div className="glass-card insight-stagger" style={{ margin: '0 16px 24px', padding: 20, borderLeft: `3px solid ${current.color}`, borderRadius: T.r, animationDelay: '120ms' }}>
+      <div className="insight-stagger alive-card" style={{ margin: '0 16px 24px', padding: 20, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${current.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 12px 24px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, animationDelay: '120ms' }}>
         <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, fontFamily: T.sans, color: current.color, marginBottom: 4 }}>
           You're in {current.name.toLowerCase()} now
         </div>

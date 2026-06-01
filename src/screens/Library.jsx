@@ -87,7 +87,7 @@ export default function Library() {
             identity. Phase flourish + eyebrow + left edge still take
             the phase accent. */}
         <button onClick={() => goArticle(heroArticle.id)}
-          className="insight-stagger"
+          className="insight-stagger alive-card"
           style={{
             position: 'relative',
             display: 'block',
@@ -157,7 +157,7 @@ export default function Library() {
                   const cardDelay = sectionDelay + 60 + iIdx * 60
                   return (
                     <button key={a.id} onClick={() => goArticle(a.id)}
-                      className="insight-stagger"
+                      className="insight-stagger alive-card"
                       style={{
                         background: sectionPaper(secKey),
                         border: `1px solid ${secCol.accent}22`,

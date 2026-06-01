@@ -267,7 +267,7 @@ export default function Calendar() {
                 p.label === 'PMS window'     ? 'plan' :
                 'default'
               return (
-                <div key={i} className="insight-stagger" style={{
+                <div key={i} className="insight-stagger alive-card" style={{
                   padding: 16,
                   background: sectionPaper(category),
                   border: `1px solid ${accentColor}22`,
