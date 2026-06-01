@@ -53,6 +53,7 @@ const TTC             = lazy(() => import('./screens/TTC'))
 const PainfulSexHelper = lazy(() => import('./screens/PainfulSexHelper'))
 const PostpartumBleedingHelper = lazy(() => import('./screens/PostpartumBleedingHelper'))
 const HeavyHelper     = lazy(() => import('./screens/HeavyHelper'))
+const Journal         = lazy(() => import('./screens/Journal'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -167,6 +168,7 @@ function ScreenRenderer({ screen }) {
     case 'painfulSex': return <PainfulSexHelper />
     case 'postpartumBleeding': return <PostpartumBleedingHelper />
     case 'heavy': return <HeavyHelper />
+    case 'journal': return <Journal />
     default:         return <Home />
   }
 }

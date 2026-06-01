@@ -12,6 +12,7 @@ import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
+import JournalCard from '../components/JournalCard'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -1233,6 +1234,19 @@ export default function Home() {
                 How did the day land against it? →
               </div>
             </button>
+          )}
+
+          {/* The journal — a notebook-page card. Tap opens the
+              full journal screen where today's page is editable
+              and earlier pages stack below. Uses today's log.note
+              as the page content so writing here, in QuickNote, or
+              on the sticky note all point at the same surface. */}
+          {!isPreg && (
+            <JournalCard
+              todayNote={todayLog?.note}
+              accent={phase?.color || T.accent}
+              onTap={() => go('journal')}
+            />
           )}
 
           {/* "For your mind and heart" — promoted entry to Reflect.
