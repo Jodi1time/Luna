@@ -528,11 +528,19 @@ button.glass-card:active {
    Each is opt-in via Settings → Make it yours. Honor
    prefers-reduced-motion by going still. */
 
-/* Moons — slow rotation + faint horizontal drift. Keeps each
-   crescent's transform-origin at its own centroid via translate. */
+/* Moons — gentle vertical drift only. Moons don't visibly rotate
+   in real life; the slow rise + fall reads as "the sky breathing."
+   Applied to an inner wrapper so it doesn't conflict with the
+   outer translate(-50%, -50%) used for positioning. */
 @keyframes moonDrift {
-  0%, 100% { transform: translate(-50%, -50%) rotate(0deg);   }
-  50%      { transform: translate(-46%, -54%) rotate(6deg);   }
+  0%, 100% { transform: translateY(0);     }
+  50%      { transform: translateY(-6px);  }
+}
+/* Moons — halo pulse. Soft outer glow breathes on its own rhythm,
+   shorter cycle than the drift so they don't sync. */
+@keyframes moonGlow {
+  0%, 100% { opacity: var(--moon-glow-base, 1); }
+  50%      { opacity: calc(var(--moon-glow-base, 1) * 0.72); }
 }
 
 /* Aurora — three blurred radials drift independently. Slow because

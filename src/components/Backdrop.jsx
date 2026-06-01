@@ -31,43 +31,131 @@ function BlobBackdrop({ accent, subtle, children }) {
 }
 
 // ── Moons (Luna brand-aligned) ───────────────────────────────
-// Three crescents at fixed positions, each slowly rotating + drifting.
-// Sizes vary; tinted in phase color with soft blur. The slowest one
-// is largest and lives behind the others.
+// A small lunar sky: 8 moons at fixed scattered positions across
+// the full phone frame, each at its own phase (new → waxing → full →
+// waning → new). Phase is encoded by the position of the radial-
+// gradient's light source: at 50% the moon is fully lit (full moon);
+// pushed off to one side it becomes gibbous, then quarter, then a
+// thin crescent. Each moon also has a soft halo behind it so it
+// reads as luminous, not flat. Motion is a slow vertical drift
+// only — moons don't visibly rotate in real life.
+//
+// `phase` here is the unit-circle position 0..1:
+//   0    = new (almost dark)
+//   0.25 = first quarter (right half lit)
+//   0.5  = full (uniformly lit)
+//   0.75 = last quarter (left half lit)
+//   1    = back to new
+function phaseToLightCx(phase) {
+  // Symmetric around 0.5 (full). Goes outside [0,100] for crescents
+  // so the gradient's bright spot is *off the disc* and only the
+  // moon's edge catches light.
+  if (phase < 0.5) return 50 + 70 * (0.5 - phase) * 2  // waxing: light moves right
+  return 50 - 70 * (phase - 0.5) * 2                    // waning: light moves left
+}
+function phaseToLitness(phase) {
+  // 1 at full, ~0.25 at new (smooth sine curve). Keeps new moons
+  // visible enough to register as quiet circles, never invisible.
+  return Math.max(0.25, Math.sin(Math.PI * phase))
+}
+
+function Moon({ size, top, left, phase, glow, dur, accent, subtle, index }) {
+  const lightCx = phaseToLightCx(phase)
+  const litness = phaseToLitness(phase)
+  const haloOpacity = litness * (subtle ? 0.32 : 0.5) * glow
+  const bodyOpacity = litness * (subtle ? 0.78 : 0.95)
+  return (
+    <div style={{
+      position: 'absolute',
+      top, left,
+      width: size, height: size,
+      transform: 'translate(-50%, -50%)',
+      // Outer drift wrapper — applies the slow vertical breathe
+      // without conflicting with the parent's positioning transform.
+    }}>
+      <div style={{
+        position: 'relative',
+        width: '100%', height: '100%',
+        animation: `moonDrift ${dur}s ease-in-out infinite`,
+        animationDelay: `${index * -7}s`,
+      }}>
+        {/* Halo — soft radial blur behind the moon, sized larger
+            than the moon body so it reads as luminescence. Scales
+            with the moon's lit-ness so new moons don't have huge
+            glows. The base opacity is passed through a CSS var so
+            the moonGlow keyframe pulses ABOUT haloOpacity rather
+            than overriding it. */}
+        <div style={{
+          position: 'absolute',
+          top: '50%', left: '50%',
+          width: `${100 + glow * 80}%`,
+          height: `${100 + glow * 80}%`,
+          transform: 'translate(-50%, -50%)',
+          background: `radial-gradient(circle, ${accent} 0%, transparent 60%)`,
+          filter: 'blur(6px)',
+          ['--moon-glow-base']: haloOpacity,
+          opacity: haloOpacity,
+          animation: `moonGlow ${dur * 0.35}s ease-in-out infinite`,
+          animationDelay: `${index * -3}s`,
+        }} />
+        {/* Moon body — a circle filled with a radial gradient whose
+            light source sits at (lightCx%, 45%). Moving lightCx
+            outside [0,100] creates crescent shapes naturally — only
+            the edge of the disc that's close to the gradient center
+            catches light, the rest fades to transparent. */}
+        <svg viewBox="0 0 64 64" width="100%" height="100%"
+          style={{ position: 'relative', opacity: bodyOpacity, display: 'block' }}>
+          <defs>
+            <radialGradient id={`m-${index}`} cx={`${lightCx}%`} cy="44%" r="0.62">
+              <stop offset="0%"   stopColor={accent} stopOpacity="1"   />
+              <stop offset="55%"  stopColor={accent} stopOpacity="0.55" />
+              <stop offset="100%" stopColor={accent} stopOpacity="0"   />
+            </radialGradient>
+          </defs>
+          <circle cx="32" cy="32" r="28" fill={`url(#m-${index})`} />
+        </svg>
+      </div>
+    </div>
+  )
+}
+
 function MoonsBackdrop({ accent, subtle }) {
+  // 8 moons scattered across the whole phone frame. Sizes vary from
+  // tiny accent specks (22px) to a big full moon (96px). Each has
+  // its own lunar phase so the sky reads as a tiny month at once.
+  // `glow` is a 0..1.5 multiplier on the halo size; full moons get
+  // bigger halos than new moons.
+  const k = subtle ? 0.78 : 1.0
   const moons = [
-    { size: subtle ? 110 : 150, top: '18%', left: '60%', rot: 30,  dur: 60 },
-    { size: subtle ? 70  : 92,  top: '64%', left: '22%', rot: -20, dur: 48 },
-    { size: subtle ? 50  : 64,  top: '30%', left: '12%', rot: 12,  dur: 36 },
-    { size: subtle ? 40  : 56,  top: '78%', left: '70%', rot: -45, dur: 42 },
+    // Big near-full moon — top-right anchor
+    { size: 96 * k, top: '20%', left: '74%', phase: 0.5,  glow: 1.4, dur: 72 },
+    // Medium waxing gibbous — middle-left
+    { size: 64 * k, top: '46%', left: '18%', phase: 0.35, glow: 1.1, dur: 58 },
+    // Small waxing crescent — top-left
+    { size: 38 * k, top: '14%', left: '22%', phase: 0.15, glow: 0.8, dur: 46 },
+    // Small first quarter — bottom-middle
+    { size: 48 * k, top: '76%', left: '48%', phase: 0.25, glow: 1.0, dur: 52 },
+    // Tiny new-ish — right edge, mid-screen
+    { size: 26 * k, top: '36%', left: '92%', phase: 0.08, glow: 0.7, dur: 40 },
+    // Small waning gibbous — bottom-right
+    { size: 44 * k, top: '70%', left: '84%', phase: 0.68, glow: 1.0, dur: 50 },
+    // Tiny full speck — top-middle, like a faraway moon
+    { size: 22 * k, top: '8%',  left: '52%', phase: 0.5,  glow: 0.6, dur: 38 },
+    // Medium waning crescent — bottom-left
+    { size: 56 * k, top: '86%', left: '14%', phase: 0.85, glow: 1.1, dur: 62 },
   ]
   return (
-    <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true">
+    <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
+      style={{
+        // Override blob-stage's centered 440px box: moons need the
+        // whole phone frame to feel scattered, not crowded into a
+        // central halo.
+        width: '100%', height: '100%', top: 0, left: 0,
+        transform: 'none',
+        overflow: 'hidden',
+      }}>
       {moons.map((m, i) => (
-        <div key={i} style={{
-          position: 'absolute',
-          top: m.top, left: m.left,
-          width: m.size, height: m.size,
-          transform: `translate(-50%, -50%) rotate(${m.rot}deg)`,
-          animation: `moonDrift ${m.dur}s ease-in-out infinite`,
-          animationDelay: `${i * -7}s`,
-          opacity: subtle ? 0.32 : 0.42,
-          filter: 'blur(0.4px)',
-        }}>
-          <svg viewBox="0 0 64 64" width="100%" height="100%">
-            <defs>
-              <radialGradient id={`m-grad-${i}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={accent} stopOpacity="0.7" />
-                <stop offset="70%" stopColor={accent} stopOpacity="0.4" />
-                <stop offset="100%" stopColor={accent} stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <path
-              d="M44 8 A 28 28 0 1 0 44 56 A 22 22 0 1 1 44 8 Z"
-              fill={`url(#m-grad-${i})`}
-            />
-          </svg>
-        </div>
+        <Moon key={i} {...m} accent={accent} subtle={subtle} index={i} />
       ))}
     </div>
   )
