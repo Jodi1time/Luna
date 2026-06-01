@@ -307,14 +307,14 @@ function SilkBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.20 : 0.30,
+        opacity: subtle ? 0.14 : 0.22,
       }}>
       <Suspense fallback={null}>
         <Silk
-          speed={3.4}
+          speed={5}
           scale={1}
           color={accent}
-          noiseIntensity={1.2}
+          noiseIntensity={1.0}
           rotation={0}
         />
       </Suspense>
@@ -336,7 +336,7 @@ function GalaxyBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.14 : 0.22,
+        opacity: subtle ? 0.08 : 0.14,
       }}>
       <Suspense fallback={null}>
         <Galaxy
