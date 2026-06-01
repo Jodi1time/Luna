@@ -1,7 +1,8 @@
-import { forwardRef } from 'react'
+import { forwardRef, useEffect, useState } from 'react'
 import { T } from '../../data/theme'
 import { JOURNAL_THEMES, DEFAULT_JOURNAL_THEME } from '../../data/journalThemes'
 import JournalDecorations from '../JournalDecorations'
+import { getTimeOfDay, TIME_OF_DAY_TINTS } from '../../lib/timeOfDay'
 import useLuna from '../../store/useLuna'
 
 // ── Icons ────────────────────────────────────────────────────
@@ -27,11 +28,23 @@ export function AppShell({ children }) {
   const journalTheme = settings?.journalTheme || DEFAULT_JOURNAL_THEME
   const skinApp = Boolean(journalTheme.applyToApp)
   const themeData = JOURNAL_THEMES[journalTheme.themeId] || JOURNAL_THEMES.cream
-  // Use a neutral fallback for the in-app accent so we don't have to
-  // pass phase context this deep — decorations look fine at low
-  // opacity regardless.
   const decorationsAccent = themeData.accent || T.accent
   const frameBg = skinApp ? themeData.paper : T.bg
+
+  // Time-of-day tint — a soft mix-blend-multiply layer that shifts
+  // the room's mood by the hour: warm gold in the morning, no tint
+  // mid-day, warmer at dusk, cool blue at night. Toggleable in
+  // Settings as settings.timeOfDayMode ('auto' | 'off'). We retick
+  // every minute so the transition is gradual when the user crosses
+  // a boundary (e.g. 5pm).
+  const todMode = settings?.timeOfDayMode ?? 'auto'
+  const [tod, setTod] = useState(() => getTimeOfDay())
+  useEffect(() => {
+    if (todMode !== 'auto') return
+    const id = setInterval(() => setTod(getTimeOfDay()), 60_000)
+    return () => clearInterval(id)
+  }, [todMode])
+  const todTint = todMode === 'auto' ? (TIME_OF_DAY_TINTS[tod] || null) : null
   return (
     <div style={{
       height: '100dvh',
@@ -64,6 +77,19 @@ export function AppShell({ children }) {
               opacity={0.07}
             />
           </div>
+        )}
+        {/* Time-of-day tint — multiply blend so cream / theme paper
+            and atmosphere read through it, just warmer or cooler.
+            zIndex above decorations + backdrop but below content. */}
+        {todTint && todTint.color && (
+          <div aria-hidden="true" style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: todTint.color,
+            opacity: todTint.opacity,
+            mixBlendMode: 'multiply',
+            transition: 'background 1.5s ease, opacity 1.5s ease',
+            zIndex: 0,
+          }} />
         )}
         <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {children}

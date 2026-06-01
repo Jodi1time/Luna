@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
+import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { getSession } from '../lib/supabase'
 import { StatusView } from '../components/StatusView'
@@ -224,49 +225,53 @@ export default function Onboarding({ step }) {
 
   return (
     <div className="home-stage">
-      <div className="blob-stage subtle" aria-hidden="true">
-        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
-      </div>
+      <Backdrop accent={T.accent} subtle />
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .3s ease-out both', overflowY: 'auto', minHeight: 0 }}>
       <ProgressBar step={step} />
 
-      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6 }}>STEP {step} / 3</div>
+      <div className="insight-stagger" style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6, animationDelay: '0ms' }}>STEP {step} / 3</div>
 
       {step === 1 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10, animationDelay: '50ms' }}>
           When did your<br /><em>last period</em> start?
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
           A rough estimate is enough. We'll learn the rest from you.
         </div>
-        <StepDate value={dateDay} onChange={setDateDay} />
+        <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
+          <StepDate value={dateDay} onChange={setDateDay} />
+        </div>
       </>}
 
       {step === 2 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10, animationDelay: '50ms' }}>
           How long is your<br /><em>cycle, usually?</em>
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
           Most cycles land between 21 and 35 days. If yours is different, that's okay — bodies aren't averages.
         </div>
-        <StepCycle value={cycleDays} onChange={setCycleDays} />
-        <SourceLine>ACOG — Menstrual Cycle Norms</SourceLine>
+        <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
+          <StepCycle value={cycleDays} onChange={setCycleDays} />
+          <SourceLine>ACOG — Menstrual Cycle Norms</SourceLine>
+        </div>
       </>}
 
       {step === 3 && <>
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10, animationDelay: '50ms' }}>
           Last thing —<br /><em>what shall we call you?</em>
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.sans, lineHeight: 1.55 }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
           Your name greets you on your home screen.{signedInEmail ? '' : ' Your account is how you sign in on any device.'}
         </div>
-        <StepAccount
-          name={account.name}
-          email={account.email}
-          accountPassword={account.accountPassword}
-          onChange={setAccountField}
-          signedInEmail={signedInEmail}
-        />
+        <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
+          <StepAccount
+            name={account.name}
+            email={account.email}
+            accountPassword={account.accountPassword}
+            onChange={setAccountField}
+            signedInEmail={signedInEmail}
+          />
+        </div>
         {signupError && (
           <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5 }}>{signupError}</div>
         )}

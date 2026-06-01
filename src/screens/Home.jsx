@@ -13,7 +13,8 @@ import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
-import Backdrop from '../components/Backdrop'
+import Backdrop, { KindTapEffect, useBackdropKind } from '../components/Backdrop'
+import Tutorial from '../components/Tutorial'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -734,7 +735,7 @@ function ForTodayRow({ phase, go, goArticle }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings, updateSetting } = store
   const wellness = settings?.wellness || {}
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
@@ -746,25 +747,32 @@ export default function Home() {
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
-  // Blob effect state — taps in the Home content fire one of two
-  // one-shot effects (ripple / bloom) on the blob.
+  // Backdrop tap-effect state. Each kind has its own reaction —
+  // blob: ripple/bloom centered; moons: sparkle burst at tap point;
+  // aurora: colored ring; petals: petal scatter; constellation:
+  // flash + ring. Position is captured from the tap so the effect
+  // floats where the user touched.
+  const backdropKind = useBackdropKind()
   const [effect, setEffect] = useState(null)
   useEffect(() => {
     if (!effect) return
     const t = setTimeout(() => setEffect(null), 1600)
     return () => clearTimeout(t)
   }, [effect])
-  // Effect name + optional color override. Mood taps pass the mood's
-  // emotional color so the bloom reads as "Luna received what you
-  // said" — a tiny rippling acknowledgement in the right hue.
   const triggerBlobEffect = (override = {}) => {
     const options = ['ripple', 'bloom']
     const next = override.name || options[Math.floor(Math.random() * options.length)]
-    setEffect({ id: Date.now(), name: next, color: override.color || null })
+    setEffect({
+      id: Date.now(),
+      name: next,
+      color: override.color || null,
+      x: override.x ?? null,
+      y: override.y ?? null,
+    })
   }
   const handleContentTap = (e) => {
     if (e.target.closest('button, a, input, [role="button"]')) return
-    triggerBlobEffect()
+    triggerBlobEffect({ x: e.clientX, y: e.clientY })
   }
 
   // Collapse-in-place scroll behaviour. The cover does NOT slide
@@ -1006,6 +1014,10 @@ export default function Home() {
     <div className="home-stage">
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
       <BackgroundBlob color={blobColor} effect={effect} />
+      {/* Non-blob backdrops get a kind-specific tap reaction rendered
+          at the tap coordinates. For 'blob', the ripple/bloom are
+          drawn inside BackgroundBlob itself. */}
+      <KindTapEffect kind={backdropKind} effect={effect && effect.x != null ? { ...effect, color: effect.color || blobColor } : null} />
       {/* Content layer — scrolls past the stationary blob. */}
       <Screen ref={screenRef}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
@@ -1302,6 +1314,15 @@ export default function Home() {
           {/* Soft milestone moment — period day one, etc. Auto-clears
               after ~3s via the useEffect above. */}
           <Celebration kind={celebration} onClose={() => setCelebration(null)} />
+
+          {/* First-run tour — 4 cards explaining the cover, the diary,
+              and the customisation. Shows once; persisted via
+              settings.tutorialSeen. */}
+          <Tutorial
+            open={settings?.tutorialSeen === false}
+            onClose={() => updateSetting('tutorialSeen', true)}
+            accent={phase?.color}
+          />
 
           {/* Quick-note bottom-sheet — opens from the "A note" quick
               action, focuses straight to a textarea, saves to today's
