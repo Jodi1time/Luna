@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import useLuna from '../store/useLuna'
 import { T } from '../data/theme'
 
@@ -91,9 +91,43 @@ function phaseToLitness(phase) {
   return Math.max(0.25, Math.sin(Math.PI * phase))
 }
 
-function Moon({ size, top, left, phase, glow, dur, accent, subtle, index }) {
-  const lightCx = phaseToLightCx(phase)
-  const litness = phaseToLitness(phase)
+function Moon({ size, top, left, phase: initialPhase, glow, dur, accent, subtle, index }) {
+  // Phase-morph animation. Each moon slowly cycles through every
+  // phase (new → waxing crescent → first quarter → gibbous → full →
+  // gibbous → last quarter → waning crescent → new), 130 seconds per
+  // full cycle. Each moon starts at its own `initialPhase`, so the
+  // sky always shows varied phases at once. The actual updates run
+  // via rAF on DOM refs (no React re-renders) — cheap even with 8
+  // moons animating in parallel.
+  const gradientRef = useRef(null)
+  const bodyRef     = useRef(null)
+  const haloRef     = useRef(null)
+  useEffect(() => {
+    let raf
+    const cycleMs = 130000  // 130s ≈ a slow, almost-monthly feel
+    const start = performance.now()
+    const loop = (now) => {
+      const t = ((now - start) / cycleMs) % 1
+      const currentPhase = (initialPhase + t) % 1
+      const lightCx = phaseToLightCx(currentPhase)
+      const litness = phaseToLitness(currentPhase)
+      if (gradientRef.current) gradientRef.current.setAttribute('cx', `${lightCx}%`)
+      if (bodyRef.current)     bodyRef.current.style.opacity = String(litness * (subtle ? 0.78 : 0.95))
+      if (haloRef.current) {
+        const halo = litness * (subtle ? 0.32 : 0.5) * glow
+        haloRef.current.style.opacity = String(halo)
+        haloRef.current.style.setProperty('--moon-glow-base', String(halo))
+      }
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [initialPhase, subtle, glow])
+
+  // Initial paint values (frame 0). The rAF loop overrides these on
+  // the next frame.
+  const lightCx     = phaseToLightCx(initialPhase)
+  const litness     = phaseToLitness(initialPhase)
   const haloOpacity = litness * (subtle ? 0.32 : 0.5) * glow
   const bodyOpacity = litness * (subtle ? 0.78 : 0.95)
   return (
@@ -102,8 +136,6 @@ function Moon({ size, top, left, phase, glow, dur, accent, subtle, index }) {
       top, left,
       width: size, height: size,
       transform: 'translate(-50%, -50%)',
-      // Outer drift wrapper — applies the slow vertical breathe
-      // without conflicting with the parent's positioning transform.
     }}>
       <div style={{
         position: 'relative',
@@ -111,13 +143,7 @@ function Moon({ size, top, left, phase, glow, dur, accent, subtle, index }) {
         animation: `moonDrift ${dur}s ease-in-out infinite`,
         animationDelay: `${index * -7}s`,
       }}>
-        {/* Halo — soft radial blur behind the moon, sized larger
-            than the moon body so it reads as luminescence. Scales
-            with the moon's lit-ness so new moons don't have huge
-            glows. The base opacity is passed through a CSS var so
-            the moonGlow keyframe pulses ABOUT haloOpacity rather
-            than overriding it. */}
-        <div style={{
+        <div ref={haloRef} style={{
           position: 'absolute',
           top: '50%', left: '50%',
           width: `${100 + glow * 80}%`,
@@ -130,15 +156,11 @@ function Moon({ size, top, left, phase, glow, dur, accent, subtle, index }) {
           animation: `moonGlow ${dur * 0.35}s ease-in-out infinite`,
           animationDelay: `${index * -3}s`,
         }} />
-        {/* Moon body — a circle filled with a radial gradient whose
-            light source sits at (lightCx%, 45%). Moving lightCx
-            outside [0,100] creates crescent shapes naturally — only
-            the edge of the disc that's close to the gradient center
-            catches light, the rest fades to transparent. */}
         <svg viewBox="0 0 64 64" width="100%" height="100%"
+          ref={bodyRef}
           style={{ position: 'relative', opacity: bodyOpacity, display: 'block' }}>
           <defs>
-            <radialGradient id={`m-${index}`} cx={`${lightCx}%`} cy="44%" r="0.62">
+            <radialGradient ref={gradientRef} id={`m-${index}`} cx={`${lightCx}%`} cy="44%" r="0.62">
               <stop offset="0%"   stopColor={accent} stopOpacity="1"   />
               <stop offset="55%"  stopColor={accent} stopOpacity="0.55" />
               <stop offset="100%" stopColor={accent} stopOpacity="0"   />

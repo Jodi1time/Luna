@@ -18,6 +18,7 @@ import Tutorial from '../components/Tutorial'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 const MS_PER_DAY = 86400000
 
@@ -407,90 +408,31 @@ function dueWellnessNudges(wellness) {
 function QuickActions({ go, setActiveLogDate }) {
   const todayISO = new Date().toISOString().slice(0, 10)
   const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
+  // Each card carries its functional category. Category drives the
+  // card's soft tint + icon accent via SECTION_PALETTE — so the row
+  // reads as chromatic variety instead of seven cream cards in a line.
   const items = [
-    {
-      key: 'log',
-      label: 'Log today',
-      sub: 'Mood, flow, anything',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 5h14M3 10h14M3 15h9" />
-        </svg>
-      ),
-      onTap: openLogToday,
-    },
-    {
-      key: 'insights',
-      label: 'What we’ve noticed',
-      sub: 'Your cycle wheel and patterns',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8" />
-          <circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none" />
-        </svg>
-      ),
-      onTap: () => go('insights'),
-    },
-    {
-      key: 'period',
-      label: 'Edit period',
-      sub: 'When it really started',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 2a6 6 0 0 1 5 9.5C13.5 14 10 18 10 18s-3.5-4-5-6.5A6 6 0 0 1 10 2z" />
-          <circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none" />
-        </svg>
-      ),
-      onTap: () => go('editPeriodStart'),
-    },
-    {
-      key: 'intimate',
-      label: 'Your sexual life',
-      sub: 'Desire, lubrication, pleasure',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 4c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6z" />
-          <circle cx="10" cy="11" r="1" fill="currentColor" stroke="none" />
-        </svg>
-      ),
-      onTap: () => go('intimate'),
-    },
-    {
-      key: 'watch',
-      label: 'When something feels off',
-      sub: 'Spot the patterns',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="9" r="5" />
-          <path d="M13 13l4 4" />
-        </svg>
-      ),
-      onTap: () => go('watch'),
-    },
-    {
-      key: 'cheatsheet',
-      label: 'For your next visit',
-      sub: 'Talking points ready',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="4" y="3" width="12" height="14" rx="1.5" />
-          <path d="M7 7h6M7 10h6M7 13h4" />
-        </svg>
-      ),
-      onTap: () => go('cheatsheet'),
-    },
-    {
-      key: 'care',
-      label: 'Care checklist',
-      sub: 'Checkups, screenings',
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="14" height="14" rx="2" />
-          <path d="M3 8h14M6 12l2 2 4-4" />
-        </svg>
-      ),
-      onTap: () => go('care'),
-    },
+    { key: 'log', category: 'body', label: 'Log today', sub: 'Mood, flow, anything',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>),
+      onTap: openLogToday },
+    { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/><circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/></svg>),
+      onTap: () => go('insights') },
+    { key: 'period', category: 'urgent', label: 'Edit period', sub: 'When it really started',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2a6 6 0 0 1 5 9.5C13.5 14 10 18 10 18s-3.5-4-5-6.5A6 6 0 0 1 10 2z"/><circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>),
+      onTap: () => go('editPeriodStart') },
+    { key: 'intimate', category: 'intimate', label: 'Your sexual life', sub: 'Desire, lubrication, pleasure',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6z"/><circle cx="10" cy="11" r="1" fill="currentColor" stroke="none"/></svg>),
+      onTap: () => go('intimate') },
+    { key: 'watch', category: 'read', label: 'When something feels off', sub: 'Spot the patterns',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg>),
+      onTap: () => go('watch') },
+    { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>),
+      onTap: () => go('cheatsheet') },
+    { key: 'care', category: 'care', label: 'Care checklist', sub: 'Checkups, screenings',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M6 12l2 2 4-4"/></svg>),
+      onTap: () => go('care') },
   ]
   return (
     <div style={{
@@ -499,33 +441,39 @@ function QuickActions({ go, setActiveLogDate }) {
       scrollSnapType: 'x mandatory',
       marginTop: 20,
     }}>
-      {items.map((it, idx) => (
-        <button key={it.key} onClick={it.onTap} className="glass-card stagger-card"
-          style={{
-            flex: '0 0 44%',
-            maxWidth: 180,
-            scrollSnapAlign: 'start',
-            textAlign: 'left',
-            borderRadius: T.r,
-            padding: '14px 14px 14px',
-            cursor: 'pointer',
-            color: T.text,
-            fontFamily: 'inherit',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            gap: 8,
-            animationDelay: `${idx * 50}ms`,
-          }}>
-          <span style={{ color: T.accent, display: 'inline-flex' }}>{it.icon}</span>
-          <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1 }}>
-            {it.label}
-          </span>
-          <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
-            {it.sub}
-          </span>
-        </button>
-      ))}
+      {items.map((it, idx) => {
+        const colors = sectionColors(it.category)
+        return (
+          <button key={it.key} onClick={it.onTap} className="stagger-card"
+            style={{
+              flex: '0 0 44%',
+              maxWidth: 180,
+              scrollSnapAlign: 'start',
+              textAlign: 'left',
+              borderRadius: T.r,
+              padding: '14px 14px 14px',
+              cursor: 'pointer',
+              color: T.text,
+              fontFamily: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: 8,
+              background: sectionPaper(it.category),
+              border: `1px solid ${colors.accent}22`,
+              boxShadow: `0 1px 0 ${colors.accent}10, 0 10px 22px -18px ${colors.accent}30`,
+              animationDelay: `${idx * 50}ms`,
+            }}>
+            <span style={{ color: colors.accent, display: 'inline-flex' }}>{it.icon}</span>
+            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1 }}>
+              {it.label}
+            </span>
+            <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+              {it.sub}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
