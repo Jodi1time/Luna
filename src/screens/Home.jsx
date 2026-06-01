@@ -635,25 +635,14 @@ function AlwaysHere({ wellness, markWellness }) {
 function ForTodayRow({ phase, go, goArticle }) {
   if (!phase) return null
   const article = ARTICLES.find((a) => a.id === phaseArticle[phase.id]) || ARTICLES[0]
+  // Each For Today tile gets its functional category — nourishment
+  // wears gold, reading wears sage, movement wears moonlight (the
+  // "energy + body" tint). Phase color stays as the LEFT EDGE so
+  // today's cycle identity still anchors the row.
   const items = [
-    {
-      key: 'nourish',
-      eyebrow: 'To nourish',
-      title: phase.nutrition.headline,
-      onTap: () => go('nourish'),
-    },
-    {
-      key: 'read',
-      eyebrow: `${article.read} read`,
-      title: article.title,
-      onTap: () => goArticle(article.id),
-    },
-    {
-      key: 'move',
-      eyebrow: 'To move',
-      title: phase.exercise.headline,
-      onTap: () => go('care'),
-    },
+    { key: 'nourish', category: 'care', eyebrow: 'To nourish', title: phase.nutrition.headline, onTap: () => go('nourish') },
+    { key: 'read',    category: 'read', eyebrow: `${article.read} read`, title: article.title, onTap: () => goArticle(article.id) },
+    { key: 'move',    category: 'plan', eyebrow: 'To move', title: phase.exercise.headline, onTap: () => go('care') },
   ]
   return (
     <div>
@@ -665,29 +654,35 @@ function ForTodayRow({ phase, go, goArticle }) {
         marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
         scrollSnapType: 'x mandatory',
       }}>
-        {items.map((it, idx) => (
-          <button key={it.key} onClick={it.onTap} className="stagger-card glass-card"
-            style={{
-              flex: '0 0 64%',
-              maxWidth: 220,
-              scrollSnapAlign: 'start',
-              textAlign: 'left',
-              borderLeft: `3px solid ${phase.color}`,
-              borderRadius: T.r,
-              padding: '14px 14px 16px',
-              cursor: 'pointer',
-              color: T.text,
-              fontFamily: 'inherit',
-              animationDelay: `${idx * 80}ms`,
-            }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.5, fontWeight: 600, color: T.accent, marginBottom: 8 }}>
-              {it.eyebrow}
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2 }}>
-              {it.title}
-            </div>
-          </button>
-        ))}
+        {items.map((it, idx) => {
+          const c = sectionColors(it.category)
+          return (
+            <button key={it.key} onClick={it.onTap} className="stagger-card"
+              style={{
+                flex: '0 0 64%',
+                maxWidth: 220,
+                scrollSnapAlign: 'start',
+                textAlign: 'left',
+                background: sectionPaper(it.category),
+                border: `1px solid ${c.accent}22`,
+                borderLeft: `3px solid ${phase.color}`,
+                boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
+                borderRadius: T.r,
+                padding: '14px 14px 16px',
+                cursor: 'pointer',
+                color: T.text,
+                fontFamily: 'inherit',
+                animationDelay: `${idx * 80}ms`,
+              }}>
+              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.5, fontWeight: 600, color: c.accent, marginBottom: 8 }}>
+                {it.eyebrow}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2 }}>
+                {it.title}
+              </div>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

@@ -2,6 +2,22 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import { PhaseFlourish } from '../components/phaseFlourishes'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
+
+// One soft category per practice — gives each practice its own
+// chromatic identity in the picker list. Intention/gratitude/feeling
+// wear reflect (lavender); bodyscan wears body (peach); compassion
+// wears intimate (mauve); reframe wears read (sage — "thinking
+// through"); bedtime wears plan (moonlight).
+const PRACTICE_SECTION = {
+  intention:  'reflect',
+  gratitude:  'reflect',
+  feeling:    'reflect',
+  bodyscan:   'body',
+  compassion: 'intimate',
+  reframe:    'read',
+  bedtime:    'plan',
+}
 import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
 import QuickNote from '../components/QuickNote'
@@ -1195,33 +1211,40 @@ export default function Reflect() {
         {/* Guided practices */}
         <Eyebrow>Or sit with one of these</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-          {PRACTICES.map((p) => (
-            <button key={p.id} onClick={() => setOpenPractice(p.id)} className="glass-card"
-              style={{
-                width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-                cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
-              }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2 }}>
-                  {p.title}
-                </div>
-                {counts[p.kind] > 0 && (
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 0.6, fontWeight: 600 }}>
-                    ×{counts[p.kind]}
+          {PRACTICES.map((p) => {
+            const c = sectionColors(PRACTICE_SECTION[p.id] || 'reflect')
+            return (
+              <button key={p.id} onClick={() => setOpenPractice(p.id)}
+                style={{
+                  width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
+                  cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
+                  background: sectionPaper(PRACTICE_SECTION[p.id] || 'reflect'),
+                  border: `1px solid ${c.accent}22`,
+                  borderLeft: `3px solid ${c.accent}`,
+                  boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2 }}>
+                    {p.title}
                   </div>
-                )}
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8 }}>
-                {p.sub}
-              </div>
-              <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.text, lineHeight: 1.55, opacity: 0.85, marginBottom: 8 }}>
-                {p.blurb}
-              </div>
-              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-                {p.cta} →
-              </div>
-            </button>
-          ))}
+                  {counts[p.kind] > 0 && (
+                    <div style={{ fontFamily: T.mono, fontSize: 9.5, color: c.accent, letterSpacing: 0.6, fontWeight: 600 }}>
+                      ×{counts[p.kind]}
+                    </div>
+                  )}
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8 }}>
+                  {p.sub}
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.text, lineHeight: 1.55, opacity: 0.85, marginBottom: 8 }}>
+                  {p.blurb}
+                </div>
+                <div style={{ fontFamily: T.sans, fontSize: 11, color: c.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+                  {p.cta} →
+                </div>
+              </button>
+            )
+          })}
         </div>
 
         {/* Talk to Luna */}

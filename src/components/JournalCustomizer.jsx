@@ -49,6 +49,16 @@ function BackdropPreview({ kind, accent }) {
       </svg>
     )
   }
+  if (kind === 'bends') {
+    return (
+      <div style={{
+        position: 'absolute', inset: -2,
+        background: `linear-gradient(110deg, ${accent}, ${accent}88 35%, ${accent}55 60%, ${accent}aa)`,
+        filter: 'blur(3px)',
+        opacity: 0.85,
+      }} />
+    )
+  }
   if (kind === 'galaxy') {
     // Mini star field — scattered dots with two faint streak lines
     // hinting at galactic rotation. Static preview; real Galaxy is
@@ -311,7 +321,7 @@ export default function JournalCustomizer({
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           THE ATMOSPHERE
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 22 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 22 }}>
           {BACKDROPS.map((b) => {
             const on = backdropKind === b.id
             return (

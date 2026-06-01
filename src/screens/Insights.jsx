@@ -7,6 +7,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCountUp } from '../hooks/useCountUp'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 // SVG arc path between two angles on a ring of given inner / outer radius.
 // Returns the d attribute for a <path>. Used for both the per-day cycle
@@ -166,7 +167,7 @@ function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged })
   const plTag = periodLengthTag(periodLength)
   const vTag  = varianceTag(variance?.conf)
   return (
-    <div className="glass-card insight-stagger" style={{ padding: 16, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 22, animationDelay: '120ms' }}>
+    <div className="insight-stagger" style={{ padding: 16, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, borderLeft: `3px solid ${T.accent}`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 10px 22px -18px ${sectionColors('body').accent}30`, borderRadius: T.r, marginBottom: 22, animationDelay: '120ms' }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
         Your cycles
       </div>
@@ -373,7 +374,7 @@ export default function Insights() {
         {bbtShift && (
           <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '240ms' }}>
             <Eyebrow>Your ovulation marker</Eyebrow>
-            <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${PHASES.ovulation.color}`, borderRadius: T.r, marginTop: 4 }}>
+            <div style={{ padding: 14, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, marginTop: 4 }}>
               <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 8, lineHeight: 1.3 }}>
                 You ovulate around <em style={{ color: T.accent }}>day {bbtShift.shiftDayMedian}.</em>
               </div>
@@ -409,7 +410,7 @@ export default function Insights() {
                 : `You often feel '${display}' in your ${p.phase} phase — ${dayLabel}`
               const concentration = Math.round((p.concentration || 0) * 100)
               return (
-                <div key={p.id} className="glass-card insight-stagger" style={{ padding: 14, borderLeft: `3px solid ${color}`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
+                <div key={p.id} className="insight-stagger" style={{ padding: 14, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 10px 22px -18px ${color}30`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
                       <SymptomIcon id={iconId} size={32} />

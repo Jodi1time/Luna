@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
-import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
+import { SymptomIcon, MOOD_IDS, MOOD_LABELS, MOOD_COLORS, MOOD_TINTS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
@@ -196,21 +196,27 @@ export default function Log() {
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
         <Eyebrow color={acc}>How you're feeling</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
-          {MOOD_IDS.map((id) => (
-            <button key={id} onClick={() => setMood(mood === id ? null : id)}
-              style={{
-                border: 'none', cursor: 'pointer',
-                flex: 1, padding: '8px 2px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                background: mood === id ? acc + '22' : 'transparent',
-                outline: mood === id ? `1.5px solid ${acc}` : 'none',
-                color: mood === id ? acc : T.text,
-                borderRadius: T.r, fontFamily: 'inherit',
-              }}>
-              <SymptomIcon id={id} size={22} />
-              <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
-            </button>
-          ))}
+          {MOOD_IDS.map((id) => {
+            const moodAccent = MOOD_COLORS[id] || acc
+            const moodTint   = MOOD_TINTS[id]
+            const on = mood === id
+            return (
+              <button key={id} onClick={() => setMood(on ? null : id)}
+                style={{
+                  border: 'none', cursor: 'pointer',
+                  flex: 1, padding: '8px 2px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  background: on ? moodTint : 'transparent',
+                  outline: on ? `1.5px solid ${moodAccent}` : 'none',
+                  color: on ? moodAccent : T.text,
+                  borderRadius: T.r, fontFamily: 'inherit',
+                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out)',
+                }}>
+                <SymptomIcon id={id} size={22} />
+                <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
+              </button>
+            )
+          })}
         </div>
         </div>
 

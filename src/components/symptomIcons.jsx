@@ -206,3 +206,27 @@ export const MOOD_LABELS = {
   hopeful: 'Hopeful',
   frustrated: 'Tense',
 }
+
+// One soft accent per mood — used by mood pills + the blob-bloom
+// feedback on tap. Loosens the all-terracotta selection look so the
+// row of moods has chromatic identity per emotion. Soft palette
+// tones, never neon.
+export const MOOD_COLORS = {
+  calm:       '#9D6F8C', // soft luteal purple — settled, internal
+  energy:     '#E8B765', // ovulation gold — alive, outward
+  tired:      '#9BA48B', // muted sage — quiet, slow
+  cramps:     '#C84E2E', // accent terra cotta — pain
+  low:        '#7E5DA8', // moonlight purple — heaviness
+  hopeful:    '#D88BAA', // dusty rose — tender, opening
+  frustrated: '#D88B5A', // warm peach — burning, edged
+}
+// Soft tint paired with each mood — 14% over cream for selection bg.
+export const MOOD_TINTS = {
+  calm:       '#EFE7F3',
+  energy:     '#F8ECCC',
+  tired:      '#E6EBDC',
+  cramps:     '#F7DAD2',
+  low:        '#E8E1F0',
+  hopeful:    '#F5DCE0',
+  frustrated: '#FBE9D9',
+}

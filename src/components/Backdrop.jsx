@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import useLuna from '../store/useLuna'
 import { T } from '../data/theme'
+import { generateShades } from '../lib/colorShades'
 
 // Silk is the only backdrop that pulls in three.js + @react-three/fiber
 // (~200KB gzipped). Lazy-load so the cost only lands on users who
@@ -10,6 +11,10 @@ const Silk = lazy(() => import('./Silk'))
 // Galaxy uses ogl (~40KB gzipped) — much lighter than three.js but
 // still a real dep, so it's lazy-loaded the same way.
 const Galaxy = lazy(() => import('./Galaxy'))
+
+// ColorBends — multi-colour shader (three.js, shares the chunk with
+// Silk). Lazy-loaded.
+const ColorBends = lazy(() => import('./ColorBends'))
 
 // ── Backdrop registry ─────────────────────────────────────────
 // Each kind is a self-contained atmosphere that fills the stage.
@@ -27,6 +32,7 @@ export const BACKDROPS = [
   { id: 'silk',    label: 'Silk' },
   { id: 'petals',  label: 'Petals' },
   { id: 'galaxy',  label: 'Galaxy' },
+  { id: 'bends',   label: 'Bends' },
 ]
 
 // Hex (#RRGGBB) → hue degrees (0-360). Used to tint Galaxy's stars
@@ -306,6 +312,45 @@ function PetalsBackdrop({ accent, subtle }) {
   )
 }
 
+// ── ColorBends (multi-colour shader from React Bits) ────────
+// Three.js fragment shader blending a palette of soft colours into
+// flowing bands. Palette is derived from the user's chosen paper —
+// we generate a small set of shades + the page accent so the bends
+// always read in the same colour family as the rest of the app.
+function ColorBendsBackdrop({ accent, subtle }) {
+  // 5 shades of the accent + accent itself → 6 colour palette in
+  // the same hue family. Caps at 8 (shader limit).
+  const palette = [accent, ...generateShades(accent, 5)]
+  return (
+    <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
+      style={{
+        width: '100%', height: '100%', top: 0, left: 0,
+        transform: 'none',
+        overflow: 'hidden',
+        opacity: subtle ? 0.22 : 0.34,
+      }}>
+      <Suspense fallback={null}>
+        <ColorBends
+          colors={palette}
+          rotation={90}
+          autoRotate={2}
+          speed={0.18}
+          scale={1}
+          frequency={1}
+          warpStrength={1}
+          mouseInfluence={0}
+          parallax={0}
+          noise={0.12}
+          iterations={1}
+          intensity={1.3}
+          bandWidth={7}
+          transparent
+        />
+      </Suspense>
+    </div>
+  )
+}
+
 // ── Silk (WebGL shader from React Bits) ─────────────────────
 // Stock Silk from React Bits: a WebGL plane running a fragment
 // shader that combines sine-warped UVs with a noise term to produce
@@ -404,6 +449,7 @@ export default function Backdrop({ accent, subtle = false, children }) {
   if (kind === 'silk')   return <SilkBackdrop   accent={a} subtle={subtle} />
   if (kind === 'petals') return <PetalsBackdrop accent={a} subtle={subtle} />
   if (kind === 'galaxy') return <GalaxyBackdrop accent={a} subtle={subtle} />
+  if (kind === 'bends')  return <ColorBendsBackdrop accent={a} subtle={subtle} />
   // default — blob (preserves Home's effects via the children slot)
   return <BlobBackdrop accent={a} subtle={subtle}>{children}</BlobBackdrop>
 }
