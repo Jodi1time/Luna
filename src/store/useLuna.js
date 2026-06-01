@@ -32,10 +32,6 @@ const DEFAULT_SETTINGS = {
   notifyWeekly:  true,
   analytics:     true,
   sounds:        false,             // soft chimes on save / milestones — opt-in
-  // Time-of-day vibe — when 'auto', the app tints the room subtly to
-  // match the hour (morning gold, evening warmth, night cool). 'off'
-  // keeps the steady cream paper at all hours.
-  timeOfDayMode: 'auto',
   // 4-card welcome tour. Set true once the user dismisses it; never
   // re-shows after that.
   tutorialSeen: false,

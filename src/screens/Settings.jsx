@@ -211,10 +211,9 @@ export default function Settings() {
       <SectionLabel color={acc}>On your Home screen</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Sticky note in the corner" right={<Toggle on={settings.stickyNoteEnabled !== false} onChange={(v) => updateSetting('stickyNoteEnabled', v)} />} />
-        <Row label="Time of day vibe" right={<Toggle on={(settings?.timeOfDayMode ?? 'auto') === 'auto'} onChange={(v) => updateSetting('timeOfDayMode', v ? 'auto' : 'off')} />} />
       </div>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
-        The sticky note is the little paper for a line to your future self. The time-of-day vibe is the soft tint that shifts with the hour — gold in the morning, warm at dusk, cool at night. Both off if you'd rather a steady, quieter Home.
+        The little hand-drawn paper that holds whatever you want to remember. Off if you'd rather a cleaner Home.
       </div>
       </div>
 
