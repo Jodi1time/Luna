@@ -75,11 +75,13 @@ export default function JournalCustomizer({
   decorations,
   applyToApp,
   backdropKind,
+  custom,
   resolvedAccent,
   onChangeTheme,
   onToggleDecoration,
   onToggleApplyToApp,
   onChangeBackdrop,
+  onChangeCustom,
 }) {
   // Lock body scroll while the sheet is open.
   useEffect(() => {
@@ -128,12 +130,13 @@ export default function JournalCustomizer({
           It is your diary, after all.
         </div>
 
-        {/* Color presets */}
+        {/* Color presets — plus a final "Custom" tile that opens the
+            color picker below it. */}
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           THE PAPER
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 22 }}>
-          {THEME_IDS.map((id) => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: themeId === 'custom' ? 14 : 22 }}>
+          {THEME_IDS.filter((id) => id !== 'custom').map((id) => {
             const t = JOURNAL_THEMES[id]
             const selected = themeId === id
             return (
@@ -174,7 +177,132 @@ export default function JournalCustomizer({
               </button>
             )
           })}
+          {/* Custom tile — opens the color picker below when selected.
+              Swatch previews the user's current custom color (or
+              gradient) so they see exactly what they'll get. */}
+          {(() => {
+            const selected = themeId === 'custom'
+            const swatchBg = custom?.gradient
+              ? `linear-gradient(${custom.angle ?? 150}deg, ${custom.color || '#F5E6D3'}, ${custom.color2 || '#E8C8B5'})`
+              : (custom?.color || '#F5E6D3')
+            return (
+              <button onClick={() => onChangeTheme('custom')}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  padding: 4, fontFamily: 'inherit',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: 12,
+                  background: swatchBg,
+                  border: `2px solid ${selected ? resolvedAccent : 'rgba(26,19,16,0.08)'}`,
+                  boxShadow: selected ? `0 0 0 3px ${resolvedAccent}22` : '0 1px 0 rgba(26,19,16,0.05)',
+                  position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {/* A small "+" mark so the tile reads as "build your own,"
+                      not just another preset. */}
+                  <span style={{ fontFamily: T.serif, fontSize: 22, fontStyle: 'italic', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.35)', lineHeight: 1 }}>
+                    +
+                  </span>
+                </div>
+                <span style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
+                  Custom
+                </span>
+              </button>
+            )
+          })()}
         </div>
+
+        {/* Custom-paper picker — only appears when themeId === 'custom'.
+            Native color inputs for the start (and end, when gradient
+            is on) + a gradient toggle + an angle slider for direction. */}
+        {themeId === 'custom' && (
+          <div style={{
+            padding: '14px 14px 16px',
+            background: 'rgba(26,19,16,0.03)',
+            border: `1px solid ${T.hair}`,
+            borderRadius: T.r,
+            marginBottom: 22,
+            display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                  {custom?.gradient ? 'START COLOUR' : 'COLOUR'}
+                </span>
+                <input
+                  type="color"
+                  value={custom?.color || '#F5E6D3'}
+                  onChange={(e) => onChangeCustom?.({ color: e.target.value })}
+                  style={{
+                    width: '100%', height: 36, border: `1px solid ${T.hair}`,
+                    borderRadius: T.r, background: 'transparent', cursor: 'pointer', padding: 2,
+                  }}
+                />
+              </label>
+              {custom?.gradient && (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                    END COLOUR
+                  </span>
+                  <input
+                    type="color"
+                    value={custom?.color2 || '#E8C8B5'}
+                    onChange={(e) => onChangeCustom?.({ color2: e.target.value })}
+                    style={{
+                      width: '100%', height: 36, border: `1px solid ${T.hair}`,
+                      borderRadius: T.r, background: 'transparent', cursor: 'pointer', padding: 2,
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+            <button onClick={() => onChangeCustom?.({ gradient: !custom?.gradient })}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: custom?.gradient ? resolvedAccent + '12' : 'transparent',
+                border: `1px solid ${custom?.gradient ? resolvedAccent : T.hair}`,
+                borderRadius: T.r, padding: '10px 12px',
+                fontFamily: 'inherit', cursor: 'pointer', color: T.text, textAlign: 'left',
+              }}>
+              <span style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', letterSpacing: -0.1 }}>
+                Blend two colours
+              </span>
+              <span style={{
+                width: 32, height: 18, borderRadius: 9,
+                background: custom?.gradient ? resolvedAccent : 'rgba(26,19,16,0.18)',
+                position: 'relative',
+                transition: 'background 0.25s var(--ease-out)',
+              }}>
+                <span style={{
+                  position: 'absolute', top: 2,
+                  left: custom?.gradient ? 16 : 2,
+                  width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                  transition: 'left 0.25s var(--ease-out)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.18)',
+                }} />
+              </span>
+            </button>
+            {custom?.gradient && (
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                    ANGLE
+                  </span>
+                  <span style={{ fontFamily: T.mono, fontSize: 10, color: T.text, fontWeight: 500 }}>
+                    {custom?.angle ?? 150}°
+                  </span>
+                </div>
+                <input
+                  type="range" min={0} max={360} value={custom?.angle ?? 150}
+                  onChange={(e) => onChangeCustom?.({ angle: Number(e.target.value) })}
+                  style={{ width: '100%', accentColor: resolvedAccent }}
+                />
+              </label>
+            )}
+          </div>
+        )}
 
         {/* Backdrop atmosphere — the animated thing behind every screen */}
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>

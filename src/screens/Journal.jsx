@@ -32,7 +32,7 @@ function paperBackground(theme) {
   return [
     `linear-gradient(to right, transparent 32px, ${theme.accent}55 32px, ${theme.accent}55 33px, transparent 33px)`,
     `repeating-linear-gradient(to bottom, transparent 0, transparent ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H}px)`,
-    theme.paper,
+    theme.paperBg || theme.paper,
   ].join(', ')
 }
 
@@ -420,8 +420,8 @@ export default function Journal() {
   const entries = settings?.journalEntries || []
   const journalTheme = settings?.journalTheme || DEFAULT_JOURNAL_THEME
   const theme = useMemo(
-    () => resolveTheme(journalTheme.themeId, phase?.color),
-    [journalTheme.themeId, phase?.color]
+    () => resolveTheme(journalTheme.themeId, phase?.color, journalTheme.custom),
+    [journalTheme.themeId, phase?.color, journalTheme.custom]
   )
   const todayISO = new Date().toISOString().slice(0, 10)
   const [customizing, setCustomizing] = useState(false)
@@ -503,9 +503,13 @@ export default function Journal() {
     updateJournalTheme({ applyToApp: !journalTheme.applyToApp })
   }
   const handleChangeBackdrop = (id) => { updateJournalTheme({ backdropKind: id }) }
+  const handleChangeCustom = (partial) => {
+    const cur = journalTheme.custom || { color: '#F5E6D3', color2: '#E8C8B5', angle: 150, gradient: false }
+    updateJournalTheme({ custom: { ...cur, ...partial } })
+  }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: theme.paper, color: theme.text, overflow: 'hidden', transition: 'background 0.4s var(--ease-out)' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: theme.paperBg || theme.paper, color: theme.text, overflow: 'hidden', transition: 'background 0.4s var(--ease-out)' }}>
       <Screen>
         <div style={{ padding: '12px 18px 0' }}>
           {/* Header */}
@@ -594,11 +598,13 @@ export default function Journal() {
         decorations={journalTheme.decorations || []}
         applyToApp={journalTheme.applyToApp}
         backdropKind={journalTheme.backdropKind || 'blob'}
+        custom={journalTheme.custom}
         resolvedAccent={theme.accent}
         onChangeTheme={handleChangeTheme}
         onToggleDecoration={handleToggleDecoration}
         onToggleApplyToApp={handleToggleApplyToApp}
         onChangeBackdrop={handleChangeBackdrop}
+        onChangeCustom={handleChangeCustom}
       />
 
       {/* First-time camera-roll explainer. The OS picker handles the

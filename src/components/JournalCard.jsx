@@ -10,7 +10,7 @@ const LINE_H = 24
 // opens the full journal.
 export default function JournalCard({ entries, journalTheme, phaseColor, onTap }) {
   const jt = journalTheme || DEFAULT_JOURNAL_THEME
-  const theme = resolveTheme(jt.themeId, phaseColor)
+  const theme = resolveTheme(jt.themeId, phaseColor, jt.custom)
   const latest = (entries && entries[0]) || null
   const preview = latest
     ? (latest.body.length > 180 ? latest.body.slice(0, 176).trimEnd() + '…' : latest.body)
@@ -18,7 +18,7 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
   const paper = [
     `linear-gradient(to right, transparent 28px, ${theme.accent}55 28px, ${theme.accent}55 29px, transparent 29px)`,
     `repeating-linear-gradient(to bottom, transparent 0, transparent ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H}px)`,
-    theme.paper,
+    theme.paperBg || theme.paper,
   ].join(', ')
   const entryCount = entries?.length || 0
   return (

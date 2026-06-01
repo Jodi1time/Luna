@@ -28,7 +28,15 @@ export function AppShell({ children }) {
   const skinApp = Boolean(journalTheme.applyToApp)
   const themeData = JOURNAL_THEMES[journalTheme.themeId] || JOURNAL_THEMES.cream
   const decorationsAccent = themeData.accent || T.accent
-  const frameBg = skinApp ? themeData.paper : T.bg
+  // When skinning the app with the Custom theme, honour the user's
+  // color picker / gradient choice; otherwise use the preset paper.
+  const customCfg = journalTheme.custom
+  const customBg = (journalTheme.themeId === 'custom' && customCfg)
+    ? (customCfg.gradient
+        ? `linear-gradient(${customCfg.angle ?? 150}deg, ${customCfg.color || themeData.paper}, ${customCfg.color2 || themeData.paper})`
+        : (customCfg.color || themeData.paper))
+    : themeData.paper
+  const frameBg = skinApp ? customBg : T.bg
   return (
     <div style={{
       height: '100dvh',
