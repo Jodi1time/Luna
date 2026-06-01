@@ -78,7 +78,24 @@ export default function Auth() {
         setInfo('Check your email for a reset link.')
       }
     } catch (e) {
-      setError(e.message || 'Something went wrong')
+      // Translate raw Supabase / network errors into something a human
+      // can act on without exposing the internals.
+      const raw = (e?.message || '').toLowerCase()
+      let friendly = e?.message || 'Something went wrong. Try again in a moment.'
+      if (raw.includes('rate limit') || raw.includes('too many requests')) {
+        friendly = 'Luna needs a quick breather. Give it a few minutes and try again.'
+      } else if (raw.includes('invalid login') || raw.includes('invalid credentials')) {
+        friendly = "That email and password don't match. Double-check, or use Forgot password? below."
+      } else if (raw.includes('email not confirmed')) {
+        friendly = "Your email isn't confirmed yet. Check your inbox (and spam) for the link from Luna."
+      } else if (raw.includes('user already registered') || raw.includes('already registered')) {
+        friendly = 'An account with this email already exists. Try signing in instead.'
+      } else if (raw.includes('network') || raw.includes('failed to fetch')) {
+        friendly = "Can't reach Luna right now. Check your connection and try again."
+      } else if (raw.includes('password') && raw.includes('short')) {
+        friendly = 'Pick a password with at least 8 characters.'
+      }
+      setError(friendly)
     } finally {
       setBusy(false)
     }
