@@ -771,40 +771,60 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Parallax + scroll-fade — the cover drifts a hair slower than
-  // the rest of the content AND fades out before the user scrolls
-  // over it. The fade is what prevents the cover's content (big
-  // day number, phase) from bleeding through the frosted glass
-  // cards below it as they pass over.
+  // Parallax + staged scroll-fade. As the user scrolls down:
+  //   1. The cover drifts a hair slower than the rest of the content
+  //      (0.18 parallax) — gentle depth feel.
+  //   2. The BODY of the cover (contextLine, bodyMood, phasePresence,
+  //      period CTA, etc.) fades first, between scrollY 60-180.
+  //   3. The HEADLINE (eyebrow + big day number + phase name) stays
+  //      longer — fades between scrollY 200-340. During step 2 it
+  //      also subtly scales down (compression feel) before fading.
+  //   4. The cover's layout footprint COLLAPSES via negative
+  //      margin-bottom in lockstep with the fade, so content below
+  //      pulls up to fill the gap — no empty void.
   //
   // Throttled via rAF and applied directly to the DOM node so we
   // don't re-render on every scroll event.
   const screenRef = useRef(null)
   const coverRef = useRef(null)
+  const headlineRef = useRef(null)
+  const bodyRef = useRef(null)
   useEffect(() => {
     const el = screenRef.current
     if (!el) return
     let rafId = null
     let lastY = 0
-    // Fade band: stays full opacity for the first 60px of scroll
-    // (so the gentle parallax reads clean), then linearly fades to
-    // 0 by 240px — which is roughly when content starts overlapping
-    // visually with the cover area through the frosted cards.
-    const FADE_START = 60
-    const FADE_END = 240
+    const BODY_FADE_START = 60
+    const BODY_FADE_END = 180
+    const HEAD_FADE_START = 200
+    const HEAD_FADE_END = 340
+    // Maximum collapse via negative margin — roughly the cover's
+    // natural height. Subsequent content pulls up by this amount
+    // as the cover fully fades.
+    const MAX_COLLAPSE = 320
+    const clamp = (v) => Math.min(1, Math.max(0, v))
     const update = () => {
       rafId = null
       const cover = coverRef.current
       if (!cover) return
-      // 0.18 multiplier on the parallax shift — subtle, never seen.
+      const bodyFade = clamp((lastY - BODY_FADE_START) / (BODY_FADE_END - BODY_FADE_START))
+      const headFade = clamp((lastY - HEAD_FADE_START) / (HEAD_FADE_END - HEAD_FADE_START))
+      const collapseAmount = Math.max(bodyFade, headFade) * MAX_COLLAPSE
       cover.style.transform = `translateY(${lastY * 0.18}px)`
-      // Opacity fade — clamped to [0, 1].
-      const t = (lastY - FADE_START) / (FADE_END - FADE_START)
-      const fade = Math.min(1, Math.max(0, t))
-      cover.style.opacity = String(1 - fade)
-      // Disable pointer events when nearly invisible so users can't
-      // accidentally tap something they can no longer see.
-      cover.style.pointerEvents = fade > 0.92 ? 'none' : 'auto'
+      // Pull content below upward as the cover fades. Default
+      // marginBottom on the cover was 4; we go negative as we collapse.
+      cover.style.marginBottom = `${4 - collapseAmount}px`
+      cover.style.pointerEvents = headFade > 0.92 ? 'none' : 'auto'
+      if (bodyRef.current) {
+        bodyRef.current.style.opacity = String(1 - bodyFade)
+      }
+      if (headlineRef.current) {
+        // Slight scale-down of the headline during the body fade —
+        // gives a "compression" cue before the headline itself fades.
+        const compress = 1 - bodyFade * 0.12
+        headlineRef.current.style.opacity = String(1 - headFade)
+        headlineRef.current.style.transform = `scale(${compress})`
+      }
     }
     const onScroll = () => {
       lastY = el.scrollTop
@@ -1035,96 +1055,111 @@ export default function Home() {
             </div>
           )}
 
-          {/* Cover — Cycle variant. willChange hints the GPU that
-              transform + opacity are about to be animated; transition
-              softens both the parallax drift and the scroll-fade so
-              they read as one smooth motion. */}
+          {/* Cover — Cycle variant. The cover is split into two
+              ref-tagged sections so the scroll-fade can stage them
+              independently:
+                headlineRef → eyebrow + big day number + phase name
+                bodyRef     → contextLine + bodyMood + button + period CTA
+              willChange + transition hints make the staged fade and
+              the margin-collapse read as one smooth motion rather
+              than separate jolts. */}
           {!isPreg && (
           <div ref={coverRef} style={{
             marginBottom: 4,
-            willChange: 'transform, opacity',
-            transition: 'transform 90ms linear, opacity 200ms var(--ease-out)',
+            willChange: 'transform, margin-bottom',
+            transition: 'transform 90ms linear, margin-bottom 140ms var(--ease-out)',
           }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
-              {onHormonalBC
-                ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
-                : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
-            </div>
-            <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
-              className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
-              style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
-              {cycleDay ? animatedDay : '—'}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
-              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05 }}>
-                {phase?.name || 'Just getting started'}.
+            <div ref={headlineRef} style={{
+              willChange: 'opacity, transform',
+              transformOrigin: 'top left',
+              transition: 'opacity 180ms var(--ease-out), transform 180ms var(--ease-out)',
+            }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
+                {onHormonalBC
+                  ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
+                  : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
               </div>
-              {phase && (
-                <span style={{ color: phase.color, opacity: 0.75, display: 'inline-flex' }} aria-hidden="true">
-                  <PhaseFlourish phaseId={phase.id} size={26} />
-                </span>
-              )}
-            </div>
-
-            {contextLine && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
-                  {contextLine.text}
+              <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
+                className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
+                style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+                {cycleDay ? animatedDay : '—'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05 }}>
+                  {phase?.name || 'Just getting started'}.
                 </div>
-                {contextLine.sub && (
-                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
-                    {contextLine.sub}
-                  </div>
+                {phase && (
+                  <span style={{ color: phase.color, opacity: 0.75, display: 'inline-flex' }} aria-hidden="true">
+                    <PhaseFlourish phaseId={phase.id} size={26} />
+                  </span>
                 )}
               </div>
-            )}
+            </div>
 
-            {phase && !onHormonalBC && (
-              <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text }}>
-                {phase.bodyMood}
-              </div>
-            )}
-            {phase && !onHormonalBC && (
-              <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
-                {phasePresence[phase.id]}
-              </div>
-            )}
-            {phase && onHormonalBC && (
-              <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 14, color: T.text }}>
-                Your hormones are steadied by your method — but patterns can still emerge. Keep noticing.
-              </div>
-            )}
+            <div ref={bodyRef} style={{
+              willChange: 'opacity',
+              transition: 'opacity 180ms var(--ease-out)',
+            }}>
+              {contextLine && (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
+                    {contextLine.text}
+                  </div>
+                  {contextLine.sub && (
+                    <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
+                      {contextLine.sub}
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {phase && (
-              <button onClick={() => goPhase(phase.id)}
-                style={{ marginTop: 16, background: 'transparent', border: `1px solid ${T.text}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 600, color: T.text, borderRadius: T.r }}>
-                More about this phase →
-              </button>
-            )}
+              {phase && !onHormonalBC && (
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text }}>
+                  {phase.bodyMood}
+                </div>
+              )}
+              {phase && !onHormonalBC && (
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
+                  {phasePresence[phase.id]}
+                </div>
+              )}
+              {phase && onHormonalBC && (
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 14, color: T.text }}>
+                  Your hormones are steadied by your method — but patterns can still emerge. Keep noticing.
+                </div>
+              )}
 
-            {/* Period-start nudge — only when relevant */}
-            {showPeriodCTA && (
-              <div style={{ marginTop: 18, padding: 16, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r }}>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
-                  {cycleDay > cycleLength
-                    ? 'Wondering if your period has arrived.'
-                    : 'Your period might be on its way.'}
+              {phase && (
+                <button onClick={() => goPhase(phase.id)}
+                  style={{ marginTop: 16, background: 'transparent', border: `1px solid ${T.text}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 600, color: T.text, borderRadius: T.r }}>
+                  More about this phase →
+                </button>
+              )}
+
+              {/* Period-start nudge — only when relevant */}
+              {showPeriodCTA && (
+                <div style={{ marginTop: 18, padding: 16, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
+                    {cycleDay > cycleLength
+                      ? 'Wondering if your period has arrived.'
+                      : 'Your period might be on its way.'}
+                  </div>
+                  <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
+                    Tap once if today is day one — it helps Luna learn your rhythm.
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={logPeriodStart}
+                      style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
+                      Yes — today is day one
+                    </button>
+                    <button onClick={() => go('log')}
+                      style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
+                      Another day
+                    </button>
+                  </div>
                 </div>
-                <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
-                  Tap once if today is day one — it helps Luna learn your rhythm.
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={logPeriodStart}
-                    style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
-                    Yes — today is day one
-                  </button>
-                  <button onClick={() => go('log')}
-                    style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
-                    Another day
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
           )}
 
