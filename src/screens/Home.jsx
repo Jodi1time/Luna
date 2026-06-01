@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -413,6 +413,18 @@ function QuickActions({ go, setActiveLogDate }) {
       onTap: openLogToday,
     },
     {
+      key: 'insights',
+      label: 'What we’ve noticed',
+      sub: 'Your cycle wheel and patterns',
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8" />
+          <circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+      onTap: () => go('insights'),
+    },
+    {
       key: 'period',
       label: 'Edit period',
       sub: 'When it really started',
@@ -749,27 +761,38 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Staged scroll-collapse. The COVER WRAPPER translates up in lockstep
-  // with a margin-bottom shrink — so cover content and cards-below
-  // move together as one unit. No overlap zone, ever. Inside the
-  // cover, body opacity fades first, headline scales + fades second.
+  // Collapse-in-place scroll behaviour. The cover does NOT slide
+  // off the top — it physically COMPRESSES where it sits, freeing
+  // real layout space below so cards-below rise up to fill the gap.
   //
-  // Phases (single normalized progress p, 0 → 1 over COLLAPSE_DISTANCE):
-  //   • bodyProg     (p 0.00 → 0.42): body opacity fades 1 → 0
-  //   • headMoveProg (p 0.32 → 0.80): headline scales 1 → 0.5
+  // Mechanics per section:
+  //   • bodyRef    — opacity fade + maxHeight shrink to 0. Content
+  //     stays in place but progressively disappears; layout space
+  //     reclaimed by the shrinking maxHeight.
+  //   • headlineRef — CSS scale (visual: the big "3" shrinks, the
+  //     phase eyebrow + name compress toward the top-left origin)
+  //     paired with a maxHeight shrink (layout: matches the visual
+  //     compression so cards below come up). Then opacity fades out
+  //     once it's physically out of the way.
+  //
+  // Phases (normalized progress p, 0 → 1 over COLLAPSE_DISTANCE):
+  //   • bodyProg     (p 0.00 → 0.42): body fades + collapses
+  //   • headMoveProg (p 0.32 → 0.80): headline scales 1 → 0.5 +
+  //     maxHeight shrinks proportionally
   //   • headFadeProg (p 0.78 → 1.00): headline opacity fades 1 → 0
   //
-  // collapse = bodyProg*200 + headMoveProg*110 — sums the natural
-  // height removed at each stage. The cover wrapper translates by
-  // -collapse and its marginBottom shrinks by the same amount, so
-  // visually the cover slides up while cards rise from below at
-  // matching rate. No card ever overlaps the cover content.
+  // Natural heights are measured in a layout effect so the maxHeight
+  // shrinks reference the actual rendered heights of each section,
+  // re-measured whenever the cover content changes (phase, day,
+  // period CTA visibility, BC mode).
   //
   // rAF-throttled, written direct to DOM — no re-render on scroll.
   const screenRef = useRef(null)
   const coverRef = useRef(null)
   const headlineRef = useRef(null)
   const bodyRef = useRef(null)
+  const bodyNatH = useRef(9999)
+  const headNatH = useRef(9999)
   useEffect(() => {
     const el = screenRef.current
     if (!el) return
@@ -788,18 +811,14 @@ export default function Home() {
 
       if (bodyRef.current) {
         bodyRef.current.style.opacity = String(1 - bodyProg)
+        bodyRef.current.style.maxHeight = `${bodyNatH.current * (1 - bodyProg)}px`
       }
       if (headlineRef.current) {
         const scale = 1 - headMoveProg * 0.5
         headlineRef.current.style.opacity = String(1 - headFadeProg)
         headlineRef.current.style.transform = `scale(${scale})`
+        headlineRef.current.style.maxHeight = `${headNatH.current * scale}px`
       }
-      // Cover wrapper rides UP at the same rate cards-below rise.
-      // Both transforms reference the natural cover height we're
-      // removing in each phase, summed.
-      const collapse = bodyProg * 200 + headMoveProg * 110
-      cover.style.transform = `translate3d(0, ${-collapse}px, 0)`
-      cover.style.marginBottom = `${4 - collapse}px`
       cover.style.pointerEvents = headFadeProg > 0.92 ? 'none' : 'auto'
     }
     const onScroll = () => {
@@ -840,6 +859,20 @@ export default function Home() {
   // After 6pm, if she set an intention today, surface a check-in.
   const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+
+  // Measure natural heights of the headline + body sections AFTER
+  // each render that may have changed their contents. scrollHeight
+  // returns the unconstrained content height even when maxHeight
+  // is applied — perfect for our collapse math which multiplies
+  // the natural height by a progress fraction. Wrapping in rAF lets
+  // the layout settle (font load, dynamic content) before measuring.
+  useLayoutEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      if (bodyRef.current) bodyNatH.current = bodyRef.current.scrollHeight
+      if (headlineRef.current) headNatH.current = headlineRef.current.scrollHeight
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [phase?.id, cycleDay, showPeriodCTA, onHormonalBC, isPreg])
 
   // Mood → emotional color. Used to tint the blob ripple when she
   // taps a mood — Luna's quiet way of saying "I received that, in
@@ -1042,11 +1075,11 @@ export default function Home() {
           {!isPreg && (
           <div ref={coverRef} style={{
             marginBottom: 4,
-            willChange: 'transform, margin-bottom',
           }}>
             <div ref={headlineRef} style={{
-              willChange: 'opacity, transform',
+              willChange: 'opacity, transform, max-height',
               transformOrigin: 'top left',
+              overflow: 'hidden',
             }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 4 }}>
                 {onHormonalBC
@@ -1071,8 +1104,8 @@ export default function Home() {
             </div>
 
             <div ref={bodyRef} style={{
-              willChange: 'opacity, transform',
-              transformOrigin: 'top left',
+              willChange: 'opacity, max-height',
+              overflow: 'hidden',
             }}>
               {contextLine && (
                 <div style={{ marginTop: 6 }}>
