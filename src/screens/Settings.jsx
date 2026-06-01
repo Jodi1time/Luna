@@ -4,6 +4,7 @@ import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
+import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { BC_LABELS } from '../data/birthControl'
 import { signOut } from '../lib/supabase'
@@ -109,9 +110,7 @@ export default function Settings() {
   const deleteAccount = () => deleteLunaAccount({ session, clearLocalData })
   return (
     <div className="home-stage">
-      <div className="blob-stage subtle" aria-hidden="true">
-        <div className="breathing-blob" style={{ '--phase-color': acc }} />
-      </div>
+      <Backdrop accent={acc} subtle />
       <Screen>
         <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ padding: '20px 22px 0', color: T.text }}>

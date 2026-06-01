@@ -13,6 +13,7 @@ import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
+import Backdrop from '../components/Backdrop'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -111,16 +112,20 @@ function BackgroundBlob({ color, effect }) {
   // which lets mood-taps tint the feedback bloom in that mood's
   // emotional color without changing the resting blob.
   const effectColor = effect?.color || color
+  // Backdrop reads the user's chosen kind from settings. For the
+  // default 'blob' kind it renders the existing breathing-blob and
+  // we layer ripple/bloom effects on top (mood-tap feedback). For
+  // alternative atmospheres (moons, aurora, petals, constellation)
+  // the effects don't apply — the new backdrop is just visual.
   return (
-    <div className="blob-stage" aria-hidden="true">
-      <div className="breathing-blob" style={{ '--phase-color': color }} />
+    <Backdrop accent={color}>
       {effect?.name === 'ripple' && (
         <div key={effect.id} className="blob-ripple" style={{ '--phase-color': effectColor }} />
       )}
       {effect?.name === 'bloom' && (
         <div key={effect.id} className="blob-bloom" style={{ '--phase-color': effectColor }} />
       )}
-    </div>
+    </Backdrop>
   )
 }
 

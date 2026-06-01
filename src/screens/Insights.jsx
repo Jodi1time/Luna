@@ -5,6 +5,7 @@ import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC, getPha
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCountUp } from '../hooks/useCountUp'
+import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 
 // SVG arc path between two angles on a ring of given inner / outer radius.
@@ -294,11 +295,7 @@ export default function Insights() {
 
   return (
     <div className="home-stage">
-      {!onHormonalBC && (
-        <div className="blob-stage subtle" aria-hidden="true">
-          <div className="breathing-blob" style={{ '--phase-color': blobColor }} />
-        </div>
-      )}
+      {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginTop: 6, marginBottom: 10, animationDelay: '0ms' }}>

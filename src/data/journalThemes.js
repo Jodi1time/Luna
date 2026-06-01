@@ -83,6 +83,10 @@ export const DEFAULT_JOURNAL_THEME = {
   themeId: 'cream',
   decorations: [],
   applyToApp: false,
+  // 'blob' | 'moons' | 'aurora' | 'petals' | 'constellation' —
+  // the animated atmosphere behind every screen. Default is the
+  // signature breathing blob.
+  backdropKind: 'blob',
 }
 
 // Resolve a theme into its color values. Passing a phaseColor uses

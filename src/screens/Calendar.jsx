@@ -4,6 +4,7 @@ import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
+import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 
 const MS_PER_DAY = 86400000
@@ -103,11 +104,7 @@ export default function Calendar() {
 
   return (
     <div className="home-stage">
-      {!onHormonalBC && (
-        <div className="blob-stage subtle" aria-hidden="true">
-          <div className="breathing-blob" style={{ '--phase-color': blobColor }} />
-        </div>
-      )}
+      {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6, animationDelay: '0ms' }}>

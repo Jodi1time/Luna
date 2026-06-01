@@ -221,6 +221,7 @@ export default function Journal() {
   const handleToggleApplyToApp = () => {
     updateJournalTheme({ applyToApp: !journalTheme.applyToApp })
   }
+  const handleChangeBackdrop = (id) => { updateJournalTheme({ backdropKind: id }) }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: theme.paper, color: theme.text, overflow: 'hidden', transition: 'background 0.4s var(--ease-out)' }}>
@@ -292,10 +293,12 @@ export default function Journal() {
         themeId={journalTheme.themeId}
         decorations={journalTheme.decorations || []}
         applyToApp={journalTheme.applyToApp}
+        backdropKind={journalTheme.backdropKind || 'blob'}
         resolvedAccent={theme.accent}
         onChangeTheme={handleChangeTheme}
         onToggleDecoration={handleToggleDecoration}
         onToggleApplyToApp={handleToggleApplyToApp}
+        onChangeBackdrop={handleChangeBackdrop}
       />
     </div>
   )

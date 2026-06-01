@@ -1,6 +1,58 @@
 import { useEffect } from 'react'
 import { T } from '../data/theme'
 import { JOURNAL_THEMES, THEME_IDS, DECORATIONS } from '../data/journalThemes'
+import { BACKDROPS } from './Backdrop'
+
+// Tiny static preview of each backdrop kind for the picker swatch.
+// Not animated — that's reserved for the live backdrop. Just enough
+// shape to read "moons" vs "aurora" vs "petals" vs "stars" at a glance.
+function BackdropPreview({ kind, accent }) {
+  if (kind === 'blob') {
+    return (
+      <div style={{ position: 'absolute', inset: 6, borderRadius: '50%',
+        background: accent, opacity: 0.55, filter: 'blur(4px)' }} />
+    )
+  }
+  if (kind === 'moons') {
+    return (
+      <svg viewBox="0 0 32 32" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        <path d="M22 6 A 8 8 0 1 0 22 22 A 6 6 0 1 1 22 6 Z" fill={accent} opacity="0.6" />
+        <path d="M10 20 A 5 5 0 1 0 10 30 A 4 4 0 1 1 10 20 Z" fill={accent} opacity="0.45" />
+      </svg>
+    )
+  }
+  if (kind === 'aurora') {
+    return (
+      <>
+        <div style={{ position: 'absolute', top: 4, left: 6, width: 22, height: 22, background: accent, opacity: 0.5, filter: 'blur(8px)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', bottom: 4, right: 4, width: 18, height: 18, background: accent, opacity: 0.35, filter: 'blur(8px)', borderRadius: '50%' }} />
+      </>
+    )
+  }
+  if (kind === 'petals') {
+    return (
+      <svg viewBox="0 0 32 44" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        <ellipse cx="8"  cy="14" rx="3" ry="6" fill={accent} opacity="0.7" transform="rotate(20 8 14)" />
+        <ellipse cx="20" cy="22" rx="3" ry="6" fill={accent} opacity="0.55" transform="rotate(-20 20 22)" />
+        <ellipse cx="13" cy="34" rx="3" ry="6" fill={accent} opacity="0.45" transform="rotate(15 13 34)" />
+      </svg>
+    )
+  }
+  if (kind === 'constellation') {
+    const pts = [[8,8],[22,6],[14,16],[6,22],[24,22],[18,28]]
+    return (
+      <svg viewBox="0 0 32 32" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+        <line x1="8" y1="8" x2="22" y2="6"   stroke={accent} strokeWidth="0.6" opacity="0.4" />
+        <line x1="22" y1="6" x2="24" y2="22" stroke={accent} strokeWidth="0.6" opacity="0.4" />
+        <line x1="14" y1="16" x2="6" y2="22" stroke={accent} strokeWidth="0.6" opacity="0.4" />
+        {pts.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r="1.4" fill={accent} opacity="0.85" />
+        ))}
+      </svg>
+    )
+  }
+  return null
+}
 
 // Bottom-sheet customisation panel — color, decorations, and an
 // optional "skin the whole app" toggle. The user's diary, their
@@ -11,10 +63,12 @@ export default function JournalCustomizer({
   themeId,
   decorations,
   applyToApp,
+  backdropKind,
   resolvedAccent,
   onChangeTheme,
   onToggleDecoration,
   onToggleApplyToApp,
+  onChangeBackdrop,
 }) {
   // Lock body scroll while the sheet is open.
   useEffect(() => {
@@ -105,6 +159,37 @@ export default function JournalCustomizer({
                 </div>
                 <span style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
                   {t.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Backdrop atmosphere — the animated thing behind every screen */}
+        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+          THE ATMOSPHERE
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 22 }}>
+          {BACKDROPS.map((b) => {
+            const on = backdropKind === b.id
+            return (
+              <button key={b.id} onClick={() => onChangeBackdrop(b.id)}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  padding: 4, fontFamily: 'inherit',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12,
+                  background: T.bg,
+                  border: `2px solid ${on ? resolvedAccent : 'rgba(26,19,16,0.08)'}`,
+                  boxShadow: on ? `0 0 0 3px ${resolvedAccent}22` : '0 1px 0 rgba(26,19,16,0.05)',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <BackdropPreview kind={b.id} accent={resolvedAccent} />
+                </div>
+                <span style={{ fontFamily: T.sans, fontSize: 9.5, fontWeight: 600, color: on ? T.text : T.muted, letterSpacing: 0.3 }}>
+                  {b.label}
                 </span>
               </button>
             )

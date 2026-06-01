@@ -5,6 +5,7 @@ import { ARTICLES, PHASES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { ARTICLE_PHASE, articleAccent as accentFor } from '../lib/articlePhase'
+import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 
 // Pick a hero article for the current phase. Looks for articles
@@ -52,9 +53,7 @@ export default function Library() {
 
   return (
     <div className="home-stage">
-      <div className="blob-stage subtle" aria-hidden="true">
-        <div className="breathing-blob" style={{ '--phase-color': heroAccent }} />
-      </div>
+      <Backdrop accent={heroAccent} subtle />
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
 

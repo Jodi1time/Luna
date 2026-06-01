@@ -524,6 +524,52 @@ button.glass-card:active {
   animation: fadeUp 0.55s var(--ease-out) both;
 }
 
+/* ── Alternative backdrops ──────────────────────────────────────
+   Each is opt-in via Settings → Make it yours. Honor
+   prefers-reduced-motion by going still. */
+
+/* Moons — slow rotation + faint horizontal drift. Keeps each
+   crescent's transform-origin at its own centroid via translate. */
+@keyframes moonDrift {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg);   }
+  50%      { transform: translate(-46%, -54%) rotate(6deg);   }
+}
+
+/* Aurora — three blurred radials drift independently. Slow because
+   the visual is heavy filter:blur(60px) — fast motion would chug. */
+@keyframes auroraDrift {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    }
+  33%      { transform: translate(-58%, -42%) scale(1.12); }
+  66%      { transform: translate(-42%, -58%) scale(0.92); }
+}
+
+/* Petals — vertical fall from above the screen to below, plus a
+   horizontal drift set per-petal via --petal-drift inline style.
+   Petals slow-spin as they fall. */
+@keyframes petalDrift {
+  0%   { transform: translate(0,    -10px) rotate(0deg);    opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translate(var(--petal-drift, 20px), 110vh) rotate(280deg); opacity: 0; }
+}
+
+/* Stars twinkle — soft opacity pulse with a tiny scale breath so it
+   reads as a star, not a blinking pixel. */
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.9); }
+  50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Hold the resting state for each animated backdrop layer. */
+  [style*="moonDrift"],
+  [style*="auroraDrift"],
+  [style*="petalDrift"],
+  [style*="starTwinkle"] {
+    animation: none !important;
+  }
+}
+
 /* StickyNote settle — when the sticky note first mounts on Home, it
    drops in with a tiny overshoot wobble on the OUTER wrapper, like
    a real piece of paper being pressed onto the wall. Inner element
