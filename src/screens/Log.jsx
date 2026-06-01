@@ -4,6 +4,7 @@ import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
@@ -146,39 +147,54 @@ export default function Log() {
 
   const dateLabel = new Date(editingISO + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
   const isToday = editingISO === todayISO
+  // Phase-aware accent — when Luna knows the user's phase, the form
+  // tints itself to that color. Today's phase becomes the Log's
+  // visual key (selection borders, save button, dividers, flourishes).
+  // Falls back to the brand accent when no phase is known yet.
+  const acc = phase?.color || T.accent
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 22px 30px' }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans }}>
+        <div className="insight-stagger" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans, animationDelay: '0ms' }}>
           <button onClick={handleBack} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => shiftDate(-1)} aria-label="Previous day"
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.text, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>‹</button>
-            <div style={{ fontSize: 12.5, color: isToday ? T.text : T.accent, fontFamily: T.serif, fontStyle: 'italic', minWidth: 140, textAlign: 'center', letterSpacing: -0.1 }}>
+            <div style={{ fontSize: 12.5, color: isToday ? T.text : acc, fontFamily: T.serif, fontStyle: 'italic', minWidth: 140, textAlign: 'center', letterSpacing: -0.1 }}>
               {isToday ? 'Today' : dateLabel}
             </div>
             <button onClick={() => shiftDate(1)} disabled={!canGoNext} aria-label="Next day"
               style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : T.hair, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>›</button>
           </div>
           <button onClick={save} className={savedJustNow ? 'success-pulse' : ''}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.accent, padding: '6px 10px', fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 6 }}>
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: acc, padding: '6px 10px', fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 6 }}>
             {savedJustNow ? 'Saved' : 'Save'}
           </button>
         </div>
 
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, margin: '16px 0 6px' }}>
-          {isToday ? <>Tell me about<br /><em>your day.</em></> : <>How was<br /><em>that day?</em></>}
+        {/* Title row + phase flourish so the page opens with a sign
+            of life, matched to the day's phase color. */}
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, margin: '16px 0 6px', animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, flex: 1, minWidth: 0 }}>
+            {isToday ? <>Tell me about<br /><em>your day.</em></> : <>How was<br /><em>that day?</em></>}
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 4 }}>
+              <PhaseFlourish phaseId={phase.id} size={26} />
+            </div>
+          )}
         </div>
-        <div style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
           {isToday
             ? <>Whatever you noticed. None of these are required — tap the <span style={{ fontFamily: T.mono }}>?</span> on any symptom for the science behind it.</>
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
 
         {/* Mood */}
-        <Eyebrow>How you're feeling</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
+        <Eyebrow color={acc}>How you're feeling</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
           {MOOD_IDS.map((id) => (
             <button key={id} onClick={() => setMood(mood === id ? null : id)}
@@ -186,9 +202,9 @@ export default function Log() {
                 border: 'none', cursor: 'pointer',
                 flex: 1, padding: '8px 2px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                background: mood === id ? T.accent + '22' : 'transparent',
-                outline: mood === id ? `1.5px solid ${T.accent}` : 'none',
-                color: mood === id ? T.accent : T.text,
+                background: mood === id ? acc + '22' : 'transparent',
+                outline: mood === id ? `1.5px solid ${acc}` : 'none',
+                color: mood === id ? acc : T.text,
                 borderRadius: T.r, fontFamily: 'inherit',
               }}>
               <SymptomIcon id={id} size={22} />
@@ -196,18 +212,20 @@ export default function Log() {
             </button>
           ))}
         </div>
+        </div>
 
         {/* Symptoms */}
-        <Eyebrow>What your body's telling you</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '180ms' }}>
+        <Eyebrow color={acc}>What your body's telling you</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 24 }}>
           {Object.entries(SYMPTOMS).slice(0, 8).map(([id, s]) => {
             const on = symptoms.includes(id)
             return (
               <div key={`${id}-${on ? 'on' : 'off'}`}
                 className={on && activeSym === id ? 'tap-bloom' : ''}
-                style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
+                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
                 <button onClick={() => toggleSym(id)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: on ? T.accent : T.text, padding: 0, width: '100%' }}>
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: on ? acc : T.text, padding: 0, width: '100%' }}>
                   <SymptomIcon id={id} size={22} />
                   <span style={{ fontSize: 10, fontWeight: 500 }}>{s.label}</span>
                 </button>
@@ -219,18 +237,19 @@ export default function Log() {
             )
           })}
         </div>
+        </div>
 
         {/* Phase-aware insight for the last-tapped symptom — same pattern
             as the mood-tap insights on Home. */}
         {symInsight && (
           <div key={`${phase?.id}-${activeSym}`}
-            style={{ marginTop: -14, marginBottom: 24, padding: '12px 14px', background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
+            style={{ marginTop: -14, marginBottom: 24, padding: '12px 14px', background: acc + '10', borderLeft: `3px solid ${acc}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
             <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.text }}>
               {symInsight.text}
             </div>
             {symInsight.read && (
               <button onClick={() => goArticle(symInsight.read)}
-                style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: acc, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
                 Read more →
               </button>
             )}
@@ -238,21 +257,24 @@ export default function Log() {
         )}
 
         {/* Flow */}
-        <Eyebrow>Bleeding</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '220ms' }}>
+        <Eyebrow color={acc}>Bleeding</Eyebrow>
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
           {['Spotting','Light','Medium','Heavy'].map((f) => {
             const on = flow === f
             return (
               <button key={f} onClick={() => setFlow(on ? null : f)}
-                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
+                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
                 {f}
               </button>
             )
           })}
         </div>
+        </div>
 
         {/* Temperature (BBT) */}
-        <Eyebrow>Your morning temperature</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '260ms' }}>
+        <Eyebrow color={acc}>Your morning temperature</Eyebrow>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
           <input
             type="number"
@@ -280,52 +302,60 @@ export default function Log() {
         <div style={{ fontSize: 12, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, marginBottom: 24, fontStyle: 'italic' }}>
           Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
         </div>
+        </div>
 
         {/* Discharge (cervical mucus internally — friendlier label here) */}
-        <Eyebrow>Discharge</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '300ms' }}>
+        <Eyebrow color={acc}>Discharge</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 24 }}>
           {MUCUS_OPTIONS.map((m) => {
             const on = mucus === m.id
             return (
               <button key={m.id} onClick={() => setMucus(on ? null : m.id)}
-                style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600, borderRadius: T.r, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '12' : T.card, color: on ? acc : T.text, padding: '10px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600, borderRadius: T.r, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <span style={{ fontSize: 11, fontWeight: 700 }}>{m.label}</span>
                 <span style={{ fontSize: 8.5, color: T.muted, letterSpacing: 0.3 }}>{m.sub}</span>
               </button>
             )
           })}
         </div>
+        </div>
 
         {/* Sleep */}
-        <Eyebrow>How you slept</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
+        <Eyebrow color={acc}>How you slept</Eyebrow>
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
           {['Great','Okay','Restless','Poor'].map((s) => {
             const on = sleep === s
             return (
               <button key={s} onClick={() => setSleep(on ? null : s)}
-                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
+                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
                 {s}
               </button>
             )
           })}
         </div>
+        </div>
 
         {/* Sex */}
-        <Eyebrow>Sex</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '380ms' }}>
+        <Eyebrow color={acc}>Sex</Eyebrow>
         <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
           {SEX_OPTIONS.map((s) => {
             const on = sex === s.id
             return (
               <button key={s.id} onClick={() => setSex(on ? null : s.id)}
-                style={{ flex: 1, border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
                 {s.label}
               </button>
             )
           })}
         </div>
+        </div>
 
         {/* Note */}
-        <Eyebrow>Anything else on your mind</Eyebrow>
+        <div className="insight-stagger" style={{ animationDelay: '420ms' }}>
+        <Eyebrow color={acc}>Anything else on your mind</Eyebrow>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line, a sentence — whatever you want to remember."
           maxLength={2000}
           style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, padding: 14, fontSize: 14, lineHeight: 1.55, color: T.text, minHeight: 80, borderRadius: T.r, fontFamily: T.serif, fontStyle: 'italic' }} />
@@ -334,6 +364,7 @@ export default function Log() {
             {note.length} / 2000
           </div>
         )}
+        </div>
 
         <SourceLine>Tracked over time, this is what gives a doctor something concrete to work with.</SourceLine>
 

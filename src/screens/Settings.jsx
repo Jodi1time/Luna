@@ -1,13 +1,24 @@
+import { useMemo } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
+import { PhaseFlourish } from '../components/phaseFlourishes'
+import { useCycle } from '../hooks/useCycle'
+import { useCountUp } from '../hooks/useCountUp'
 import useLuna from '../store/useLuna'
 import { BC_LABELS } from '../data/birthControl'
 import { signOut } from '../lib/supabase'
 import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
 import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
 
-function SectionLabel({ children }) {
-  return <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: T.muted, fontFamily: T.sans, padding: '20px 22px 8px', textTransform: 'uppercase' }}>{children}</div>
+function SectionLabel({ children, color }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '22px 22px 8px' }}>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color || T.muted, opacity: 0.6 }} />
+      <div style={{ fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: T.muted, fontFamily: T.sans, textTransform: 'uppercase' }}>
+        {children}
+      </div>
+    </div>
+  )
 }
 
 function Row({ label, value, right, onTap, danger }) {
@@ -23,9 +34,57 @@ function Row({ label, value, right, onTap, danger }) {
   )
 }
 
+// Live "Luna with you" stat strip — three small counts that animate
+// up on mount. Days logged, cycles tracked, articles saved. Quiet
+// proof that the user has been showing up.
+function LunaStats({ logs, cyclesLogged, savedArticles, accent }) {
+  const daysLogged = useMemo(() => {
+    if (!logs) return 0
+    let n = 0
+    for (const l of Object.values(logs)) {
+      if (l && (l.mood || (l.symptoms?.length) || l.flow || l.bbt || l.mucus || l.sex || l.sleep || l.note)) n++
+    }
+    return n
+  }, [logs])
+  const savedCount = Array.isArray(savedArticles) ? savedArticles.length : 0
+  const animDays  = useCountUp(daysLogged,    1200)
+  const animCycles = useCountUp(cyclesLogged, 1200)
+  const animSaved  = useCountUp(savedCount,   1200)
+
+  if (daysLogged === 0 && cyclesLogged === 0 && savedCount === 0) return null
+
+  const Stat = ({ n, label }) => (
+    <div style={{ flex: 1, textAlign: 'center', padding: '4px 0' }}>
+      <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 500, fontStyle: 'italic', color: accent, letterSpacing: -0.4, lineHeight: 1 }}>
+        {n}
+      </div>
+      <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1, fontWeight: 600, color: T.muted, marginTop: 4 }}>
+        {label}
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="insight-stagger" style={{ padding: '0 16px 4px', animationDelay: '180ms' }}>
+      <div className="glass-card" style={{ padding: '14px 8px', borderRadius: T.r, display: 'flex', alignItems: 'stretch', gap: 4 }}>
+        <Stat n={animDays}   label="DAYS LOGGED" />
+        <div style={{ width: 1, background: T.hair, alignSelf: 'stretch' }} />
+        <Stat n={animCycles} label="CYCLES" />
+        <div style={{ width: 1, background: T.hair, alignSelf: 'stretch' }} />
+        <Stat n={animSaved}  label="SAVED READS" />
+      </div>
+    </div>
+  )
+}
+
 export default function Settings() {
   const { go, settings, updateSetting, cycleLength, periodLength, isPro, trialDaysLeft, displayName, birthControl, pregnancy } = useLuna()
   const clearLocalData = useLuna((s) => s.clearLocalData)
+  const logs = useLuna((s) => s.logs)
+  const store = useLuna()
+  const cycle = useCycle(store)
+  const phase = cycle?.phase
+  const acc = phase?.color || T.accent
   const methodLabel = BC_LABELS[birthControl?.method] || 'None'
   const pregLabel = (() => {
     if (!pregnancy?.active || !pregnancy?.lmp) return 'Not active'
@@ -37,6 +96,7 @@ export default function Settings() {
   })()
   const session = useLuna((s) => s.session)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
+  const cyclesLogged = cycle?.periodHistory?.length || 0
 
   const handleSignOut = async () => {
     await signOut()
@@ -50,21 +110,30 @@ export default function Settings() {
   return (
     <div className="home-stage">
       <div className="blob-stage subtle" aria-hidden="true">
-        <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
+        <div className="breathing-blob" style={{ '--phase-color': acc }} />
       </div>
       <Screen>
         <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ padding: '20px 22px 0', color: T.text }}>
-        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Welcome.'}</div>
-        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
-          Your account, your cycle, your preferences.
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '0ms' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Welcome.'}</div>
+            <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
+              Your account, your cycle, your preferences.
+            </div>
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 4 }}>
+              <PhaseFlourish phaseId={phase.id} size={26} />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Pro card */}
-      <div style={{ padding: '20px 16px 8px' }}>
+      {/* Pro card — avatar now tinted to current phase color */}
+      <div className="insight-stagger" style={{ padding: '20px 16px 8px', animationDelay: '90ms' }}>
         <div className="glass-card" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14, borderRadius: T.r }}>
-          <div style={{ width: 50, height: 50, background: T.accent, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 22, fontWeight: 500, borderRadius: T.r }}>{initial}</div>
+          <div style={{ width: 50, height: 50, background: acc, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 22, fontWeight: 500, fontStyle: 'italic', borderRadius: T.r }}>{initial}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600, fontSize: 14, fontFamily: T.sans }}>{isPro ? 'Luna Pro' : 'Luna Free'}</div>
             <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.sans }}>
@@ -72,13 +141,16 @@ export default function Settings() {
             </div>
           </div>
           {!isPro && (
-            <button onClick={() => go('paywall')} style={{ background: T.accent, color: '#fff', border: 'none', padding: '8px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 1, borderRadius: T.r }}>UPGRADE</button>
+            <button onClick={() => go('paywall')} style={{ background: acc, color: '#fff', border: 'none', padding: '8px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 1, borderRadius: T.r }}>UPGRADE</button>
           )}
         </div>
       </div>
 
-      {session && <>
-        <SectionLabel>Your account</SectionLabel>
+      {/* Live stats — days logged, cycles tracked, saved reads */}
+      <LunaStats logs={logs} cyclesLogged={cyclesLogged} savedArticles={settings?.savedArticles} accent={acc} />
+
+      {session && <div className="insight-stagger" style={{ animationDelay: '240ms' }}>
+        <SectionLabel color={acc}>Your account</SectionLabel>
         <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
           <Row label="Signed in as" value={session.user.email} />
           <Row label="Sign out" onTap={handleSignOut} />
@@ -101,9 +173,10 @@ export default function Settings() {
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
           Sign in on any device to come back to your cycle.
         </div>
-      </>}
+      </div>}
 
-      <SectionLabel>Your cycle</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '290ms' }}>
+      <SectionLabel color={acc}>Your cycle</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Cycle & period length" value={`${cycleLength} / ${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
@@ -111,8 +184,10 @@ export default function Settings() {
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
         <Row label="Pregnancy" value={pregLabel} onTap={() => go('pregnancy')} />
       </div>
+      </div>
 
-      <SectionLabel>Privacy</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
+      <SectionLabel color={acc}>Privacy</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Your data, in the open" onTap={() => go('privacyDashboard')} />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
@@ -122,23 +197,29 @@ export default function Settings() {
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
         <Row label="Terms" onTap={() => go('terms')} />
       </div>
+      </div>
 
-      <SectionLabel>Gentle reminders</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '390ms' }}>
+      <SectionLabel color={acc}>Gentle reminders</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Period reminder"  right={<Toggle on={settings.notifyPeriod} onChange={(v) => updateSetting('notifyPeriod', v)} />} />
         <Row label="Daily check-in"   right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
         <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
       </div>
+      </div>
 
-      <SectionLabel>On your Home screen</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '440ms' }}>
+      <SectionLabel color={acc}>On your Home screen</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Sticky note in the corner" right={<Toggle on={settings.stickyNoteEnabled !== false} onChange={(v) => updateSetting('stickyNoteEnabled', v)} />} />
       </div>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
         The little hand-drawn paper that holds whatever you want to remember. Off if you'd rather a cleaner Home.
       </div>
+      </div>
 
-      <SectionLabel>Your life stage</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '490ms' }}>
+      <SectionLabel color={acc}>Your life stage</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Cycle tracking"
              value={settings?.lifecycle === 'ttc' ? 'Underlying' : 'Active'} />
@@ -160,8 +241,10 @@ export default function Settings() {
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
         Luna grows with you. Each stage gets its own thoughtful mode — built for the body you're in, not optimised against it.
       </div>
+      </div>
 
-      <SectionLabel>Coming as part of Luna Pro</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '540ms' }}>
+      <SectionLabel color={acc}>Coming as part of Luna Pro</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="Talk to Luna" value="Soon" />
         <Row label="Pregnancy companion" value="v1.1" />
@@ -172,8 +255,10 @@ export default function Settings() {
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
         Pro is for the depth — the AI companion, the deep life-stage modes, the long-form reflective tools. Everything you need to take care of yourself stays free.
       </div>
+      </div>
 
-      <SectionLabel>When something is happening</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '590ms' }}>
+      <SectionLabel color={acc}>When something is happening</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="When it feels heavy" onTap={() => go('heavy')} />
         <Row label="Cramps right now" onTap={() => go('cramps')} />
@@ -185,10 +270,13 @@ export default function Settings() {
         <Row label="Sex has been hurting" onTap={() => go('painfulSex')} />
         <Row label="Postpartum bleeding" onTap={() => go('postpartumBleeding')} />
       </div>
+      </div>
 
-      <SectionLabel>More from Luna</SectionLabel>
+      <div className="insight-stagger" style={{ animationDelay: '640ms' }}>
+      <SectionLabel color={acc}>More from Luna</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
+        <Row label="What we've noticed" onTap={() => go('insights')} />
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
         <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
@@ -198,6 +286,7 @@ export default function Settings() {
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
         <Row label="Delete my account"  onTap={deleteAccount} danger />
+      </div>
       </div>
 
       <div style={{ padding: '24px 22px 12px', textAlign: 'center', fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, lineHeight: 1.6 }}>
