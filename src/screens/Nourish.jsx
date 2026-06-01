@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, BrickList, SourceLine, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
 
 const PHASE_ORDER = ['menstrual', 'follicular', 'ovulation', 'luteal']
@@ -19,15 +20,20 @@ export default function Nourish() {
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="to nourish" onBack={back} />
-        <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 8 }}>
-          What helps you<br /><em>right now.</em>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8, animationDelay: '0ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, flex: 1, minWidth: 0 }}>
+            What helps you<br /><em>right now.</em>
+          </div>
+          <div aria-hidden="true" style={{ color: current.color, opacity: 0.55, paddingTop: 4 }}>
+            <PhaseFlourish phaseId={current.id} size={24} />
+          </div>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.6, marginBottom: 24 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, lineHeight: 1.6, marginBottom: 24, fontStyle: 'italic', animationDelay: '60ms' }}>
           What your body wants shifts across the month. Doctor-grounded, by phase.
         </div>
       </div>
 
-      <div className="glass-card" style={{ margin: '0 16px 24px', padding: 20, borderLeft: `3px solid ${current.color}`, borderRadius: T.r }}>
+      <div className="glass-card insight-stagger" style={{ margin: '0 16px 24px', padding: 20, borderLeft: `3px solid ${current.color}`, borderRadius: T.r, animationDelay: '120ms' }}>
         <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, fontFamily: T.sans, color: current.color, marginBottom: 4 }}>
           You're in {current.name.toLowerCase()} now
         </div>
@@ -46,11 +52,11 @@ export default function Nourish() {
         </button>
       </div>
 
-      <div style={{ padding: '0 22px 10px' }}>
-        <Eyebrow>The whole month</Eyebrow>
+      <div className="insight-stagger" style={{ padding: '0 22px 10px', animationDelay: '180ms' }}>
+        <Eyebrow color={current.color}>The whole month</Eyebrow>
       </div>
 
-      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+      <div className="glass-card insight-stagger" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden', animationDelay: '220ms' }}>
         {PHASE_ORDER.filter((id) => id !== current.id).map((id, idx, arr) => {
           const p = PHASES[id]
           const isOpen = open === id

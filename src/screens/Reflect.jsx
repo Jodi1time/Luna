@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
 import QuickNote from '../components/QuickNote'
@@ -1132,11 +1133,20 @@ export default function Reflect() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="reflect" onBack={back} />
-        <Eyebrow>For your mind and heart</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
-          {firstName ? `Sit a minute, ${firstName}.` : 'Sit a minute.'}
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow color={phase?.color}>For your mind and heart</Eyebrow>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.muted, marginTop: 12, fontStyle: 'italic' }}>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05, flex: 1 }}>
+            {firstName ? `Sit a minute, ${firstName}.` : 'Sit a minute.'}
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: phase.color, opacity: 0.55, paddingTop: 2 }}>
+              <PhaseFlourish phaseId={phase.id} size={24} />
+            </div>
+          )}
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.muted, marginTop: 12, fontStyle: 'italic', animationDelay: '90ms' }}>
           {opening || 'Write what wants to be written. Or pick a practice — short, gentle, evidence-grown.'}
         </div>
         <Rule />

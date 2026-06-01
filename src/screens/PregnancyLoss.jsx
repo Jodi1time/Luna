@@ -132,11 +132,13 @@ export default function PregnancyLoss() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="pregnancy loss" onBack={back} />
-        <Eyebrow>You are not alone in this</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow>You are not alone in this</Eyebrow>
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05, animationDelay: '50ms' }}>
           A room for what happened.
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.65, color: T.muted, marginTop: 12 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.65, color: T.muted, marginTop: 12, fontStyle: 'italic', animationDelay: '110ms' }}>
           Roughly one in four pregnancies ends in loss. The science is clear; the grief deserves its own room. Use this space to mark it, write to your future self, and find the next human to talk to. Nothing here is required.
         </div>
         <Rule />

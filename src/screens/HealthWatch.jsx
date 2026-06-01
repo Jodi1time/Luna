@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen, Icons } from '../components/shared'
 import { RED_FLAGS, ARTICLES } from '../data/lunaData'
+import { PhaseFlourish } from '../components/phaseFlourishes'
+import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
 // Defensive escape for anything interpolated into the PDF HTML template.
@@ -18,7 +20,11 @@ function htmlEscape(s) {
 }
 
 export default function HealthWatch() {
-  const { back, goArticle } = useLuna()
+  const store = useLuna()
+  const { back, goArticle } = store
+  const cycle = useCycle(store)
+  const phase = cycle?.phase
+  const acc = phase?.color || T.accent
   const [answers, setAnswers] = useState({})
   const toggle = (id) => setAnswers((a) => ({ ...a, [id]: !a[id] }))
   const triggered = RED_FLAGS.filter((f) => answers[f.id])
@@ -59,20 +65,32 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
     <Screen padBottom={30}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="When something feels off" onBack={back} />
-        <Eyebrow>Not a diagnosis — words to take to your doctor</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1 }}>What you've been feeling is real.</div>
-        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10 }}>
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow color={acc}>Not a diagnosis — words to take to your doctor</Eyebrow>
+        </div>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, flex: 1 }}>
+            What you've been feeling is real.
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 2 }}>
+              <PhaseFlourish phaseId={phase.id} size={22} />
+            </div>
+          )}
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10, fontStyle: 'italic', animationDelay: '90ms' }}>
           Tap anything that's been showing up for you lately. Luna will gather the language so the next conversation with your provider is easier.
         </div>
         <Rule />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {RED_FLAGS.map((f) => {
+          {RED_FLAGS.map((f, i) => {
             const on = !!answers[f.id]
             return (
               <button key={f.id} onClick={() => toggle(f.id)}
-                style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '0E' : T.card, padding: '14px 14px 14px 44px', cursor: 'pointer', fontFamily: 'inherit', color: T.text, textAlign: 'left', position: 'relative', borderRadius: T.r }}>
-                <div style={{ position: 'absolute', top: 14, left: 14, width: 18, height: 18, border: `1.5px solid ${on ? T.accent : T.muted}`, background: on ? T.accent : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', borderRadius: 2 }}>
+                className="insight-stagger"
+                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '0E' : T.card, padding: '14px 14px 14px 44px', cursor: 'pointer', fontFamily: 'inherit', color: T.text, textAlign: 'left', position: 'relative', borderRadius: T.r, animationDelay: `${140 + i * 40}ms` }}>
+                <div style={{ position: 'absolute', top: 14, left: 14, width: 18, height: 18, border: `1.5px solid ${on ? acc : T.muted}`, background: on ? acc : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', borderRadius: 2 }}>
                   {on && Icons.check}
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, marginBottom: on ? 6 : 0, lineHeight: 1.35 }}>{f.q}</div>
@@ -84,21 +102,21 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
 
         {triggered.length > 0 && (
           <div style={{ marginTop: 22, padding: 18, background: T.text, color: '#FAF4ED', borderRadius: T.r, animation: 'fadeUp .25s ease-out both' }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 8 }}>Worth bringing up</div>
+            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: acc, fontWeight: 700, marginBottom: 8 }}>Worth bringing up</div>
             <div style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.4, marginBottom: 10 }}>
               {triggered.length === 1 ? 'One thing' : `${triggered.length} of these`} is worth a conversation with your provider.
             </div>
             <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.55, marginBottom: 14 }}>
               We'll make a one-page summary you can email or print, so you don't have to find the words in the room.
             </div>
-            <button onClick={exportPDF} style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+            <button onClick={exportPDF} style={{ background: acc, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
               Make me a summary →
             </button>
           </div>
         )}
 
         <Rule />
-        <Eyebrow>To read with a cup of tea</Eyebrow>
+        <Eyebrow color={acc}>To read with a cup of tea</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {['pmdd','endo','iron','pcos'].map((id) => {
             const a = ARTICLES.find((x) => x.id === id)

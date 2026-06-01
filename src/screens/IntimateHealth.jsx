@@ -3,6 +3,8 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import { ARTICLES, SYMPTOMS } from '../data/lunaData'
 import { SymptomIcon } from '../components/symptomIcons'
+import { PhaseFlourish } from '../components/phaseFlourishes'
+import { useCycle } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
 // Doula-toned scales. Each option is a value, not a verdict — the
@@ -81,6 +83,9 @@ function intimatePatterns(logs, cycleLengthDays = 60) {
 export default function IntimateHealth() {
   const store = useLuna()
   const { back, goArticle, saveLog, getLog, logs } = store
+  const cycle = useCycle(store)
+  const phase = cycle?.phase
+  const acc = phase?.color || T.accent
   const todayISO = new Date().toISOString().slice(0, 10)
   const existing = getLog(todayISO) || {}
   const initialIntimate = existing.intimate || {}
@@ -132,17 +137,26 @@ export default function IntimateHealth() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="intimate health" onBack={back} />
-        <Eyebrow>Your sexual life, on your own terms</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08 }}>
-          What's the body telling you today?
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow color={acc}>Your sexual life, on your own terms</Eyebrow>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10 }}>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08, flex: 1 }}>
+            What's the body telling you today?
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 2 }}>
+              <PhaseFlourish phaseId={phase.id} size={22} />
+            </div>
+          )}
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10, fontStyle: 'italic', animationDelay: '90ms' }}>
           Desire, lubrication, pain, pleasure — all of it counts as health. Track what feels worth tracking. None of this is required, none of it is graded.
         </div>
         <Rule />
 
         {/* Today's intimate check-in */}
-        <Eyebrow>Today</Eyebrow>
+        <Eyebrow color={acc}>Today</Eyebrow>
 
         <div style={{ marginBottom: 18 }}>
           <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', marginBottom: 8, color: T.text }}>Libido</div>

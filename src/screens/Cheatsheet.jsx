@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { useCycle, detectSymptomPatterns } from '../hooks/useCycle'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
 import { buildCheatsheet, cheatsheetText } from '../lib/cheatsheet'
 
@@ -9,6 +10,8 @@ export default function Cheatsheet() {
   const store = useLuna()
   const { back, logs, displayName } = store
   const cycle = useCycle(store)
+  const phase = cycle?.phase
+  const acc = phase?.color || T.accent
   const patterns = useMemo(
     () => detectSymptomPatterns(logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength),
     [logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength]
@@ -76,20 +79,29 @@ ${points.map((p, i) => `
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="For your next visit" onBack={back} />
-        <Eyebrow>Wording, ready to take with you</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08 }}>
-          What's worth bringing up.
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow color={acc}>Wording, ready to take with you</Eyebrow>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10 }}>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08, flex: 1 }}>
+            What's worth bringing up.
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 2 }}>
+              <PhaseFlourish phaseId={phase.id} size={22} />
+            </div>
+          )}
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10, fontStyle: 'italic', animationDelay: '90ms' }}>
           Luna read your cycles and pulled together the conversation. Use it as a script, edit it, or just bring the page in. The point is that you don't have to find the words in the room.
         </div>
         <Rule />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {points.map((p, i) => (
-            <div key={p.id} className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+            <div key={p.id} className="glass-card insight-stagger" style={{ padding: 16, borderLeft: `3px solid ${acc}`, borderRadius: T.r, animationDelay: `${140 + i * 70}ms` }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
-                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, fontWeight: 700, letterSpacing: 1 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, color: acc, fontWeight: 700, letterSpacing: 1 }}>
                   {String(i + 1).padStart(2, '0')}
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1 }}>
@@ -121,7 +133,7 @@ ${points.map((p, i) => `
 
         <div style={{ marginTop: 22, display: 'flex', gap: 10 }}>
           <button onClick={copyAll}
-            style={{ flex: 1, background: T.accent, color: '#fff', border: 'none', padding: '12px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.4, borderRadius: T.r }}>
+            style={{ flex: 1, background: acc, color: '#fff', border: 'none', padding: '12px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.4, borderRadius: T.r }}>
             {copied ? 'Copied' : 'Copy to clipboard'}
           </button>
           <button onClick={printPage}

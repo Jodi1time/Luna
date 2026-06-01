@@ -3,6 +3,8 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, Toggle } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
+import { PhaseFlourish } from '../components/phaseFlourishes'
+import { useCountUp } from '../hooks/useCountUp'
 import { setAnalyticsEnabled, capture } from '../lib/posthog'
 import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
 
@@ -32,14 +34,16 @@ function dataStats(state, cycle) {
   }
 }
 
-function Stat({ label, value, sub }) {
+function Stat({ label, value, sub, accent }) {
+  const animVal = useCountUp(typeof value === 'number' ? value : 0, 1200)
+  const display = typeof value === 'number' ? animVal : value
   return (
     <div className="glass-card" style={{ padding: '14px 16px', borderRadius: T.r, display: 'flex', flexDirection: 'column', gap: 4 }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>
         {label}
       </div>
-      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, color: T.text, letterSpacing: -0.4, lineHeight: 1.1 }}>
-        {value}
+      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, color: accent || T.text, letterSpacing: -0.4, lineHeight: 1.1, fontStyle: 'italic' }}>
+        {display}
       </div>
       {sub && (
         <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.4 }}>{sub}</div>
@@ -63,6 +67,8 @@ export default function PrivacyDashboard() {
   const { back, go, settings, updateSetting, session, displayName } = store
   const clearLocalData = useLuna((s) => s.clearLocalData)
   const cycle = useCycle(store)
+  const phase = cycle?.phase
+  const acc = phase?.color || T.accent
   const stats = useMemo(() => dataStats(store, cycle), [store, cycle])
   const [copied, setCopied] = useState(false)
 
@@ -80,23 +86,34 @@ export default function PrivacyDashboard() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Your data, in the open" onBack={back} />
-        <Eyebrow>What we hold, what we don't, what you can do</Eyebrow>
-        <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08 }}>
-          Your privacy, made visible.
+        <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
+          <Eyebrow color={acc}>What we hold, what we don't, what you can do</Eyebrow>
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10 }}>
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.08, flex: 1 }}>
+            Your privacy, made visible.
+          </div>
+          {phase && (
+            <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 2 }}>
+              <PhaseFlourish phaseId={phase.id} size={22} />
+            </div>
+          )}
+        </div>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10, fontStyle: 'italic', animationDelay: '90ms' }}>
           Most period apps treat your data like inventory. Here's what Luna actually has on you — and what we deliberately don't.
         </div>
         <Rule />
 
-        <Eyebrow>What's stored</Eyebrow>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 14 }}>
-          <Stat label="LOG ENTRIES" value={stats.entries} sub={stats.entries === 1 ? 'day logged' : 'days logged'} />
-          <Stat label="CYCLES TRACKED" value={stats.cycles} sub={stats.cycles === 1 ? 'period anchored' : 'periods anchored'} />
-          <Stat label="BBT READINGS" value={stats.bbtCount} sub="basal temps" />
-          <Stat label="NOTES WRITTEN" value={stats.noteCount} sub="free-text" />
-          <Stat label="MOODS" value={stats.moodCount} sub="check-ins" />
-          <Stat label="SYMPTOMS" value={stats.symptomCount} sub="ticks logged" />
+        <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
+          <Eyebrow color={acc}>What's stored</Eyebrow>
+        </div>
+        <div className="insight-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 14, animationDelay: '180ms' }}>
+          <Stat label="LOG ENTRIES" value={stats.entries} sub={stats.entries === 1 ? 'day logged' : 'days logged'} accent={acc} />
+          <Stat label="CYCLES TRACKED" value={stats.cycles} sub={stats.cycles === 1 ? 'period anchored' : 'periods anchored'} accent={acc} />
+          <Stat label="BBT READINGS" value={stats.bbtCount} sub="basal temps" accent={acc} />
+          <Stat label="NOTES WRITTEN" value={stats.noteCount} sub="free-text" accent={acc} />
+          <Stat label="MOODS" value={stats.moodCount} sub="check-ins" accent={acc} />
+          <Stat label="SYMPTOMS" value={stats.symptomCount} sub="ticks logged" accent={acc} />
         </div>
         {span && (
           <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 22 }}>
@@ -104,8 +121,8 @@ export default function PrivacyDashboard() {
           </div>
         )}
 
-        <Eyebrow>Where it lives</Eyebrow>
-        <div className="glass-card" style={{ padding: 16, borderRadius: T.r, borderLeft: `3px solid ${T.accent}`, marginBottom: 22 }}>
+        <Eyebrow color={acc}>Where it lives</Eyebrow>
+        <div className="glass-card" style={{ padding: 16, borderRadius: T.r, borderLeft: `3px solid ${acc}`, marginBottom: 22 }}>
           <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.4, marginBottom: 8, letterSpacing: -0.1 }}>
             On Luna's servers (Supabase), encrypted at rest.
           </div>
@@ -114,7 +131,7 @@ export default function PrivacyDashboard() {
           </div>
         </div>
 
-        <Eyebrow>What we deliberately don't collect</Eyebrow>
+        <Eyebrow color={acc}>What we deliberately don't collect</Eyebrow>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 22 }}>
           <Pill label="Location" ok />
           <Pill label="Contacts" ok />
@@ -129,7 +146,7 @@ export default function PrivacyDashboard() {
           No ad pixels. No selling. No "anonymous mode" hidden behind a paywall — privacy is the same for everyone here.
         </div>
 
-        <Eyebrow>Your controls</Eyebrow>
+        <Eyebrow color={acc}>Your controls</Eyebrow>
         <div className="glass-card" style={{ borderRadius: T.r, overflow: 'hidden', marginBottom: 18 }}>
           <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}` }}>
             <div>
@@ -157,10 +174,10 @@ export default function PrivacyDashboard() {
           </button>
         </div>
 
-        <Eyebrow>Take it with you, or take it down</Eyebrow>
+        <Eyebrow color={acc}>Take it with you, or take it down</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
           <button onClick={exportCSV}
-            style={{ width: '100%', padding: '13px 14px', background: T.accent, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, borderRadius: T.r }}>
+            style={{ width: '100%', padding: '13px 14px', background: acc, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, borderRadius: T.r }}>
             Export everything as CSV
           </button>
           <button onClick={deleteAccount}
