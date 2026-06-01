@@ -771,20 +771,21 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Parallax + staged scroll-fade. As the user scrolls down:
-  //   1. The cover drifts a hair slower than the rest of the content
-  //      (0.18 parallax) — gentle depth feel.
-  //   2. The BODY of the cover (contextLine, bodyMood, phasePresence,
-  //      period CTA, etc.) fades first, between scrollY 60-180.
-  //   3. The HEADLINE (eyebrow + big day number + phase name) stays
-  //      longer — fades between scrollY 200-340. During step 2 it
-  //      also subtly scales down (compression feel) before fading.
-  //   4. The cover's layout footprint COLLAPSES via negative
-  //      margin-bottom in lockstep with the fade, so content below
-  //      pulls up to fill the gap — no empty void.
+  // Staged scroll-collapse. Cover compresses physically (translate +
+  // scale) in lockstep with a margin-bottom shrink — so cover content
+  // and cards-below move together, no overlap. Only AFTER the
+  // headline has physically moved out of the way does it fade.
   //
-  // Throttled via rAF and applied directly to the DOM node so we
-  // don't re-render on every scroll event.
+  // Phases (single normalized progress p, 0 → 1 over COLLAPSE_DISTANCE):
+  //   • bodyProg     (p 0.00 → 0.42): body details translate up + fade
+  //   • headMoveProg (p 0.32 → 0.80): headline translates up + scales
+  //     (the "3" visibly shrinks, eyebrow + phase name ride up with it)
+  //   • headFadeProg (p 0.78 → 1.00): headline finally fades out
+  //
+  // Margin collapse is summed across stages so layout reduction
+  // matches the visual height removed at every frame.
+  //
+  // rAF-throttled, written direct to DOM — no re-render on scroll.
   const screenRef = useRef(null)
   const coverRef = useRef(null)
   const headlineRef = useRef(null)
@@ -794,37 +795,30 @@ export default function Home() {
     if (!el) return
     let rafId = null
     let lastY = 0
-    const BODY_FADE_START = 60
-    const BODY_FADE_END = 180
-    const HEAD_FADE_START = 200
-    const HEAD_FADE_END = 340
-    // Maximum collapse via negative margin — roughly the cover's
-    // natural height. Subsequent content pulls up by this amount
-    // as the cover fully fades.
-    const MAX_COLLAPSE = 320
+    const COLLAPSE_DISTANCE = 360
     const clamp = (v) => Math.min(1, Math.max(0, v))
     const update = () => {
       rafId = null
       const cover = coverRef.current
       if (!cover) return
-      const bodyFade = clamp((lastY - BODY_FADE_START) / (BODY_FADE_END - BODY_FADE_START))
-      const headFade = clamp((lastY - HEAD_FADE_START) / (HEAD_FADE_END - HEAD_FADE_START))
-      const collapseAmount = Math.max(bodyFade, headFade) * MAX_COLLAPSE
-      cover.style.transform = `translateY(${lastY * 0.18}px)`
-      // Pull content below upward as the cover fades. Default
-      // marginBottom on the cover was 4; we go negative as we collapse.
-      cover.style.marginBottom = `${4 - collapseAmount}px`
-      cover.style.pointerEvents = headFade > 0.92 ? 'none' : 'auto'
+      const p = clamp(lastY / COLLAPSE_DISTANCE)
+      const bodyProg = clamp(p / 0.42)
+      const headMoveProg = clamp((p - 0.32) / 0.48)
+      const headFadeProg = clamp((p - 0.78) / 0.22)
+
       if (bodyRef.current) {
-        bodyRef.current.style.opacity = String(1 - bodyFade)
+        bodyRef.current.style.opacity = String(1 - bodyProg)
+        bodyRef.current.style.transform = `translate3d(0, ${-bodyProg * 24}px, 0)`
       }
       if (headlineRef.current) {
-        // Slight scale-down of the headline during the body fade —
-        // gives a "compression" cue before the headline itself fades.
-        const compress = 1 - bodyFade * 0.12
-        headlineRef.current.style.opacity = String(1 - headFade)
-        headlineRef.current.style.transform = `scale(${compress})`
+        const scale = 1 - headMoveProg * 0.5
+        const translateY = -headMoveProg * 80
+        headlineRef.current.style.opacity = String(1 - headFadeProg)
+        headlineRef.current.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`
       }
+      const collapse = bodyProg * 210 + headMoveProg * 120
+      cover.style.marginBottom = `${4 - collapse}px`
+      cover.style.pointerEvents = headFadeProg > 0.92 ? 'none' : 'auto'
     }
     const onScroll = () => {
       lastY = el.scrollTop
@@ -1066,13 +1060,11 @@ export default function Home() {
           {!isPreg && (
           <div ref={coverRef} style={{
             marginBottom: 4,
-            willChange: 'transform, margin-bottom',
-            transition: 'transform 90ms linear, margin-bottom 140ms var(--ease-out)',
+            willChange: 'margin-bottom',
           }}>
             <div ref={headlineRef} style={{
               willChange: 'opacity, transform',
               transformOrigin: 'top left',
-              transition: 'opacity 180ms var(--ease-out), transform 180ms var(--ease-out)',
             }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
                 {onHormonalBC
@@ -1097,8 +1089,8 @@ export default function Home() {
             </div>
 
             <div ref={bodyRef} style={{
-              willChange: 'opacity',
-              transition: 'opacity 180ms var(--ease-out)',
+              willChange: 'opacity, transform',
+              transformOrigin: 'top left',
             }}>
               {contextLine && (
                 <div style={{ marginTop: 8 }}>
