@@ -29,6 +29,16 @@ function BackdropPreview({ kind, accent }) {
       </>
     )
   }
+  if (kind === 'silk') {
+    return (
+      <div style={{
+        position: 'absolute', inset: -4,
+        background: `conic-gradient(from 20deg at 50% 50%, ${accent}22, ${accent}aa, ${accent}33, ${accent}99, ${accent}22)`,
+        filter: 'blur(5px)',
+        opacity: 0.7,
+      }} />
+    )
+  }
   if (kind === 'petals') {
     return (
       <svg viewBox="0 0 32 44" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>

@@ -14,6 +14,7 @@ export const BACKDROPS = [
   { id: 'blob',          label: 'Blob' },
   { id: 'moons',         label: 'Moons' },
   { id: 'aurora',        label: 'Aurora' },
+  { id: 'silk',          label: 'Silk' },
   { id: 'petals',        label: 'Petals' },
   { id: 'constellation', label: 'Stars' },
 ]
@@ -242,6 +243,71 @@ function PetalsBackdrop({ accent, subtle }) {
   )
 }
 
+// ── Silk (flowing gradient sheets) ───────────────────────────
+// Three layered gradient sheets drifting at different speeds, with a
+// fine noise overlay for that silk-grain feel. The conic gradient
+// underneath gives the "fold" highlights; two large radial sheets
+// drifting in opposite directions on top read as light catching
+// fabric. Adapted to phase color so silk shimmers in the same hue
+// as today's atmosphere.
+function SilkBackdrop({ accent, subtle }) {
+  // Unique id so multiple Silk instances don't share the same SVG
+  // filter (e.g. if the customiser preview ever switches to live).
+  const noiseId = `silk-noise-${accent.replace(/[^a-z0-9]/gi, '') || 'x'}`
+  return (
+    <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
+      style={{
+        width: '100%', height: '100%', top: 0, left: 0,
+        transform: 'none',
+        overflow: 'hidden',
+      }}>
+      {/* Base sheet — slow conic rotation creates the fold highlights */}
+      <div style={{
+        position: 'absolute', inset: '-25%',
+        background: `conic-gradient(from 0deg at 50% 50%, ${accent}11, ${accent}88, ${accent}22, ${accent}99, ${accent}33, ${accent}88, ${accent}11)`,
+        animation: 'silkRotate 60s linear infinite',
+        filter: 'blur(48px)',
+        opacity: subtle ? 0.42 : 0.62,
+      }} />
+      {/* Drifting sheet A — large soft glow, screens over base */}
+      <div style={{
+        position: 'absolute', inset: '-30%',
+        background: `radial-gradient(ellipse 60% 70% at 38% 52%, ${accent}aa 0%, ${accent}00 65%)`,
+        animation: 'silkDrift 22s ease-in-out infinite',
+        filter: 'blur(56px) saturate(1.1)',
+        opacity: subtle ? 0.34 : 0.55,
+        mixBlendMode: 'screen',
+      }} />
+      {/* Drifting sheet B — counter-direction, multiplies for shadow */}
+      <div style={{
+        position: 'absolute', inset: '-30%',
+        background: `radial-gradient(ellipse 55% 65% at 62% 48%, ${accent}99 0%, ${accent}00 65%)`,
+        animation: 'silkDrift 28s ease-in-out infinite reverse',
+        animationDelay: '-10s',
+        filter: 'blur(56px)',
+        opacity: subtle ? 0.34 : 0.52,
+        mixBlendMode: 'multiply',
+      }} />
+      {/* Noise overlay — SVG fractal turbulence gives the silk its
+          grain. Set very low opacity so it's texture, not noise.
+          mixBlendMode: overlay so it modulates the underlying hues
+          instead of greying them out. */}
+      <svg style={{
+        position: 'absolute', inset: 0, width: '100%', height: '100%',
+        opacity: subtle ? 0.08 : 0.14,
+        mixBlendMode: 'overlay',
+        pointerEvents: 'none',
+      }}>
+        <filter id={noiseId}>
+          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" />
+          <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0" />
+        </filter>
+        <rect width="100%" height="100%" filter={`url(#${noiseId})`} />
+      </svg>
+    </div>
+  )
+}
+
 // ── Constellation (twinkling stars) ──────────────────────────
 // Scattered stars at fixed positions, each twinkling on its own
 // rhythm (different durations + delays). Two faint connecting lines
@@ -304,6 +370,7 @@ export default function Backdrop({ accent, subtle = false, children }) {
   const a = accent || T.accent
   if (kind === 'moons')         return <MoonsBackdrop         accent={a} subtle={subtle} />
   if (kind === 'aurora')        return <AuroraBackdrop        accent={a} subtle={subtle} />
+  if (kind === 'silk')          return <SilkBackdrop          accent={a} subtle={subtle} />
   if (kind === 'petals')        return <PetalsBackdrop        accent={a} subtle={subtle} />
   if (kind === 'constellation') return <ConstellationBackdrop accent={a} subtle={subtle} />
   // default — blob (preserves Home's effects via the children slot)
