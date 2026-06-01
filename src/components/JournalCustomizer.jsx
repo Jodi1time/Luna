@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { JOURNAL_THEMES, THEME_IDS, DECORATIONS } from '../data/journalThemes'
 import { BACKDROPS } from './Backdrop'
+import { generateShades } from '../lib/colorShades'
 
 // Tiny static preview of each backdrop kind for the picker swatch.
 // Not animated — that's reserved for the live backdrop. Just enough
@@ -337,73 +338,84 @@ export default function JournalCustomizer({
           })}
         </div>
 
-        {/* Backdrop colour override. Default ("Follow your phase")
-            ties the backdrop to today's cycle phase — Luna's
-            signature look. Custom lets the user pick any colour for
-            when the phase tint clashes with their paper or
-            decorations. Applies across every backdrop kind. */}
+        {/* Backdrop colour. Default ("Follow your phase") ties the
+            backdrop to today's cycle phase — Luna's signature look.
+            The shade row offers six tones derived from the user's
+            current paper colour — keeps the backdrop in the same
+            visual family as the page, so nothing ever clashes. */}
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           BACKDROP COLOUR
         </div>
-        <div style={{
-          display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 22,
-        }}>
-          <button onClick={() => onChangeBackdropAccent?.(null)}
-            style={{
-              flex: 1,
-              background: !backdropAccent ? resolvedAccent + '12' : 'transparent',
-              border: `1px solid ${!backdropAccent ? resolvedAccent : T.hair}`,
-              borderRadius: T.r,
-              padding: '10px 12px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              color: T.text,
-              textAlign: 'left',
-              display: 'flex', alignItems: 'center', gap: 10,
-            }}>
-            <span style={{
-              width: 18, height: 18, borderRadius: '50%',
-              background: resolvedAccent,
-              boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)',
-              flexShrink: 0,
-            }} />
-            <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', letterSpacing: -0.1 }}>
-              Follow your phase
-            </span>
-          </button>
-          <label style={{
-            flex: 1,
-            background: backdropAccent ? resolvedAccent + '12' : 'transparent',
-            border: `1px solid ${backdropAccent ? resolvedAccent : T.hair}`,
-            borderRadius: T.r,
-            padding: '10px 12px',
-            cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <span style={{
-              width: 22, height: 22, borderRadius: '50%',
-              background: backdropAccent || '#C0A088',
-              boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)',
-              flexShrink: 0,
-              position: 'relative',
-              overflow: 'hidden',
-            }}>
-              <input type="color"
-                value={backdropAccent || '#C0A088'}
-                onChange={(e) => onChangeBackdropAccent?.(e.target.value)}
+        {(() => {
+          // The effective paper colour drives the palette. For preset
+          // themes that's the theme's paper; for the Custom theme
+          // it's whatever the user picked (gradient start if a
+          // gradient is on).
+          const paperHex = themeId === 'custom'
+            ? (custom?.color || '#F5E6D3')
+            : (JOURNAL_THEMES[themeId]?.paper || JOURNAL_THEMES.cream.paper)
+          const shades = generateShades(paperHex, 6)
+          const selectedShade = backdropAccent
+            ? shades.findIndex((s) => s.toLowerCase() === backdropAccent.toLowerCase())
+            : -1
+          return (
+            <div style={{ marginBottom: 22 }}>
+              <button onClick={() => onChangeBackdropAccent?.(null)}
                 style={{
-                  position: 'absolute', inset: 0,
-                  width: '100%', height: '100%',
-                  opacity: 0, cursor: 'pointer',
-                  border: 'none', padding: 0,
-                }}
-              />
-            </span>
-            <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', letterSpacing: -0.1, color: T.text }}>
-              Pick a colour
-            </span>
-          </label>
-        </div>
+                  width: '100%',
+                  background: !backdropAccent ? resolvedAccent + '12' : 'transparent',
+                  border: `1px solid ${!backdropAccent ? resolvedAccent : T.hair}`,
+                  borderRadius: T.r,
+                  padding: '10px 12px',
+                  marginBottom: 10,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  color: T.text,
+                  textAlign: 'left',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                <span style={{
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: resolvedAccent,
+                  boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', letterSpacing: -0.1 }}>
+                  Follow your phase
+                </span>
+              </button>
+              {/* Shade row — six tones of the paper hue from dark to
+                  light. Tapping one sets it as the backdrop accent;
+                  staying on "Follow your phase" leaves the row
+                  unselected. */}
+              <div style={{
+                fontFamily: T.mono, fontSize: 8.5, letterSpacing: 1.2, fontWeight: 600,
+                color: T.muted, marginBottom: 6, opacity: 0.7,
+              }}>
+                OR PICK A SHADE OF YOUR PAPER
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                {shades.map((shade, i) => {
+                  const on = selectedShade === i
+                  return (
+                    <button key={shade} onClick={() => onChangeBackdropAccent?.(shade)}
+                      aria-label={`Shade ${i + 1}`}
+                      style={{
+                        aspectRatio: '1',
+                        background: shade,
+                        border: `2px solid ${on ? resolvedAccent : 'rgba(26,19,16,0.08)'}`,
+                        boxShadow: on ? `0 0 0 3px ${resolvedAccent}33` : '0 1px 0 rgba(26,19,16,0.05)',
+                        borderRadius: 10,
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Decorations */}
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>

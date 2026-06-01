@@ -236,15 +236,25 @@ function AuroraBackdrop({ accent, subtle }) {
 // continuously. Each petal has its own duration + horizontal drift
 // so the motion never repeats predictably.
 function PetalsBackdrop({ accent, subtle }) {
+  // 14 petals, scattered across the horizontal span with varied
+  // sizes (9-17px), durations (14-26s), and lateral drifts (-26 to
+  // +26px). Negative animation delays stagger them so the stream
+  // is full from the first frame instead of arriving in waves.
   const petals = [
-    { left: '12%', size: 14, dur: 14, drift: 24,  delay: 0 },
-    { left: '28%', size: 11, dur: 18, drift: -18, delay: -3 },
-    { left: '42%', size: 16, dur: 22, drift: 14,  delay: -7 },
-    { left: '58%', size: 12, dur: 16, drift: -22, delay: -11 },
-    { left: '72%', size: 15, dur: 20, drift: 20,  delay: -5 },
-    { left: '86%', size: 10, dur: 24, drift: -16, delay: -9 },
+    { left: '8%',  size: 14, dur: 14, drift: 24,  delay: 0 },
+    { left: '18%', size: 12, dur: 17, drift: -14, delay: -2 },
+    { left: '24%', size: 10, dur: 22, drift: 18,  delay: -8 },
+    { left: '32%', size: 13, dur: 18, drift: -20, delay: -3 },
+    { left: '40%', size: 16, dur: 22, drift: 14,  delay: -7 },
+    { left: '46%', size: 11, dur: 25, drift: -10, delay: -13 },
     { left: '52%', size: 13, dur: 19, drift: 18,  delay: -14 },
-    { left: '20%', size: 12, dur: 17, drift: -14, delay: -2 },
+    { left: '58%', size: 12, dur: 16, drift: -22, delay: -11 },
+    { left: '64%', size: 15, dur: 23, drift: 16,  delay: -6 },
+    { left: '70%', size: 9,  size2: 14, dur: 20, drift: -12, delay: -1 },
+    { left: '76%', size: 15, dur: 20, drift: 20,  delay: -5 },
+    { left: '82%', size: 11, dur: 26, drift: 26,  delay: -10 },
+    { left: '88%', size: 13, dur: 21, drift: -18, delay: -4 },
+    { left: '94%', size: 10, dur: 24, drift: -16, delay: -9 },
   ]
   return (
     <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
@@ -297,11 +307,11 @@ function SilkBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.28 : 0.42,
+        opacity: subtle ? 0.20 : 0.30,
       }}>
       <Suspense fallback={null}>
         <Silk
-          speed={1.6}
+          speed={3.4}
           scale={1}
           color={accent}
           noiseIntensity={1.2}
@@ -326,7 +336,7 @@ function GalaxyBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.20 : 0.30,
+        opacity: subtle ? 0.14 : 0.22,
       }}>
       <Suspense fallback={null}>
         <Galaxy
