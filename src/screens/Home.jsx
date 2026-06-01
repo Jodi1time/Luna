@@ -9,6 +9,7 @@ import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
 import { usePregnancy } from '../hooks/usePregnancy'
@@ -89,29 +90,6 @@ const trimesterColor = (n) => {
   return T.accent
 }
 
-// Animates a value smoothly toward `target`. Day-to-day rollovers
-// animate from the previous day to the new one, not always from 0.
-function useCountUp(target, duration = 900) {
-  const [value, setValue] = useState(target ?? 0)
-  const prevRef = useRef(target ?? 0)
-  useEffect(() => {
-    if (target == null) { setValue(0); prevRef.current = 0; return }
-    const from = prevRef.current
-    prevRef.current = target
-    if (from === target) { setValue(target); return }
-    let raf
-    const start = performance.now()
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / duration)
-      const eased = 1 - Math.pow(1 - t, 4)
-      setValue(Math.round(from + (target - from) * eased))
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [target, duration])
-  return value
-}
 
 // Living blob centered behind the Home screen. Wrapped in an animated
 // container whose vertical position is driven by a react-spring that

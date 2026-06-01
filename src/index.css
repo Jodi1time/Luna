@@ -469,6 +469,61 @@ button.glass-card:active {
   animation: arrivalHalo 1.4s var(--ease-out) both;
 }
 
+/* Insights cycle wheel — today marker pulse. Outer ring scales out
+   from the marker and fades, looped slowly. Says "you are here" with
+   a quiet heartbeat, not a flashing dot. `transform-box: fill-box`
+   anchors the scale to the element's center (not the SVG origin). */
+@keyframes wheelTodayPulse {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  70%  { transform: scale(2.6); opacity: 0;    }
+  100% { transform: scale(2.6); opacity: 0;    }
+}
+.wheel-today-pulse {
+  animation: wheelTodayPulse 2.8s var(--ease-out) infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* Fertile-window glow — outer arc of the cycle wheel softly pulses
+   when the user is in the fertile phase. Surrounds the fertile days
+   with a quiet halo so the eye lands there. Opacity-only, GPU cheap. */
+@keyframes fertileGlow {
+  0%, 100% { opacity: 0.32; }
+  50%      { opacity: 0.62; }
+}
+.fertile-glow {
+  animation: fertileGlow 4.2s ease-in-out infinite;
+}
+
+/* Sparkline reveal — used in the BBT shift card. The line draws
+   itself in over ~1s, then the dots pop. stroke-dashoffset trick
+   so the path appears to be written stroke-by-stroke. */
+@keyframes sparklineDraw {
+  from { stroke-dashoffset: var(--spark-len, 400); }
+  to   { stroke-dashoffset: 0; }
+}
+.sparkline-draw {
+  stroke-dasharray: var(--spark-len, 400);
+  stroke-dashoffset: var(--spark-len, 400);
+  animation: sparklineDraw 1.1s var(--ease-out) 0.15s both;
+}
+@keyframes sparkDotPop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.spark-dot {
+  transform-origin: center;
+  transform-box: fill-box;
+  animation: sparkDotPop 0.4s var(--ease-spring) both;
+}
+
+/* Insight section stagger — entrance for the sections of the Insights
+   screen. Same workhorse fadeUp + blur bridge as Home cards, but the
+   delay is wired per element via inline animationDelay. */
+.insight-stagger {
+  animation: fadeUp 0.55s var(--ease-out) both;
+}
+
 /* StickyNote settle — when the sticky note first mounts on Home, it
    drops in with a tiny overshoot wobble on the OUTER wrapper, like
    a real piece of paper being pressed onto the wall. Inner element
