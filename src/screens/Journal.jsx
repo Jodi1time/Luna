@@ -1,254 +1,302 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useRef, useEffect } from 'react'
 import { T } from '../data/theme'
 import { Screen, Icons } from '../components/shared'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle } from '../hooks/useCycle'
+import { resolveTheme, DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
+import JournalDecorations from '../components/JournalDecorations'
+import JournalCustomizer from '../components/JournalCustomizer'
 import useLuna from '../store/useLuna'
 
 const LINE_H = 28
 
-// Format an ISO date as a notebook page header: "Friday, May 31"
-function formatPageDate(iso) {
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
-  })
+// Format a timestamp as a notebook page header.
+//   Same-day:   "Today · 7:42 PM"
+//   Other:      "Friday, May 31 · 7:42 PM"
+function formatEntryDate(iso, todayISO) {
+  const d = new Date(iso)
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  const dateISO = d.toISOString().slice(0, 10)
+  if (dateISO === todayISO) return `Today · ${time}`
+  return `${d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} · ${time}`
 }
 
-// Friendly "X days ago" — short and quiet, used on past pages.
-function ago(iso, todayISO) {
-  const a = new Date(todayISO + 'T00:00:00')
-  const b = new Date(iso + 'T00:00:00')
-  const days = Math.round((a - b) / 86400000)
-  if (days === 0) return 'today'
-  if (days === 1) return 'yesterday'
-  if (days < 7)   return `${days} days ago`
-  if (days < 14)  return 'last week'
-  if (days < 30)  return `${Math.round(days / 7)} weeks ago`
-  if (days < 365) return `${Math.round(days / 30)} months ago`
-  return `${Math.round(days / 365)} years ago`
-}
-
-// Lined-paper background — three layers: vertical margin line in
-// phase accent, horizontal ruled lines, warm cream paper.
-function paperBackground(accent) {
+// Lined-paper background — phase / theme accent margin + horizontal
+// ruled lines + paper colour. Composed as three layered backgrounds
+// so the margin sits on top of the ruled lines.
+function paperBackground(theme) {
   return [
-    `linear-gradient(to right, transparent 32px, ${accent}55 32px, ${accent}55 33px, transparent 33px)`,
+    `linear-gradient(to right, transparent 32px, ${theme.accent}55 32px, ${theme.accent}55 33px, transparent 33px)`,
     `repeating-linear-gradient(to bottom, transparent 0, transparent ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H}px)`,
-    '#FAF4DC',
+    theme.paper,
   ].join(', ')
 }
 
-// Today's page — editable, autosaves to log.note with a short
-// debounce so every keystroke isn't a write.
-function TodayPage({ todayISO, todayNote, save, accent, phaseId }) {
-  const [text, setText] = useState(todayNote || '')
+// New-entry composer — a notebook page that's empty until the user
+// writes. Save commits it as its own entry (with timestamp), clears
+// the input so they can start the next page.
+function EntryComposer({ theme, decorations, onSave, phaseId }) {
+  const [text, setText] = useState('')
   const taRef = useRef(null)
-  const saveT = useRef(null)
-  useEffect(() => { setText(todayNote || '') }, [todayNote])
-  // Debounced autosave
-  useEffect(() => {
-    if (text === (todayNote || '')) return
-    if (saveT.current) clearTimeout(saveT.current)
-    saveT.current = setTimeout(() => { save(text) }, 700)
-    return () => { if (saveT.current) clearTimeout(saveT.current) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text])
-  // Save on blur — covers the case where the user leaves the screen
-  // before the debounce fires.
-  const flush = () => { if (text !== (todayNote || '')) save(text) }
-  // Auto-grow the textarea so the page expands as the user writes.
   useEffect(() => {
     const el = taRef.current
     if (!el) return
     el.style.height = 'auto'
-    const min = LINE_H * 6
+    const min = LINE_H * 5
     el.style.height = `${Math.max(min, el.scrollHeight)}px`
   }, [text])
+  const canSave = text.trim().length > 0
+  const handleSave = () => {
+    if (!canSave) return
+    onSave(text)
+    setText('')
+    if (taRef.current) taRef.current.style.height = `${LINE_H * 5}px`
+  }
   return (
     <div style={{
-      background: paperBackground(accent),
+      background: paperBackground(theme),
       borderRadius: T.r,
-      padding: '20px 22px 28px 44px',
+      padding: '20px 22px 22px 44px',
       boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 12px 28px -18px rgba(26,19,16,0.18)',
-      marginBottom: 26,
+      marginBottom: 22,
       position: 'relative',
+      color: theme.text,
     }}>
-      {/* Page header — italic serif date, phase flourish in the corner */}
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 22, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.2 }}>
-          {formatPageDate(todayISO)}.
+      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.1} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: theme.accent, opacity: 0.85 }}>
+            A NEW PAGE
+          </div>
+          {phaseId && (
+            <span aria-hidden="true" style={{ color: theme.accent, opacity: 0.55, display: 'inline-flex' }}>
+              <PhaseFlourish phaseId={phaseId} size={18} />
+            </span>
+          )}
         </div>
-        {phaseId && (
-          <span aria-hidden="true" style={{ color: accent, opacity: 0.6, display: 'inline-flex' }}>
-            <PhaseFlourish phaseId={phaseId} size={20} />
-          </span>
-        )}
+        <textarea
+          ref={taRef}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Whatever's on your mind — start writing."
+          maxLength={6000}
+          style={{
+            width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none',
+            padding: 0,
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 16,
+            lineHeight: `${LINE_H}px`,
+            color: theme.text,
+            minHeight: LINE_H * 5,
+            display: 'block',
+          }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+          <button onClick={handleSave} disabled={!canSave}
+            style={{
+              background: canSave ? theme.accent : 'rgba(26,19,16,0.08)',
+              color: canSave ? '#fff' : T.muted,
+              border: 'none',
+              padding: '9px 16px',
+              borderRadius: T.r,
+              cursor: canSave ? 'pointer' : 'default',
+              fontFamily: T.sans, fontSize: 11.5, fontWeight: 700, letterSpacing: 1,
+              transition: 'background 0.25s var(--ease-out), color 0.25s var(--ease-out)',
+            }}>
+            SAVE PAGE
+          </button>
+        </div>
       </div>
-      {/* Subtle eyebrow in mono — "page X / today / writing" register */}
-      <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.4, fontWeight: 600, color: accent, opacity: 0.7, marginBottom: 10 }}>
-        TODAY'S PAGE
-      </div>
-      <textarea
-        ref={taRef}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={flush}
-        placeholder="What did today feel like? Anything you want to remember…"
-        maxLength={4000}
-        style={{
-          width: '100%',
-          background: 'transparent',
-          border: 'none',
-          outline: 'none',
-          resize: 'none',
-          padding: 0,
-          fontFamily: T.serif,
-          fontStyle: 'italic',
-          fontSize: 16,
-          lineHeight: `${LINE_H}px`,
-          color: T.text,
-          minHeight: LINE_H * 6,
-          display: 'block',
-        }}
-      />
     </div>
   )
 }
 
-// A past page — read-only preview, tap to open that day's Log for editing.
-function PastPage({ iso, note, todayISO, accent, onTap }) {
-  // Truncate gently so the page is a preview, not the whole entry.
-  const preview = note.length > 380 ? note.slice(0, 376).trimEnd() + '…' : note
+// A past entry — read mode by default, tap to edit in place. Trash
+// icon in the corner deletes after a single confirm.
+function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete }) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(entry.body)
+  const taRef = useRef(null)
+  useEffect(() => { setText(entry.body) }, [entry.body])
+  useEffect(() => {
+    if (!editing) return
+    const el = taRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    const min = LINE_H * 4
+    el.style.height = `${Math.max(min, el.scrollHeight)}px`
+  }, [editing, text])
+  const save = () => {
+    if (text.trim() && text !== entry.body) onUpdate({ body: text.trim() })
+    setEditing(false)
+  }
+  const handleDelete = (e) => {
+    e.stopPropagation()
+    if (!window.confirm('Tear this page out? This cannot be undone.')) return
+    onDelete()
+  }
   return (
-    <button onClick={onTap}
+    <div
+      onClick={editing ? undefined : () => setEditing(true)}
       style={{
-        width: '100%',
-        textAlign: 'left',
-        background: paperBackground(accent),
+        background: paperBackground(theme),
         borderRadius: T.r,
         padding: '18px 22px 22px 44px',
         boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 8px 22px -16px rgba(26,19,16,0.16)',
         marginBottom: 16,
-        border: 'none',
-        cursor: 'pointer',
-        color: T.text,
-        fontFamily: 'inherit',
+        cursor: editing ? 'text' : 'pointer',
         position: 'relative',
+        color: theme.text,
       }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2 }}>
-          {formatPageDate(iso)}.
+      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.08} />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2, color: theme.text }}>
+            {formatEntryDate(entry.createdAt, todayISO)}.
+          </div>
+          <button onClick={handleDelete}
+            aria-label="Delete this entry"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.accent, opacity: 0.5, padding: 4, fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, fontWeight: 600 }}>
+            ✕
+          </button>
         </div>
-        <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1, fontWeight: 600, color: T.muted }}>
-          {ago(iso, todayISO).toUpperCase()}
-        </div>
+        {editing ? (
+          <>
+            <textarea
+              ref={taRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onBlur={save}
+              autoFocus
+              maxLength={6000}
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none',
+                padding: 0,
+                fontFamily: T.serif, fontStyle: 'italic', fontSize: 15.5,
+                lineHeight: `${LINE_H}px`,
+                color: theme.text,
+                minHeight: LINE_H * 4,
+                display: 'block',
+              }}
+            />
+            <div style={{ fontFamily: T.mono, fontSize: 9.5, color: theme.accent, opacity: 0.7, letterSpacing: 1, marginTop: 8 }}>
+              TAP OUTSIDE TO SAVE
+            </div>
+          </>
+        ) : (
+          <div style={{
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 15.5,
+            lineHeight: `${LINE_H}px`, color: theme.text,
+            whiteSpace: 'pre-wrap',
+          }}>
+            {entry.body}
+          </div>
+        )}
       </div>
-      <div style={{
-        fontFamily: T.serif, fontStyle: 'italic', fontSize: 15,
-        lineHeight: `${LINE_H}px`, color: T.text,
-        whiteSpace: 'pre-wrap',
-      }}>
-        {preview}
-      </div>
-    </button>
+    </div>
   )
 }
 
 export default function Journal() {
   const store = useLuna()
-  const { back, saveLog, logs, setActiveLogDate, go } = store
+  const { back, saveJournalEntry, updateJournalEntry, deleteJournalEntry, updateJournalTheme } = store
+  const settings = useLuna((s) => s.settings)
   const cycle = useCycle(store)
   const phase = cycle?.phase
-  const accent = phase?.color || T.accent
+  const entries = settings?.journalEntries || []
+  const journalTheme = settings?.journalTheme || DEFAULT_JOURNAL_THEME
+  const theme = useMemo(
+    () => resolveTheme(journalTheme.themeId, phase?.color),
+    [journalTheme.themeId, phase?.color]
+  )
   const todayISO = new Date().toISOString().slice(0, 10)
-  const todayNote = (logs?.[todayISO]?.note || '').toString()
+  const [customizing, setCustomizing] = useState(false)
 
-  const save = (text) => {
-    const existing = logs?.[todayISO] || {}
-    saveLog(new Date(), { ...existing, note: text })
+  const handleSaveEntry = (body) => { saveJournalEntry(body) }
+  const handleChangeTheme = (themeId) => { updateJournalTheme({ themeId }) }
+  const handleToggleDecoration = (id) => {
+    const cur = journalTheme.decorations || []
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]
+    updateJournalTheme({ decorations: next })
   }
-
-  // Past pages — every day other than today that has a non-empty note,
-  // newest first. Filter quietly so the list stays the user's writing,
-  // not an audit of empty days.
-  const pastPages = useMemo(() => {
-    const entries = []
-    for (const [iso, log] of Object.entries(logs || {})) {
-      if (iso === todayISO) continue
-      const note = (log?.note || '').toString().trim()
-      if (!note) continue
-      entries.push({ iso, note })
-    }
-    entries.sort((a, b) => (a.iso < b.iso ? 1 : -1))
-    return entries
-  }, [logs, todayISO])
-
-  const openPastDay = (iso) => {
-    setActiveLogDate(iso)
-    go('log')
+  const handleToggleApplyToApp = () => {
+    updateJournalTheme({ applyToApp: !journalTheme.applyToApp })
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, overflow: 'hidden' }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: theme.paper, color: theme.text, overflow: 'hidden', transition: 'background 0.4s var(--ease-out)' }}>
       <Screen>
         <div style={{ padding: '12px 18px 0' }}>
-          {/* Header — back arrow + small "Journal" title */}
+          {/* Header */}
           <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0 14px', animationDelay: '0ms' }}>
-            <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>
+            <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.text, opacity: 0.55, padding: 6 }}>
               {Icons.close}
             </button>
-            <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
-              The journal.
+            <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2, color: theme.text }}>
+              The diary.
             </div>
-            <div style={{ width: 30 }} />
+            <button onClick={() => setCustomizing(true)}
+              aria-label="Customize the journal"
+              style={{ background: 'none', border: `1px solid ${theme.accent}66`, color: theme.accent, padding: '5px 10px', borderRadius: 999, fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8, cursor: 'pointer' }}>
+              DECORATE
+            </button>
           </div>
 
-          {/* Today's page — editable */}
-          <div className="insight-stagger" style={{ animationDelay: '60ms' }}>
-            <TodayPage
-              todayISO={todayISO}
-              todayNote={todayNote}
-              save={save}
-              accent={accent}
+          {/* New-page composer */}
+          <div className="insight-stagger" style={{ animationDelay: '50ms' }}>
+            <EntryComposer
+              theme={theme}
+              decorations={journalTheme.decorations || []}
+              onSave={handleSaveEntry}
               phaseId={phase?.id}
             />
           </div>
 
-          {/* Past pages — divider eyebrow + stack of read-only pages */}
-          {pastPages.length > 0 && (
+          {/* Earlier entries */}
+          {entries.length > 0 && (
             <>
-              <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 0 14px', animationDelay: '140ms' }}>
-                <div style={{ flex: 1, height: 1, background: T.hair }} />
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted }}>
-                  EARLIER PAGES
+              <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0 14px', animationDelay: '110ms' }}>
+                <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
+                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: theme.text, opacity: 0.55 }}>
+                  EARLIER PAGES · {entries.length}
                 </div>
-                <div style={{ flex: 1, height: 1, background: T.hair }} />
+                <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
               </div>
-              {pastPages.map((p, i) => (
-                <div key={p.iso} className="insight-stagger" style={{ animationDelay: `${180 + i * 60}ms` }}>
-                  <PastPage
-                    iso={p.iso}
-                    note={p.note}
+              {entries.map((entry, i) => (
+                <div key={entry.id} className="insight-stagger" style={{ animationDelay: `${160 + i * 50}ms` }}>
+                  <EntryPage
+                    entry={entry}
+                    theme={theme}
+                    decorations={journalTheme.decorations || []}
                     todayISO={todayISO}
-                    accent={accent}
-                    onTap={() => openPastDay(p.iso)}
+                    onUpdate={(p) => updateJournalEntry(entry.id, p)}
+                    onDelete={() => deleteJournalEntry(entry.id)}
                   />
                 </div>
               ))}
             </>
           )}
 
-          {/* Empty-past state — only shown when today has content but
-              no prior pages exist. A quiet promise that the book grows. */}
-          {pastPages.length === 0 && todayNote.trim().length > 0 && (
-            <div className="insight-stagger" style={{ textAlign: 'center', padding: '20px 22px 32px', fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: T.muted, lineHeight: 1.6, animationDelay: '160ms' }}>
-              This is page one. The book grows from here.
+          {entries.length === 0 && (
+            <div className="insight-stagger" style={{ textAlign: 'center', padding: '8px 22px 32px', fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: theme.text, opacity: 0.55, lineHeight: 1.6, animationDelay: '180ms' }}>
+              The book is empty. Whatever you save here becomes a page.
             </div>
           )}
 
           <div style={{ height: 24 }} />
         </div>
       </Screen>
+
+      <JournalCustomizer
+        open={customizing}
+        onClose={() => setCustomizing(false)}
+        themeId={journalTheme.themeId}
+        decorations={journalTheme.decorations || []}
+        applyToApp={journalTheme.applyToApp}
+        resolvedAccent={theme.accent}
+        onChangeTheme={handleChangeTheme}
+        onToggleDecoration={handleToggleDecoration}
+        onToggleApplyToApp={handleToggleApplyToApp}
+      />
     </div>
   )
 }

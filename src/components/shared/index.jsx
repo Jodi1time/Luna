@@ -1,5 +1,8 @@
 import { forwardRef } from 'react'
 import { T } from '../../data/theme'
+import { JOURNAL_THEMES, DEFAULT_JOURNAL_THEME } from '../../data/journalThemes'
+import JournalDecorations from '../JournalDecorations'
+import useLuna from '../../store/useLuna'
 
 // ── Icons ────────────────────────────────────────────────────
 export const Icons = {
@@ -16,6 +19,19 @@ export const Icons = {
 
 // ── App shell — phone-shaped viewport ───────────────────────
 export function AppShell({ children }) {
+  // Pull diary theme + decorations from the store. When the user has
+  // toggled "skin the whole app", the phone-frame background switches
+  // to the theme's paper colour and the chosen decorations render as
+  // a fixed overlay behind every screen.
+  const settings = useLuna((s) => s.settings)
+  const journalTheme = settings?.journalTheme || DEFAULT_JOURNAL_THEME
+  const skinApp = Boolean(journalTheme.applyToApp)
+  const themeData = JOURNAL_THEMES[journalTheme.themeId] || JOURNAL_THEMES.cream
+  // Use a neutral fallback for the in-app accent so we don't have to
+  // pass phase context this deep — decorations look fine at low
+  // opacity regardless.
+  const decorationsAccent = themeData.accent || T.accent
+  const frameBg = skinApp ? themeData.paper : T.bg
   return (
     <div style={{
       height: '100dvh',
@@ -30,13 +46,28 @@ export function AppShell({ children }) {
         width: '100%',
         maxWidth: 430,
         height: '100dvh',
-        background: T.bg,
+        background: frameBg,
         position: 'relative',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
+        transition: 'background 0.4s var(--ease-out)',
       }}>
-        {children}
+        {/* App-wide decorations overlay — only when the user opted in.
+            Renders behind all screens. Soft opacity so it never
+            competes with content. */}
+        {skinApp && journalTheme.decorations?.length > 0 && (
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}>
+            <JournalDecorations
+              decorations={journalTheme.decorations}
+              accent={decorationsAccent}
+              opacity={0.07}
+            />
+          </div>
+        )}
+        <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {children}
+        </div>
       </div>
     </div>
   )

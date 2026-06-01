@@ -1236,15 +1236,16 @@ export default function Home() {
             </button>
           )}
 
-          {/* The journal — a notebook-page card. Tap opens the
-              full journal screen where today's page is editable
-              and earlier pages stack below. Uses today's log.note
-              as the page content so writing here, in QuickNote, or
-              on the sticky note all point at the same surface. */}
+          {/* The diary — separate from log.note (the sticky note is
+              for a quick line to your future self; the diary is for
+              freeform multi-entry writing). Tap opens the full
+              journal where the user can write new pages, read past
+              ones, and customise the paper / decorations. */}
           {!isPreg && (
             <JournalCard
-              todayNote={todayLog?.note}
-              accent={phase?.color || T.accent}
+              entries={settings?.journalEntries}
+              journalTheme={settings?.journalTheme}
+              phaseColor={phase?.color}
               onTap={() => go('journal')}
             />
           )}

@@ -56,6 +56,19 @@ const DEFAULT_SETTINGS = {
   //   'ttc'      — trying to conceive; fertile-window emphasis
   // Pregnancy + Postpartum continue to use the `pregnancy` field above.
   lifecycle: 'cycle',
+  // Diary entries — the user's freeform writing, separate from
+  // log.note (which is the per-day sticky-note style memo). Each
+  // entry is its own page: { id, body, createdAt, updatedAt }.
+  // Multiple per day are fine.
+  journalEntries: [],
+  // Diary customisation — themeId picks the palette, decorations is
+  // a list of decoration keys ('hearts' | 'stars' | etc.), and
+  // applyToApp = true skins the rest of the app to match.
+  journalTheme: {
+    themeId: 'cream',
+    decorations: [],
+    applyToApp: false,
+  },
 }
 
 const useLuna = create(
@@ -191,6 +204,52 @@ const useLuna = create(
         const next = { ...cur, wellness }
         set({ settings: next })
         fireAndForget(saveProfile({ settings: next }), 'markWellness')
+      },
+
+      // ── Journal — diary entries with their own data + theme ──
+      //
+      // Each entry: { id, body, createdAt, updatedAt }. Append a new
+      // entry (saveJournalEntry), update an existing one in place
+      // (updateJournalEntry), or remove it (deleteJournalEntry).
+      // Theme + decorations live under settings.journalTheme.
+      saveJournalEntry: (body) => {
+        const trimmed = String(body || '').trim()
+        if (!trimmed) return null
+        const now = new Date().toISOString()
+        const entry = {
+          id: `j_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          body: trimmed,
+          createdAt: now,
+          updatedAt: now,
+        }
+        const cur = get().settings || {}
+        const next = { ...cur, journalEntries: [entry, ...(cur.journalEntries || [])] }
+        set({ settings: next })
+        fireAndForget(saveProfile({ settings: next }), 'saveJournalEntry')
+        return entry
+      },
+      updateJournalEntry: (id, partial) => {
+        const cur = get().settings || {}
+        const list = (cur.journalEntries || []).map((e) =>
+          e.id === id ? { ...e, ...partial, updatedAt: new Date().toISOString() } : e
+        )
+        const next = { ...cur, journalEntries: list }
+        set({ settings: next })
+        fireAndForget(saveProfile({ settings: next }), 'updateJournalEntry')
+      },
+      deleteJournalEntry: (id) => {
+        const cur = get().settings || {}
+        const list = (cur.journalEntries || []).filter((e) => e.id !== id)
+        const next = { ...cur, journalEntries: list }
+        set({ settings: next })
+        fireAndForget(saveProfile({ settings: next }), 'deleteJournalEntry')
+      },
+      updateJournalTheme: (partial) => {
+        const cur = get().settings || {}
+        const journalTheme = { ...(cur.journalTheme || {}), ...partial }
+        const next = { ...cur, journalTheme }
+        set({ settings: next })
+        fireAndForget(saveProfile({ settings: next }), 'updateJournalTheme')
       },
 
       // ── Navigation (in-app, never persisted) ─────────────────

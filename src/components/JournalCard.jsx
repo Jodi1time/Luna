@@ -1,21 +1,26 @@
 import { T } from '../data/theme'
+import { resolveTheme, DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
+import JournalDecorations from './JournalDecorations'
 
 const LINE_H = 24
 
-// A small notebook-page card for Home. Shows today's note preview if
-// one exists, otherwise a soft "blank page" invitation. The aesthetic
-// matches the full Journal screen (cream paper, ruled lines, phase-
-// color margin line) so tapping in feels like opening the same book.
-export default function JournalCard({ todayNote, accent, onTap }) {
-  const trimmed = (todayNote || '').toString().trim()
-  const preview = trimmed.length > 180 ? trimmed.slice(0, 176).trimEnd() + '…' : trimmed
-  // Three layers: phase-color left margin, horizontal ruled lines,
-  // cream paper.
+// A small notebook-page card for Home. Previews the user's most
+// recent diary entry (or an empty-state invitation) and tints to
+// whatever theme + decorations they've picked for the diary. Tapping
+// opens the full journal.
+export default function JournalCard({ entries, journalTheme, phaseColor, onTap }) {
+  const jt = journalTheme || DEFAULT_JOURNAL_THEME
+  const theme = resolveTheme(jt.themeId, phaseColor)
+  const latest = (entries && entries[0]) || null
+  const preview = latest
+    ? (latest.body.length > 180 ? latest.body.slice(0, 176).trimEnd() + '…' : latest.body)
+    : null
   const paper = [
-    `linear-gradient(to right, transparent 28px, ${accent}55 28px, ${accent}55 29px, transparent 29px)`,
+    `linear-gradient(to right, transparent 28px, ${theme.accent}55 28px, ${theme.accent}55 29px, transparent 29px)`,
     `repeating-linear-gradient(to bottom, transparent 0, transparent ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H - 1}px, rgba(26,19,16,0.08) ${LINE_H}px)`,
-    '#FAF4DC',
+    theme.paper,
   ].join(', ')
+  const entryCount = entries?.length || 0
   return (
     <button onClick={onTap}
       style={{
@@ -28,47 +33,51 @@ export default function JournalCard({ todayNote, accent, onTap }) {
         boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 10px 24px -18px rgba(26,19,16,0.16)',
         border: 'none',
         cursor: 'pointer',
-        color: T.text,
+        color: theme.text,
         fontFamily: 'inherit',
         position: 'relative',
         display: 'block',
+        overflow: 'hidden',
       }}>
-      {/* Page corner fold — small triangle in the top-right, signals
-          "this is a page, not a card." */}
+      <JournalDecorations decorations={jt.decorations || []} accent={theme.accent} opacity={0.1} />
+      {/* Page corner fold — small triangle in the top-right */}
       <div aria-hidden="true" style={{
         position: 'absolute', top: 0, right: 0,
         width: 0, height: 0,
         borderLeft: '14px solid transparent',
-        borderTop: `14px solid ${accent}22`,
+        borderTop: `14px solid ${theme.accent}33`,
+        zIndex: 2,
       }} />
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.3, fontWeight: 600, color: accent, opacity: 0.85 }}>
-          THE JOURNAL
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.3, fontWeight: 600, color: theme.accent, opacity: 0.9 }}>
+            THE DIARY {entryCount > 0 && `· ${entryCount} PAGE${entryCount === 1 ? '' : 'S'}`}
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 10, color: theme.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+            {latest ? 'Open the book →' : 'Start a page →'}
+          </div>
         </div>
-        <div style={{ fontFamily: T.sans, fontSize: 10, color: accent, fontWeight: 600, letterSpacing: 0.3 }}>
-          {trimmed ? 'Open the book →' : 'Start a page →'}
-        </div>
+        {preview ? (
+          <div style={{
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5,
+            lineHeight: `${LINE_H}px`, color: theme.text,
+            whiteSpace: 'pre-wrap',
+            maxHeight: LINE_H * 4,
+            overflow: 'hidden',
+          }}>
+            {preview}
+          </div>
+        ) : (
+          <div style={{
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 15,
+            lineHeight: `${LINE_H}px`, color: theme.text, opacity: 0.55,
+            minHeight: LINE_H * 3,
+          }}>
+            A blank book.<br />
+            Whatever you want to write — entries stack here.
+          </div>
+        )}
       </div>
-      {trimmed ? (
-        <div style={{
-          fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5,
-          lineHeight: `${LINE_H}px`, color: T.text,
-          whiteSpace: 'pre-wrap',
-          maxHeight: LINE_H * 4,
-          overflow: 'hidden',
-        }}>
-          {preview}
-        </div>
-      ) : (
-        <div style={{
-          fontFamily: T.serif, fontStyle: 'italic', fontSize: 15,
-          lineHeight: `${LINE_H}px`, color: T.muted,
-          minHeight: LINE_H * 3,
-        }}>
-          A blank page.<br />
-          Whatever you want to put down.
-        </div>
-      )}
     </button>
   )
 }
