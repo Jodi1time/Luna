@@ -9,6 +9,7 @@ import JournalCustomizer from '../components/JournalCustomizer'
 import Polaroid, { makePhotoMeta } from '../components/Polaroid'
 import PhotoPermissionSheet from '../components/PhotoPermissionSheet'
 import { compressImage } from '../lib/imageCompress'
+import { createRecognizer, isVoiceSupported } from '../lib/voiceRecognition'
 import useLuna from '../store/useLuna'
 
 const LINE_H = 28
@@ -41,14 +42,40 @@ function paperBackground(theme) {
 function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   const [text, setText] = useState('')
   const [photos, setPhotos] = useState([])
+  const [recording, setRecording] = useState(false)
+  const [interim, setInterim] = useState('')
+  const [voiceError, setVoiceError] = useState('')
+  const [elapsedSec, setElapsedSec] = useState(0)
   const taRef = useRef(null)
+  const recRef = useRef(null)
+  const timerRef = useRef(null)
+  const voiceSupported = useMemo(() => isVoiceSupported(), [])
+
+  // Resize the textarea to fit content as the user writes — or as
+  // dictated transcript flows in.
   useEffect(() => {
     const el = taRef.current
     if (!el) return
     el.style.height = 'auto'
     const min = LINE_H * 5
     el.style.height = `${Math.max(min, el.scrollHeight)}px`
-  }, [text])
+  }, [text, interim])
+
+  // Tick the recording timer so the UI shows "0:23" while the mic is
+  // open. Stops the moment recording flips off.
+  useEffect(() => {
+    if (!recording) {
+      if (timerRef.current) clearInterval(timerRef.current)
+      return
+    }
+    setElapsedSec(0)
+    const start = Date.now()
+    timerRef.current = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - start) / 1000))
+    }, 1000)
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [recording])
+
   // A page is savable when it has text OR at least one photo —
   // sometimes a picture is the whole entry.
   const canSave = text.trim().length > 0 || photos.length > 0
@@ -65,6 +92,49 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   const removePhoto = (id) => {
     setPhotos((cur) => cur.filter((p) => p.id !== id))
   }
+
+  // Voice → text. Web Speech API runs continuously until stopped;
+  // each final chunk lands in `text` (with a leading space if needed
+  // so the dictation doesn't fuse with the prior word). Interim
+  // chunks live in their own state and render as ghost text below
+  // the textarea so the user sees Luna catching what they're saying.
+  const startVoice = () => {
+    if (recording) return
+    setVoiceError('')
+    setInterim('')
+    const rec = createRecognizer({
+      onResult: ({ transcript, isFinal }) => {
+        if (isFinal) {
+          setText((prev) => {
+            const sep = prev && !/\s$/.test(prev) ? ' ' : ''
+            return (prev + sep + transcript.trim()).trim() + ' '
+          })
+          setInterim('')
+        } else {
+          setInterim(transcript)
+        }
+      },
+      onError: (msg) => {
+        setVoiceError(msg)
+        setRecording(false)
+      },
+      onEnd: () => {
+        setRecording(false)
+        setInterim('')
+      },
+    })
+    recRef.current = rec
+    rec.start()
+    setRecording(true)
+  }
+  const stopVoice = () => {
+    recRef.current?.stop()
+    setRecording(false)
+  }
+  // Always stop the mic when the composer unmounts so the browser
+  // tab doesn't keep the indicator on.
+  useEffect(() => () => { recRef.current?.stop() }, [])
+  const mmss = `${Math.floor(elapsedSec / 60)}:${String(elapsedSec % 60).padStart(2, '0')}`
   return (
     <div style={{
       background: paperBackground(theme),
@@ -91,7 +161,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
           ref={taRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Whatever's on your mind — start writing."
+          placeholder={recording ? 'Listening — speak whenever.' : "Whatever's on your mind — start writing."}
           maxLength={6000}
           style={{
             width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none',
@@ -103,6 +173,33 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
             display: 'block',
           }}
         />
+        {/* Live interim transcript — what Luna is hearing right now,
+            before the final chunk lands in the textarea. Rendered as
+            ghost-italic so the user sees a draft without the cursor
+            jumping. Disappears between final chunks. */}
+        {recording && interim && (
+          <div style={{
+            fontFamily: T.serif, fontStyle: 'italic', fontSize: 15.5,
+            lineHeight: `${LINE_H}px`, color: theme.text, opacity: 0.45,
+            marginTop: 2,
+          }}>
+            {interim}
+          </div>
+        )}
+        {/* Voice error — surfaces permission denial / no-speech /
+            unsupported messages above the actions row. */}
+        {voiceError && (
+          <div style={{
+            marginTop: 12, padding: '8px 12px',
+            background: T.accent + '12',
+            border: `1px solid ${T.accent}40`,
+            borderRadius: T.r,
+            fontFamily: T.sans, fontSize: 11.5, color: T.accent,
+            lineHeight: 1.5,
+          }}>
+            {voiceError}
+          </div>
+        )}
         {/* Polaroid attachments — rendered between the text and the
             actions row. Each gets a remove button while in compose. */}
         {photos.length > 0 && (
@@ -112,29 +209,71 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
             ))}
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10 }}>
-          <button onClick={handleAddPhoto}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={handleAddPhoto}
+              disabled={recording}
+              style={{
+                background: 'transparent',
+                color: theme.accent,
+                border: `1px solid ${theme.accent}55`,
+                padding: '8px 12px',
+                borderRadius: 999,
+                cursor: recording ? 'default' : 'pointer',
+                opacity: recording ? 0.4 : 1,
+                fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}>
+              <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
+              PHOTO
+            </button>
+            {voiceSupported && (
+              recording ? (
+                <button onClick={stopVoice}
+                  className="voice-recording"
+                  style={{
+                    background: T.accent, color: '#fff',
+                    border: 'none',
+                    padding: '8px 12px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    boxShadow: `0 0 0 0 ${T.accent}66`,
+                  }}>
+                  <span aria-hidden="true" style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: '#fff',
+                    animation: 'voicePulse 1.2s ease-in-out infinite',
+                  }} />
+                  STOP · {mmss}
+                </button>
+              ) : (
+                <button onClick={startVoice}
+                  style={{
+                    background: 'transparent',
+                    color: theme.accent,
+                    border: `1px solid ${theme.accent}55`,
+                    padding: '8px 12px',
+                    borderRadius: 999,
+                    cursor: 'pointer',
+                    fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                  }}>
+                  <span style={{ fontSize: 12, lineHeight: 0 }}>🎤</span>
+                  VOICE
+                </button>
+              )
+            )}
+          </div>
+          <button onClick={handleSave} disabled={!canSave || recording}
             style={{
-              background: 'transparent',
-              color: theme.accent,
-              border: `1px solid ${theme.accent}55`,
-              padding: '8px 12px',
-              borderRadius: 999,
-              cursor: 'pointer',
-              fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-            }}>
-            <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
-            PHOTO
-          </button>
-          <button onClick={handleSave} disabled={!canSave}
-            style={{
-              background: canSave ? theme.accent : 'rgba(26,19,16,0.08)',
-              color: canSave ? '#fff' : T.muted,
+              background: canSave && !recording ? theme.accent : 'rgba(26,19,16,0.08)',
+              color: canSave && !recording ? '#fff' : T.muted,
               border: 'none',
               padding: '9px 16px',
               borderRadius: T.r,
-              cursor: canSave ? 'pointer' : 'default',
+              cursor: canSave && !recording ? 'pointer' : 'default',
               fontFamily: T.sans, fontSize: 11.5, fontWeight: 700, letterSpacing: 1,
               transition: 'background 0.25s var(--ease-out), color 0.25s var(--ease-out)',
             }}>
