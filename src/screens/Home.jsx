@@ -1184,49 +1184,58 @@ export default function Home() {
 
           {/* Smart helper surfaces — only appear when she has told us
               something is happening today. Each gets its own eyebrow
-              so the page reads as conversation, not a status bar. */}
-          {!isPreg && hasCrampsToday && (
-            <SmartHelperCard
-              onTap={() => go('cramps')}
-              eyebrow="Cramping today"
-              line="Sit with it — Luna has a few small things that help."
-            />
-          )}
-          {!isPreg && hasAnxietyToday && (
-            <SmartHelperCard
-              onTap={() => go('heavy')}
-              eyebrow="Heavy today"
-              line="A few ways in — body, words, breath, or someone to talk to."
-            />
-          )}
-          {!isPreg && hasInsomniaToday && (
-            <SmartHelperCard
-              onTap={() => go('insomnia')}
-              eyebrow="Sleep was rough"
-              line="Tonight, Luna will help you wind down sooner."
-            />
-          )}
-          {!isPreg && hasUTIToday && (
-            <SmartHelperCard
-              onTap={() => go('utiHelper')}
-              eyebrow="UTI signs"
-              line="Catch it early — here's the playbook for tonight."
-            />
-          )}
-          {!isPreg && isTTC && (
-            <SmartHelperCard
-              onTap={() => go('ttc')}
-              eyebrow="Trying to conceive"
-              line="Your fertile-window read for today."
-            />
-          )}
-          {showMorningIntention && (
-            <SmartHelperCard
-              onTap={() => { setActiveReflectPractice('intention'); go('reflect') }}
-              eyebrow="This morning"
-              line="One sentence about what today is really about?"
-            />
-          )}
+              so the page reads as conversation, not a status bar.
+              Single-surface rule: only the highest-priority active
+              helper renders, so the user sees one quiet "this matters
+              today" card instead of a stack. Priority is harshest-
+              physical first (cramps, UTI) → emotional (heavy, sleep)
+              → reflective (morning intention) → mode-context (TTC). */}
+          {(() => {
+            if (isPreg) return null
+            if (hasCrampsToday) return (
+              <SmartHelperCard
+                onTap={() => go('cramps')}
+                eyebrow="Cramping today"
+                line="Sit with it — Luna has a few small things that help."
+              />
+            )
+            if (hasUTIToday) return (
+              <SmartHelperCard
+                onTap={() => go('utiHelper')}
+                eyebrow="UTI signs"
+                line="Catch it early — here's the playbook for tonight."
+              />
+            )
+            if (hasAnxietyToday) return (
+              <SmartHelperCard
+                onTap={() => go('heavy')}
+                eyebrow="Heavy today"
+                line="A few ways in — body, words, breath, or someone to talk to."
+              />
+            )
+            if (hasInsomniaToday) return (
+              <SmartHelperCard
+                onTap={() => go('insomnia')}
+                eyebrow="Sleep was rough"
+                line="Tonight, Luna will help you wind down sooner."
+              />
+            )
+            if (showMorningIntention) return (
+              <SmartHelperCard
+                onTap={() => { setActiveReflectPractice('intention'); go('reflect') }}
+                eyebrow="This morning"
+                line="One sentence about what today is really about?"
+              />
+            )
+            if (isTTC) return (
+              <SmartHelperCard
+                onTap={() => go('ttc')}
+                eyebrow="Trying to conceive"
+                line="Your fertile-window read for today."
+              />
+            )
+            return null
+          })()}
           {showEveningIntention && todayIntention && (
             <button onClick={() => go('reflect')} className="glass-card"
               style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
@@ -1257,9 +1266,11 @@ export default function Home() {
           )}
 
           {/* "For your mind and heart" — promoted entry to Reflect.
-              Lives right next to the daily thought so the journaling
-              practices are first-class, not buried in Always Here. */}
-          {!isPreg && phase && (
+              Suppressed when the morning intention card is showing
+              (both nudge reflective writing — morning is more
+              specific, this one is general; double-surfacing both
+              would be redundant). */}
+          {!isPreg && phase && !showMorningIntention && (
             <button onClick={() => go('reflect')} className="glass-card"
               style={{
                 marginTop: 26, padding: '14px 16px',

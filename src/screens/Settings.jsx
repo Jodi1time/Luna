@@ -271,19 +271,41 @@ export default function Settings() {
       </div>
       </div>
 
+      {/* Former "More from Luna" — split into four labeled groups so
+          11 mixed-purpose rows stop reading as a wall. Reflective →
+          writing & noticing; When something's wrong → urgent care &
+          loss; Manage → practical routines; Account → Pro + delete. */}
       <div className="insight-stagger" style={{ animationDelay: '640ms' }}>
-      <SectionLabel color={acc}>More from Luna</SectionLabel>
+      <SectionLabel color={acc}>Reflective</SectionLabel>
       <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
         <Row label="What we've noticed" onTap={() => go('insights')} />
-        <Row label="When something feels off" onTap={() => go('watch')} />
-        <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
-        <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
-        <Row label="For your next visit" onTap={() => go('cheatsheet')} />
         <Row label="Your year with Luna" onTap={() => go('yourYear')} />
-        <Row label="View Pro features"  onTap={() => go('paywall')} />
+        <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
+      </div>
+      </div>
+
+      <div className="insight-stagger" style={{ animationDelay: '680ms' }}>
+      <SectionLabel color={acc}>When something's wrong</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="When something feels off" onTap={() => go('watch')} />
+        <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
+      </div>
+      </div>
+
+      <div className="insight-stagger" style={{ animationDelay: '720ms' }}>
+      <SectionLabel color={acc}>Manage</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="For your next visit" onTap={() => go('cheatsheet')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
+      </div>
+      </div>
+
+      <div className="insight-stagger" style={{ animationDelay: '760ms' }}>
+      <SectionLabel color={acc}>Account</SectionLabel>
+      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+        <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Delete my account"  onTap={deleteAccount} danger />
       </div>
       </div>
