@@ -503,6 +503,10 @@ export default function Journal() {
     updateJournalTheme({ applyToApp: !journalTheme.applyToApp })
   }
   const handleChangeBackdrop = (id) => { updateJournalTheme({ backdropKind: id }) }
+  const handleChangeBackdropAccent = (color) => {
+    const cur = journalTheme.backdrop || { accent: null }
+    updateJournalTheme({ backdrop: { ...cur, accent: color } })
+  }
   const handleChangeCustom = (partial) => {
     const cur = journalTheme.custom || { color: '#F5E6D3', color2: '#E8C8B5', angle: 150, gradient: false }
     updateJournalTheme({ custom: { ...cur, ...partial } })
@@ -598,12 +602,14 @@ export default function Journal() {
         decorations={journalTheme.decorations || []}
         applyToApp={journalTheme.applyToApp}
         backdropKind={journalTheme.backdropKind || 'blob'}
+        backdropAccent={journalTheme.backdrop?.accent || null}
         custom={journalTheme.custom}
         resolvedAccent={theme.accent}
         onChangeTheme={handleChangeTheme}
         onToggleDecoration={handleToggleDecoration}
         onToggleApplyToApp={handleToggleApplyToApp}
         onChangeBackdrop={handleChangeBackdrop}
+        onChangeBackdropAccent={handleChangeBackdropAccent}
         onChangeCustom={handleChangeCustom}
       />
 

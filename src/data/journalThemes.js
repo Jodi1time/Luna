@@ -96,6 +96,13 @@ export const DEFAULT_JOURNAL_THEME = {
     angle:    150,         // gradient direction in degrees
     gradient: false,       // false → solid color; true → linear-gradient
   },
+  // Override for the backdrop accent. null → tie to today's phase
+  // (the default — Luna's signature look). Any hex string → use
+  // that color for the backdrop instead, regardless of phase. Lets
+  // users break the phase tie when it clashes with their paper.
+  backdrop: {
+    accent: null,
+  },
 }
 
 // Add 'custom' as a virtual theme entry the picker can show as a

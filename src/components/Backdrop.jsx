@@ -313,15 +313,12 @@ function SilkBackdrop({ accent, subtle }) {
 }
 
 // ── Galaxy (WebGL star field from React Bits) ────────────────
-// Replaces the earlier hand-rolled Constellation. Galaxy gives us
-// real depth (4 stacked star layers parallaxing past each other),
-// proper twinkle + flare, slow rotation, and per-phase hue tint via
-// the shader's uHueShift uniform.
-//
-// Tuned for Luna's quiet register: mouse interaction off (no tech
-// demo feel), saturation moderate (stars take a wash of the phase
-// hue without going technicolor), slow star + rotation speed,
-// transparent background so cream/theme paper reads through.
+// Dialed dramatically down from the React Bits demo for Luna. The
+// demo's defaults read as sci-fi star field — too loud for a cream
+// female-coded interface. Tuning targets a soft "dust in light"
+// atmosphere instead: very low density, tiny flares, gentle twinkle,
+// minimal saturation, wrapper at low opacity. Pair with phase color
+// (or backdrop.accent override) via hexToHue.
 function GalaxyBackdrop({ accent, subtle }) {
   return (
     <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
@@ -329,19 +326,19 @@ function GalaxyBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.55 : 0.8,
+        opacity: subtle ? 0.32 : 0.45,
       }}>
       <Suspense fallback={null}>
         <Galaxy
           transparent
           mouseInteraction={false}
           mouseRepulsion={false}
-          density={subtle ? 0.7 : 1.0}
-          starSpeed={0.35}
-          rotationSpeed={0.04}
-          glowIntensity={0.3}
-          saturation={0.35}
-          twinkleIntensity={0.45}
+          density={subtle ? 0.35 : 0.5}
+          starSpeed={0.22}
+          rotationSpeed={0.025}
+          glowIntensity={0.13}
+          saturation={0.18}
+          twinkleIntensity={0.25}
           hueShift={hexToHue(accent)}
         />
       </Suspense>
@@ -360,7 +357,11 @@ export default function Backdrop({ accent, subtle = false, children }) {
   // we swapped to the React Bits Galaxy. Anyone who already picked
   // Stars maps cleanly to Galaxy.
   if (kind === 'constellation') kind = 'galaxy'
-  const a = accent || T.accent
+  // Honor the user's backdrop colour override when set. null → fall
+  // back to the screen's accent (which itself is the phase color
+  // for cycle screens, or theme accent for custom paper).
+  const customAccent = settings?.journalTheme?.backdrop?.accent
+  const a = customAccent || accent || T.accent
   if (kind === 'moons')  return <MoonsBackdrop  accent={a} subtle={subtle} />
   if (kind === 'aurora') return <AuroraBackdrop accent={a} subtle={subtle} />
   if (kind === 'silk')   return <SilkBackdrop   accent={a} subtle={subtle} />

@@ -75,12 +75,14 @@ export default function JournalCustomizer({
   decorations,
   applyToApp,
   backdropKind,
+  backdropAccent,
   custom,
   resolvedAccent,
   onChangeTheme,
   onToggleDecoration,
   onToggleApplyToApp,
   onChangeBackdrop,
+  onChangeBackdropAccent,
   onChangeCustom,
 }) {
   // Lock body scroll while the sheet is open.
@@ -333,6 +335,74 @@ export default function JournalCustomizer({
               </button>
             )
           })}
+        </div>
+
+        {/* Backdrop colour override. Default ("Follow your phase")
+            ties the backdrop to today's cycle phase — Luna's
+            signature look. Custom lets the user pick any colour for
+            when the phase tint clashes with their paper or
+            decorations. Applies across every backdrop kind. */}
+        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+          BACKDROP COLOUR
+        </div>
+        <div style={{
+          display: 'flex', alignItems: 'stretch', gap: 8, marginBottom: 22,
+        }}>
+          <button onClick={() => onChangeBackdropAccent?.(null)}
+            style={{
+              flex: 1,
+              background: !backdropAccent ? resolvedAccent + '12' : 'transparent',
+              border: `1px solid ${!backdropAccent ? resolvedAccent : T.hair}`,
+              borderRadius: T.r,
+              padding: '10px 12px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              color: T.text,
+              textAlign: 'left',
+              display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+            <span style={{
+              width: 18, height: 18, borderRadius: '50%',
+              background: resolvedAccent,
+              boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)',
+              flexShrink: 0,
+            }} />
+            <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', letterSpacing: -0.1 }}>
+              Follow your phase
+            </span>
+          </button>
+          <label style={{
+            flex: 1,
+            background: backdropAccent ? resolvedAccent + '12' : 'transparent',
+            border: `1px solid ${backdropAccent ? resolvedAccent : T.hair}`,
+            borderRadius: T.r,
+            padding: '10px 12px',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: backdropAccent || '#C0A088',
+              boxShadow: 'inset 0 0 0 2px rgba(255,255,255,0.6)',
+              flexShrink: 0,
+              position: 'relative',
+              overflow: 'hidden',
+            }}>
+              <input type="color"
+                value={backdropAccent || '#C0A088'}
+                onChange={(e) => onChangeBackdropAccent?.(e.target.value)}
+                style={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%',
+                  opacity: 0, cursor: 'pointer',
+                  border: 'none', padding: 0,
+                }}
+              />
+            </span>
+            <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', letterSpacing: -0.1, color: T.text }}>
+              Pick a colour
+            </span>
+          </label>
         </div>
 
         {/* Decorations */}
