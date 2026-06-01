@@ -735,7 +735,7 @@ function ForTodayRow({ phase, go, goArticle }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings, updateSetting } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings, updateSetting, setActiveReflectPractice } = store
   const wellness = settings?.wellness || {}
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
@@ -1222,7 +1222,7 @@ export default function Home() {
           )}
           {showMorningIntention && (
             <SmartHelperCard
-              onTap={() => go('reflect')}
+              onTap={() => { setActiveReflectPractice('intention'); go('reflect') }}
               eyebrow="This morning"
               line="One sentence about what today is really about?"
             />

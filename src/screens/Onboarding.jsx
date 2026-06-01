@@ -7,38 +7,155 @@ import { getSession } from '../lib/supabase'
 import { StatusView } from '../components/StatusView'
 import { validateName, validateAccountPassword, validateEmail } from '../lib/validation'
 
+// Editorial progress bar — three numbered chips with the current step
+// lit in accent. Reads as "you are here" rather than "fill these in."
 function ProgressBar({ step, total = 3 }) {
+  const labels = ['Your last period', 'Your cycle', 'Your name']
   return (
-    <div style={{ display: 'flex', gap: 4, marginBottom: 36 }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{ height: 2, flex: 1, background: i < step ? T.accent : T.hair, transition: 'background .2s' }} />
-      ))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 30 }}>
+      {Array.from({ length: total }).map((_, i) => {
+        const n = i + 1
+        const active = n === step
+        const done = n < step
+        return (
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, fontWeight: 500,
+              background: active ? T.accent : (done ? T.accent + '22' : 'transparent'),
+              color: active ? '#fff' : (done ? T.accent : T.muted),
+              border: active ? 'none' : `1px solid ${done ? T.accent + '55' : T.hair}`,
+              transition: 'all 0.3s var(--ease-out)',
+            }}>
+              {n}
+            </div>
+            <div style={{
+              fontFamily: T.mono, fontSize: 8.5, letterSpacing: 0.9, fontWeight: 600,
+              color: active ? T.accent : T.muted,
+              opacity: active ? 1 : 0.55,
+              transition: 'all 0.3s var(--ease-out)',
+              textTransform: 'uppercase',
+            }}>
+              {labels[i]}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
 
+// Calendar widget — supports navigating back up to 12 months so the
+// user can mark a period that started in a previous month. Forward
+// navigation is allowed up to the current month only (no future).
+// Selection is stored as an ISO date string (YYYY-MM-DD).
 function StepDate({ value, onChange }) {
-  const days  = ['M','T','W','T','F','S','S']
-  const dates = Array.from({ length: 31 }, (_, i) => i + 1)
-  const now   = new Date()
-  const month = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const first = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
-  const adj   = first === 0 ? 6 : first - 1
+  const days = ['M','T','W','T','F','S','S']
+  const now = new Date()
+  const todayISO = now.toISOString().slice(0, 10)
+  const initialDate = value ? new Date(value + 'T12:00:00') : now
+  const [viewing, setViewing] = useState({
+    year:  initialDate.getFullYear(),
+    month: initialDate.getMonth(),
+  })
+
+  const monthLabel = new Date(viewing.year, viewing.month, 1)
+    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+
+  const daysInMonth = new Date(viewing.year, viewing.month + 1, 0).getDate()
+  const firstDay   = new Date(viewing.year, viewing.month, 1).getDay()
+  const offset     = firstDay === 0 ? 6 : firstDay - 1
+  const dates      = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+
+  // Back 12 months max; forward only up to current month.
+  const earliestAllowed = new Date(now.getFullYear(), now.getMonth() - 12, 1)
+  const currentMonthFirst = new Date(now.getFullYear(), now.getMonth(), 1)
+  const viewingFirst = new Date(viewing.year, viewing.month, 1)
+  const canGoBack = viewingFirst > earliestAllowed
+  const canGoForward = viewingFirst < currentMonthFirst
+
+  const stepMonth = (delta) => {
+    setViewing(({ year, month }) => {
+      const d = new Date(year, month + delta, 1)
+      return { year: d.getFullYear(), month: d.getMonth() }
+    })
+  }
+
   return (
     <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderRadius: T.r }}>
-      <div style={{ fontWeight: 600, fontSize: 14, fontFamily: T.sans, marginBottom: 14 }}>{month}</div>
+      {/* Month navigation header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <button onClick={() => stepMonth(-1)} disabled={!canGoBack}
+          aria-label="Previous month"
+          style={{
+            background: 'transparent', border: `1px solid ${T.hair}`,
+            color: canGoBack ? T.text : T.hair,
+            width: 30, height: 30, borderRadius: T.r,
+            cursor: canGoBack ? 'pointer' : 'default',
+            fontFamily: T.sans, fontSize: 16, padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>‹</button>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, fontSize: 17, letterSpacing: -0.2, color: T.text }}>
+          {monthLabel}
+        </div>
+        <button onClick={() => stepMonth(1)} disabled={!canGoForward}
+          aria-label="Next month"
+          style={{
+            background: 'transparent', border: `1px solid ${T.hair}`,
+            color: canGoForward ? T.text : T.hair,
+            width: 30, height: 30, borderRadius: T.r,
+            cursor: canGoForward ? 'pointer' : 'default',
+            fontFamily: T.sans, fontSize: 16, padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>›</button>
+      </div>
+      {/* Day-of-week headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
-        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10, color: T.muted, fontFamily: T.sans }}>{d}</div>)}
+        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
       </div>
+      {/* Day cells */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}
-        {dates.map((d) => (
-          <button key={d} onClick={() => onChange(d)}
-            style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontFamily: T.sans, cursor: 'pointer', border: 'none', background: value === d ? T.accent : 'transparent', color: value === d ? '#fff' : T.text, borderRadius: T.r, fontWeight: value === d ? 600 : 400 }}>
-            {d}
-          </button>
-        ))}
+        {Array.from({ length: offset }).map((_, i) => <div key={`e${i}`} />)}
+        {dates.map((d) => {
+          const cellISO = `${viewing.year}-${String(viewing.month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+          const isFuture = cellISO > todayISO
+          const isSelected = value === cellISO
+          const isToday = cellISO === todayISO
+          return (
+            <button key={d} onClick={() => !isFuture && onChange(cellISO)}
+              disabled={isFuture}
+              style={{
+                aspectRatio: '1',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 13, fontFamily: T.serif,
+                cursor: isFuture ? 'default' : 'pointer',
+                border: isToday && !isSelected ? `1px dashed ${T.accent}66` : 'none',
+                background: isSelected ? T.accent : 'transparent',
+                color: isSelected ? '#fff' : isFuture ? T.hair : T.text,
+                opacity: isFuture ? 0.4 : 1,
+                borderRadius: T.r,
+                fontWeight: isSelected ? 600 : 400,
+                padding: 0,
+                transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out)',
+              }}>
+              {d}
+            </button>
+          )
+        })}
       </div>
+      {/* Selected-date readback — confirms the user's choice in a
+          conversational line so they don't have to recompute the
+          month they're looking at. */}
+      {value && (
+        <div style={{
+          marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`,
+          fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic',
+          color: T.muted, textAlign: 'center', letterSpacing: -0.1,
+        }}>
+          {new Date(value + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.
+        </div>
+      )}
     </div>
   )
 }
@@ -46,13 +163,16 @@ function StepDate({ value, onChange }) {
 function StepCycle({ value, onChange }) {
   return (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
-        <span key={value} style={{ fontFamily: T.serif, fontSize: 96, fontWeight: 300, color: T.accent, lineHeight: 1, display: 'inline-block', animation: 'numberPop 0.35s ease-out both' }}>{value}</span>
-        <span style={{ fontFamily: T.sans, fontSize: 14, color: T.muted, marginLeft: 8 }}>days</span>
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <span key={value} style={{ fontFamily: T.serif, fontSize: 110, fontStyle: 'italic', fontWeight: 400, color: T.accent, lineHeight: 1, letterSpacing: -3, display: 'inline-block', animation: 'numberPop 0.35s ease-out both' }}>{value}</span>
+        <span style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', color: T.muted, marginLeft: 10 }}>days</span>
       </div>
-      <input type="range" min={21} max={45} value={value} onChange={(e) => onChange(+e.target.value)} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: T.muted, marginTop: 6, fontFamily: T.sans }}>
-        <span>21</span><span>33</span><span>45</span>
+      <input type="range" min={21} max={45} value={value} onChange={(e) => onChange(+e.target.value)}
+        style={{ width: '100%', accentColor: T.accent }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 8, fontFamily: T.mono, letterSpacing: 0.8, fontWeight: 600 }}>
+        <span>21</span>
+        <span style={{ fontStyle: 'italic', fontFamily: T.serif, fontSize: 11 }}>typical · 28</span>
+        <span>45</span>
       </div>
     </div>
   )
@@ -104,7 +224,10 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
 
 export default function Onboarding({ step }) {
   const { go, setOnboarding, cycleLength } = useLuna()
-  const [dateDay,   setDateDay]  = useState(new Date().getDate())
+  // Period start is stored as an ISO date string so the picker can
+  // navigate back across months. Defaults to today; the user can
+  // step back up to 12 months via the calendar header.
+  const [lastPeriodISO, setLastPeriodISO] = useState(() => new Date().toISOString().slice(0, 10))
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [account, setAccount] = useState({
     name: '', email: '', accountPassword: '',
@@ -136,7 +259,9 @@ export default function Onboarding({ step }) {
     setFatalError('')
     setFinishing(true)
     try {
-      const d = new Date(now.getFullYear(), now.getMonth(), dateDay)
+      // lastPeriodISO is already the user's exact pick (YYYY-MM-DD),
+      // possibly in a previous month.
+      const d = new Date(lastPeriodISO + 'T12:00:00')
 
       let acct = null
       if (signedInEmail) {
@@ -239,7 +364,7 @@ export default function Onboarding({ step }) {
           A rough estimate is enough. We'll learn the rest from you.
         </div>
         <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
-          <StepDate value={dateDay} onChange={setDateDay} />
+          <StepDate value={lastPeriodISO} onChange={setLastPeriodISO} />
         </div>
       </>}
 
