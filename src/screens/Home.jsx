@@ -771,19 +771,21 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Staged scroll-collapse. Cover compresses physically (translate +
-  // scale) in lockstep with a margin-bottom shrink — so cover content
-  // and cards-below move together, no overlap. Only AFTER the
-  // headline has physically moved out of the way does it fade.
+  // Staged scroll-collapse. The COVER WRAPPER translates up in lockstep
+  // with a margin-bottom shrink — so cover content and cards-below
+  // move together as one unit. No overlap zone, ever. Inside the
+  // cover, body opacity fades first, headline scales + fades second.
   //
   // Phases (single normalized progress p, 0 → 1 over COLLAPSE_DISTANCE):
-  //   • bodyProg     (p 0.00 → 0.42): body details translate up + fade
-  //   • headMoveProg (p 0.32 → 0.80): headline translates up + scales
-  //     (the "3" visibly shrinks, eyebrow + phase name ride up with it)
-  //   • headFadeProg (p 0.78 → 1.00): headline finally fades out
+  //   • bodyProg     (p 0.00 → 0.42): body opacity fades 1 → 0
+  //   • headMoveProg (p 0.32 → 0.80): headline scales 1 → 0.5
+  //   • headFadeProg (p 0.78 → 1.00): headline opacity fades 1 → 0
   //
-  // Margin collapse is summed across stages so layout reduction
-  // matches the visual height removed at every frame.
+  // collapse = bodyProg*200 + headMoveProg*110 — sums the natural
+  // height removed at each stage. The cover wrapper translates by
+  // -collapse and its marginBottom shrinks by the same amount, so
+  // visually the cover slides up while cards rise from below at
+  // matching rate. No card ever overlaps the cover content.
   //
   // rAF-throttled, written direct to DOM — no re-render on scroll.
   const screenRef = useRef(null)
@@ -808,15 +810,17 @@ export default function Home() {
 
       if (bodyRef.current) {
         bodyRef.current.style.opacity = String(1 - bodyProg)
-        bodyRef.current.style.transform = `translate3d(0, ${-bodyProg * 24}px, 0)`
       }
       if (headlineRef.current) {
         const scale = 1 - headMoveProg * 0.5
-        const translateY = -headMoveProg * 80
         headlineRef.current.style.opacity = String(1 - headFadeProg)
-        headlineRef.current.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`
+        headlineRef.current.style.transform = `scale(${scale})`
       }
-      const collapse = bodyProg * 210 + headMoveProg * 120
+      // Cover wrapper rides UP at the same rate cards-below rise.
+      // Both transforms reference the natural cover height we're
+      // removing in each phase, summed.
+      const collapse = bodyProg * 200 + headMoveProg * 110
+      cover.style.transform = `translate3d(0, ${-collapse}px, 0)`
       cover.style.marginBottom = `${4 - collapse}px`
       cover.style.pointerEvents = headFadeProg > 0.92 ? 'none' : 'auto'
     }
@@ -1060,23 +1064,23 @@ export default function Home() {
           {!isPreg && (
           <div ref={coverRef} style={{
             marginBottom: 4,
-            willChange: 'margin-bottom',
+            willChange: 'transform, margin-bottom',
           }}>
             <div ref={headlineRef} style={{
               willChange: 'opacity, transform',
               transformOrigin: 'top left',
             }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 4 }}>
                 {onHormonalBC
                   ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                   : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
               </div>
               <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
                 className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+                style={{ fontFamily: T.serif, fontSize: 124, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.95, letterSpacing: -6, marginTop: 4, transition: 'color 0.6s ease-out' }}>
                 {cycleDay ? animatedDay : '—'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 2 }}>
                 <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05 }}>
                   {phase?.name || 'Just getting started'}.
                 </div>
@@ -1093,7 +1097,7 @@ export default function Home() {
               transformOrigin: 'top left',
             }}>
               {contextLine && (
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 6 }}>
                   <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
                     {contextLine.text}
                   </div>
@@ -1106,24 +1110,24 @@ export default function Home() {
               )}
 
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text }}>
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, marginTop: 10, color: T.text }}>
                   {phase.bodyMood}
                 </div>
               )}
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 6, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
                   {phasePresence[phase.id]}
                 </div>
               )}
               {phase && onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 14, color: T.text }}>
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, marginTop: 10, color: T.text }}>
                   Your hormones are steadied by your method — but patterns can still emerge. Keep noticing.
                 </div>
               )}
 
               {phase && (
                 <button onClick={() => goPhase(phase.id)}
-                  style={{ marginTop: 16, background: 'transparent', border: `1px solid ${T.text}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 600, color: T.text, borderRadius: T.r }}>
+                  style={{ marginTop: 12, background: 'transparent', border: `1px solid ${T.text}`, padding: '9px 13px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 600, color: T.text, borderRadius: T.r }}>
                   More about this phase →
                 </button>
               )}
