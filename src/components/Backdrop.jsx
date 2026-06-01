@@ -1,5 +1,11 @@
+import { lazy, Suspense } from 'react'
 import useLuna from '../store/useLuna'
 import { T } from '../data/theme'
+
+// Silk is the only backdrop that pulls in three.js + @react-three/fiber
+// (~200KB gzipped). Lazy-load so the cost only lands on users who
+// actually pick this atmosphere.
+const Silk = lazy(() => import('./Silk'))
 
 // ── Backdrop registry ─────────────────────────────────────────
 // Each kind is a self-contained atmosphere that fills the stage.
@@ -243,67 +249,40 @@ function PetalsBackdrop({ accent, subtle }) {
   )
 }
 
-// ── Silk (flowing gradient sheets) ───────────────────────────
-// Three layered gradient sheets drifting at different speeds, with a
-// fine noise overlay for that silk-grain feel. The conic gradient
-// underneath gives the "fold" highlights; two large radial sheets
-// drifting in opposite directions on top read as light catching
-// fabric. Adapted to phase color so silk shimmers in the same hue
-// as today's atmosphere.
+// ── Silk (WebGL shader from React Bits) ─────────────────────
+// Stock Silk from React Bits: a WebGL plane running a fragment
+// shader that combines sine-warped UVs with a noise term to produce
+// the flowing silk pattern. Wrapped in a positioned div with the
+// blob-stage's full-screen sizing override, plus a Suspense
+// fallback so the page isn't blank while three.js loads.
+//
+// Props tuned for Luna's editorial register:
+//   speed 1.6           — meditative, not vibrating
+//   scale 1             — stock
+//   color = phase accent — silk shimmers in today's hue
+//   noiseIntensity 1.2  — slightly softer than the React Bits demo
+//   rotation 0
+//
+// The Canvas reduces to a 0.6× opacity overlay so it blends with
+// the cream paper / theme background instead of replacing it.
 function SilkBackdrop({ accent, subtle }) {
-  // Unique id so multiple Silk instances don't share the same SVG
-  // filter (e.g. if the customiser preview ever switches to live).
-  const noiseId = `silk-noise-${accent.replace(/[^a-z0-9]/gi, '') || 'x'}`
   return (
     <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
       style={{
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
+        opacity: subtle ? 0.45 : 0.65,
       }}>
-      {/* Base sheet — slow conic rotation creates the fold highlights */}
-      <div style={{
-        position: 'absolute', inset: '-25%',
-        background: `conic-gradient(from 0deg at 50% 50%, ${accent}11, ${accent}88, ${accent}22, ${accent}99, ${accent}33, ${accent}88, ${accent}11)`,
-        animation: 'silkRotate 60s linear infinite',
-        filter: 'blur(48px)',
-        opacity: subtle ? 0.42 : 0.62,
-      }} />
-      {/* Drifting sheet A — large soft glow, screens over base */}
-      <div style={{
-        position: 'absolute', inset: '-30%',
-        background: `radial-gradient(ellipse 60% 70% at 38% 52%, ${accent}aa 0%, ${accent}00 65%)`,
-        animation: 'silkDrift 22s ease-in-out infinite',
-        filter: 'blur(56px) saturate(1.1)',
-        opacity: subtle ? 0.34 : 0.55,
-        mixBlendMode: 'screen',
-      }} />
-      {/* Drifting sheet B — counter-direction, multiplies for shadow */}
-      <div style={{
-        position: 'absolute', inset: '-30%',
-        background: `radial-gradient(ellipse 55% 65% at 62% 48%, ${accent}99 0%, ${accent}00 65%)`,
-        animation: 'silkDrift 28s ease-in-out infinite reverse',
-        animationDelay: '-10s',
-        filter: 'blur(56px)',
-        opacity: subtle ? 0.34 : 0.52,
-        mixBlendMode: 'multiply',
-      }} />
-      {/* Noise overlay — SVG fractal turbulence gives the silk its
-          grain. Set very low opacity so it's texture, not noise.
-          mixBlendMode: overlay so it modulates the underlying hues
-          instead of greying them out. */}
-      <svg style={{
-        position: 'absolute', inset: 0, width: '100%', height: '100%',
-        opacity: subtle ? 0.08 : 0.14,
-        mixBlendMode: 'overlay',
-        pointerEvents: 'none',
-      }}>
-        <filter id={noiseId}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" />
-          <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.55 0" />
-        </filter>
-        <rect width="100%" height="100%" filter={`url(#${noiseId})`} />
-      </svg>
+      <Suspense fallback={null}>
+        <Silk
+          speed={1.6}
+          scale={1}
+          color={accent}
+          noiseIntensity={1.2}
+          rotation={0}
+        />
+      </Suspense>
     </div>
   )
 }

@@ -568,28 +568,16 @@ button.glass-card:active {
   50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.1); }
 }
 
-/* Silk — base conic rotates very slowly to create flowing fold
-   highlights. 60s loop keeps it meditative. */
-@keyframes silkRotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-/* Silk drifting sheets — each radial sheet translates + scales on
-   its own ease, the two combined read as fabric catching light. */
-@keyframes silkDrift {
-  0%, 100% { transform: translate(0, 0)        scale(1);    }
-  33%      { transform: translate(8%, -5%)     scale(1.08); }
-  66%      { transform: translate(-6%, 4%)     scale(0.96); }
-}
 
 @media (prefers-reduced-motion: reduce) {
-  /* Hold the resting state for each animated backdrop layer. */
+  /* Hold the resting state for each animated backdrop layer. Note
+     that Silk's animation runs in a WebGL shader and isn't pausable
+     via CSS; if reduced-motion compliance becomes critical, swap to
+     a still-render variant in components/Silk.jsx. */
   [style*="moonDrift"],
   [style*="auroraDrift"],
   [style*="petalDrift"],
-  [style*="starTwinkle"],
-  [style*="silkRotate"],
-  [style*="silkDrift"] {
+  [style*="starTwinkle"] {
     animation: none !important;
   }
 }
