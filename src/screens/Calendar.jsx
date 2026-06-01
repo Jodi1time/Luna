@@ -6,6 +6,7 @@ import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
+import { sectionPaper } from '../data/sectionPalette'
 
 const MS_PER_DAY = 86400000
 
@@ -256,8 +257,25 @@ export default function Calendar() {
               const rangeLabel = p.range
                 ? p.range.replace('±', 'give or take').replace(/(\d+) days?/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
                 : null
+              // Map each prediction kind to a section category for the
+              // soft background tint. Period predictions → urgent (rose),
+              // fertile window → care (gold — preciousness), PMS → plan
+              // (moonlight, the "luteal anticipating" feel).
+              const category =
+                p.label === 'Next period'    ? 'urgent' :
+                p.label === 'Fertile window' ? 'care' :
+                p.label === 'PMS window'     ? 'plan' :
+                'default'
               return (
-                <div key={i} className="glass-card insight-stagger" style={{ padding: 16, borderLeft: `3px solid ${accentColor}`, borderRadius: T.r, animationDelay: `${680 + i * 80}ms` }}>
+                <div key={i} className="insight-stagger" style={{
+                  padding: 16,
+                  background: sectionPaper(category),
+                  border: `1px solid ${accentColor}22`,
+                  borderLeft: `3px solid ${accentColor}`,
+                  boxShadow: `0 1px 0 ${accentColor}10, 0 10px 22px -18px ${accentColor}30`,
+                  borderRadius: T.r,
+                  animationDelay: `${680 + i * 80}ms`,
+                }}>
                   <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
                     {certaintyLabel}
                   </div>

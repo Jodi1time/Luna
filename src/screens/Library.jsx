@@ -7,6 +7,20 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { ARTICLE_PHASE, articleAccent as accentFor } from '../lib/articlePhase'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
+
+// Map an article's subject category to a section palette category so
+// each article card / section header can wear a soft chromatic tint
+// that matches what the piece is about. Mental Health pieces wear
+// lavender; Nutrition wears gold; Conditions (PMDD, endo, PCOS) wear
+// rose because they demand attention; body-literacy pieces wear sage.
+const ARTICLE_CAT_TO_SECTION = {
+  'Mental Health': 'reflect',
+  'Nutrition':     'care',
+  'Conditions':    'urgent',
+  'Know your body':'read',
+}
+const articleSection = (cat) => ARTICLE_CAT_TO_SECTION[cat] || 'default'
 
 // Pick a hero article for the current phase. Looks for articles
 // explicitly mapped to this phase first; falls back to the basics
@@ -68,8 +82,10 @@ export default function Library() {
         </div>
 
         {/* Hero — phase-matched feature with editorial treatment.
-            Bigger headline, larger summary, phase flourish in corner,
-            soft phase-color wash on the left side. */}
+            Background now uses the article's subject-category tint
+            from the section palette, so the card has real chromatic
+            identity. Phase flourish + eyebrow + left edge still take
+            the phase accent. */}
         <button onClick={() => goArticle(heroArticle.id)}
           className="insight-stagger"
           style={{
@@ -78,17 +94,16 @@ export default function Library() {
             width: '100%',
             textAlign: 'left',
             padding: '20px 20px 22px',
-            background: `linear-gradient(to right, ${heroAccent}14, rgba(255,255,255,0.5) 70%)`,
+            background: sectionPaper(articleSection(heroArticle.cat)),
+            border: `1px solid ${sectionColors(articleSection(heroArticle.cat)).accent}22`,
             borderLeft: `3px solid ${heroAccent}`,
+            boxShadow: `0 1px 0 ${heroAccent}10, 0 12px 28px -20px ${heroAccent}30`,
             borderRadius: T.r,
             cursor: 'pointer',
             color: T.text,
             fontFamily: 'inherit',
-            border: 'none',
             marginBottom: 32,
             animationDelay: '180ms',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
             overflow: 'hidden',
           }}>
           {/* Phase flourish in the top-right corner, quietly */}
@@ -121,11 +136,16 @@ export default function Library() {
             TOC rather than a database list. */}
         {sections.map((section, sIdx) => {
           const sectionDelay = 260 + sIdx * 100
+          const secKey = articleSection(section.cat)
+          const secCol = sectionColors(secKey)
           return (
             <div key={section.cat} style={{ marginBottom: 22 }}>
               <div className="insight-stagger" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12, animationDelay: `${sectionDelay}ms` }}>
-                <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.3, fontStyle: 'italic' }}>
-                  {section.cat}.
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: secCol.accent, opacity: 0.7, transform: 'translateY(-2px)', display: 'inline-block' }} />
+                  <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.3, fontStyle: 'italic' }}>
+                    {section.cat}.
+                  </div>
                 </div>
                 <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>
                   {section.items.length} PIECE{section.items.length === 1 ? '' : 'S'}
@@ -137,8 +157,10 @@ export default function Library() {
                   const cardDelay = sectionDelay + 60 + iIdx * 60
                   return (
                     <button key={a.id} onClick={() => goArticle(a.id)}
-                      className="glass-card insight-stagger"
+                      className="insight-stagger"
                       style={{
+                        background: sectionPaper(secKey),
+                        border: `1px solid ${secCol.accent}22`,
                         borderLeft: `3px solid ${ac}`,
                         textAlign: 'left',
                         padding: '14px 16px',
@@ -147,6 +169,7 @@ export default function Library() {
                         color: T.text,
                         fontFamily: 'inherit',
                         borderRadius: T.r,
+                        boxShadow: `0 1px 0 ${secCol.accent}10, 0 8px 18px -18px ${secCol.accent}30`,
                         animationDelay: `${cardDelay}ms`,
                       }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>

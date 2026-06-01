@@ -10,6 +10,7 @@ import { BC_LABELS } from '../data/birthControl'
 import { signOut } from '../lib/supabase'
 import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
 import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 
 function SectionLabel({ children, color }) {
   return (
@@ -272,12 +273,20 @@ export default function Settings() {
       </div>
 
       {/* Former "More from Luna" — split into four labeled groups so
-          11 mixed-purpose rows stop reading as a wall. Reflective →
-          writing & noticing; When something's wrong → urgent care &
-          loss; Manage → practical routines; Account → Pro + delete. */}
+          11 mixed-purpose rows stop reading as a wall. Each group now
+          also wears its functional category's soft tint:
+            Reflective → lavender
+            When something's wrong → warm rose
+            Manage → golden cream
+            Account → moonlight purple
+          Cards stop reading as identical glass slabs. */}
       <div className="insight-stagger" style={{ animationDelay: '640ms' }}>
-      <SectionLabel color={acc}>Reflective</SectionLabel>
-      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+      <SectionLabel color={sectionColors('reflect').accent}>Reflective</SectionLabel>
+      <div style={{
+        margin: '0 16px', borderRadius: T.r, overflow: 'hidden',
+        background: sectionPaper('reflect'),
+        border: `1px solid ${sectionColors('reflect').accent}22`,
+      }}>
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
         <Row label="What we've noticed" onTap={() => go('insights')} />
         <Row label="Your year with Luna" onTap={() => go('yourYear')} />
@@ -286,16 +295,24 @@ export default function Settings() {
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '680ms' }}>
-      <SectionLabel color={acc}>When something's wrong</SectionLabel>
-      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+      <SectionLabel color={sectionColors('urgent').accent}>When something's wrong</SectionLabel>
+      <div style={{
+        margin: '0 16px', borderRadius: T.r, overflow: 'hidden',
+        background: sectionPaper('urgent'),
+        border: `1px solid ${sectionColors('urgent').accent}22`,
+      }}>
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
       </div>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '720ms' }}>
-      <SectionLabel color={acc}>Manage</SectionLabel>
-      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+      <SectionLabel color={sectionColors('care').accent}>Manage</SectionLabel>
+      <div style={{
+        margin: '0 16px', borderRadius: T.r, overflow: 'hidden',
+        background: sectionPaper('care'),
+        border: `1px solid ${sectionColors('care').accent}22`,
+      }}>
         <Row label="For your next visit" onTap={() => go('cheatsheet')} />
         <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
@@ -303,8 +320,12 @@ export default function Settings() {
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '760ms' }}>
-      <SectionLabel color={acc}>Account</SectionLabel>
-      <div className="glass-card" style={{ margin: '0 16px', borderRadius: T.r, overflow: 'hidden' }}>
+      <SectionLabel color={sectionColors('plan').accent}>Account</SectionLabel>
+      <div style={{
+        margin: '0 16px', borderRadius: T.r, overflow: 'hidden',
+        background: sectionPaper('plan'),
+        border: `1px solid ${sectionColors('plan').accent}22`,
+      }}>
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Delete my account"  onTap={deleteAccount} danger />
       </div>

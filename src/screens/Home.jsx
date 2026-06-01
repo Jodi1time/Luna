@@ -492,13 +492,25 @@ function weeklyHealthCheck(date = new Date()) {
 
 // Smart helper card — reusable Home surface for any of the "what now"
 // helpers. Only mounted when a relevant signal is in today's log.
-function SmartHelperCard({ onTap, eyebrow, line }) {
+function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
+  // smart-arrival glows the border with a one-shot accent halo on mount.
+  // Category drives the soft tint + accent — physical-acute helpers
+  // (cramps, UTI) wear 'urgent' rose, emotional (heavy mood) wears
+  // lavender, sleep wears moonlight purple, morning intention wears
+  // lavender too. Tells the user at a glance what KIND of nudge this is.
+  const colors = sectionColors(category)
   return (
-    // smart-arrival glows the border with a one-shot accent halo on mount —
-    // says "Luna noticed this for you" without nagging.
-    <button onClick={onTap} className="glass-card smart-arrival"
-      style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+    <button onClick={onTap} className="smart-arrival"
+      style={{
+        marginTop: 14, padding: '14px 16px',
+        background: sectionPaper(category),
+        border: `1px solid ${colors.accent}33`,
+        borderLeft: `3px solid ${colors.accent}`,
+        boxShadow: `0 1px 0 ${colors.accent}10, 0 10px 22px -18px ${colors.accent}30`,
+        borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%',
+        color: T.text, fontFamily: 'inherit', display: 'block',
+      }}>
+      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: colors.accent, marginBottom: 6 }}>
         {eyebrow}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
@@ -1142,6 +1154,7 @@ export default function Home() {
             if (isPreg) return null
             if (hasCrampsToday) return (
               <SmartHelperCard
+                category="urgent"
                 onTap={() => go('cramps')}
                 eyebrow="Cramping today"
                 line="Sit with it — Luna has a few small things that help."
@@ -1149,6 +1162,7 @@ export default function Home() {
             )
             if (hasUTIToday) return (
               <SmartHelperCard
+                category="urgent"
                 onTap={() => go('utiHelper')}
                 eyebrow="UTI signs"
                 line="Catch it early — here's the playbook for tonight."
@@ -1156,6 +1170,7 @@ export default function Home() {
             )
             if (hasAnxietyToday) return (
               <SmartHelperCard
+                category="reflect"
                 onTap={() => go('heavy')}
                 eyebrow="Heavy today"
                 line="A few ways in — body, words, breath, or someone to talk to."
@@ -1163,6 +1178,7 @@ export default function Home() {
             )
             if (hasInsomniaToday) return (
               <SmartHelperCard
+                category="plan"
                 onTap={() => go('insomnia')}
                 eyebrow="Sleep was rough"
                 line="Tonight, Luna will help you wind down sooner."
@@ -1170,6 +1186,7 @@ export default function Home() {
             )
             if (showMorningIntention) return (
               <SmartHelperCard
+                category="reflect"
                 onTap={() => { setActiveReflectPractice('intention'); go('reflect') }}
                 eyebrow="This morning"
                 line="One sentence about what today is really about?"
@@ -1177,6 +1194,7 @@ export default function Home() {
             )
             if (isTTC) return (
               <SmartHelperCard
+                category="plan"
                 onTap={() => go('ttc')}
                 eyebrow="Trying to conceive"
                 line="Your fertile-window read for today."
