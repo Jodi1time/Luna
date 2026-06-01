@@ -3,6 +3,7 @@ import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/share
 import { PHASES, SYMPTOMS } from '../data/lunaData'
 import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCountUp } from '../hooks/useCountUp'
 import useLuna from '../store/useLuna'
 
@@ -91,23 +92,31 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
               '--final-opacity': s.isToday ? 0.95 : 0.32,
             }} />
         ))}
+        {/* Soft glow under the marker — quiet phase-color halo */}
+        <circle cx={mx} cy={my} r={14} fill={todayPhase.color} opacity={0.18}
+          style={{ filter: 'blur(3px)' }} />
         {/* Outer pulsing ring — the heartbeat of "you are here" */}
         <circle cx={mx} cy={my} r={6} fill={todayPhase.color}
           className="wheel-today-pulse" />
         {/* Today marker — solid disc on top of the ring */}
         <circle cx={mx} cy={my} r={6} fill="#fff" stroke={todayPhase.color} strokeWidth={2} />
-        {/* Center label — animated count-up + italic phase */}
-        <text x={cx} y={cy - 2} textAnchor="middle"
-          style={{ fontFamily: T.serif, fontSize: 44, fontWeight: 400, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -1 }}>
+        {/* Center — big italic day number + small serif "of X" */}
+        <text x={cx} y={cy + 4} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 56, fontWeight: 400, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -2 }}>
           {animatedCenter}
         </text>
-        <text x={cx} y={cy + 20} textAnchor="middle"
-          style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.6, fill: T.muted, fontWeight: 600 }}>
-          DAY · {cycleLength}
+        <text x={cx} y={cy + 24} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 11.5, fill: T.muted, fontStyle: 'italic', letterSpacing: 0.2 }}>
+          of {cycleLength}
         </text>
       </svg>
-      <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, marginTop: 14, fontStyle: 'italic' }}>
-        You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 17, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
+          You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
+        </div>
+        <span style={{ color: todayPhase.color, opacity: 0.78, display: 'inline-flex' }} aria-hidden="true">
+          <PhaseFlourish phaseId={todayPhase.id} size={22} />
+        </span>
       </div>
     </div>
   )
@@ -226,6 +235,16 @@ function BBTSparkline({ bbtShift, cycleLength }) {
         strokeLinecap="round" strokeLinejoin="round"
         className="sparkline-draw"
         style={{ '--spark-len': sparkLen }} />
+      {/* Day marker — vertical dashed line at the shift, appears after
+          the sparkline draws. Anchors the visual story: "this is where
+          your ovulation lives." */}
+      <line x1={shiftX} y1={padY + 2} x2={shiftX} y2={yLow + 4}
+        stroke={PHASES.ovulation.color} strokeWidth={1} strokeDasharray="2 2"
+        className="spark-dot" style={{ animationDelay: '0.95s', opacity: 0.5, transformOrigin: `${shiftX}px ${(yLow + yHigh) / 2}px` }} />
+      <text x={shiftX} y={padY - 2} textAnchor="middle"
+        className="spark-dot" style={{ animationDelay: '1.05s', fontFamily: T.mono, fontSize: 8, letterSpacing: 0.6, fill: PHASES.ovulation.color, fontWeight: 600, transformOrigin: `${shiftX}px ${padY}px` }}>
+        DAY {bbtShift.shiftDayMedian}
+      </text>
       {/* Two reading dots — follicular avg + luteal avg */}
       <circle cx={padX + innerW * 0.18} cy={yLow}  r={3.2} fill={PHASES.follicular.color}
         className="spark-dot" style={{ animationDelay: '1.0s' }} />
@@ -395,8 +414,8 @@ export default function Insights() {
               return (
                 <div key={p.id} className="glass-card insight-stagger" style={{ padding: 14, borderLeft: `3px solid ${color}`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{ flexShrink: 0, color: T.accent, marginTop: 2 }}>
-                      <SymptomIcon id={iconId} size={28} />
+                    <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
+                      <SymptomIcon id={iconId} size={32} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: color, fontFamily: T.sans, marginBottom: 4 }}>

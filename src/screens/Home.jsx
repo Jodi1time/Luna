@@ -765,26 +765,22 @@ export default function Home() {
   // off the top — it physically COMPRESSES where it sits, freeing
   // real layout space below so cards-below rise up to fill the gap.
   //
-  // Mechanics per section:
-  //   • bodyRef    — opacity fade + maxHeight shrink to 0. Content
-  //     stays in place but progressively disappears; layout space
-  //     reclaimed by the shrinking maxHeight.
-  //   • headlineRef — CSS scale (visual: the big "3" shrinks, the
-  //     phase eyebrow + name compress toward the top-left origin)
-  //     paired with a maxHeight shrink (layout: matches the visual
-  //     compression so cards below come up). Then opacity fades out
-  //     once it's physically out of the way.
+  // Unified fade-into-collapse aesthetic — both sections do the
+  // SAME thing (opacity fade + maxHeight shrink), just staged:
+  //   • bodyRef     (p 0.00 → 0.42): body fades + collapses first
+  //   • headlineRef (p 0.32 → 0.80): headline fades + collapses
+  //   • overlap     (p 0.32 → 0.42): both collapse simultaneously —
+  //     the seam reads as a single continuous gesture, not two
+  //     separate animations
   //
-  // Phases (normalized progress p, 0 → 1 over COLLAPSE_DISTANCE):
-  //   • bodyProg     (p 0.00 → 0.42): body fades + collapses
-  //   • headMoveProg (p 0.32 → 0.80): headline scales 1 → 0.5 +
-  //     maxHeight shrinks proportionally
-  //   • headFadeProg (p 0.78 → 1.00): headline opacity fades 1 → 0
+  // No scale transform — the previous "headline scales 1→0.5" read
+  // as a slide-out, breaking the gentle fade-collapse feel. Now
+  // every element disappears the same way: it grows transparent
+  // while its layout box shrinks proportionally.
   //
   // Natural heights are measured in a layout effect so the maxHeight
   // shrinks reference the actual rendered heights of each section,
-  // re-measured whenever the cover content changes (phase, day,
-  // period CTA visibility, BC mode).
+  // re-measured whenever the cover content changes.
   //
   // rAF-throttled, written direct to DOM — no re-render on scroll.
   const screenRef = useRef(null)
@@ -806,20 +802,17 @@ export default function Home() {
       if (!cover) return
       const p = clamp(lastY / COLLAPSE_DISTANCE)
       const bodyProg = clamp(p / 0.42)
-      const headMoveProg = clamp((p - 0.32) / 0.48)
-      const headFadeProg = clamp((p - 0.78) / 0.22)
+      const headProg = clamp((p - 0.32) / 0.48)
 
       if (bodyRef.current) {
         bodyRef.current.style.opacity = String(1 - bodyProg)
         bodyRef.current.style.maxHeight = `${bodyNatH.current * (1 - bodyProg)}px`
       }
       if (headlineRef.current) {
-        const scale = 1 - headMoveProg * 0.5
-        headlineRef.current.style.opacity = String(1 - headFadeProg)
-        headlineRef.current.style.transform = `scale(${scale})`
-        headlineRef.current.style.maxHeight = `${headNatH.current * scale}px`
+        headlineRef.current.style.opacity = String(1 - headProg)
+        headlineRef.current.style.maxHeight = `${headNatH.current * (1 - headProg)}px`
       }
-      cover.style.pointerEvents = headFadeProg > 0.92 ? 'none' : 'auto'
+      cover.style.pointerEvents = headProg > 0.92 ? 'none' : 'auto'
     }
     const onScroll = () => {
       lastY = el.scrollTop
@@ -1077,8 +1070,7 @@ export default function Home() {
             marginBottom: 4,
           }}>
             <div ref={headlineRef} style={{
-              willChange: 'opacity, transform, max-height',
-              transformOrigin: 'top left',
+              willChange: 'opacity, max-height',
               overflow: 'hidden',
             }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 4 }}>

@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
+import { PhaseFlourish } from '../components/phaseFlourishes'
 import useLuna from '../store/useLuna'
 
 const MS_PER_DAY = 86400000
@@ -43,9 +44,6 @@ export default function Calendar() {
   const offset     = firstDay === 0 ? 6 : firstDay - 1
   const daysInMonth = new Date(viewed.getFullYear(), viewed.getMonth() + 1, 0).getDate()
 
-  // Build the grid of (date, phase, future, isPeriodDay) for the viewed
-  // month. Phase comes from the cycle math anchored to lastPeriodStart;
-  // period days are union of logged flow days and predicted period days.
   const loggedPeriods = useMemo(() => buildLoggedPeriodSet(store.logs), [store.logs])
   const nextPeriodStart = useMemo(() => {
     if (!cycle.lastPeriodStart) return null
@@ -66,26 +64,43 @@ export default function Calendar() {
       const iso = new Date(viewed.getFullYear(), viewed.getMonth(), d).toISOString().slice(0, 10)
       const isFuture = iso > todayISO
       let phase = null
+      let dayInCycle = null
       if (cycle.lastPeriodStart) {
         const anchor = new Date(cycle.lastPeriodStart + 'T00:00:00')
         const cur = new Date(iso + 'T00:00:00')
         const diff = Math.floor((cur - anchor) / MS_PER_DAY)
         if (diff >= 0) {
-          const dayInCycle = (diff % cycle.cycleLength) + 1
+          dayInCycle = (diff % cycle.cycleLength) + 1
           phase = getPhaseForDay(dayInCycle, cycle.cycleLength, cycle.periodLength)
         }
       }
       const isPeriodDay = loggedPeriods.has(iso) || (isFuture && isPredictedPeriod(iso))
-      cells.push({ date: iso, day: d, phase, future: isFuture, isPeriodDay, isLoggedPeriod: loggedPeriods.has(iso) })
+      cells.push({ date: iso, day: d, phase, future: isFuture, isPeriodDay, isLoggedPeriod: loggedPeriods.has(iso), dayInCycle })
     }
     return cells
   }, [viewed, daysInMonth, todayISO, loggedPeriods, cycle.lastPeriodStart, cycle.cycleLength, cycle.periodLength])
+
+  // Mark phase boundaries — the first day of a new phase gets a small
+  // visual cue (left edge accent) so the eye can see "this is where
+  // follicular becomes ovulation" without reading copy. Computed
+  // per-cell by comparing each cell's phase id to the previous cell's.
+  const cellsWithBoundary = useMemo(() => {
+    let prevPhaseId = null
+    return monthCells.map((c) => {
+      const startsPhase = c.phase && c.phase.id !== prevPhaseId
+      prevPhaseId = c.phase?.id ?? prevPhaseId
+      return { ...c, startsPhase }
+    })
+  }, [monthCells])
 
   const monthLabel = viewed.toLocaleDateString('en-US', { month: 'long' })
   const yearLabel = viewed.getFullYear()
   const isCurrentMonth = viewed.getFullYear() === now.getFullYear() && viewed.getMonth() === now.getMonth()
 
   const blobColor = (cycle.phase?.color) || T.accent
+  const flourishPhase = cycle.phase?.id || 'follicular'
+  const flourishColor = (cycle.phase?.color) || T.accent
+
   return (
     <div className="home-stage">
       {!onHormonalBC && (
@@ -95,22 +110,27 @@ export default function Calendar() {
       )}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
-        <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6, animationDelay: '0ms' }}>
           Your cycle, mapped.
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic', animationDelay: '60ms' }}>
           Logged days are filled; predicted days are outlined.
         </div>
 
-        {/* Month header with arrow nav */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        {/* Month header with arrow nav + flourish next to month name */}
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, animationDelay: '100ms' }}>
           <button onClick={() => stepMonth(-1)} aria-label="Previous month"
             style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
             ‹
           </button>
           <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
               {monthLabel}.
+              {isCurrentMonth && (
+                <span style={{ color: flourishColor, opacity: 0.7, display: 'inline-flex', transform: 'translateY(-2px)' }} aria-hidden="true">
+                  <PhaseFlourish phaseId={flourishPhase} size={20} />
+                </span>
+              )}
             </div>
             <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 1 }}>
               {yearLabel}
@@ -129,7 +149,7 @@ export default function Calendar() {
         )}
 
         {/* Phase + period legend */}
-        <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: T.sans, color: T.muted }}>
+        <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
           {Object.values(PHASES).map((p) => (
             <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
@@ -144,39 +164,60 @@ export default function Calendar() {
         </div>
 
         {/* Day headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+        <div className="insight-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6, animationDelay: '160ms' }}>
           {dayLetters.map((d, i) => (
             <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
           ))}
         </div>
 
-        {/* Days grid */}
+        {/* Days grid — each cell fades in with a diagonal sweep delay
+            so the month assembles itself top-left → bottom-right
+            instead of arriving as one slab. Stagger of 18ms per
+            position keeps total reveal under ~750ms. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
           {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
-          {monthCells.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod }) => {
+          {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, startsPhase }, cellIdx) => {
             const isToday = date === todayISO
             const showLoggedDot = isLoggedPeriod
             const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
-            // Past and today are tappable → open Log for that date.
-            // Future days are non-interactive (no log to make yet).
             const tappable = !future
+            // Diagonal-sweep delay — based on grid row + col so the
+            // reveal feels like a wave across the month, not a slab.
+            const gridIdx = offset + cellIdx
+            const row = Math.floor(gridIdx / 7)
+            const col = gridIdx % 7
+            const cellDelay = 200 + (row + col) * 18
             return (
               <button key={date}
                 onClick={tappable ? () => openLogFor(date) : undefined}
                 disabled={!tappable}
                 aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
+                className="insight-stagger"
                 style={{
-                position: 'relative',
-                aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
-                background: phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent',
-                color: isToday && phase ? '#fff' : T.text,
-                border: future && phase ? `1px dashed ${phase.color}88` : 'none',
-                borderRadius: T.r,
-                cursor: tappable ? 'pointer' : 'default',
-                padding: 0,
-                fontFamily: T.serif,
-              }}>
+                  position: 'relative',
+                  aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
+                  background: phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent',
+                  color: isToday && phase ? '#fff' : T.text,
+                  border: future && phase ? `1px dashed ${phase.color}88` : 'none',
+                  borderRadius: T.r,
+                  cursor: tappable ? 'pointer' : 'default',
+                  padding: 0,
+                  animationDelay: `${cellDelay}ms`,
+                  // Phase-start cells get a thin accent line on the left
+                  // edge — visual cue for "phase begins here" without copy.
+                  boxShadow: startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none',
+                }}>
+                {/* Today cell pulse ring — quiet "you are here" anchor */}
+                {isToday && phase && (
+                  <div className="pulse-ring" aria-hidden="true"
+                    style={{
+                      position: 'absolute', inset: -3,
+                      border: `1.5px solid ${phase.color}`,
+                      borderRadius: T.r,
+                      pointerEvents: 'none',
+                    }} />
+                )}
                 {day}
                 {showLoggedDot && (
                   <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: T.accent, borderRadius: '50%' }} />
@@ -192,16 +233,15 @@ export default function Calendar() {
         <Rule />
 
         {/* Predictions — written like a friend, not a dashboard */}
-        <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4 }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4, animationDelay: '600ms' }}>
           Looking ahead.
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '640ms' }}>
           What's likely coming up, with how steady the call is.
         </div>
         {filteredPredictions ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filteredPredictions.map((p, i) => {
-              // Conversational title + soft confidence wording per row.
               const title =
                 p.label === 'Next period'    ? 'Your next period' :
                 p.label === 'Fertile window' ? 'Your fertile window' :
@@ -220,7 +260,7 @@ export default function Calendar() {
                 ? p.range.replace('±', 'give or take').replace(/(\d+) days?/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
                 : null
               return (
-                <div key={i} className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${accentColor}`, borderRadius: T.r }}>
+                <div key={i} className="glass-card insight-stagger" style={{ padding: 16, borderLeft: `3px solid ${accentColor}`, borderRadius: T.r, animationDelay: `${680 + i * 80}ms` }}>
                   <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
                     {certaintyLabel}
                   </div>
