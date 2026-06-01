@@ -311,7 +311,7 @@ function SilkBackdrop({ accent, subtle }) {
       }}>
       <Suspense fallback={null}>
         <Silk
-          speed={5}
+          speed={10}
           scale={1}
           color={accent}
           noiseIntensity={1.0}
@@ -346,8 +346,13 @@ function GalaxyBackdrop({ accent, subtle }) {
           density={subtle ? 0.35 : 0.5}
           starSpeed={0.22}
           rotationSpeed={0.025}
-          glowIntensity={0.13}
-          saturation={0.18}
+          /* glowIntensity stays low so flares don't punch through.
+             saturation raised significantly — the previous 0.18 left
+             stars effectively grayscale, reading as a "whitish dark"
+             dust over the cream paper. At 0.7 stars properly inherit
+             the accent / phase hue. */
+          glowIntensity={0.10}
+          saturation={0.70}
           twinkleIntensity={0.25}
           hueShift={hexToHue(accent)}
         />
