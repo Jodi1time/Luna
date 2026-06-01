@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense, useState } from 'react'
 import { AppShell, TabBar } from './components/shared'
+import GradualBlur from './components/GradualBlur'
 
 // Pick a time-of-day class. Re-checked every 15 minutes.
 function timeClass() {
@@ -136,7 +137,17 @@ export default function App() {
         <ScreenRenderer screen={resolvedScreen} />
       </Suspense>
       {TAB_SCREENS.includes(resolvedScreen) && (
-        <TabBar active={resolvedScreen} onChange={go} />
+        <>
+          {/* Soft fade — the scroll content dissolves into atmosphere
+              before meeting the tab bar instead of cutting hard.
+              Renders above content (z 40), below the tab bar (z 50).
+              Positioned just above the tab bar's height + safe area
+              so the fade sits in the right band. */}
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(54px + env(safe-area-inset-bottom, 8px))', height: 70, pointerEvents: 'none', zIndex: 40 }}>
+            <GradualBlur position="bottom" height="100%" strength={1.6} divCount={6} curve="bezier" exponential />
+          </div>
+          <TabBar active={resolvedScreen} onChange={go} />
+        </>
       )}
     </AppShell>
   )
