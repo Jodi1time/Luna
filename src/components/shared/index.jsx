@@ -66,7 +66,7 @@ export function AppShell({ children }) {
             <JournalDecorations
               decorations={journalTheme.decorations}
               accent={decorationsAccent}
-              opacity={0.07}
+              opacity={0.12}
             />
           </div>
         )}

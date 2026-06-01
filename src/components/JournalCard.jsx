@@ -39,7 +39,7 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
         display: 'block',
         overflow: 'hidden',
       }}>
-      <JournalDecorations decorations={jt.decorations || []} accent={theme.accent} opacity={0.1} />
+      <JournalDecorations decorations={jt.decorations || []} accent={theme.accent} opacity={0.16} />
       {/* Page corner fold — small triangle in the top-right */}
       <div aria-hidden="true" style={{
         position: 'absolute', top: 0, right: 0,

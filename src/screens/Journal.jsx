@@ -145,7 +145,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
       position: 'relative',
       color: theme.text,
     }}>
-      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.1} />
+      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.18} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
           <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: theme.accent, opacity: 0.85 }}>
@@ -330,7 +330,7 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, on
         position: 'relative',
         color: theme.text,
       }}>
-      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.08} />
+      <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.15} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2, color: theme.text }}>

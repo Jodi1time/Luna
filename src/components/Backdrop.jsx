@@ -307,7 +307,7 @@ function SilkBackdrop({ accent, subtle }) {
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
-        opacity: subtle ? 0.14 : 0.22,
+        opacity: subtle ? 0.10 : 0.16,
       }}>
       <Suspense fallback={null}>
         <Silk
