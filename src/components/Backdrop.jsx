@@ -7,6 +7,10 @@ import { T } from '../data/theme'
 // actually pick this atmosphere.
 const Silk = lazy(() => import('./Silk'))
 
+// Galaxy uses ogl (~40KB gzipped) — much lighter than three.js but
+// still a real dep, so it's lazy-loaded the same way.
+const Galaxy = lazy(() => import('./Galaxy'))
+
 // ── Backdrop registry ─────────────────────────────────────────
 // Each kind is a self-contained atmosphere that fills the stage.
 // All are animated, all honor prefers-reduced-motion via the CSS
@@ -17,13 +21,34 @@ const Silk = lazy(() => import('./Silk'))
 // lives most).
 
 export const BACKDROPS = [
-  { id: 'blob',          label: 'Blob' },
-  { id: 'moons',         label: 'Moons' },
-  { id: 'aurora',        label: 'Aurora' },
-  { id: 'silk',          label: 'Silk' },
-  { id: 'petals',        label: 'Petals' },
-  { id: 'constellation', label: 'Stars' },
+  { id: 'blob',    label: 'Blob' },
+  { id: 'moons',   label: 'Moons' },
+  { id: 'aurora',  label: 'Aurora' },
+  { id: 'silk',    label: 'Silk' },
+  { id: 'petals',  label: 'Petals' },
+  { id: 'galaxy',  label: 'Galaxy' },
 ]
+
+// Hex (#RRGGBB) → hue degrees (0-360). Used to tint Galaxy's stars
+// in the user's current phase color via uHueShift. Naive HSL via
+// max/min channel math is plenty here — galaxy's hue is a vibe knob,
+// not a precise palette match.
+function hexToHue(hex) {
+  const h = (hex || '#C84E2E').replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16) / 255
+  const g = parseInt(h.slice(2, 4), 16) / 255
+  const b = parseInt(h.slice(4, 6), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const d = max - min
+  if (d === 0) return 0
+  let hue
+  if (max === r)      hue = ((g - b) / d) % 6
+  else if (max === g) hue = (b - r) / d + 2
+  else                hue = (r - g) / d + 4
+  hue = Math.round(hue * 60)
+  return hue < 0 ? hue + 360 : hue
+}
 
 // ── Blob (default) ───────────────────────────────────────────
 // Preserves the existing breathing-blob behavior — same CSS class,
@@ -287,54 +312,39 @@ function SilkBackdrop({ accent, subtle }) {
   )
 }
 
-// ── Constellation (twinkling stars) ──────────────────────────
-// Scattered stars at fixed positions, each twinkling on its own
-// rhythm (different durations + delays). Two faint connecting lines
-// suggest a constellation without committing to a specific one.
-function ConstellationBackdrop({ accent, subtle }) {
-  const stars = [
-    { top: '12%', left: '20%', size: 5, dur: 4.0, delay: 0 },
-    { top: '8%',  left: '60%', size: 7, dur: 5.5, delay: -1 },
-    { top: '24%', left: '78%', size: 4, dur: 3.6, delay: -2 },
-    { top: '32%', left: '38%', size: 6, dur: 4.8, delay: -0.5 },
-    { top: '46%', left: '14%', size: 3, dur: 6.0, delay: -3 },
-    { top: '52%', left: '64%', size: 5, dur: 4.2, delay: -1.5 },
-    { top: '60%', left: '82%', size: 4, dur: 5.0, delay: -2.5 },
-    { top: '68%', left: '32%', size: 7, dur: 5.2, delay: -0.2 },
-    { top: '78%', left: '54%', size: 4, dur: 3.8, delay: -1.8 },
-    { top: '84%', left: '18%', size: 5, dur: 4.6, delay: -2.7 },
-    { top: '88%', left: '72%', size: 3, dur: 5.8, delay: -0.8 },
-    { top: '20%', left: '46%', size: 4, dur: 4.4, delay: -3.4 },
-  ]
+// ── Galaxy (WebGL star field from React Bits) ────────────────
+// Replaces the earlier hand-rolled Constellation. Galaxy gives us
+// real depth (4 stacked star layers parallaxing past each other),
+// proper twinkle + flare, slow rotation, and per-phase hue tint via
+// the shader's uHueShift uniform.
+//
+// Tuned for Luna's quiet register: mouse interaction off (no tech
+// demo feel), saturation moderate (stars take a wash of the phase
+// hue without going technicolor), slow star + rotation speed,
+// transparent background so cream/theme paper reads through.
+function GalaxyBackdrop({ accent, subtle }) {
   return (
     <div className={`blob-stage${subtle ? ' subtle' : ''}`} aria-hidden="true"
       style={{
         width: '100%', height: '100%', top: 0, left: 0,
         transform: 'none',
         overflow: 'hidden',
+        opacity: subtle ? 0.55 : 0.8,
       }}>
-      {/* Two faint connecting lines — a hint of constellation */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.18 }} preserveAspectRatio="none">
-        <line x1="20%" y1="12%" x2="60%" y2="8%"  stroke={accent} strokeWidth={0.6} />
-        <line x1="60%" y1="8%"  x2="78%" y2="24%" stroke={accent} strokeWidth={0.6} />
-        <line x1="38%" y1="32%" x2="64%" y2="52%" stroke={accent} strokeWidth={0.6} />
-        <line x1="32%" y1="68%" x2="54%" y2="78%" stroke={accent} strokeWidth={0.6} />
-        <line x1="54%" y1="78%" x2="72%" y2="88%" stroke={accent} strokeWidth={0.6} />
-      </svg>
-      {stars.map((s, i) => (
-        <div key={i} style={{
-          position: 'absolute',
-          top: s.top, left: s.left,
-          width: s.size, height: s.size,
-          background: accent,
-          borderRadius: '50%',
-          transform: 'translate(-50%, -50%)',
-          boxShadow: `0 0 ${s.size * 2}px ${accent}88`,
-          animation: `starTwinkle ${s.dur}s ease-in-out infinite`,
-          animationDelay: `${s.delay}s`,
-          opacity: subtle ? 0.45 : 0.65,
-        }} />
-      ))}
+      <Suspense fallback={null}>
+        <Galaxy
+          transparent
+          mouseInteraction={false}
+          mouseRepulsion={false}
+          density={subtle ? 0.7 : 1.0}
+          starSpeed={0.35}
+          rotationSpeed={0.04}
+          glowIntensity={0.3}
+          saturation={0.35}
+          twinkleIntensity={0.45}
+          hueShift={hexToHue(accent)}
+        />
+      </Suspense>
     </div>
   )
 }
@@ -345,13 +355,17 @@ function ConstellationBackdrop({ accent, subtle }) {
 // existing `.blob-stage > .breathing-blob` divs across screens.
 export default function Backdrop({ accent, subtle = false, children }) {
   const settings = useLuna((s) => s.settings)
-  const kind = settings?.journalTheme?.backdropKind || 'blob'
+  let kind = settings?.journalTheme?.backdropKind || 'blob'
+  // Legacy: 'constellation' was the hand-rolled star backdrop before
+  // we swapped to the React Bits Galaxy. Anyone who already picked
+  // Stars maps cleanly to Galaxy.
+  if (kind === 'constellation') kind = 'galaxy'
   const a = accent || T.accent
-  if (kind === 'moons')         return <MoonsBackdrop         accent={a} subtle={subtle} />
-  if (kind === 'aurora')        return <AuroraBackdrop        accent={a} subtle={subtle} />
-  if (kind === 'silk')          return <SilkBackdrop          accent={a} subtle={subtle} />
-  if (kind === 'petals')        return <PetalsBackdrop        accent={a} subtle={subtle} />
-  if (kind === 'constellation') return <ConstellationBackdrop accent={a} subtle={subtle} />
+  if (kind === 'moons')  return <MoonsBackdrop  accent={a} subtle={subtle} />
+  if (kind === 'aurora') return <AuroraBackdrop accent={a} subtle={subtle} />
+  if (kind === 'silk')   return <SilkBackdrop   accent={a} subtle={subtle} />
+  if (kind === 'petals') return <PetalsBackdrop accent={a} subtle={subtle} />
+  if (kind === 'galaxy') return <GalaxyBackdrop accent={a} subtle={subtle} />
   // default — blob (preserves Home's effects via the children slot)
   return <BlobBackdrop accent={a} subtle={subtle}>{children}</BlobBackdrop>
 }

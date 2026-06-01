@@ -561,23 +561,15 @@ button.glass-card:active {
   100% { transform: translate(var(--petal-drift, 20px), 110vh) rotate(280deg); opacity: 0; }
 }
 
-/* Stars twinkle — soft opacity pulse with a tiny scale breath so it
-   reads as a star, not a blinking pixel. */
-@keyframes starTwinkle {
-  0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(0.9); }
-  50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.1); }
-}
-
 
 @media (prefers-reduced-motion: reduce) {
   /* Hold the resting state for each animated backdrop layer. Note
-     that Silk's animation runs in a WebGL shader and isn't pausable
-     via CSS; if reduced-motion compliance becomes critical, swap to
-     a still-render variant in components/Silk.jsx. */
+     that Silk + Galaxy run in WebGL shaders and aren't pausable via
+     CSS; if reduced-motion compliance becomes critical, swap to
+     still-render variants in those components. */
   [style*="moonDrift"],
   [style*="auroraDrift"],
-  [style*="petalDrift"],
-  [style*="starTwinkle"] {
+  [style*="petalDrift"] {
     animation: none !important;
   }
 }

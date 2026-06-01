@@ -48,15 +48,16 @@ function BackdropPreview({ kind, accent }) {
       </svg>
     )
   }
-  if (kind === 'constellation') {
-    const pts = [[8,8],[22,6],[14,16],[6,22],[24,22],[18,28]]
+  if (kind === 'galaxy') {
+    // Mini star field — scattered dots with two faint streak lines
+    // hinting at galactic rotation. Static preview; real Galaxy is
+    // a WebGL star field, lazy-loaded on selection.
+    const pts = [[7,9],[22,6],[14,15],[5,21],[26,20],[19,28],[10,26],[28,12],[18,11]]
     return (
       <svg viewBox="0 0 32 32" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-        <line x1="8" y1="8" x2="22" y2="6"   stroke={accent} strokeWidth="0.6" opacity="0.4" />
-        <line x1="22" y1="6" x2="24" y2="22" stroke={accent} strokeWidth="0.6" opacity="0.4" />
-        <line x1="14" y1="16" x2="6" y2="22" stroke={accent} strokeWidth="0.6" opacity="0.4" />
+        <ellipse cx="16" cy="16" rx="13" ry="4" stroke={accent} strokeWidth="0.4" fill="none" opacity="0.25" transform="rotate(-22 16 16)" />
         {pts.map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r="1.4" fill={accent} opacity="0.85" />
+          <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 1.6 : 1.0} fill={accent} opacity={0.6 + (i % 3) * 0.12} />
         ))}
       </svg>
     )
