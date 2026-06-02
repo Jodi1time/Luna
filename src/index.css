@@ -167,49 +167,48 @@ button.glass-card:active {
 }
 
 /* ── TabBar material ─────────────────────────────────────────────
-   The TabBar wears a translucent cream + backdrop blur when the
-   user has content scrolled BEHIND it — sells iOS material. When
-   the user has scrolled to the bottom of the screen (body class
-   .scroll-at-bottom toggled by the Screen component), there is no
-   content trapped behind it, so the blur + tint fade away and the
-   bar becomes transparent — the screen breathes all the way down.
-   A subtle hairline border keeps the bottom of the safe area
-   readable even when transparent.
-   Transitions are slow enough (~0.35s) that the fade reads as a
-   considered material change, not a flicker. */
+   The TabBar's frost is driven by --tabbar-frost (a 0..1 value
+   set by the Screen component on scroll). At 1, full iOS material:
+   blurred cream tint + saturate boost + hairline border. At 0, fully
+   transparent — the screen breathes through. The continuous range
+   means as the user approaches the end of content the bar visibly
+   defers, instead of snapping at a threshold.
+   --tabbar-frost defaults to 1 (full material) if the Screen hasn't
+   set it yet. backdrop-filter handles calc() inside blur()/saturate(). */
 .luna-tabbar {
-  background: rgba(244, 239, 229, 0.72);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-          backdrop-filter: blur(28px) saturate(1.4);
-  border-top: 0.5px solid rgba(26, 19, 16, 0.06);
-  transition:
-    background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    backdrop-filter 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    -webkit-backdrop-filter 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    border-top-color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-body.scroll-at-bottom .luna-tabbar {
-  background: rgba(244, 239, 229, 0);
-  -webkit-backdrop-filter: blur(0) saturate(1);
-          backdrop-filter: blur(0) saturate(1);
-  border-top-color: transparent;
-}
-@media (prefers-reduced-motion: reduce) {
-  .luna-tabbar { transition: none; }
+  background: rgba(244, 239, 229, calc(0.72 * var(--tabbar-frost, 1)));
+  -webkit-backdrop-filter:
+    blur(calc(28px * var(--tabbar-frost, 1)))
+    saturate(calc(1 + 0.4 * var(--tabbar-frost, 1)));
+          backdrop-filter:
+    blur(calc(28px * var(--tabbar-frost, 1)))
+    saturate(calc(1 + 0.4 * var(--tabbar-frost, 1)));
+  border-top: 0.5px solid rgba(26, 19, 16, calc(0.06 * var(--tabbar-frost, 1)));
 }
 
 /* ── Horizontal scroller polish ──────────────────────────────────
    Apple-grade horizontal rows. The mask-image fades the rightmost
    ~36px so the peek card softly dissolves into the screen, telling
-   the eye "there's more here" without a hard cutoff. Touch action
-   pan-x prevents accidental vertical scroll capture. Overscroll
-   contain prevents the page bouncing when a scroller hits its end. */
+   the eye "there's more here" without a hard cutoff.
+
+   Scroll-snap is *proximity*, not mandatory — proximity snaps only
+   when the user's natural scroll lands close to a snap point, so
+   light flicks can cruise past multiple cards instead of hard-
+   catching on each one. scroll-snap-stop normal (the default; not
+   `always`) means a momentum scroll can pass through stops if it
+   has the speed. scroll-padding-inline-start aligns the snap edge
+   to the screen gutter so the first card starts where the
+   container's padding ends, not at the literal left edge.
+
+   Touch action pan-x prevents accidental vertical scroll capture.
+   Overscroll-behavior contain prevents page bounce at the ends. */
 .h-scroller {
   scrollbar-width: none;
   -ms-overflow-style: none;
   touch-action: pan-x;
   overscroll-behavior-x: contain;
-  scroll-snap-stop: always;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: 22px;
   -webkit-mask-image: linear-gradient(
     to right,
     transparent 0px,

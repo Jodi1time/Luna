@@ -235,23 +235,37 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 96, sty
     const el = innerRef.current
     if (!el) return
     let raf = 0
+    // Continuous fade: as the user approaches the bottom of the
+    // scrollable content, the TabBar's frost progressively releases.
+    // Within FADE_DISTANCE of the bottom, the bar fades from full
+    // frost (1) to none (0). Mapped to a CSS custom property the
+    // .luna-tabbar CSS interpolates from. Smoother + more honest
+    // than a hard at/not-at toggle: as the user nears the end of
+    // content, the bar visibly steps out of the way.
+    const FADE_DISTANCE = 160
+    const root = document.documentElement
+    const apply = (frost) => {
+      root.style.setProperty('--tabbar-frost', String(frost))
+      // Keep the body class for any downstream selector that wants
+      // the binary at/not-at state (e.g., other components hooking in).
+      document.body.classList.toggle('scroll-at-bottom', frost < 0.05)
+    }
     const check = () => {
       raf = 0
-      // 24px slack — when the user's *almost* at the bottom we can
-      // already start releasing the blur. Feels more responsive.
       const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
-      const atBottom = remaining < 24
-      document.body.classList.toggle('scroll-at-bottom', atBottom)
+      // 0 at bottom → frost 0. ≥ FADE_DISTANCE → frost 1. Linear between.
+      const frost = Math.min(1, Math.max(0, remaining / FADE_DISTANCE))
+      apply(frost)
     }
     const onScrollLocal = () => { if (raf) return; raf = requestAnimationFrame(check) }
     el.addEventListener('scroll', onScrollLocal, { passive: true })
-    // Initial check (covers short screens with no scroll needed).
     check()
     return () => {
       el.removeEventListener('scroll', onScrollLocal)
       if (raf) cancelAnimationFrame(raf)
-      // Don't leak the class to the next screen — it'll re-evaluate
-      // on its own mount.
+      // Reset to full frost so the next screen doesn't inherit our
+      // last frame's value until its own initial check runs.
+      root.style.setProperty('--tabbar-frost', '1')
       document.body.classList.remove('scroll-at-bottom')
     }
   }, [])

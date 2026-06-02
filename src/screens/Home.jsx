@@ -490,7 +490,6 @@ function QuickActions({ go, setActiveLogDate }) {
     <div ref={scrollerRef} className="h-scroller" style={{
       display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
       marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      scrollSnapType: 'x mandatory',
       marginTop: 16,
     }}>
       {items.map((it, idx) => {
@@ -743,7 +742,6 @@ function ForTodayRow({ phase, go, goArticle }) {
       <div ref={scrollerRef} className="h-scroller" style={{
         display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
         marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
-        scrollSnapType: 'x mandatory',
       }}>
         {items.map((it, idx) => {
           const c = sectionColors(it.category)
