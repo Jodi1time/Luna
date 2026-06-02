@@ -260,7 +260,7 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   const taken = wellness?.bcTakenToday === todayISO
   if (taken) return null
   return (
-    <div className="glass-card" style={{ marginTop: 22, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="glass-card alive-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ flex: 1 }}>
         <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>
           Have you taken your pill today?
@@ -270,7 +270,7 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
         </div>
       </div>
       <button onClick={() => markWellness('bcTakenToday', todayISO)}
-        style={{ background: T.accent, color: '#fff', border: 'none', padding: '8px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, borderRadius: T.r, flexShrink: 0 }}>
+        style={{ background: T.accent, color: '#fff', border: 'none', padding: '9px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999, flexShrink: 0 }}>
         Done
       </button>
     </div>
@@ -316,7 +316,7 @@ function buildMonthlyRecap(logs) {
 function MonthlyRecap({ recap }) {
   if (!recap) return null
   return (
-    <div className="glass-card" style={{ marginTop: 22, padding: 16, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+    <div className="glass-card alive-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         The last 30 days
       </div>
@@ -357,7 +357,7 @@ function Hydration({ wellness, markWellness }) {
                 position: 'relative',
                 background: 'transparent',
                 border: `1.5px solid ${filled ? T.accent : 'rgba(26,19,16,0.18)'}`,
-                borderRadius: '4px 4px 8px 8px',
+                borderRadius: '8px 8px 14px 14px',
                 cursor: 'pointer', padding: 0, overflow: 'hidden',
                 transition: 'border-color .2s',
               }}>
@@ -450,8 +450,8 @@ function QuickActions({ go, setActiveLogDate }) {
               maxWidth: 180,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: T.r,
-              padding: '14px 14px 14px',
+              borderRadius: 20,
+              padding: '16px 16px 16px',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
@@ -461,7 +461,7 @@ function QuickActions({ go, setActiveLogDate }) {
               gap: 8,
               background: sectionPaper(it.category),
               border: `1px solid ${colors.accent}22`,
-              boxShadow: `0 1px 0 ${colors.accent}10, 0 10px 22px -18px ${colors.accent}30`,
+              boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -22px ${colors.accent}50`,
               animationDelay: `${idx * 50}ms`,
             }}>
             <span style={{ color: colors.accent, display: 'inline-flex' }}>{it.icon}</span>
@@ -502,12 +502,12 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
   return (
     <button onClick={onTap} className="smart-arrival alive-card"
       style={{
-        marginTop: 14, padding: '14px 16px',
+        marginTop: 14, padding: 18,
         background: sectionPaper(category),
         border: `1px solid ${colors.accent}33`,
         borderLeft: `3px solid ${colors.accent}`,
-        boxShadow: `0 1px 0 ${colors.accent}10, 0 10px 22px -18px ${colors.accent}30`,
-        borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%',
+        boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -20px ${colors.accent}50`,
+        borderRadius: 22, textAlign: 'left', cursor: 'pointer', width: '100%',
         color: T.text, fontFamily: 'inherit', display: 'block',
       }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: colors.accent, marginBottom: 6 }}>
@@ -532,12 +532,13 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
   // Trim very long notes so the card stays a card.
   const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
   return (
-    <button onClick={open} className="glass-card"
+    <button onClick={open} className="glass-card alive-card"
       style={{
         marginTop: 22,
-        padding: '14px 16px',
+        padding: 18,
         borderLeft: `3px solid ${T.accent}`,
-        borderRadius: T.r,
+        borderRadius: 22,
+        boxShadow: `0 14px 30px -20px ${T.accent}40`,
         textAlign: 'left',
         cursor: 'pointer',
         width: '100%',
@@ -567,12 +568,13 @@ function WeeklyHealthCheckCard({ go }) {
   const item = weeklyHealthCheck()
   if (!item) return null
   return (
-    <button onClick={() => go('watch')} className="glass-card"
+    <button onClick={() => go('watch')} className="glass-card alive-card"
       style={{
         marginTop: 22,
-        padding: '14px 16px',
+        padding: 18,
         borderLeft: `3px solid ${T.accent}`,
-        borderRadius: T.r,
+        borderRadius: 22,
+        boxShadow: `0 14px 30px -20px ${T.accent}40`,
         textAlign: 'left',
         cursor: 'pointer',
         width: '100%',
@@ -610,8 +612,8 @@ function AlwaysHere({ wellness, markWellness }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {nudges.map((n) => (
-          <div key={n.key} className="glass-card"
-            style={{ padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+          <div key={n.key} className="glass-card alive-card"
+            style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
               {n.label}
             </div>
@@ -619,7 +621,7 @@ function AlwaysHere({ wellness, markWellness }) {
               {n.sub}
             </div>
             <button onClick={() => markWellness(n.key, todayISO)}
-              style={{ background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '7px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3, borderRadius: T.r }}>
+              style={{ background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '8px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999 }}>
               {n.cta}
             </button>
           </div>
@@ -666,9 +668,9 @@ function ForTodayRow({ phase, go, goArticle }) {
                 background: sectionPaper(it.category),
                 border: `1px solid ${c.accent}22`,
                 borderLeft: `3px solid ${phase.color}`,
-                boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
-                borderRadius: T.r,
-                padding: '14px 14px 16px',
+                boxShadow: `0 1px 0 ${c.accent}10, 0 14px 30px -22px ${c.accent}50`,
+                borderRadius: 22,
+                padding: '16px 16px 18px',
                 cursor: 'pointer',
                 color: T.text,
                 fontFamily: 'inherit',
@@ -986,16 +988,17 @@ export default function Home() {
             />
           )}
 
-          {/* Cover — Pregnancy variant */}
+          {/* Cover — Pregnancy variant. Centered like the mockup —
+              week number lives in the middle of the screen, not the left. */}
           {isPreg && (
-            <div style={{ marginBottom: 4 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 45%)` : T.muted, marginBottom: 6 }}>
-                Week {preg.week} · {preg.trimester?.name}
+            <div style={{ marginBottom: 4, textAlign: 'center', padding: '8px 0 4px' }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 35%)` : T.muted, marginBottom: 10, opacity: 0.9 }}>
+                week {preg.week} · {preg.trimester?.name?.toLowerCase()}
               </div>
-              <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 15%)` : T.accent, lineHeight: 1, letterSpacing: -7, marginTop: 12, transition: 'color 0.6s ease-out' }}>
+              <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, fontStyle: 'italic', color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 15%)` : T.accent, lineHeight: 0.92, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
                 {animatedDay || '—'}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, marginTop: 6, lineHeight: 1.05 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, marginTop: 14, lineHeight: 1.1, color: T.text }}>
                 {preg.daysToDue > 0
                   ? `${preg.daysToDue} days to go.`
                   : preg.daysToDue === 0
@@ -1003,7 +1006,7 @@ export default function Home() {
                     : `${Math.abs(preg.daysToDue)} days past your due date.`}
               </div>
               {preg.content && (
-                <div style={{ marginTop: 18, padding: 16, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: T.r }}>
+                <div className="alive-card" style={{ marginTop: 22, padding: 20, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${trimColor}40`, textAlign: 'left' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.3, marginBottom: 12, letterSpacing: -0.2 }}>
                     About the size of {preg.content.size}.
                   </div>
@@ -1019,41 +1022,40 @@ export default function Home() {
             </div>
           )}
 
-          {/* Cover — Cycle variant. The cover is split into two
-              ref-tagged sections so the scroll-fade can stage them
-              independently:
-                headlineRef → eyebrow + big day number + phase name
-                bodyRef     → contextLine + bodyMood + button + period CTA
-              willChange + transition hints make the staged fade and
-              the margin-collapse read as one smooth motion rather
-              than separate jolts. */}
+          {/* Cover — Cycle variant. The cover is now CENTERED: phase
+              eyebrow + flourish + giant italic day number + phase name
+              + context + mood all sit on the visual axis of the
+              screen. Made female-glance friendly — the eye lands on
+              the number first, not on a left-aligned wall of type.
+              Split into two ref-tagged sections so the scroll-fade
+              can stage them independently. */}
           {!isPreg && (
           <div ref={coverRef} style={{
             marginBottom: 4,
+            textAlign: 'center',
           }}>
             <div ref={headlineRef} style={{
               willChange: 'opacity, max-height',
               overflow: 'hidden',
+              padding: '8px 0 4px',
             }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 600, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` : T.muted, marginBottom: 4 }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 8, opacity: 0.9 }}>
                 {onHormonalBC
-                  ? `Day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
-                  : (phase ? `Day ${cycleDay || '—'} · ${phase.name.toLowerCase()}` : 'Day —')}
+                  ? `day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
+                  : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
               </div>
+              {phase && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: phase.color, opacity: 0.7 }} aria-hidden="true">
+                  <PhaseFlourish phaseId={phase.id} size={26} />
+                </div>
+              )}
               <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
                 className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 124, fontWeight: 300, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.95, letterSpacing: -6, marginTop: 4, transition: 'color 0.6s ease-out' }}>
+                style={{ fontFamily: T.serif, fontSize: 124, fontWeight: 300, fontStyle: 'italic', color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.92, letterSpacing: -6, transition: 'color 0.6s ease-out' }}>
                 {cycleDay ? animatedDay : '—'}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 2 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05 }}>
-                  {phase?.name || 'Just getting started'}.
-                </div>
-                {phase && (
-                  <span style={{ color: phase.color, opacity: 0.75, display: 'inline-flex' }} aria-hidden="true">
-                    <PhaseFlourish phaseId={phase.id} size={26} />
-                  </span>
-                )}
+              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05, marginTop: 10, color: T.text }}>
+                {phase?.name || 'Just getting started'}.
               </div>
             </div>
 
@@ -1062,7 +1064,7 @@ export default function Home() {
               overflow: 'hidden',
             }}>
               {contextLine && (
-                <div style={{ marginTop: 6 }}>
+                <div style={{ marginTop: 14, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
                     {contextLine.text}
                   </div>
@@ -1075,31 +1077,31 @@ export default function Home() {
               )}
 
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, marginTop: 10, color: T.text }}>
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   {phase.bodyMood}
                 </div>
               )}
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 6, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)` }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   {phasePresence[phase.id]}
                 </div>
               )}
               {phase && onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, marginTop: 10, color: T.text }}>
+                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   Your hormones are steadied by your method — but patterns can still emerge. Keep noticing.
                 </div>
               )}
 
               {phase && (
                 <button onClick={() => goPhase(phase.id)}
-                  style={{ marginTop: 12, background: 'transparent', border: `1px solid ${T.text}`, padding: '9px 13px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 600, color: T.text, borderRadius: T.r }}>
+                  style={{ marginTop: 18, background: 'transparent', border: `1px solid ${T.text}40`, padding: '10px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.text, borderRadius: 999 }}>
                   More about this phase →
                 </button>
               )}
 
               {/* Period-start nudge — only when relevant */}
               {showPeriodCTA && (
-                <div style={{ marginTop: 18, padding: 16, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r }}>
+                <div className="alive-card" style={{ marginTop: 22, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
                     {cycleDay > cycleLength
                       ? 'Wondering if your period has arrived.'
@@ -1110,11 +1112,11 @@ export default function Home() {
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={logPeriodStart}
-                      style={{ background: T.accent, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
+                      style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
                       Yes — today is day one
                     </button>
                     <button onClick={() => go('log')}
-                      style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
+                      style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
                       Another day
                     </button>
                   </div>
@@ -1198,8 +1200,8 @@ export default function Home() {
             return null
           })()}
           {showEveningIntention && todayIntention && (
-            <button onClick={() => go('reflect')} className="glass-card"
-              style={{ marginTop: 14, padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+            <button onClick={() => go('reflect')} className="glass-card alive-card"
+              style={{ marginTop: 14, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
               <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
                 You set this morning
               </div>
@@ -1232,10 +1234,11 @@ export default function Home() {
               specific, this one is general; double-surfacing both
               would be redundant). */}
           {!isPreg && phase && !showMorningIntention && (
-            <button onClick={() => go('reflect')} className="glass-card"
+            <button onClick={() => go('reflect')} className="glass-card alive-card"
               style={{
-                marginTop: 26, padding: '14px 16px',
-                borderLeft: `3px solid ${phase.color}`, borderRadius: T.r,
+                marginTop: 26, padding: 18,
+                borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
+                boxShadow: `0 14px 30px -20px ${phase.color}50`,
                 textAlign: 'left', cursor: 'pointer', width: '100%',
                 color: T.text, fontFamily: 'inherit', display: 'block',
               }}>
@@ -1257,7 +1260,8 @@ export default function Home() {
               Tap to open a brief conversation with Luna. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              style={{ marginTop: 14, padding: '14px 16px', background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: T.r, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
+              className="alive-card"
+              style={{ marginTop: 14, padding: 18, background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${phase.color}50`, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
                   A thought for today
@@ -1354,9 +1358,10 @@ export default function Home() {
                     style={{
                       border: 'none', cursor: 'pointer', background: isSelected ? T.accent + '22' : 'transparent',
                       outline: isSelected ? `1.5px solid ${T.accent}` : 'none',
-                      padding: '10px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                      minWidth: 56, borderRadius: T.r,
+                      padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                      minWidth: 56, borderRadius: 18,
                       color: isSelected ? T.accent : T.text, fontFamily: T.sans,
+                      transition: 'background .25s ease',
                     }}>
                     <SymptomIcon id={id} size={26} />
                     <span style={{ fontSize: 11, fontWeight: 500 }}>{l}</span>
@@ -1366,7 +1371,7 @@ export default function Home() {
             </div>
             {moodInsight && (
               <div key={`${phase?.id}-${quickMood}`}
-                style={{ marginTop: 14, padding: '12px 14px', background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
+                style={{ marginTop: 14, padding: 16, background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
                 <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
                   {moodInsight.text}
                 </div>

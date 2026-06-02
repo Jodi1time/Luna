@@ -186,17 +186,19 @@ export function SourceLine({ children }) {
 // ── CTAButton ────────────────────────────────────────────────
 export function CTAButton({ children, onClick, outline, full, style: s = {} }) {
   const base = {
-    border: outline ? `1px solid ${T.text}` : 'none',
+    border: outline ? `1px solid ${T.text}40` : 'none',
     background: outline ? 'transparent' : T.accent,
     color: outline ? T.text : '#fff',
-    padding: '15px 22px', borderRadius: T.r,
+    padding: '15px 24px', borderRadius: 999,
     fontFamily: T.sans, fontSize: 12, fontWeight: 700,
     letterSpacing: 0.4, cursor: 'pointer',
     width: full ? '100%' : undefined,
     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    boxShadow: outline ? 'none' : `0 14px 30px -16px ${T.accent}60`,
+    transition: 'transform .18s ease, box-shadow .18s ease',
     ...s,
   }
-  return <button onClick={onClick} style={base}>{children}</button>
+  return <button className="alive-card" onClick={onClick} style={base}>{children}</button>
 }
 
 // ── Brick list (numbered items) ──────────────────────────────
