@@ -96,6 +96,11 @@ export function TabBar({ active, onChange }) {
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 50,
     }}>
+      {/* Frost layer — sibling div, not a pseudo. Safer cross-browser
+          rendering for backdrop-filter, and its opacity is fully
+          animatable via --tabbar-frost. Sits behind the icons via
+          z-index: 0 vs the .luna-tabbar-content's z-index: 1. */}
+      <div className="luna-tabbar-frost" aria-hidden="true" />
       {items.map((it) => {
         if (it.key === 'log') {
           return (

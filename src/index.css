@@ -167,36 +167,36 @@ button.glass-card:active {
 }
 
 /* ── TabBar material ─────────────────────────────────────────────
-   Why a pseudo-element: Safari (iOS especially) cannot reliably
-   re-rasterize `backdrop-filter` when its value comes through a
-   CSS variable in calc(). So instead of animating blur() inline,
-   we put the FULL frost (background + blur + saturate + hairline)
-   on an absolutely-positioned ::before pseudo, then animate that
-   pseudo's OPACITY via --tabbar-frost. Opacity changes are
-   universally GPU-cheap and animatable; the blur is either fully
-   on or fully off (any opacity-modulated mix in between).
-   --tabbar-frost defaults to 1 (full frost) so screens that don't
-   use Screen.jsx still get the bar's material. */
+   Full frost (background + blur + saturate + hairline) lives on a
+   sibling div .luna-tabbar-frost, NOT a pseudo. Pseudos with
+   backdrop-filter have inconsistent rendering on Safari/iOS; a real
+   sibling div is bulletproof. The frost's opacity is animated by
+   --tabbar-frost (0..1) set by Screen.jsx on scroll. The bar's
+   actual interactive content (icons) sits at z-index 1 over the
+   frost at z-index 0. --tabbar-frost defaults to 1 so screens that
+   don't use Screen still get the bar's material. */
 .luna-tabbar {
   position: fixed;
   background: transparent;
   border-top: none;
-  isolation: isolate;
 }
-.luna-tabbar::before {
-  content: '';
+.luna-tabbar > * { position: relative; z-index: 1; }
+.luna-tabbar-frost {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background: rgba(244, 239, 229, 0.72);
   -webkit-backdrop-filter: blur(28px) saturate(1.4);
           backdrop-filter: blur(28px) saturate(1.4);
   border-top: 0.5px solid rgba(26, 19, 16, 0.06);
   opacity: var(--tabbar-frost, 1);
   pointer-events: none;
-  z-index: -1;
+  /* Opacity transition smooths any jitter in the JS-driven variable
+     and gives a buttery fade-out when the user lands at bottom. */
+  transition: opacity 0.18s ease-out;
 }
 @media (prefers-reduced-motion: reduce) {
-  .luna-tabbar::before { transition: none; }
+  .luna-tabbar-frost { transition: none; }
 }
 
 /* ── Horizontal scroller polish ──────────────────────────────────
@@ -218,7 +218,12 @@ button.glass-card:active {
 .h-scroller {
   scrollbar-width: none;
   -ms-overflow-style: none;
-  touch-action: pan-x;
+  /* `pan-x pan-y` (NOT `pan-x`) lets the browser route gestures based
+     on direction: a horizontal flick scrolls the row, a vertical
+     finger drag bubbles up to the parent scroll surface. With just
+     `pan-x` iOS treated vertical drags as "wrong direction" and
+     swallowed the gesture instead of bubbling. */
+  touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
   /* iOS momentum scrolling — important on older WebKit, harmless on
      modern. Without this the scroll can feel "stuck" when finger leaves. */
