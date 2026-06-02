@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useRef, useEffect } from 'react'
 import { T } from '../../data/theme'
 import { JOURNAL_THEMES, DEFAULT_JOURNAL_THEME } from '../../data/journalThemes'
 import JournalDecorations from '../JournalDecorations'
@@ -88,15 +88,11 @@ export function TabBar({ active, onChange }) {
     { key: 'settings', label: 'You',      icon: Icons.settings },
   ]
   return (
-    <div style={{
+    <div className="luna-tabbar" style={{
       position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
       width: '100%', maxWidth: 430,
       paddingBottom: 'env(safe-area-inset-bottom, 8px)',
       paddingTop: 10,
-      background: 'rgba(244,239,229,0.72)',
-      backdropFilter: 'blur(28px) saturate(1.4)',
-      WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
-      borderTop: '0.5px solid rgba(26,19,16,0.06)',
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 50,
     }}>
@@ -223,9 +219,44 @@ export function BrickList({ title, items, positive = false }) {
 }
 
 // ── Screen wrapper (scrollable, padded, fade-in) ─────────────
+// Also tells the TabBar when this screen is scrolled to its end —
+// when at-bottom, the TabBar fades its frost away so the last bit
+// of content isn't trapped behind a translucent blur. Toggling a
+// body class lets TabBar respond via CSS transition (smooth) without
+// either component needing knowledge of the other.
 export const Screen = forwardRef(function Screen({ children, padBottom = 96, style: s = {}, onScroll }, ref) {
+  const innerRef = useRef(null)
+  const setRef = (el) => {
+    innerRef.current = el
+    if (typeof ref === 'function') ref(el)
+    else if (ref) ref.current = el
+  }
+  useEffect(() => {
+    const el = innerRef.current
+    if (!el) return
+    let raf = 0
+    const check = () => {
+      raf = 0
+      // 24px slack — when the user's *almost* at the bottom we can
+      // already start releasing the blur. Feels more responsive.
+      const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
+      const atBottom = remaining < 24
+      document.body.classList.toggle('scroll-at-bottom', atBottom)
+    }
+    const onScrollLocal = () => { if (raf) return; raf = requestAnimationFrame(check) }
+    el.addEventListener('scroll', onScrollLocal, { passive: true })
+    // Initial check (covers short screens with no scroll needed).
+    check()
+    return () => {
+      el.removeEventListener('scroll', onScrollLocal)
+      if (raf) cancelAnimationFrame(raf)
+      // Don't leak the class to the next screen — it'll re-evaluate
+      // on its own mount.
+      document.body.classList.remove('scroll-at-bottom')
+    }
+  }, [])
   return (
-    <div ref={ref} onScroll={onScroll} style={{
+    <div ref={setRef} onScroll={onScroll} style={{
       flex: 1,
       minHeight: 0,                /* required for proper flex+overflow:auto behaviour */
       overflowY: 'auto', overflowX: 'hidden',
