@@ -445,46 +445,56 @@ function QuickActions({ go, setActiveLogDate }) {
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M6 12l2 2 4-4"/></svg>),
       onTap: () => go('care') },
   ]
-  // One-shot scroll teaser — on mount, the row glides forward to a
-  // peak then springs back with a small overshoot in the opposite
-  // direction before settling. The overshoot is the magic move:
-  // the eye sees "scroll forward, ease back, tiny tug back to start"
-  // — reads as a physical motion, not a programmed slide. Apple's
-  // App Store hero rows do this. Honors prefers-reduced-motion.
+  // One-shot scroll teaser — runs once on mount unless the user
+  // touches the row first, in which case it cancels immediately so
+  // the user's finger always wins over the animation. Spring tail
+  // (forward glide → light overshoot → settle) reads as physical
+  // motion, not a programmed slide.
   const scrollerRef = useRef(null)
   useEffect(() => {
     const el = scrollerRef.current
     if (!el) return
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let raf = 0
+    let cancelled = false
+    let startTimer = 0
+    const cancel = () => {
+      cancelled = true
+      if (startTimer) clearTimeout(startTimer)
+      if (raf) cancelAnimationFrame(raf)
+    }
+    el.addEventListener('touchstart', cancel, { passive: true, once: true })
+    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
+    el.addEventListener('wheel', cancel, { passive: true, once: true })
     const start = performance.now()
     const duration = 1650
     const peak = 64
-    // Spring-tail offsets: the curve goes 0 → peak → 0 → -8 → 0
-    // The "tug" reads as the row catching itself, not a robot.
     const tick = (now) => {
+      if (cancelled) return
       const t = Math.min(1, (now - start) / duration)
       let x = 0
       if (t < 0.42) {
-        // Phase 1 — forward glide, ease-out cubic
         const p = t / 0.42
         x = peak * (1 - Math.pow(1 - p, 3))
       } else if (t < 0.78) {
-        // Phase 2 — settle back to 0 with subtle overshoot to -8
         const p = (t - 0.42) / 0.36
         const eased = 1 - Math.pow(1 - p, 2.5)
-        x = peak + (-peak - 8) * eased  // peak → -8
+        x = peak + (-peak - 8) * eased
       } else {
-        // Phase 3 — spring back from -8 to 0
         const p = (t - 0.78) / 0.22
         const eased = Math.sin((p * Math.PI) / 2)
-        x = -8 + 8 * eased  // -8 → 0
+        x = -8 + 8 * eased
       }
       el.scrollLeft = Math.max(0, x)
       if (t < 1) raf = requestAnimationFrame(tick)
     }
-    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 650)
-    return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
+    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 650)
+    return () => {
+      cancel()
+      el.removeEventListener('touchstart', cancel)
+      el.removeEventListener('pointerdown', cancel)
+      el.removeEventListener('wheel', cancel)
+    }
   }, [])
   return (
     <div ref={scrollerRef} className="h-scroller" style={{
@@ -694,19 +704,30 @@ function AlwaysHere({ wellness, markWellness }) {
 // a movement hint — all phase-tuned. Soft borders, no images, intentionally
 // quiet so they texture the screen without dominating it.
 function ForTodayRow({ phase, go, goArticle }) {
-  // Same spring-overshoot teaser as QuickActions, slightly delayed
-  // and with a smaller peak so the two scrollers feel related but
-  // independent — not a synchronized robot.
+  // Same spring teaser as QuickActions, slightly delayed + cancels
+  // on user touch. The two scrollers tease at different times so they
+  // feel related, not synchronized.
   const scrollerRef = useRef(null)
   useEffect(() => {
     const el = scrollerRef.current
     if (!el || !phase) return
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let raf = 0
+    let cancelled = false
+    let startTimer = 0
+    const cancel = () => {
+      cancelled = true
+      if (startTimer) clearTimeout(startTimer)
+      if (raf) cancelAnimationFrame(raf)
+    }
+    el.addEventListener('touchstart', cancel, { passive: true, once: true })
+    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
+    el.addEventListener('wheel', cancel, { passive: true, once: true })
     const start = performance.now()
     const duration = 1500
     const peak = 52
     const tick = (now) => {
+      if (cancelled) return
       const t = Math.min(1, (now - start) / duration)
       let x = 0
       if (t < 0.42) {
@@ -724,8 +745,13 @@ function ForTodayRow({ phase, go, goArticle }) {
       el.scrollLeft = Math.max(0, x)
       if (t < 1) raf = requestAnimationFrame(tick)
     }
-    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 1300)
-    return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
+    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 1300)
+    return () => {
+      cancel()
+      el.removeEventListener('touchstart', cancel)
+      el.removeEventListener('pointerdown', cancel)
+      el.removeEventListener('wheel', cancel)
+    }
   }, [phase?.id])
   if (!phase) return null
   const article = ARTICLES.find((a) => a.id === phaseArticle[phase.id]) || ARTICLES[0]

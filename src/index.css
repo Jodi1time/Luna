@@ -167,23 +167,36 @@ button.glass-card:active {
 }
 
 /* ── TabBar material ─────────────────────────────────────────────
-   The TabBar's frost is driven by --tabbar-frost (a 0..1 value
-   set by the Screen component on scroll). At 1, full iOS material:
-   blurred cream tint + saturate boost + hairline border. At 0, fully
-   transparent — the screen breathes through. The continuous range
-   means as the user approaches the end of content the bar visibly
-   defers, instead of snapping at a threshold.
-   --tabbar-frost defaults to 1 (full material) if the Screen hasn't
-   set it yet. backdrop-filter handles calc() inside blur()/saturate(). */
+   Why a pseudo-element: Safari (iOS especially) cannot reliably
+   re-rasterize `backdrop-filter` when its value comes through a
+   CSS variable in calc(). So instead of animating blur() inline,
+   we put the FULL frost (background + blur + saturate + hairline)
+   on an absolutely-positioned ::before pseudo, then animate that
+   pseudo's OPACITY via --tabbar-frost. Opacity changes are
+   universally GPU-cheap and animatable; the blur is either fully
+   on or fully off (any opacity-modulated mix in between).
+   --tabbar-frost defaults to 1 (full frost) so screens that don't
+   use Screen.jsx still get the bar's material. */
 .luna-tabbar {
-  background: rgba(244, 239, 229, calc(0.72 * var(--tabbar-frost, 1)));
-  -webkit-backdrop-filter:
-    blur(calc(28px * var(--tabbar-frost, 1)))
-    saturate(calc(1 + 0.4 * var(--tabbar-frost, 1)));
-          backdrop-filter:
-    blur(calc(28px * var(--tabbar-frost, 1)))
-    saturate(calc(1 + 0.4 * var(--tabbar-frost, 1)));
-  border-top: 0.5px solid rgba(26, 19, 16, calc(0.06 * var(--tabbar-frost, 1)));
+  position: fixed;
+  background: transparent;
+  border-top: none;
+  isolation: isolate;
+}
+.luna-tabbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(244, 239, 229, 0.72);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+          backdrop-filter: blur(28px) saturate(1.4);
+  border-top: 0.5px solid rgba(26, 19, 16, 0.06);
+  opacity: var(--tabbar-frost, 1);
+  pointer-events: none;
+  z-index: -1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .luna-tabbar::before { transition: none; }
 }
 
 /* ── Horizontal scroller polish ──────────────────────────────────
@@ -207,20 +220,24 @@ button.glass-card:active {
   -ms-overflow-style: none;
   touch-action: pan-x;
   overscroll-behavior-x: contain;
+  /* iOS momentum scrolling — important on older WebKit, harmless on
+     modern. Without this the scroll can feel "stuck" when finger leaves. */
+  -webkit-overflow-scrolling: touch;
   scroll-snap-type: x proximity;
   scroll-padding-inline-start: 22px;
+  /* Soft right-edge fade so the peek card dissolves out instead of
+     hard-cutting. Left edge stays sharp — cards align cleanly to
+     the gutter, that's the visual anchor. */
   -webkit-mask-image: linear-gradient(
     to right,
-    transparent 0px,
-    black 22px,
-    black calc(100% - 36px),
+    black 0,
+    black calc(100% - 44px),
     transparent 100%
   );
           mask-image: linear-gradient(
     to right,
-    transparent 0px,
-    black 22px,
-    black calc(100% - 36px),
+    black 0,
+    black calc(100% - 44px),
     transparent 100%
   );
 }
