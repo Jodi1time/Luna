@@ -1398,13 +1398,20 @@ export default function Home() {
             </button>
           )}
 
-          {/* ─── DAILY RITUAL TIER ────────────────────────────────────
-              The two things the user should ALWAYS land on first after
-              the cover, in this exact order: the morning thought (the
-              personal moment), then the mood-pill row (the one-tap
-              gesture). Apple-style hierarchy: anchor → moment → action.
-              Promoted from their previous mid/bottom positions because
-              they're the daily ritual, not auxiliary content. */}
+          {/* ─── WHAT MAKES LUNA, LUNA ────────────────────────────────
+              The differentiators come FIRST after the cover + triggered
+              helpers. Nobody else gives women a 5-day phase-aware
+              literacy program, a doula-toned daily reflection, or a
+              full diary with photos + voice. These run above the
+              commodity daily-log surfaces. */}
+
+          {/* Cycle School card — appears only when the user's current
+              phase matches an enrolled school AND it's not completed.
+              When it appears, it's the rarest and most distinctive
+              thing on the page, so it leads. */}
+          {!isPreg && phase && (
+            <CycleSchoolCard phase={phase} settings={settings} go={go} />
+          )}
 
           {/* Morning thought — the visual HERO of the reflective area.
               Large italic serif quote, soft phase-tinted glass, opening
@@ -1444,10 +1451,34 @@ export default function Home() {
             </button>
           )}
 
-          {/* How are you, today? — Five frosted mood pills. PROMOTED
-              from the bottom of the page (where it was historically
-              buried under recaps). The one-tap gesture that satisfies
-              the "I came back to log something" intent in a second. */}
+          {/* The diary — multi-entry writing with photos + voice +
+              customisable paper. A Luna-distinctive surface (Flo /
+              Clue have no diary at all). Lives in the "differentiators"
+              tier above the commodity log gestures. */}
+          {!isPreg && (
+            <JournalCard
+              entries={settings?.journalEntries}
+              journalTheme={settings?.journalTheme}
+              phaseColor={phase?.color}
+              onTap={() => go('journal')}
+            />
+          )}
+
+          {/* For today — horizontal scroll of curated phase-tuned
+              cards (nourishment + article + movement). Phase-aware
+              curation is distinctive even if the format is common. */}
+          {!isPreg && phase && (
+            <div style={{ marginTop: 22 }}>
+              <ForTodayRow phase={phase} go={go} goArticle={goArticle} />
+            </div>
+          )}
+
+          {/* ─── DAILY LOG GESTURE ────────────────────────────────────
+              Mood pills — the essential one-tap log surface every
+              period app has. Kept right under the differentiators
+              so it stays accessible without scrolling far. */}
+
+          {/* How are you, today? — Five frosted mood pills. */}
           <div style={{ padding: '4px 0', marginTop: 22, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
@@ -1515,20 +1546,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* The diary — separate from log.note (the sticky note is
-              for a quick line to your future self; the diary is for
-              freeform multi-entry writing). Tap opens the full
-              journal where the user can write new pages, read past
-              ones, and customise the paper / decorations. */}
-          {!isPreg && (
-            <JournalCard
-              entries={settings?.journalEntries}
-              journalTheme={settings?.journalTheme}
-              phaseColor={phase?.color}
-              onTap={() => go('journal')}
-            />
-          )}
-
           {/* Soft milestone moment — period day one, etc. Auto-clears
               after ~3s via the useEffect above. */}
           <Celebration kind={celebration} onClose={() => setCelebration(null)} />
@@ -1566,21 +1583,6 @@ export default function Home() {
               cycleLength: cycle.cycleLength,
             } : {}}
           />
-
-          {/* For today — horizontal scroll of curated phase-tuned cards */}
-          {!isPreg && phase && (
-            <div style={{ marginTop: 26 }}>
-              <ForTodayRow phase={phase} go={go} goArticle={goArticle} />
-            </div>
-          )}
-
-          {/* Cycle School card — surfaces the school that matches the
-              user's current phase. Resumes from the lowest incomplete
-              day on tap. Quietly disappears when the matching school
-              is already completed. */}
-          {!isPreg && phase && (
-            <CycleSchoolCard phase={phase} settings={settings} go={go} />
-          )}
 
           {/* Daily BC pill reminder, when applicable */}
           {!isPreg && <BCReminder bcMethod={birthControl?.method} wellness={wellness} markWellness={markWellness} />}
