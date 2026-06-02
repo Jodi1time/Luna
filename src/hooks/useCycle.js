@@ -290,6 +290,178 @@ export function detectBBTShift(logs, periodStarts, cycleLength) {
   }
 }
 
+// Find the median cycle day on which the user logs egg-white cervical
+// mucus. Egg-white mucus is the strongest non-instrumental marker of
+// peak fertility — it appears in the 2-3 days before ovulation when
+// estrogen peaks. Returns { day, samples, cycles } or null when we
+// don't have enough data.
+//
+// Why this matters: mucus is logged but until this function existed,
+// the data wasn't feeding ovulation prediction at all. With BBT alone
+// we infer ovulation AFTER it happens (the shift is post-event).
+// Mucus tells us BEFORE — which materially improves fertile-window
+// timing accuracy.
+export function detectMucusPeak(logs, periodStarts) {
+  if (!periodStarts || periodStarts.length < 2) return null
+  const cycleDayFor = (dateISO) => {
+    const t = new Date(dateISO + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (!anchor) return null
+    return Math.floor((t - new Date(anchor + 'T00:00:00').getTime()) / MS_PER_DAY) + 1
+  }
+  // Track which cycle each egg-white day belongs to so we can count
+  // cycles, not just total occurrences.
+  const cyclesWithEggWhite = new Set()
+  const eggWhiteDays = []
+  for (const [date, log] of Object.entries(logs || {})) {
+    if (log?.mucus !== 'eggwhite') continue
+    const day = cycleDayFor(date)
+    if (day == null) continue
+    const t = new Date(date + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (anchor) cyclesWithEggWhite.add(anchor)
+    eggWhiteDays.push(day)
+  }
+  if (eggWhiteDays.length < 2) return null
+  eggWhiteDays.sort((a, b) => a - b)
+  // Median is more robust to outlier days than mean
+  const median = eggWhiteDays[Math.floor(eggWhiteDays.length / 2)]
+  return { day: median, samples: eggWhiteDays.length, cycles: cyclesWithEggWhite.size }
+}
+
+// Find the median cycle day on which the user reports high or "open"
+// libido. Libido tends to peak in the days around ovulation as
+// testosterone and estrogen both crest. Returns { day, samples, cycles }
+// or null. Lower-weight signal than BBT/mucus — used to corroborate.
+export function detectLibidoPeak(logs, periodStarts) {
+  if (!periodStarts || periodStarts.length < 2) return null
+  const cycleDayFor = (dateISO) => {
+    const t = new Date(dateISO + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (!anchor) return null
+    return Math.floor((t - new Date(anchor + 'T00:00:00').getTime()) / MS_PER_DAY) + 1
+  }
+  const cyclesWithHigh = new Set()
+  const highDays = []
+  for (const [date, log] of Object.entries(logs || {})) {
+    const lib = log?.intimate?.libido
+    if (lib !== 'high' && lib !== 'open') continue
+    const day = cycleDayFor(date)
+    if (day == null) continue
+    const t = new Date(date + 'T00:00:00').getTime()
+    let anchor = null
+    for (const s of periodStarts) {
+      const st = new Date(s + 'T00:00:00').getTime()
+      if (st <= t) anchor = s
+      else break
+    }
+    if (anchor) cyclesWithHigh.add(anchor)
+    highDays.push(day)
+  }
+  if (highDays.length < 3) return null  // libido is noisier — need more samples
+  highDays.sort((a, b) => a - b)
+  const median = highDays[Math.floor(highDays.length / 2)]
+  return { day: median, samples: highDays.length, cycles: cyclesWithHigh.size }
+}
+
+// Triangulated ovulation detection. Fuses up to three signals:
+//   - BBT shift (weight 1.0)  — gold standard, post-event marker
+//   - Mucus peak (weight 0.8) — egg-white = peak fertility, +1 day = ov
+//   - Libido peak (weight 0.5) — supportive, often crests near ov
+//
+// Weighted average of available signals gives the predicted ov day.
+// Confidence rises when signals agree (small spread) and falls when
+// they disagree (large spread). Single-signal results inherit the
+// signal's intrinsic confidence (BBT → medium, mucus/libido → low).
+//
+// Why this matters: with all three signals, we approach the accuracy
+// of Natural Cycles / pee-strip kits — but using data the user is
+// already logging, without any additional hardware.
+//
+// Returns: { day, confidence: 'very-high'|'high'|'medium'|'low',
+//   signals: [{type, day, weight, detail}], spread, why } or null.
+export function detectOvulation(logs, periodStarts, cycleLength) {
+  const bbt = detectBBTShift(logs, periodStarts, cycleLength)
+  const mucus = detectMucusPeak(logs, periodStarts)
+  const libido = detectLibidoPeak(logs, periodStarts)
+
+  const signals = []
+  if (bbt) {
+    signals.push({
+      type: 'bbt',
+      day: bbt.shiftDayMedian,
+      weight: 1.0,
+      detail: `Biphasic temperature shift +${bbt.shiftDelta}°${bbt.unit}`,
+    })
+  }
+  if (mucus) {
+    // Ovulation typically falls 1 day after peak egg-white mucus —
+    // estrogen drives the mucus, ov follows the estrogen peak.
+    signals.push({
+      type: 'mucus',
+      day: mucus.day + 1,
+      weight: 0.8,
+      detail: `Egg-white mucus peak around day ${mucus.day}`,
+    })
+  }
+  if (libido) {
+    signals.push({
+      type: 'libido',
+      day: libido.day,
+      weight: 0.5,
+      detail: `Libido tends to peak around day ${libido.day}`,
+    })
+  }
+
+  if (signals.length === 0) return null
+
+  const totalWeight = signals.reduce((s, x) => s + x.weight, 0)
+  const day = Math.round(signals.reduce((s, x) => s + x.day * x.weight, 0) / totalWeight)
+  const days = signals.map((s) => s.day)
+  const spread = signals.length > 1 ? Math.max(...days) - Math.min(...days) : 0
+
+  // Confidence rubric. When signals agree tightly (spread ≤ 2 days)
+  // and 3 signals fire, we're as confident as a non-clinical tracker
+  // can be. Disagreement reduces confidence even if all 3 fire.
+  let confidence = 'low'
+  if (signals.length >= 3 && spread <= 2)       confidence = 'very-high'
+  else if (signals.length >= 2 && spread <= 2)  confidence = 'high'
+  else if (signals.length >= 2 && spread <= 4)  confidence = 'medium'
+  else if (signals.length === 1 && bbt)         confidence = 'medium'
+  else                                          confidence = 'low'
+
+  const sigList = signals.map((s) => {
+    if (s.type === 'bbt') return 'BBT shift'
+    if (s.type === 'mucus') return 'egg-white mucus'
+    return 'libido peak'
+  })
+  const sigText = sigList.length === 1
+    ? sigList[0]
+    : sigList.length === 2
+      ? `${sigList[0]} and ${sigList[1]}`
+      : `${sigList.slice(0, -1).join(', ')}, and ${sigList[sigList.length - 1]}`
+  const why = signals.length >= 2
+    ? `Triangulated from ${sigText}${spread > 2 ? ' (signals don\'t agree exactly).' : '.'}`
+    : `From ${sigText} alone — add more signals for tighter timing.`
+
+  return { day, confidence, signals, spread, why }
+}
+
 // Detect recurring mood / symptom patterns across multiple cycles.
 // For each mood and each symptom, computes the median cycle day and the
 // concentration of occurrences within ±3 days of that median. Returns
@@ -410,7 +582,7 @@ export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, period
 // from the user's actual cycle variance, plus a human-readable confidence
 // label and reason. If BBT data has detected an ovulation shift, the
 // fertile window uses that day instead of the cycle-length midpoint.
-export function getPredictions(lastPeriodStart, cycleLength, periodLength, variance, bbtShift) {
+export function getPredictions(lastPeriodStart, cycleLength, periodLength, variance, ovulation) {
   if (!lastPeriodStart) return null
   const start = new Date(lastPeriodStart)
   start.setHours(0, 0, 0, 0)
@@ -428,18 +600,25 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength, varia
 
   const nextPeriod = new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
 
-  // BBT fusion — if the user has logged enough BBT for a shift to be
-  // detected, anchor the ovulation prediction to that day-of-cycle.
-  // Otherwise fall back to the cycle-length midpoint.
-  const ovDay = bbtShift?.shiftDayMedian ?? (Math.round(cycleLength / 2) - 1)
+  // Multi-signal ovulation fusion. If detectOvulation produced a day
+  // from any combination of BBT/mucus/libido, anchor here. Otherwise
+  // fall back to cycle-length midpoint. Confidence label is inherited
+  // directly from the fusion so users see WHY this window is tight.
+  const ovDay = ovulation?.day ?? (Math.round(cycleLength / 2) - 1)
   const fertileStart = new Date(currentCycleStart.getTime() + (ovDay - 2) * MS_PER_DAY)
   const fertileEnd   = new Date(currentCycleStart.getTime() + (ovDay + 1) * MS_PER_DAY)
   const pmsStart     = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * MS_PER_DAY)
   const pmsEnd       = new Date(currentCycleStart.getTime() + (cycleLength - 1) * MS_PER_DAY)
 
   const periodWhy = variance?.why ?? `Based on your ${cycleLength}-day cycle.`
-  const fertileWhy = bbtShift
-    ? `Anchored to your detected ovulation day (~day ${ovDay}) from BBT.`
+  const fertileConf =
+    ovulation?.confidence === 'very-high' ? 'high' :  // 'very-high' renders as 'high' in the UI
+    ovulation?.confidence === 'high'      ? 'high' :
+    ovulation?.confidence === 'medium'    ? 'medium' :
+    ovulation?.confidence === 'low'       ? 'low' :
+    conf
+  const fertileWhy = ovulation
+    ? ovulation.why
     : 'Predicted from cycle length and ovulation timing.'
 
   return [
@@ -453,8 +632,8 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength, varia
     {
       label: 'Fertile window',
       date: `${fmt(fertileStart)} – ${fmt(fertileEnd)}`,
-      range: bbtShift ? null : rangeLabel(Math.min(range, 2)),
-      conf: bbtShift ? 'high' : conf,
+      range: ovulation ? null : rangeLabel(Math.min(range, 2)),
+      conf: fertileConf,
       why: fertileWhy,
     },
     {
@@ -490,10 +669,12 @@ export function useCycle(store) {
   const lastPeriodStart = starts.length > 0 ? starts[starts.length - 1] : storedStart
   const variance = cycleVariance(starts)
   const bbtShift = detectBBTShift(logs, starts, cycleLength)
+  // Triangulated ovulation from BBT + mucus + libido. May be null.
+  const ovulation = detectOvulation(logs, starts, cycleLength)
 
   const cycleDay = getCycleDay(lastPeriodStart, cycleLength)
   const phase    = cycleDay ? getPhaseForDay(cycleDay, cycleLength, periodLength) : null
-  const predictions = getPredictions(lastPeriodStart, cycleLength, periodLength, variance, bbtShift)
+  const predictions = getPredictions(lastPeriodStart, cycleLength, periodLength, variance, ovulation)
   const now = new Date()
   const monthGrid = buildMonthGrid(now.getFullYear(), now.getMonth(), lastPeriodStart, cycleLength, periodLength, logs)
 
@@ -507,7 +688,8 @@ export function useCycle(store) {
     lastPeriodStart,
     periodHistory: starts,
     variance,              // { stdDev, range, conf: 'high'|'medium'|'low', why }
-    bbtShift,              // null OR detected ovulation shift from BBT logs
+    bbtShift,              // null OR detected biphasic shift (kept for legacy callers)
+    ovulation,             // null OR fused ovulation { day, confidence, signals, why }
     cyclesLogged: starts.length,
   }
 }

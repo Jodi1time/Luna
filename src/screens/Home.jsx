@@ -44,7 +44,7 @@ const phaseArticle = {
 // adds a small reassurance / honesty tag based on how steady the
 // user's cycles have been. The peace-of-mind sale is the line that
 // follows: "You don't have to keep track."
-function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, bbtShift }) {
+function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, bbtShift, ovulation }) {
   if (!phase || cycleDay == null) return null
   const conf = variance?.conf ?? 'low'
 
@@ -59,17 +59,23 @@ function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, 
   }
 
   if (phase.id === 'follicular') {
-    // Prefer BBT-detected ovulation day if we have it (more accurate than
-    // calendar math), otherwise fall back to midpoint.
-    const ovDay = bbtShift?.shiftDayMedian ?? Math.round(cycleLength / 2)
+    // Prefer the fused ovulation day (BBT + mucus + libido) when
+    // available — it's typically tighter than BBT alone. Fall back
+    // to BBT, then to cycle-length midpoint.
+    const ovDay = ovulation?.day ?? bbtShift?.shiftDayMedian ?? Math.round(cycleLength / 2)
     const days = ovDay - cycleDay
-    const sub = bbtShift ? 'Anchored to your BBT shift.' : null
+    const sub = ovulation && ovulation.signals.length >= 2
+      ? `Triangulated from ${ovulation.signals.length} signals.`
+      : bbtShift ? 'Anchored to your BBT shift.' : null
     if (days <= 1) return { text: 'Ovulation begins tomorrow.', sub }
     return { text: `${days} days until ovulation.`, sub }
   }
 
   if (phase.id === 'ovulation') {
-    return { text: 'You\'re in your fertile window.', sub: bbtShift ? 'Confirmed by your BBT shift.' : null }
+    const sub = ovulation && ovulation.signals.length >= 2
+      ? `Confirmed by ${ovulation.signals.length} signals.`
+      : bbtShift ? 'Confirmed by your BBT shift.' : null
+    return { text: 'You\'re in your fertile window.', sub }
   }
 
   if (phase.id === 'luteal') {
@@ -1078,7 +1084,7 @@ export default function Home() {
     return () => clearTimeout(t)
   }, [celebration, setCelebration])
 
-  const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift }) : null
+  const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift, ovulation: cycle.ovulation }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
   // Resurface a meaningful old note when one fits today.

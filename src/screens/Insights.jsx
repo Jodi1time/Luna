@@ -294,7 +294,8 @@ export default function Insights() {
   const onHormonalBC = isOnHormonalBC(birthControl)
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
   const cyclesLogged = periodHistory ? periodHistory.length : 0
-  const bbtShift = !onHormonalBC ? detectBBTShift(logs, periodHistory, cycle.cycleLength) : null
+  const bbtShift = !onHormonalBC ? cycle.bbtShift : null
+  const ovulation = !onHormonalBC ? cycle.ovulation : null
   const cycleDay = cycle.cycleDay
 
   const blobColor = (phase?.color) || T.accent
@@ -376,21 +377,72 @@ export default function Insights() {
 
         <Rule />
 
-        {bbtShift && (
+        {ovulation && (
           <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '240ms' }}>
             <Eyebrow>Your ovulation marker</Eyebrow>
             <div className="alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 14px 30px -20px ${sectionColors('care').accent}40`, borderRadius: 20, marginTop: 4 }}>
-              <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 8, lineHeight: 1.3 }}>
-                You ovulate around <em style={{ color: T.accent }}>day {bbtShift.shiftDayMedian}.</em>
+              {/* Confidence pill — multi-signal cases get visibly louder.
+                  Very-high / high cases use phase color; medium grey; low grey. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                <div style={{
+                  fontFamily: T.sans, fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase',
+                  padding: '4px 10px', borderRadius: 999,
+                  background: ovulation.confidence === 'very-high' || ovulation.confidence === 'high'
+                    ? PHASES.ovulation.color
+                    : ovulation.confidence === 'medium' ? T.muted : 'rgba(26,19,16,0.10)',
+                  color: ovulation.confidence === 'very-high' || ovulation.confidence === 'high'
+                    ? '#fff'
+                    : ovulation.confidence === 'medium' ? '#fff' : T.muted,
+                }}>
+                  {ovulation.confidence === 'very-high' ? 'High confidence' : ovulation.confidence === 'high' ? 'High confidence' : ovulation.confidence === 'medium' ? 'Medium confidence' : 'Low confidence'}
+                </div>
+                <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                  {ovulation.signals.length === 1 ? '1 signal' : `${ovulation.signals.length} signals`}
+                </div>
               </div>
-              {/* Mini sparkline — visualises the biphasic step up */}
-              <BBTSparkline bbtShift={bbtShift} cycleLength={cycle.cycleLength} />
-              <div style={{ fontFamily: T.sans, fontSize: 13, color: T.muted, lineHeight: 1.55, marginBottom: 10, marginTop: 4 }}>
-                Your post-ovulation temperatures run about {bbtShift.shiftDelta}°{bbtShift.unit} higher than your follicular phase — the biological signature of ovulation.
+              <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 12, lineHeight: 1.3 }}>
+                You ovulate around <em style={{ color: T.accent }}>day {ovulation.day}.</em>
               </div>
-              <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
-                {bbtShift.follicularAvg}°{bbtShift.unit} → {bbtShift.lutealAvg}°{bbtShift.unit} · {bbtShift.samples} reading{bbtShift.samples === 1 ? '' : 's'}
+
+              {/* Signal chips — show each contributing signal with its day */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                {ovulation.signals.map((s) => (
+                  <div key={s.type} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 12px',
+                    background: 'rgba(253,250,245,0.55)',
+                    border: '1px solid rgba(26,19,16,0.06)',
+                    borderRadius: 14,
+                  }}>
+                    <span style={{
+                      width: 6, height: 6, borderRadius: 999,
+                      background: s.type === 'bbt' ? PHASES.ovulation.color
+                                : s.type === 'mucus' ? PHASES.follicular.color
+                                : PHASES.luteal.color,
+                    }} />
+                    <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.text, letterSpacing: -0.1, flex: 1 }}>
+                      {s.detail}
+                    </span>
+                    <span style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                      day {s.day}
+                    </span>
+                  </div>
+                ))}
               </div>
+
+              {/* Mini sparkline — only when BBT is one of the signals */}
+              {bbtShift && <BBTSparkline bbtShift={bbtShift} cycleLength={cycle.cycleLength} />}
+
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.6, marginTop: bbtShift ? 8 : 0 }}>
+                {ovulation.why}
+              </div>
+
+              {/* When BBT is one of the signals, expose the underlying numbers */}
+              {bbtShift && (
+                <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5, paddingTop: 10, marginTop: 10, borderTop: `1px solid ${T.hair}` }}>
+                  {bbtShift.follicularAvg}°{bbtShift.unit} → {bbtShift.lutealAvg}°{bbtShift.unit} · {bbtShift.samples} reading{bbtShift.samples === 1 ? '' : 's'}
+                </div>
+              )}
             </div>
           </div>
         )}
