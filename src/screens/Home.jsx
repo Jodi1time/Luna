@@ -445,20 +445,47 @@ function QuickActions({ go, setActiveLogDate }) {
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M6 12l2 2 4-4"/></svg>),
       onTap: () => go('care') },
   ]
+  // One-shot scroll teaser — on mount, the row slides ~50px to the
+  // right then settles back, signaling "there's more here, you can
+  // scroll." Runs once per Home mount. Apple uses this on the App
+  // Store hero rows. Honors prefers-reduced-motion via the early bail.
+  const scrollerRef = useRef(null)
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let raf = 0
+    const start = performance.now()
+    const duration = 1400
+    const peak = 52
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration)
+      // ease in-out + return: 0 → peak → 0
+      const eased = t < 0.5
+        ? 2 * t * t
+        : 1 - Math.pow(-2 * t + 2, 2) / 2
+      const x = Math.sin(eased * Math.PI) * peak
+      el.scrollLeft = x
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 650)
+    return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
+  }, [])
   return (
-    <div style={{
+    <div ref={scrollerRef} style={{
       display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
       marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
       scrollSnapType: 'x mandatory',
       marginTop: 16,
+      scrollBehavior: 'smooth',
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 38%',
-              maxWidth: 158,
+              flex: '0 0 36%',
+              maxWidth: 152,
               scrollSnapAlign: 'start',
               textAlign: 'left',
               borderRadius: 22,
@@ -515,8 +542,9 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
   // lavender too. Tells the user at a glance what KIND of nudge this is.
   const colors = sectionColors(category)
   return (
-    <button onClick={onTap} className="smart-arrival alive-card frost-card"
+    <button onClick={onTap} className="smart-arrival alive-card frost-card sheen-once"
       style={{
+        position: 'relative',
         marginTop: 14, padding: 18,
         background: sectionPaper(category),
         border: `1px solid ${colors.accent}33`,
@@ -524,6 +552,7 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
         boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -20px ${colors.accent}50`,
         borderRadius: 22, textAlign: 'left', cursor: 'pointer', width: '100%',
         color: T.text, fontFamily: 'inherit', display: 'block',
+        overflow: 'hidden',
       }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: colors.accent, marginBottom: 6 }}>
         {eyebrow}
@@ -547,8 +576,9 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
   // Trim very long notes so the card stays a card.
   const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
   return (
-    <button onClick={open} className="glass-card alive-card frost-card"
+    <button onClick={open} className="glass-card alive-card frost-card sheen-once"
       style={{
+        position: 'relative',
         marginTop: 22,
         padding: 18,
         borderLeft: `3px solid ${T.accent}`,
@@ -560,10 +590,11 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
         color: T.text,
         fontFamily: 'inherit',
         display: 'block',
+        overflow: 'hidden',
       }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
-          From your past self
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
+          from your past self
         </div>
         <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
           Open the day →
@@ -650,12 +681,29 @@ function AlwaysHere({ wellness, markWellness }) {
 // a movement hint — all phase-tuned. Soft borders, no images, intentionally
 // quiet so they texture the screen without dominating it.
 function ForTodayRow({ phase, go, goArticle }) {
+  // One-shot scroll teaser, same as QuickActions. The row slides
+  // ~40px right and settles back so the user sees it scrolls. Runs
+  // once per Home mount, ~1.2s after a small delay.
+  const scrollerRef = useRef(null)
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el || !phase) return
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let raf = 0
+    const start = performance.now()
+    const duration = 1300
+    const peak = 44
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration)
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+      el.scrollLeft = Math.sin(eased * Math.PI) * peak
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 1100)
+    return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
+  }, [phase?.id])
   if (!phase) return null
   const article = ARTICLES.find((a) => a.id === phaseArticle[phase.id]) || ARTICLES[0]
-  // Each For Today tile gets its functional category — nourishment
-  // wears gold, reading wears sage, movement wears moonlight (the
-  // "energy + body" tint). Phase color stays as the LEFT EDGE so
-  // today's cycle identity still anchors the row.
   const items = [
     { key: 'nourish', category: 'care', eyebrow: 'To nourish', title: phase.nutrition.headline, onTap: () => go('nourish') },
     { key: 'read',    category: 'read', eyebrow: `${article.read} read`, title: article.title, onTap: () => goArticle(article.id) },
@@ -666,7 +714,7 @@ function ForTodayRow({ phase, go, goArticle }) {
       <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 10, letterSpacing: -0.2 }}>
         For today.
       </div>
-      <div style={{
+      <div ref={scrollerRef} style={{
         display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
         marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
         scrollSnapType: 'x mandatory',
@@ -1284,7 +1332,7 @@ export default function Home() {
               opener. This is Luna's daily ritual. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              className="alive-card frost-card"
+              className="alive-card frost-card sheen-once"
               style={{
                 position: 'relative',
                 marginTop: 14, padding: '24px 22px 22px',

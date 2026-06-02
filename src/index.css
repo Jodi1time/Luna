@@ -166,6 +166,75 @@ button.glass-card:active {
   border-color: rgba(26, 19, 16, 0.10);
 }
 
+/* ── Sheen-once ───────────────────────────────────────────────────
+   A soft light sweep that passes across a card LEFT → RIGHT once.
+   Use to mark a card as a "new arrival" without a badge — the eye
+   follows the highlight without being interrupted by a notification.
+   Honors reduced-motion.
+
+   How it works: a pseudo-element with a transparent → cream-white →
+   transparent linear gradient sits absolute over the card; an
+   animation translates it from -120% → +120% over 1.6s once, then
+   stays at +120% forever (so it never repeats). The card needs
+   position: relative + overflow: hidden (so we don't clip nearby
+   surfaces). */
+@keyframes lunaSheen {
+  0%   { transform: translateX(-120%) skewX(-12deg); opacity: 0; }
+  20%  { opacity: 0.55; }
+  50%  { opacity: 0.55; }
+  80%  { opacity: 0.0; }
+  100% { transform: translateX(120%)  skewX(-12deg); opacity: 0; }
+}
+.sheen-once {
+  position: relative;
+  overflow: hidden;
+}
+.sheen-once::after {
+  content: '';
+  position: absolute;
+  top: -10%; bottom: -10%;
+  left: 0; width: 40%;
+  background: linear-gradient(
+    100deg,
+    rgba(255,255,255,0) 10%,
+    rgba(255,255,255,0.42) 50%,
+    rgba(255,255,255,0) 90%
+  );
+  pointer-events: none;
+  animation: lunaSheen 1.6s cubic-bezier(0.4, 0, 0.2, 1) 0.6s 1 forwards;
+  transform: translateX(-120%) skewX(-12deg);
+  mix-blend-mode: soft-light;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheen-once::after { display: none; }
+}
+
+/* ── Plus-pulse ───────────────────────────────────────────────────
+   Slow gentle breathing on the primary TabBar + button — the eye
+   notices the warm focal point pulsing every ~5s, drawing soft
+   attention to "log" without nagging. Reduced-motion safe. */
+@keyframes lunaPlusPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 14px 30px -10px rgba(200, 78, 46, 0.55),
+                0 2px 0 rgba(200, 78, 46, 0.30) inset,
+                0 0 0 0   rgba(200, 78, 46, 0.30);
+  }
+  50% {
+    transform: scale(1.04);
+    box-shadow: 0 18px 36px -10px rgba(200, 78, 46, 0.65),
+                0 2px 0 rgba(200, 78, 46, 0.30) inset,
+                0 0 0 8px rgba(200, 78, 46, 0.0);
+  }
+}
+.plus-pulse {
+  animation: lunaPlusPulse 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 1.5s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .plus-pulse { animation: none !important; }
+}
+
 /* ── Settings row hover — subtle highlight on tap ────────────────
    The settings rows are pressable strips inside a frosted card. On
    tap they brighten very slightly so the gesture has feedback. */

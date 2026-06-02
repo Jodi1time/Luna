@@ -105,12 +105,11 @@ export function TabBar({ active, onChange }) {
           return (
             <button key="log" onClick={() => onChange('log')} className="alive-card"
               style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
-              <div style={{
+              <div className="plus-pulse" style={{
                 width: 50, height: 50,
                 background: T.accent, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: 999, marginBottom: 2,
-                boxShadow: `0 14px 30px -10px ${T.accent}60, 0 2px 0 ${T.accent}40 inset`,
               }}>{Icons.plus}</div>
             </button>
           )
