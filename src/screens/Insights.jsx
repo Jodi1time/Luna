@@ -35,12 +35,12 @@ function arcPath(cx, cy, innerR, outerR, startAngle, endAngle) {
 function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
   if (!cycleDay || !cycleLength) return null
   const animatedCenter = useCountUp(cycleDay, 1100)
-  const size = 240
-  const r = 100
+  const size = 260
+  const r = 112
   const cx = size / 2
   const cy = size / 2
   const segmentAngle = 360 / cycleLength
-  const innerR = r - 18
+  const innerR = r - 10
   const segments = []
   for (let d = 1; d <= cycleLength; d++) {
     const phase = getPhaseForDay(d, cycleLength, periodLength)
@@ -57,7 +57,7 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
   // Today marker — placed at the centroid of today's segment.
   const todayMidAngle = (cycleDay - 0.5) * segmentAngle - 90
   const markerRad = (todayMidAngle * Math.PI) / 180
-  const markerR = r - 9
+  const markerR = r - 5
   const mx = cx + markerR * Math.cos(markerRad)
   const my = cy + markerR * Math.sin(markerRad)
   const todayPhase = getPhaseForDay(cycleDay, cycleLength, periodLength)
@@ -73,47 +73,52 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
   const fertileStartAngle = (fertileStart - 1) * segmentAngle - 90
   const fertileEndAngle   = fertileEnd       * segmentAngle - 90
   const fertileHaloPath = inOrNearFertile
-    ? arcPath(cx, cy, r + 6, r + 14, fertileStartAngle, fertileEndAngle)
+    ? arcPath(cx, cy, r + 5, r + 11, fertileStartAngle, fertileEndAngle)
     : null
 
+  // Simpler wheel: the segments now read as a soft ring around the
+  // number rather than a chart. Inactive days drop to opacity 0.18
+  // so the eye lands on the number first; today's segment glows at
+  // 0.85 so you can still find it on the ring. The center number is
+  // the protagonist — italic serif, big, in phase color.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 6 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
       <svg width={size} height={size} style={{ overflow: 'visible' }}>
         {/* Outer fertile-window halo — only when in or near fertile days */}
         {fertileHaloPath && (
           <path d={fertileHaloPath} fill={PHASES.ovulation.color}
             className="fertile-glow"
-            style={{ filter: 'blur(4px)' }} />
+            style={{ filter: 'blur(5px)' }} />
         )}
-        {/* Per-day arc segments, draw-in staggered */}
+        {/* Per-day arc segments — much quieter now, function as a ring */}
         {segments.map((s, idx) => (
           <path key={s.d} d={s.path} fill={s.color}
             className="arc-draw"
             style={{
-              animationDelay: `${idx * 22}ms`,
-              '--final-opacity': s.isToday ? 0.95 : 0.32,
+              animationDelay: `${idx * 18}ms`,
+              '--final-opacity': s.isToday ? 0.85 : 0.18,
             }} />
         ))}
         {/* Soft glow under the marker — quiet phase-color halo */}
-        <circle cx={mx} cy={my} r={14} fill={todayPhase.color} opacity={0.18}
-          style={{ filter: 'blur(3px)' }} />
+        <circle cx={mx} cy={my} r={10} fill={todayPhase.color} opacity={0.22}
+          style={{ filter: 'blur(2.5px)' }} />
         {/* Outer pulsing ring — the heartbeat of "you are here" */}
-        <circle cx={mx} cy={my} r={6} fill={todayPhase.color}
+        <circle cx={mx} cy={my} r={4.5} fill={todayPhase.color}
           className="wheel-today-pulse" />
         {/* Today marker — solid disc on top of the ring */}
-        <circle cx={mx} cy={my} r={6} fill="#fff" stroke={todayPhase.color} strokeWidth={2} />
-        {/* Center — big italic day number + small serif "of X" */}
-        <text x={cx} y={cy + 4} textAnchor="middle"
-          style={{ fontFamily: T.serif, fontSize: 56, fontWeight: 400, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -2 }}>
+        <circle cx={mx} cy={my} r={4.5} fill="#fff" stroke={todayPhase.color} strokeWidth={1.5} />
+        {/* Center — huge italic day number + small serif "of X" */}
+        <text x={cx} y={cy + 2} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 92, fontWeight: 300, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -3 }}>
           {animatedCenter}
         </text>
-        <text x={cx} y={cy + 24} textAnchor="middle"
-          style={{ fontFamily: T.serif, fontSize: 11.5, fill: T.muted, fontStyle: 'italic', letterSpacing: 0.2 }}>
+        <text x={cx} y={cy + 26} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 12, fill: T.muted, fontStyle: 'italic', letterSpacing: 0.3 }}>
           of {cycleLength}
         </text>
       </svg>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 17, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 18, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
           You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
         </div>
         <span style={{ color: todayPhase.color, opacity: 0.78, display: 'inline-flex' }} aria-hidden="true">
@@ -167,7 +172,7 @@ function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged })
   const plTag = periodLengthTag(periodLength)
   const vTag  = varianceTag(variance?.conf)
   return (
-    <div className="insight-stagger" style={{ padding: 16, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, borderLeft: `3px solid ${T.accent}`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 10px 22px -18px ${sectionColors('body').accent}30`, borderRadius: T.r, marginBottom: 22, animationDelay: '120ms' }}>
+    <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, borderLeft: `3px solid ${T.accent}`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 14px 30px -20px ${sectionColors('body').accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '120ms' }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
         Your cycles
       </div>
@@ -374,7 +379,7 @@ export default function Insights() {
         {bbtShift && (
           <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '240ms' }}>
             <Eyebrow>Your ovulation marker</Eyebrow>
-            <div style={{ padding: 14, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, marginTop: 4 }}>
+            <div className="alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 14px 30px -20px ${sectionColors('care').accent}40`, borderRadius: 20, marginTop: 4 }}>
               <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 8, lineHeight: 1.3 }}>
                 You ovulate around <em style={{ color: T.accent }}>day {bbtShift.shiftDayMedian}.</em>
               </div>
@@ -410,7 +415,7 @@ export default function Insights() {
                 : `You often feel '${display}' in your ${p.phase} phase — ${dayLabel}`
               const concentration = Math.round((p.concentration || 0) * 100)
               return (
-                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 14, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 10px 22px -18px ${color}30`, borderRadius: T.r, animationDelay: `${320 + idx * 70}ms` }}>
+                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 14px 30px -20px ${color}40`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
                       <SymptomIcon id={iconId} size={32} />
@@ -441,8 +446,8 @@ export default function Insights() {
             real to look back on. The gate lives in buildYearNarrative. */}
         {(cycle.cyclesLogged >= 2 || Object.keys(logs || {}).length >= 30) && (
           <button onClick={() => go('yourYear')}
-            className="glass-card insight-stagger"
-            style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', animationDelay: '420ms' }}>
+            className="glass-card insight-stagger alive-card"
+            style={{ marginTop: 22, padding: 20, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', animationDelay: '420ms' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
               A longer look back
             </div>
