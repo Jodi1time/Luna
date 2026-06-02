@@ -101,15 +101,15 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
         </div>
 
         {triggered.length > 0 && (
-          <div style={{ marginTop: 22, padding: 18, background: T.text, color: '#FAF4ED', borderRadius: T.r, animation: 'fadeUp .25s ease-out both' }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 2, color: acc, fontWeight: 700, marginBottom: 8 }}>Worth bringing up</div>
-            <div style={{ fontFamily: T.serif, fontSize: 18, lineHeight: 1.4, marginBottom: 10 }}>
+          <div className="frost-card alive-card" style={{ marginTop: 22, padding: 20, background: T.text, color: '#FAF4ED', borderRadius: 22, boxShadow: `0 16px 36px -20px rgba(26,19,16,0.5)`, animation: 'fadeUp .25s ease-out both' }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: acc, fontWeight: 500, marginBottom: 10, letterSpacing: -0.1 }}>worth bringing up</div>
+            <div style={{ fontFamily: T.serif, fontSize: 19, lineHeight: 1.4, marginBottom: 10, fontStyle: 'italic', letterSpacing: -0.3 }}>
               {triggered.length === 1 ? 'One thing' : `${triggered.length} of these`} is worth a conversation with your provider.
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.55, marginBottom: 14 }}>
-              We'll make a one-page summary you can email or print, so you don't have to find the words in the room.
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, color: 'rgba(250,244,237,0.72)', lineHeight: 1.6, marginBottom: 16, fontStyle: 'italic' }}>
+              Luna will make a one-page summary you can email or print, so you don't have to find the words in the room.
             </div>
-            <button onClick={exportPDF} style={{ background: acc, color: '#fff', border: 'none', padding: '10px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+            <button onClick={exportPDF} className="alive-card" style={{ background: acc, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, letterSpacing: 0.3, fontWeight: 600, borderRadius: 999, boxShadow: `0 10px 22px -10px ${acc}80` }}>
               Make me a summary →
             </button>
           </div>

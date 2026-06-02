@@ -7,8 +7,8 @@ import useLuna from '../store/useLuna'
 
 function Field({ label, type = 'text', value, onChange, placeholder }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>{label}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ fontSize: 13, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, color: T.muted, letterSpacing: -0.1, textTransform: 'lowercase' }}>{String(label).toLowerCase()}</div>
       <input
         type={type}
         value={value}
@@ -16,9 +16,9 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
         placeholder={placeholder}
         autoCapitalize="off"
         autoCorrect="off"
-        style={{ background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '13px 14px', fontSize: 15, fontFamily: T.sans, color: T.text, outline: 'none', width: '100%' }}
-        onFocus={(e) => { e.target.style.borderColor = T.accent }}
-        onBlur={(e)  => { e.target.style.borderColor = T.hair }}
+        style={{ background: 'rgba(253,250,245,0.55)', border: `1px solid rgba(26,19,16,0.08)`, borderRadius: 16, padding: '14px 16px', fontSize: 15, fontFamily: T.sans, color: T.text, outline: 'none', width: '100%', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+        onFocus={(e) => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = `0 0 0 3px ${T.accent}18` }}
+        onBlur={(e)  => { e.target.style.borderColor = 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }}
       />
     </div>
   )
@@ -120,10 +120,11 @@ export default function Auth() {
         <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, lineHeight: 1.55, marginBottom: 24 }}>{sub}</div>
 
         {mode !== 'reset' && (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
             {[['signin','Sign in'],['signup','Create account']].map(([k, l]) => (
               <button key={k} onClick={() => { setMode(k); setError(''); setInfo('') }}
-                style={{ background: mode === k ? T.text : 'transparent', color: mode === k ? T.bg : T.text, border: `1px solid ${mode === k ? T.text : T.hair}`, padding: '7px 12px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.6, borderRadius: T.r }}>
+                className="alive-card"
+                style={{ background: mode === k ? T.text : 'rgba(253,250,245,0.55)', color: mode === k ? T.bg : T.text, border: `1px solid ${mode === k ? T.text : 'rgba(26,19,16,0.08)'}`, padding: '9px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, borderRadius: 999, backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', boxShadow: mode === k ? `0 10px 20px -10px ${T.ink}80` : 'none', transition: 'all .2s ease' }}>
                 {l}
               </button>
             ))}
@@ -137,12 +138,12 @@ export default function Auth() {
           )}
         </div>
 
-        {error && <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, marginTop: 12 }}>{error}</div>}
-        {info  && <div style={{ fontFamily: T.sans, fontSize: 12, color: T.text, background: T.subtle, padding: '10px 14px', borderRadius: T.r, marginTop: 12, lineHeight: 1.5 }}>{info}</div>}
+        {error && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.accent, marginTop: 14, lineHeight: 1.5 }}>{error}</div>}
+        {info  && <div className="frost-card" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.text, background: `rgba(253,250,245,0.65)`, border: '1px solid rgba(26,19,16,0.06)', padding: '14px 16px', borderRadius: 18, marginTop: 14, lineHeight: 1.55 }}>{info}</div>}
 
-        <div style={{ marginTop: 22 }}>
-          <CTAButton full onClick={submit} style={{ opacity: busy ? 0.5 : 1 }}>
-            {busy ? 'WORKING…' : mode === 'signin' ? 'SIGN IN' : mode === 'signup' ? 'CREATE ACCOUNT' : 'EMAIL RESET LINK'} {Icons.arrow}
+        <div style={{ marginTop: 24 }}>
+          <CTAButton full onClick={submit} style={{ opacity: busy ? 0.5 : 1, letterSpacing: 0.3, textTransform: 'none', fontSize: 13 }}>
+            {busy ? 'working…' : mode === 'signin' ? 'Sign in' : mode === 'signup' ? 'Create account' : 'Email reset link'} {Icons.arrow}
           </CTAButton>
         </div>
 
@@ -159,8 +160,8 @@ export default function Auth() {
           </button>
         )}
 
-        <div style={{ marginTop: 28, padding: 14, background: T.subtle, borderRadius: T.r, fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55 }}>
-          Your cycle data is stored on Luna's servers, encrypted at rest, and only accessible from your signed-in account. We do not sell or share it.
+        <div className="frost-card" style={{ marginTop: 28, padding: 18, background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 20, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.65 }}>
+          Your cycle data lives on Luna's servers, encrypted at rest, only readable from your signed-in account. We don't sell or share it.
         </div>
       </div>
       </Screen>

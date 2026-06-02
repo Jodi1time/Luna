@@ -1112,6 +1112,15 @@ export default function Home() {
                   Your method steadies your hormones — patterns still emerge.
                 </div>
               )}
+              {/* Affordance hint — tells the user the whole cover is
+                  tappable. Soft italic serif so it reads as a quiet
+                  invitation, not an instruction. Uses the phase color
+                  so it ties to the rest of the cover. */}
+              {phase && (
+                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 10, marginTop: 12, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.4, fontWeight: 600, opacity: 0.7, textTransform: 'lowercase' }}>
+                  tap to learn more
+                </div>
+              )}
 
               {/* Period-start nudge — only when relevant */}
               {showPeriodCTA && (
@@ -1242,26 +1251,23 @@ export default function Home() {
             />
           )}
 
-          {/* "For your mind and heart" — promoted entry to Reflect.
-              Suppressed when the morning intention card is showing
-              (both nudge reflective writing — morning is more
-              specific, this one is general; double-surfacing both
-              would be redundant). */}
+          {/* "For your mind and heart" — soft inline entry to Reflect.
+              Suppressed when the morning intention card is showing. */}
           {!isPreg && phase && !showMorningIntention && (
             <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
               style={{
-                marginTop: 26, padding: 18,
+                marginTop: 26, padding: 20,
                 borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
                 boxShadow: `0 14px 30px -20px ${phase.color}50`,
                 textAlign: 'left', cursor: 'pointer', width: '100%',
                 color: T.text, fontFamily: 'inherit', display: 'block',
               }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
-                  For your mind and heart
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
+                  for your mind and heart
                 </div>
-                <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-                  Reflect →
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
+                  reflect →
                 </div>
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
@@ -1270,21 +1276,42 @@ export default function Home() {
             </button>
           )}
 
-          {/* A small reflection — phase-aware, changes day to day, soft.
-              Tap to open a brief conversation with Luna. */}
+          {/* Morning thought — the one moment of the day. Promoted to
+              be the visual HERO of the reflective area. Large italic
+              serif quote, soft phase-tinted glass, opening serif
+              quotation mark as the visual signature. Tap → open a
+              conversation with Luna using this thought as the
+              opener. This is Luna's daily ritual. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
               className="alive-card frost-card"
-              style={{ marginTop: 14, padding: 18, background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${phase.color}50`, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
-                  A thought for today
+              style={{
+                position: 'relative',
+                marginTop: 14, padding: '24px 22px 22px',
+                background: `linear-gradient(160deg, ${phase.color}14, ${phase.color}06 60%, rgba(253,250,245,0.5))`,
+                border: `1px solid ${phase.color}28`,
+                borderRadius: 26,
+                boxShadow: `0 18px 40px -22px ${phase.color}60`,
+                textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
+                fontFamily: 'inherit', color: 'inherit',
+                overflow: 'hidden',
+              }}>
+              {/* Opening serif quotation mark — large, soft, low alpha */}
+              <div aria-hidden="true" style={{
+                position: 'absolute', top: -10, left: 14,
+                fontFamily: T.serif, fontSize: 90, lineHeight: 1, fontStyle: 'italic',
+                color: phase.color, opacity: 0.18, fontWeight: 400,
+                userSelect: 'none', pointerEvents: 'none',
+              }}>"</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12, position: 'relative' }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
+                  a thought, today
                 </div>
-                <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-                  Talk it through →
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
+                  talk it through →
                 </div>
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.2 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
                 {thoughtText}
               </div>
             </button>

@@ -166,6 +166,18 @@ button.glass-card:active {
   border-color: rgba(26, 19, 16, 0.10);
 }
 
+/* ── Settings row hover — subtle highlight on tap ────────────────
+   The settings rows are pressable strips inside a frosted card. On
+   tap they brighten very slightly so the gesture has feedback. */
+.settings-row:active {
+  background: rgba(255,255,255,0.35);
+}
+@media (hover: hover) {
+  .settings-row:hover {
+    background: rgba(255,255,255,0.25);
+  }
+}
+
 /* ── Frost card — section-tinted glass over the AppShell atmosphere
    The section paper gradient (sectionPaper) already uses alpha (cc/88),
    so cards with this class get an iOS-material blur stacking on top of

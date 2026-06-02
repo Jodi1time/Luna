@@ -176,7 +176,7 @@ function GratitudeSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
           </div>
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, background: 'rgba(200,78,46,0.04)' }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 8 }}>
             What you wrote
           </div>
           {savedItems.map((it, i) => (
@@ -186,7 +186,7 @@ function GratitudeSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
           ))}
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10, fontStyle: 'italic' }}>
@@ -377,7 +377,7 @@ function FeelingSheet({ open, onClose, onSave, phase, history = [], onOpenNote, 
           )}
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
@@ -520,7 +520,7 @@ function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNot
         </div>
         {savedReflection && (
           <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, background: 'rgba(200,78,46,0.04)' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
               You wrote
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.text }}>
@@ -529,7 +529,7 @@ function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNot
           </div>
         )}
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
@@ -616,7 +616,7 @@ function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
       <SheetShell onClose={reset} title="Reframed." sub="Two voices, side by side.">
         <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ marginBottom: 14 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
               The worry, as it lives
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.text }}>
@@ -625,7 +625,7 @@ function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
           </div>
           {savedTriple.friend && (
             <div style={{ paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.accent, marginBottom: 6 }}>
                 The voice you'd offer a friend
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, color: T.accent }}>
@@ -638,7 +638,7 @@ function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
           </div>
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
@@ -722,7 +722,7 @@ function IntentionSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
     return (
       <SheetShell onClose={reset} title="Set." sub="Luna will hold this for you today.">
         <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 8 }}>
             Today is about
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.2, marginBottom: 14 }}>
@@ -733,7 +733,7 @@ function IntentionSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
           </div>
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
@@ -853,7 +853,7 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
           )}
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
@@ -980,7 +980,7 @@ function BedtimeSheet({ open, onClose, onSave, history = [], onOpenHelper }) {
           )}
         </div>
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.65, color: T.text, marginBottom: 10 }}>
@@ -1179,7 +1179,7 @@ export default function Reflect() {
               marginBottom: 22,
             }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: phase.color }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: phase.color }}>
                 {recommendation.eyebrow}
               </div>
               <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
