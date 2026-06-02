@@ -56,6 +56,8 @@ const PostpartumBleedingHelper = lazy(() => import('./screens/PostpartumBleeding
 const HeavyHelper     = lazy(() => import('./screens/HeavyHelper'))
 const Journal         = lazy(() => import('./screens/Journal'))
 const ResetPassword   = lazy(() => import('./screens/ResetPassword'))
+const CycleSchools    = lazy(() => import('./screens/CycleSchools'))
+const CycleSchool     = lazy(() => import('./screens/CycleSchool'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -198,6 +200,8 @@ function ScreenRenderer({ screen }) {
     case 'heavy': return <HeavyHelper />
     case 'journal': return <Journal />
     case 'resetPassword': return <ResetPassword />
+    case 'cycleSchools': return <CycleSchools />
+    case 'cycleSchool': return <CycleSchool />
     default:         return <Home />
   }
 }

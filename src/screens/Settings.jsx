@@ -300,6 +300,7 @@ export default function Settings() {
         background: sectionPaper('reflect'),
         border: `1px solid ${sectionColors('reflect').accent}22`,
       }}>
+        <Row label="Cycle schools" value="5-day programs" onTap={() => go('cycleSchools')} />
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
         <Row label="What we've noticed" onTap={() => go('insights')} />
         <Row label="Your year with Luna" onTap={() => go('yourYear')} />

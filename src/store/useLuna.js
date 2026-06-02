@@ -64,6 +64,11 @@ const DEFAULT_SETTINGS = {
   //   'ttc'      — trying to conceive; fertile-window emphasis
   // Pregnancy + Postpartum continue to use the `pregnancy` field above.
   lifecycle: 'cycle',
+  // Cycle Schools — 5-day phase-aware educational programs. Each
+  // entry: { startedAt, completedDays: [1,2,3], lastDay }. The key
+  // is the school id (e.g. 'understanding-luteal'). Persisted in
+  // settings so it survives across devices via the same cloud sync.
+  schools: {},
   // Diary entries — the user's freeform writing, separate from
   // log.note (which is the per-day sticky-note style memo). Each
   // entry is its own page:
@@ -272,6 +277,7 @@ const useLuna = create(
       activePhaseId:  'ovulation',
       activeArticleId: 'pmdd',
       activeSymptomId: 'cramps',
+      activeSchoolId:  'understanding-luteal',
       // When set, the Reflect screen auto-opens this practice on mount
       // and then clears the value. Lets any helper / surface deep-link
       // straight into the right exercise instead of dumping the user
@@ -307,6 +313,7 @@ const useLuna = create(
       goPhase:   (id) => set((s) => ({ activePhaseId: id,   screen: 'phase',   stack: [...s.stack, 'phase'] })),
       goArticle: (id) => set((s) => ({ activeArticleId: id, screen: 'article', stack: [...s.stack, 'article'] })),
       goSymptom: (id) => set((s) => ({ activeSymptomId: id, screen: 'symptom', stack: [...s.stack, 'symptom'] })),
+      goSchool:  (id) => set((s) => ({ activeSchoolId: id,  screen: 'cycleSchool', stack: [...s.stack, 'cycleSchool'] })),
 
       // ── Pro ──────────────────────────────────────────────────
       isPro: true,

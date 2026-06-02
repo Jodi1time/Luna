@@ -19,6 +19,7 @@ import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { schoolForPhase } from '../data/cycleSchools'
 
 const MS_PER_DAY = 86400000
 
@@ -703,6 +704,62 @@ function AlwaysHere({ wellness, markWellness }) {
 // Three horizontally-scrollable cards: a nourish hint, a short read,
 // a movement hint — all phase-tuned. Soft borders, no images, intentionally
 // quiet so they texture the screen without dominating it.
+// CycleSchoolCard — phase-matched 5-day program. Surfaces the school
+// whose phase matches the user's current phase, shows progress dots,
+// and tap-resumes from the lowest incomplete day. Renders nothing
+// when the matching school is fully complete OR no school matches.
+function CycleSchoolCard({ phase, settings, go }) {
+  if (!phase) return null
+  const school = schoolForPhase(phase.id)
+  if (!school) return null
+  const state = settings?.schools?.[school.id] || {}
+  const completedDays = state.completedDays || []
+  const allDone = completedDays.length === school.duration
+  if (allDone) return null  // quiet when finished — re-appears next cycle
+  const colors = sectionColors(school.category)
+  const started = completedDays.length > 0 || state.startedAt
+  return (
+    <button onClick={() => go('cycleSchool', { activeSchoolId: school.id })}
+      className="alive-card frost-card sheen-once"
+      style={{
+        position: 'relative',
+        marginTop: 22, padding: 20,
+        background: sectionPaper(school.category),
+        border: `1px solid ${colors.accent}28`,
+        borderLeft: `3px solid ${colors.accent}`,
+        borderRadius: 22,
+        boxShadow: `0 14px 30px -22px ${colors.accent}55`,
+        textAlign: 'left', cursor: 'pointer', width: '100%',
+        color: T.text, fontFamily: 'inherit', display: 'block',
+        overflow: 'hidden',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: colors.accent, fontWeight: 500, letterSpacing: -0.1 }}>
+          a school for your {school.phase} week
+        </div>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: colors.accent, fontWeight: 500 }}>
+          {started ? `day ${completedDays.length + 1} →` : 'begin →'}
+        </div>
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
+        {school.title}
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, lineHeight: 1.55, marginBottom: 14 }}>
+        {school.subtitle}
+      </div>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {Array.from({ length: school.duration }).map((_, i) => (
+          <div key={i} style={{
+            flex: 1, height: 4, borderRadius: 999,
+            background: i < completedDays.length ? colors.accent : 'rgba(26,19,16,0.10)',
+            transition: 'background .25s ease-out',
+          }} />
+        ))}
+      </div>
+    </button>
+  )
+}
+
 function ForTodayRow({ phase, go, goArticle }) {
   // Same spring teaser as QuickActions, slightly delayed + cancels
   // on user touch. The two scrollers tease at different times so they
@@ -1458,6 +1515,14 @@ export default function Home() {
             <div style={{ marginTop: 26 }}>
               <ForTodayRow phase={phase} go={go} goArticle={goArticle} />
             </div>
+          )}
+
+          {/* Cycle School card — surfaces the school that matches the
+              user's current phase. Resumes from the lowest incomplete
+              day on tap. Quietly disappears when the matching school
+              is already completed. */}
+          {!isPreg && phase && (
+            <CycleSchoolCard phase={phase} settings={settings} go={go} />
           )}
 
           {/* Daily BC pill reminder, when applicable */}
