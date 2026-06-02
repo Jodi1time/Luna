@@ -83,18 +83,35 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
         </div>
         <Rule />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {RED_FLAGS.map((f, i) => {
             const on = !!answers[f.id]
             return (
               <button key={f.id} onClick={() => toggle(f.id)}
-                className="insight-stagger"
-                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '0E' : T.card, padding: '14px 14px 14px 44px', cursor: 'pointer', fontFamily: 'inherit', color: T.text, textAlign: 'left', position: 'relative', borderRadius: T.r, animationDelay: `${140 + i * 40}ms` }}>
-                <div style={{ position: 'absolute', top: 14, left: 14, width: 18, height: 18, border: `1.5px solid ${on ? acc : T.muted}`, background: on ? acc : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', borderRadius: 2 }}>
+                className="insight-stagger alive-card frost-card"
+                style={{
+                  border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
+                  background: on ? acc + '14' : 'rgba(253,250,245,0.55)',
+                  padding: '16px 16px 16px 48px',
+                  cursor: 'pointer', fontFamily: 'inherit', color: T.text, textAlign: 'left',
+                  position: 'relative', borderRadius: 18,
+                  boxShadow: on ? `0 14px 30px -22px ${acc}60` : '0 10px 22px -22px rgba(26,19,16,0.18)',
+                  animationDelay: `${140 + i * 40}ms`,
+                  transition: 'all 0.2s var(--ease-out)',
+                }}>
+                <div style={{
+                  position: 'absolute', top: 16, left: 16, width: 22, height: 22,
+                  border: `1.5px solid ${on ? acc : 'rgba(26,19,16,0.22)'}`,
+                  background: on ? acc : 'rgba(253,250,245,0.6)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', borderRadius: 8,
+                  boxShadow: on ? `0 6px 12px -6px ${acc}80` : 'none',
+                  transition: 'all 0.2s var(--ease-out)',
+                }}>
                   {on && Icons.check}
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, marginBottom: on ? 6 : 0, lineHeight: 1.35 }}>{f.q}</div>
-                {on && <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, lineHeight: 1.45, animation: 'fadeUp .2s ease-out both' }}>{f.a}</div>}
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, marginBottom: on ? 6 : 0, lineHeight: 1.4, letterSpacing: -0.1 }}>{f.q}</div>
+                {on && <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55, animation: 'fadeUp .2s ease-out both' }}>{f.a}</div>}
               </button>
             )
           })}
@@ -117,15 +134,16 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
 
         <Rule />
         <Eyebrow color={acc}>To read with a cup of tea</Eyebrow>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {['pmdd','endo','iron','pcos'].map((id) => {
             const a = ARTICLES.find((x) => x.id === id)
             if (!a) return null
             return (
               <button key={id} onClick={() => goArticle(id)}
-                style={{ background: 'transparent', border: 'none', textAlign: 'left', padding: 0, cursor: 'pointer', color: T.text, fontFamily: 'inherit' }}>
-                <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.25 }}>{a.title} →</div>
-                <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, marginTop: 2 }}>{a.read} · {a.cat}</div>
+                className="alive-card frost-card"
+                style={{ background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderLeft: `3px solid ${acc}`, textAlign: 'left', padding: 16, cursor: 'pointer', color: T.text, fontFamily: 'inherit', borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}40` }}>
+                <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1 }}>{a.title} →</div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 4 }}>{a.read} · {a.cat}</div>
               </button>
             )
           })}

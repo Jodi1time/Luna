@@ -166,6 +166,50 @@ button.glass-card:active {
   border-color: rgba(26, 19, 16, 0.10);
 }
 
+/* ── Horizontal scroller polish ──────────────────────────────────
+   Apple-grade horizontal rows. The mask-image fades the rightmost
+   ~36px so the peek card softly dissolves into the screen, telling
+   the eye "there's more here" without a hard cutoff. Touch action
+   pan-x prevents accidental vertical scroll capture. Overscroll
+   contain prevents the page bouncing when a scroller hits its end. */
+.h-scroller {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  scroll-snap-stop: always;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black 22px,
+    black calc(100% - 36px),
+    transparent 100%
+  );
+          mask-image: linear-gradient(
+    to right,
+    transparent 0px,
+    black 22px,
+    black calc(100% - 36px),
+    transparent 100%
+  );
+}
+.h-scroller::-webkit-scrollbar { display: none; }
+
+/* Soft pulsing chevron dot to hint at scrollability after the
+   one-shot teaser settles. Sits below the row, low opacity. Use
+   sparingly — only on the primary scroller (QuickActions). */
+@keyframes lunaScrollHint {
+  0%, 100% { transform: translateX(0);    opacity: 0.35; }
+  50%      { transform: translateX(3px);  opacity: 0.65; }
+}
+.scroll-hint {
+  animation: lunaScrollHint 2.6s ease-in-out infinite;
+  animation-delay: 2.5s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint { animation: none !important; }
+}
+
 /* ── Sheen-once ───────────────────────────────────────────────────
    A soft light sweep that passes across a card LEFT → RIGHT once.
    Use to mark a card as a "new arrival" without a badge — the eye

@@ -5,9 +5,20 @@ import { SymptomIcon, MOOD_IDS, MOOD_LABELS, MOOD_COLORS, MOOD_TINTS } from '../
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
+import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
+
+// Bleeding intensity colors — soft Luna palette, not stoplight red.
+// Each step deepens slightly so the row reads as a gradient of
+// intensity, not four identical chips.
+const FLOW_COLORS = {
+  Spotting: '#E6B5A8',
+  Light:    '#D88B5A',
+  Medium:   '#C84E2E',
+  Heavy:    '#9A2F1A',
+}
 
 const MUCUS_OPTIONS = [
   { id: 'dry',      label: 'Dry',       sub: 'Low fertility' },
@@ -156,20 +167,23 @@ export default function Log() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 22px 30px' }}>
-        {/* Header */}
+        {/* Header — soft date stepper. Date is a glass chip in the
+            center, navigation chevrons are circular tap targets,
+            close + save sit on the outer edges. */}
         <div className="insight-stagger" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0 0', fontFamily: T.sans, animationDelay: '0ms' }}>
-          <button onClick={handleBack} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 6 }}>{Icons.close}</button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button onClick={handleBack} aria-label="Close" className="alive-card"
+            style={{ background: 'rgba(253,250,245,0.5)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, cursor: 'pointer', color: T.muted, width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}>{Icons.close}</button>
+          <div className="frost-card" style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, padding: '2px 4px' }}>
             <button onClick={() => shiftDate(-1)} aria-label="Previous day"
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.text, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>‹</button>
-            <div style={{ fontSize: 12.5, color: isToday ? T.text : acc, fontFamily: T.serif, fontStyle: 'italic', minWidth: 140, textAlign: 'center', letterSpacing: -0.1 }}>
-              {isToday ? 'Today' : dateLabel}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.text, fontSize: 16, padding: '4px 10px', fontFamily: T.serif, borderRadius: 999 }}>‹</button>
+            <div style={{ fontSize: 13, color: isToday ? T.text : acc, fontFamily: T.serif, fontStyle: 'italic', minWidth: 130, textAlign: 'center', letterSpacing: -0.1, padding: '4px 0' }}>
+              {isToday ? 'today' : dateLabel.toLowerCase()}
             </div>
             <button onClick={() => shiftDate(1)} disabled={!canGoNext} aria-label="Next day"
-              style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : T.hair, fontSize: 14, padding: '4px 8px', fontFamily: T.sans }}>›</button>
+              style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : 'rgba(26,19,16,0.18)', fontSize: 16, padding: '4px 10px', fontFamily: T.serif, borderRadius: 999 }}>›</button>
           </div>
-          <button onClick={save} className={savedJustNow ? 'success-pulse' : ''}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: acc, padding: '6px 10px', fontWeight: 600, fontSize: 13, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 6 }}>
+          <button onClick={save} className={`alive-card${savedJustNow ? ' success-pulse' : ''}`}
+            style={{ background: acc, border: 'none', cursor: 'pointer', color: '#fff', padding: '8px 16px', fontWeight: 600, fontSize: 12.5, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 999, boxShadow: `0 10px 22px -10px ${acc}80` }}>
             {savedJustNow ? 'Saved' : 'Save'}
           </button>
         </div>
@@ -192,51 +206,79 @@ export default function Log() {
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
 
-        {/* Mood */}
+        {/* Mood — frosted soft pills with each mood's own color tint */}
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
         <Eyebrow color={acc}>How you're feeling</Eyebrow>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 2 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 6 }}>
           {MOOD_IDS.map((id) => {
             const moodAccent = MOOD_COLORS[id] || acc
             const moodTint   = MOOD_TINTS[id]
             const on = mood === id
             return (
               <button key={id} onClick={() => setMood(on ? null : id)}
+                className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
                 style={{
-                  border: 'none', cursor: 'pointer',
-                  flex: 1, padding: '8px 2px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                  background: on ? moodTint : 'transparent',
-                  outline: on ? `1.5px solid ${moodAccent}` : 'none',
+                  flex: 1,
+                  border: `1px solid ${on ? moodAccent + '55' : 'rgba(26,19,16,0.06)'}`,
+                  cursor: 'pointer',
+                  padding: '12px 4px 10px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                  background: on ? moodTint : 'rgba(253,250,245,0.55)',
                   color: on ? moodAccent : T.text,
-                  borderRadius: T.r, fontFamily: 'inherit',
-                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out)',
+                  borderRadius: 18, fontFamily: 'inherit',
+                  boxShadow: on ? `0 12px 22px -16px ${moodAccent}80` : '0 10px 22px -22px rgba(26,19,16,0.18)',
+                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)',
                 }}>
-                <SymptomIcon id={id} size={22} />
-                <span style={{ fontSize: 9, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
+                <span style={{
+                  width: 30, height: 30, borderRadius: 999,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: on ? `${moodAccent}24` : `${moodAccent}12`,
+                  color: moodAccent,
+                }}>
+                  <SymptomIcon id={id} size={18} />
+                </span>
+                <span style={{ fontSize: 9.5, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
               </button>
             )
           })}
         </div>
         </div>
 
-        {/* Symptoms */}
+        {/* Symptoms — frosted body-tinted cards */}
         <div className="insight-stagger" style={{ animationDelay: '180ms' }}>
         <Eyebrow color={acc}>What your body's telling you</Eyebrow>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 24 }}>
           {Object.entries(SYMPTOMS).slice(0, 8).map(([id, s]) => {
             const on = symptoms.includes(id)
+            const bodyColors = sectionColors('body')
             return (
               <div key={`${id}-${on ? 'on' : 'off'}`}
-                className={on && activeSym === id ? 'tap-bloom' : ''}
-                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '12' : T.card, padding: '12px 4px 6px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, position: 'relative', borderRadius: T.r }}>
+                className={`alive-card frost-card${on && activeSym === id ? ' tap-bloom' : ''}`}
+                style={{
+                  border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
+                  background: on ? acc + '15' : sectionPaper('body'),
+                  padding: '14px 4px 10px',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                  position: 'relative',
+                  borderRadius: 18,
+                  boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${bodyColors.accent}40`,
+                  transition: 'all 0.2s var(--ease-out)',
+                }}>
                 <button onClick={() => toggleSym(id)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: on ? acc : T.text, padding: 0, width: '100%' }}>
-                  <SymptomIcon id={id} size={22} />
-                  <span style={{ fontSize: 10, fontWeight: 500 }}>{s.label}</span>
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: 'inherit', color: on ? acc : T.text, padding: 0, width: '100%' }}>
+                  <span style={{
+                    width: 30, height: 30, borderRadius: 999,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    background: on ? `${acc}24` : `${bodyColors.accent}14`,
+                    color: on ? acc : bodyColors.accent,
+                  }}>
+                    <SymptomIcon id={id} size={18} />
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1.2 }}>{s.label}</span>
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); goSymptom(id) }}
-                  style={{ position: 'absolute', top: 2, right: 3, width: 16, height: 16, padding: 0, background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, fontSize: 11, fontFamily: T.mono, fontWeight: 700 }}>
+                  aria-label={`Learn about ${s.label}`}
+                  style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, padding: 0, background: 'rgba(253,250,245,0.6)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, cursor: 'pointer', color: T.muted, fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   ?
                 </button>
               </div>
@@ -249,28 +291,44 @@ export default function Log() {
             as the mood-tap insights on Home. */}
         {symInsight && (
           <div key={`${phase?.id}-${activeSym}`}
-            style={{ marginTop: -14, marginBottom: 24, padding: '12px 14px', background: acc + '10', borderLeft: `3px solid ${acc}`, borderRadius: T.r, animation: 'fadeUp 0.35s ease-out both' }}>
-            <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.text }}>
+            className="frost-card"
+            style={{ marginTop: -10, marginBottom: 24, padding: 16, background: acc + '12', border: `1px solid ${acc}28`, borderLeft: `3px solid ${acc}`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}50`, animation: 'fadeUp 0.35s ease-out both' }}>
+            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic' }}>
               {symInsight.text}
             </div>
             {symInsight.read && (
               <button onClick={() => goArticle(symInsight.read)}
-                style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: acc, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: acc, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
                 Read more →
               </button>
             )}
           </div>
         )}
 
-        {/* Flow */}
+        {/* Flow — intensity gradient. Spotting is soft peach, Heavy
+            is deep terracotta. The row reads as a scale, not four
+            identical buttons. Selected = filled with that intensity. */}
         <div className="insight-stagger" style={{ animationDelay: '220ms' }}>
         <Eyebrow color={acc}>Bleeding</Eyebrow>
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
           {['Spotting','Light','Medium','Heavy'].map((f) => {
             const on = flow === f
+            const fc = FLOW_COLORS[f]
             return (
               <button key={f} onClick={() => setFlow(on ? null : f)}
-                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
+                className="alive-card frost-card"
+                style={{
+                  flex: 1,
+                  border: `1px solid ${on ? fc : 'rgba(26,19,16,0.06)'}`,
+                  background: on ? fc : `linear-gradient(160deg, ${fc}10, rgba(253,250,245,0.5))`,
+                  color: on ? '#fff' : T.text,
+                  padding: '14px 4px',
+                  cursor: 'pointer',
+                  fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: 500,
+                  borderRadius: 18,
+                  boxShadow: on ? `0 12px 24px -16px ${fc}90` : `0 10px 22px -22px ${fc}40`,
+                  transition: 'all 0.2s var(--ease-out)',
+                }}>
                 {f}
               </button>
             )
@@ -278,10 +336,10 @@ export default function Log() {
         </div>
         </div>
 
-        {/* Temperature (BBT) */}
+        {/* Temperature (BBT) — frosted input + segmented unit toggle */}
         <div className="insight-stagger" style={{ animationDelay: '260ms' }}>
         <Eyebrow color={acc}>Your morning temperature</Eyebrow>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
           <input
             type="number"
             inputMode="decimal"
@@ -289,53 +347,68 @@ export default function Log() {
             value={bbt}
             onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError('') }}
             placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
-            style={{ flex: 1, background: T.card, border: `1px solid ${bbtError ? T.accent : T.hair}`, borderRadius: T.r, padding: '12px 14px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none' }}
+            style={{ flex: 1, background: 'rgba(253,250,245,0.55)', border: `1px solid ${bbtError ? T.accent : 'rgba(26,19,16,0.08)'}`, borderRadius: 16, padding: '14px 16px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+            onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
+            onBlur={(e)  => { e.target.style.borderColor = bbtError ? T.accent : 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }}
           />
-          <div style={{ display: 'flex', border: `1px solid ${T.hair}`, borderRadius: T.r, overflow: 'hidden' }}>
+          <div className="frost-card" style={{ display: 'flex', background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, padding: 3 }}>
             {['F','C'].map((u) => (
               <button key={u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
-                style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '12px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 700 }}>
+                style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999, transition: 'all 0.2s var(--ease-out)' }}>
                 °{u}
               </button>
             ))}
           </div>
         </div>
         {bbtError && (
-          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5, padding: '10px 14px', background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r, marginTop: 6, marginBottom: 8 }}>
+          <div className="frost-card" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.accent, lineHeight: 1.5, padding: '12px 14px', background: T.accent + '14', border: `1px solid ${T.accent}40`, borderRadius: 14, marginTop: 8, marginBottom: 8 }}>
             {bbtError}
           </div>
         )}
-        <div style={{ fontSize: 12, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, marginBottom: 24, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 24, fontStyle: 'italic' }}>
           Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
         </div>
         </div>
 
-        {/* Discharge (cervical mucus internally — friendlier label here) */}
+        {/* Discharge — frosted soft cards with care tint */}
         <div className="insight-stagger" style={{ animationDelay: '300ms' }}>
         <Eyebrow color={acc}>Discharge</Eyebrow>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 4, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 24 }}>
           {MUCUS_OPTIONS.map((m) => {
             const on = mucus === m.id
+            const careColors = sectionColors('care')
             return (
               <button key={m.id} onClick={() => setMucus(on ? null : m.id)}
-                style={{ border: `1px solid ${on ? acc : T.hair}`, background: on ? acc + '12' : T.card, color: on ? acc : T.text, padding: '10px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600, borderRadius: T.r, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <span style={{ fontSize: 11, fontWeight: 700 }}>{m.label}</span>
-                <span style={{ fontSize: 8.5, color: T.muted, letterSpacing: 0.3 }}>{m.sub}</span>
+                className="alive-card frost-card"
+                style={{
+                  border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
+                  background: on ? acc + '14' : sectionPaper('care'),
+                  color: on ? acc : T.text,
+                  padding: '12px 4px',
+                  cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600,
+                  borderRadius: 16,
+                  boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${careColors.accent}40`,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  transition: 'all 0.2s var(--ease-out)',
+                }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, fontFamily: T.serif, letterSpacing: -0.1 }}>{m.label}</span>
+                <span style={{ fontSize: 9, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
               </button>
             )
           })}
         </div>
         </div>
 
-        {/* Sleep */}
+        {/* Sleep — frosted pill cards */}
         <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
         <Eyebrow color={acc}>How you slept</Eyebrow>
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
           {['Great','Okay','Restless','Poor'].map((s) => {
             const on = sleep === s
             return (
               <button key={s} onClick={() => setSleep(on ? null : s)}
-                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 500, borderRadius: T.r }}>
+                className="alive-card frost-card"
+                style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
                 {s}
               </button>
             )
@@ -343,15 +416,16 @@ export default function Log() {
         </div>
         </div>
 
-        {/* Sex */}
+        {/* Sex — frosted pill cards */}
         <div className="insight-stagger" style={{ animationDelay: '380ms' }}>
         <Eyebrow color={acc}>Sex</Eyebrow>
-        <div style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
           {SEX_OPTIONS.map((s) => {
             const on = sex === s.id
             return (
               <button key={s.id} onClick={() => setSex(on ? null : s.id)}
-                style={{ flex: 1, border: `1px solid ${on ? acc : T.hair}`, background: on ? acc : T.card, color: on ? '#fff' : T.text, padding: '12px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 10.5, letterSpacing: 0.6, fontWeight: 600, borderRadius: T.r }}>
+                className="alive-card frost-card"
+                style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
                 {s.label}
               </button>
             )
@@ -359,29 +433,35 @@ export default function Log() {
         </div>
         </div>
 
-        {/* Note */}
+        {/* Note — frosted glass textarea */}
         <div className="insight-stagger" style={{ animationDelay: '420ms' }}>
         <Eyebrow color={acc}>Anything else on your mind</Eyebrow>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line, a sentence — whatever you want to remember."
           maxLength={2000}
-          style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, padding: 14, fontSize: 14, lineHeight: 1.55, color: T.text, minHeight: 80, borderRadius: T.r, fontFamily: T.serif, fontStyle: 'italic' }} />
+          className="frost-card"
+          style={{ width: '100%', background: 'rgba(253,250,245,0.55)', border: `1px solid rgba(26,19,16,0.08)`, padding: 16, fontSize: 14.5, lineHeight: 1.6, color: T.text, minHeight: 96, borderRadius: 18, fontFamily: T.serif, fontStyle: 'italic', outline: 'none', resize: 'vertical' }}
+          onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
+          onBlur={(e)  => { e.target.style.borderColor = 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }} />
         {note.length > 1900 && (
-          <div style={{ fontSize: 10, fontFamily: T.mono, color: T.muted, textAlign: 'right', marginTop: 4 }}>
+          <div style={{ fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', color: T.muted, textAlign: 'right', marginTop: 6 }}>
             {note.length} / 2000
           </div>
         )}
         </div>
 
-        <SourceLine>Tracked over time, this is what gives a doctor something concrete to work with.</SourceLine>
+        <div style={{ marginTop: 20, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.6, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.05)' }}>
+          Tracked over time, this is what gives a doctor something concrete to work with.
+        </div>
 
         {/* Quiet undo path — if the user logged something on the wrong
             day, or wants to start fresh, let them empty this day's
             entry entirely. Confirmation prompt so it's not accidental. */}
-        <div style={{ marginTop: 22, paddingTop: 18, borderTop: `1px solid ${T.hair}` }}>
-          <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 10 }}>
+        <div style={{ marginTop: 22, paddingTop: 18 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 12 }}>
             Tapped the wrong thing? Take it back — your future self won't mind.
           </div>
           <button
+            className="alive-card frost-card"
             onClick={() => {
               const friendly = isToday ? 'today' : dateLabel
               if (!window.confirm(`Clear everything you have logged for ${friendly}? This removes the whole entry.`)) return
@@ -389,7 +469,7 @@ export default function Log() {
               setActiveLogDate(null)
               back()
             }}
-            style={{ width: '100%', background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '11px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+            style={{ width: '100%', background: 'rgba(253,250,245,0.55)', border: `1px solid ${T.accent}40`, color: T.accent, padding: '13px 16px', borderRadius: 18, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.3, boxShadow: `0 10px 22px -22px ${T.accent}60` }}>
             Clear this day's entry
           </button>
         </div>

@@ -27,8 +27,8 @@ function CalendarBlock({ year, month, selectedISO, onPick }) {
   const todayISO = new Date().toISOString().slice(0, 10)
 
   return (
-    <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderRadius: T.r, marginBottom: 14 }}>
-      <div style={{ fontWeight: 600, fontSize: 13, fontFamily: T.sans, marginBottom: 12, color: T.text }}>{monthLabel}</div>
+    <div className="frost-card" style={{ background: 'rgba(253,250,245,0.55)', padding: 18, border: '1px solid rgba(26,19,16,0.06)', borderRadius: 24, marginBottom: 14, boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)' }}>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, marginBottom: 14, color: T.text, letterSpacing: -0.2 }}>{monthLabel.toLowerCase()}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
         {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
       </div>
@@ -42,12 +42,14 @@ function CalendarBlock({ year, month, selectedISO, onPick }) {
             <button key={d} onClick={() => !isFuture && onPick(iso)} disabled={isFuture}
               style={{
                 aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontFamily: T.sans, fontWeight: isSelected ? 600 : 400,
+                fontSize: 14, fontFamily: T.serif, fontWeight: isSelected ? 600 : 400,
                 cursor: isFuture ? 'default' : 'pointer', border: 'none',
                 background: isSelected ? T.accent : 'transparent',
-                color: isSelected ? '#fff' : (isFuture ? T.hair : T.text),
-                borderRadius: T.r,
+                color: isSelected ? '#fff' : (isFuture ? 'rgba(26,19,16,0.18)' : T.text),
+                borderRadius: 999,
+                boxShadow: isSelected ? `0 8px 18px -8px ${T.accent}90` : 'none',
                 opacity: isFuture ? 0.4 : 1,
+                transition: 'all 0.2s var(--ease-out)',
               }}>
               {d}
             </button>
@@ -112,11 +114,11 @@ export default function EditPeriodStart() {
         <CalendarBlock year={now.getFullYear()} month={now.getMonth()} selectedISO={selected} onPick={setSelected} />
 
         {selected && preview && (
-          <div className="glass-card" style={{ padding: '12px 14px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-              {preview.tooFarBack ? 'Heads up' : 'What this will do'}
+          <div className="glass-card alive-card frost-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}50`, marginBottom: 14 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1, marginBottom: 8 }}>
+              {preview.tooFarBack ? 'heads up' : 'what this will do'}
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.5, color: T.text }}>
+            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
               {preview.tooFarBack
                 ? `That's more than three cycles back. If your most recent period actually started after this date, choose that one instead — Luna anchors to your latest, not your earliest.`
                 : (
@@ -133,12 +135,12 @@ export default function EditPeriodStart() {
         )}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-          <button onClick={back}
-            style={{ border: `1px solid ${T.hair}`, background: 'transparent', color: T.text, padding: '15px 18px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.4, fontWeight: 700 }}>
-            CANCEL
+          <button onClick={back} className="alive-card frost-card"
+            style={{ border: '1px solid rgba(26,19,16,0.08)', background: 'rgba(253,250,245,0.55)', color: T.text, padding: '15px 22px', borderRadius: 999, cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.3, fontWeight: 600 }}>
+            Cancel
           </button>
-          <CTAButton full onClick={handleSave} style={{ opacity: selected ? 1 : 0.5 }}>
-            SAVE {Icons.arrow}
+          <CTAButton full onClick={handleSave} style={{ opacity: selected ? 1 : 0.5, textTransform: 'none', letterSpacing: 0.3, fontSize: 13 }}>
+            Save {Icons.arrow}
           </CTAButton>
         </div>
       </div>

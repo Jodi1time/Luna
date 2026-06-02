@@ -445,10 +445,12 @@ function QuickActions({ go, setActiveLogDate }) {
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M6 12l2 2 4-4"/></svg>),
       onTap: () => go('care') },
   ]
-  // One-shot scroll teaser — on mount, the row slides ~50px to the
-  // right then settles back, signaling "there's more here, you can
-  // scroll." Runs once per Home mount. Apple uses this on the App
-  // Store hero rows. Honors prefers-reduced-motion via the early bail.
+  // One-shot scroll teaser — on mount, the row glides forward to a
+  // peak then springs back with a small overshoot in the opposite
+  // direction before settling. The overshoot is the magic move:
+  // the eye sees "scroll forward, ease back, tiny tug back to start"
+  // — reads as a physical motion, not a programmed slide. Apple's
+  // App Store hero rows do this. Honors prefers-reduced-motion.
   const scrollerRef = useRef(null)
   useEffect(() => {
     const el = scrollerRef.current
@@ -456,28 +458,40 @@ function QuickActions({ go, setActiveLogDate }) {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let raf = 0
     const start = performance.now()
-    const duration = 1400
-    const peak = 52
+    const duration = 1650
+    const peak = 64
+    // Spring-tail offsets: the curve goes 0 → peak → 0 → -8 → 0
+    // The "tug" reads as the row catching itself, not a robot.
     const tick = (now) => {
       const t = Math.min(1, (now - start) / duration)
-      // ease in-out + return: 0 → peak → 0
-      const eased = t < 0.5
-        ? 2 * t * t
-        : 1 - Math.pow(-2 * t + 2, 2) / 2
-      const x = Math.sin(eased * Math.PI) * peak
-      el.scrollLeft = x
+      let x = 0
+      if (t < 0.42) {
+        // Phase 1 — forward glide, ease-out cubic
+        const p = t / 0.42
+        x = peak * (1 - Math.pow(1 - p, 3))
+      } else if (t < 0.78) {
+        // Phase 2 — settle back to 0 with subtle overshoot to -8
+        const p = (t - 0.42) / 0.36
+        const eased = 1 - Math.pow(1 - p, 2.5)
+        x = peak + (-peak - 8) * eased  // peak → -8
+      } else {
+        // Phase 3 — spring back from -8 to 0
+        const p = (t - 0.78) / 0.22
+        const eased = Math.sin((p * Math.PI) / 2)
+        x = -8 + 8 * eased  // -8 → 0
+      }
+      el.scrollLeft = Math.max(0, x)
       if (t < 1) raf = requestAnimationFrame(tick)
     }
     const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 650)
     return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
   }, [])
   return (
-    <div ref={scrollerRef} style={{
+    <div ref={scrollerRef} className="h-scroller" style={{
       display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
       marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
       scrollSnapType: 'x mandatory',
       marginTop: 16,
-      scrollBehavior: 'smooth',
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
@@ -681,9 +695,9 @@ function AlwaysHere({ wellness, markWellness }) {
 // a movement hint — all phase-tuned. Soft borders, no images, intentionally
 // quiet so they texture the screen without dominating it.
 function ForTodayRow({ phase, go, goArticle }) {
-  // One-shot scroll teaser, same as QuickActions. The row slides
-  // ~40px right and settles back so the user sees it scrolls. Runs
-  // once per Home mount, ~1.2s after a small delay.
+  // Same spring-overshoot teaser as QuickActions, slightly delayed
+  // and with a smaller peak so the two scrollers feel related but
+  // independent — not a synchronized robot.
   const scrollerRef = useRef(null)
   useEffect(() => {
     const el = scrollerRef.current
@@ -691,15 +705,27 @@ function ForTodayRow({ phase, go, goArticle }) {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let raf = 0
     const start = performance.now()
-    const duration = 1300
-    const peak = 44
+    const duration = 1500
+    const peak = 52
     const tick = (now) => {
       const t = Math.min(1, (now - start) / duration)
-      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
-      el.scrollLeft = Math.sin(eased * Math.PI) * peak
+      let x = 0
+      if (t < 0.42) {
+        const p = t / 0.42
+        x = peak * (1 - Math.pow(1 - p, 3))
+      } else if (t < 0.78) {
+        const p = (t - 0.42) / 0.36
+        const eased = 1 - Math.pow(1 - p, 2.5)
+        x = peak + (-peak - 6) * eased
+      } else {
+        const p = (t - 0.78) / 0.22
+        const eased = Math.sin((p * Math.PI) / 2)
+        x = -6 + 6 * eased
+      }
+      el.scrollLeft = Math.max(0, x)
       if (t < 1) raf = requestAnimationFrame(tick)
     }
-    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 1100)
+    const startTimer = setTimeout(() => { raf = requestAnimationFrame(tick) }, 1300)
     return () => { clearTimeout(startTimer); cancelAnimationFrame(raf) }
   }, [phase?.id])
   if (!phase) return null
@@ -714,7 +740,7 @@ function ForTodayRow({ phase, go, goArticle }) {
       <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 10, letterSpacing: -0.2 }}>
         For today.
       </div>
-      <div ref={scrollerRef} style={{
+      <div ref={scrollerRef} className="h-scroller" style={{
         display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
         marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
         scrollSnapType: 'x mandatory',
