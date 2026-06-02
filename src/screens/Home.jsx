@@ -1398,57 +1398,24 @@ export default function Home() {
             </button>
           )}
 
-          {/* The diary — separate from log.note (the sticky note is
-              for a quick line to your future self; the diary is for
-              freeform multi-entry writing). Tap opens the full
-              journal where the user can write new pages, read past
-              ones, and customise the paper / decorations. */}
-          {!isPreg && (
-            <JournalCard
-              entries={settings?.journalEntries}
-              journalTheme={settings?.journalTheme}
-              phaseColor={phase?.color}
-              onTap={() => go('journal')}
-            />
-          )}
+          {/* ─── DAILY RITUAL TIER ────────────────────────────────────
+              The two things the user should ALWAYS land on first after
+              the cover, in this exact order: the morning thought (the
+              personal moment), then the mood-pill row (the one-tap
+              gesture). Apple-style hierarchy: anchor → moment → action.
+              Promoted from their previous mid/bottom positions because
+              they're the daily ritual, not auxiliary content. */}
 
-          {/* "For your mind and heart" — soft inline entry to Reflect.
-              Suppressed when the morning intention card is showing. */}
-          {!isPreg && phase && !showMorningIntention && (
-            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
-              style={{
-                marginTop: 26, padding: 20,
-                borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
-                boxShadow: `0 14px 30px -20px ${phase.color}50`,
-                textAlign: 'left', cursor: 'pointer', width: '100%',
-                color: T.text, fontFamily: 'inherit', display: 'block',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
-                  for your mind and heart
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
-                  reflect →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
-                Write freely, sit with a practice, or talk it through with Luna.
-              </div>
-            </button>
-          )}
-
-          {/* Morning thought — the one moment of the day. Promoted to
-              be the visual HERO of the reflective area. Large italic
-              serif quote, soft phase-tinted glass, opening serif
-              quotation mark as the visual signature. Tap → open a
-              conversation with Luna using this thought as the
-              opener. This is Luna's daily ritual. */}
+          {/* Morning thought — the visual HERO of the reflective area.
+              Large italic serif quote, soft phase-tinted glass, opening
+              serif quotation mark as the visual signature. Tap opens a
+              conversation with Luna seeded by this thought. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
               className="alive-card frost-card sheen-once"
               style={{
                 position: 'relative',
-                marginTop: 14, padding: '24px 22px 22px',
+                marginTop: 22, padding: '24px 22px 22px',
                 background: `linear-gradient(160deg, ${phase.color}14, ${phase.color}06 60%, rgba(253,250,245,0.5))`,
                 border: `1px solid ${phase.color}28`,
                 borderRadius: 26,
@@ -1457,7 +1424,6 @@ export default function Home() {
                 fontFamily: 'inherit', color: 'inherit',
                 overflow: 'hidden',
               }}>
-              {/* Opening serif quotation mark — large, soft, low alpha */}
               <div aria-hidden="true" style={{
                 position: 'absolute', top: -10, left: 14,
                 fontFamily: T.serif, fontSize: 90, lineHeight: 1, fontStyle: 'italic',
@@ -1476,6 +1442,91 @@ export default function Home() {
                 {thoughtText}
               </div>
             </button>
+          )}
+
+          {/* How are you, today? — Five frosted mood pills. PROMOTED
+              from the bottom of the page (where it was historically
+              buried under recaps). The one-tap gesture that satisfies
+              the "I came back to log something" intent in a second. */}
+          <div style={{ padding: '4px 0', marginTop: 22, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
+                How are you, today?
+              </div>
+              <button onClick={() => go('log')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
+                Log more →
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              {[
+                ['calm','Calm','#9D6F8C'],
+                ['energy','Bright','#E8B765'],
+                ['tired','Tired','#7D7269'],
+                ['cramps','Sore','#C84E2E'],
+                ['low','Low','#5A4A72'],
+              ].map(([id, l, color]) => {
+                const isSelected = quickMood === l
+                return (
+                  <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
+                    className={`alive-card frost-card${isSelected ? ' tap-bloom' : ''}`}
+                    style={{
+                      flex: 1,
+                      border: `1px solid ${isSelected ? color + '55' : 'rgba(26,19,16,0.06)'}`,
+                      cursor: 'pointer',
+                      background: isSelected ? `${color}1f` : 'rgba(253,250,245,0.55)',
+                      padding: '14px 6px 12px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                      borderRadius: 20,
+                      color: isSelected ? color : T.text, fontFamily: T.sans,
+                      boxShadow: isSelected
+                        ? `0 14px 28px -18px ${color}60`
+                        : '0 14px 26px -22px rgba(26,19,16,0.18)',
+                      transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease',
+                    }}>
+                    <span style={{
+                      width: 36, height: 36, borderRadius: 999,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      background: isSelected ? `${color}28` : `${color}14`,
+                      color: color,
+                      transition: 'background .25s ease',
+                    }}>
+                      <SymptomIcon id={id} size={22} />
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{l}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {moodInsight && (
+              <div key={`${phase?.id}-${quickMood}`}
+                className="frost-card"
+                style={{ marginTop: 14, padding: 18, background: `rgba(200,78,46,0.08)`, border: `1px solid ${T.accent}25`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
+                  {moodInsight.text}
+                </div>
+                {moodInsight.read && (
+                  <button onClick={() => goArticle(moodInsight.read)}
+                    style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                    Read more →
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* The diary — separate from log.note (the sticky note is
+              for a quick line to your future self; the diary is for
+              freeform multi-entry writing). Tap opens the full
+              journal where the user can write new pages, read past
+              ones, and customise the paper / decorations. */}
+          {!isPreg && (
+            <JournalCard
+              entries={settings?.journalEntries}
+              journalTheme={settings?.journalTheme}
+              phaseColor={phase?.color}
+              onTap={() => go('journal')}
+            />
           )}
 
           {/* Soft milestone moment — period day one, etc. Auto-clears
@@ -1554,76 +1605,33 @@ export default function Home() {
             />
           )}
 
-          {/* How are you, today? — Soft frosted pill row. Each mood is
-              a tinted circle (icon) above a tiny label. No top/bottom
-              rules (newspaper register). The selected pill blooms with
-              the mood's color; others stay quiet glass. */}
-          <div style={{ padding: '20px 0 4px', marginTop: 16, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
-                How are you, today?
-              </div>
-              <button onClick={() => go('log')}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
-                Log more →
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              {[
-                ['calm','Calm','#9D6F8C'],
-                ['energy','Bright','#E8B765'],
-                ['tired','Tired','#7D7269'],
-                ['cramps','Sore','#C84E2E'],
-                ['low','Low','#5A4A72'],
-              ].map(([id, l, color]) => {
-                const isSelected = quickMood === l
-                return (
-                  <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
-                    className={`alive-card frost-card${isSelected ? ' tap-bloom' : ''}`}
-                    style={{
-                      flex: 1,
-                      border: `1px solid ${isSelected ? color + '55' : 'rgba(26,19,16,0.06)'}`,
-                      cursor: 'pointer',
-                      background: isSelected ? `${color}1f` : 'rgba(253,250,245,0.55)',
-                      padding: '14px 6px 12px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                      borderRadius: 20,
-                      color: isSelected ? color : T.text, fontFamily: T.sans,
-                      boxShadow: isSelected
-                        ? `0 14px 28px -18px ${color}60`
-                        : '0 14px 26px -22px rgba(26,19,16,0.18)',
-                      transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease',
-                    }}>
-                    <span style={{
-                      width: 36, height: 36, borderRadius: 999,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSelected ? `${color}28` : `${color}14`,
-                      color: color,
-                      transition: 'background .25s ease',
-                    }}>
-                      <SymptomIcon id={id} size={22} />
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{l}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {moodInsight && (
-              <div key={`${phase?.id}-${quickMood}`}
-                className="frost-card"
-                style={{ marginTop: 14, padding: 18, background: `rgba(200,78,46,0.08)`, border: `1px solid ${T.accent}25`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
-                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
-                  {moodInsight.text}
+          {/* "For your mind and heart" — soft inline entry to Reflect.
+              Moved here (from above the daily thought) so the bottom
+              of the page closes with a reflective surface instead of
+              the mood row. Suppressed when the morning intention is
+              already showing. */}
+          {!isPreg && phase && !showMorningIntention && (
+            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
+              style={{
+                marginTop: 22, padding: 20,
+                borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
+                boxShadow: `0 14px 30px -20px ${phase.color}50`,
+                textAlign: 'left', cursor: 'pointer', width: '100%',
+                color: T.text, fontFamily: 'inherit', display: 'block',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
+                  for your mind and heart
                 </div>
-                {moodInsight.read && (
-                  <button onClick={() => goArticle(moodInsight.read)}
-                    style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
-                    Read more →
-                  </button>
-                )}
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
+                  reflect →
+                </div>
               </div>
-            )}
-          </div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
+                Write freely, sit with a practice, or talk it through with Luna.
+              </div>
+            </button>
+          )}
 
           <div style={{ height: 16 }} />
         </div>
