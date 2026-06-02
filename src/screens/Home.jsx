@@ -50,7 +50,11 @@ function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, 
   if (phase.id === 'menstrual') {
     const total = periodLength || 5
     if (cycleDay > total) return { text: 'Your period is winding down.', sub: null }
-    return { text: `Day ${cycleDay} of your period.`, sub: null }
+    // Don't return a context line on menstrual days — the eyebrow
+    // ("day X · your menstrual phase") and the giant centered number
+    // already say "this is day X of your period". A separate line
+    // is redundancy, not signal.
+    return null
   }
 
   if (phase.id === 'follicular') {
@@ -260,7 +264,7 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   const taken = wellness?.bcTakenToday === todayISO
   if (taken) return null
   return (
-    <div className="glass-card alive-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ flex: 1 }}>
         <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>
           Have you taken your pill today?
@@ -316,7 +320,7 @@ function buildMonthlyRecap(logs) {
 function MonthlyRecap({ recap }) {
   if (!recap) return null
   return (
-    <div className="glass-card alive-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
+    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         The last 30 days
       </div>
@@ -436,22 +440,22 @@ function QuickActions({ go, setActiveLogDate }) {
   ]
   return (
     <div style={{
-      display: 'flex', gap: 8, overflowX: 'auto', overflowY: 'hidden',
-      marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
+      display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
+      marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
       scrollSnapType: 'x mandatory',
-      marginTop: 20,
+      marginTop: 16,
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
         return (
-          <button key={it.key} onClick={it.onTap} className="stagger-card alive-card"
+          <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 44%',
-              maxWidth: 180,
+              flex: '0 0 38%',
+              maxWidth: 158,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: 20,
-              padding: '16px 16px 16px',
+              borderRadius: 22,
+              padding: '14px 14px 14px',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
@@ -464,8 +468,12 @@ function QuickActions({ go, setActiveLogDate }) {
               boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -22px ${colors.accent}50`,
               animationDelay: `${idx * 50}ms`,
             }}>
-            <span style={{ color: colors.accent, display: 'inline-flex' }}>{it.icon}</span>
-            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1 }}>
+            <span style={{
+              width: 30, height: 30, borderRadius: 999, display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center',
+              background: colors.tint, color: colors.accent,
+            }}>{it.icon}</span>
+            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
               {it.label}
             </span>
             <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
@@ -500,7 +508,7 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
   // lavender too. Tells the user at a glance what KIND of nudge this is.
   const colors = sectionColors(category)
   return (
-    <button onClick={onTap} className="smart-arrival alive-card"
+    <button onClick={onTap} className="smart-arrival alive-card frost-card"
       style={{
         marginTop: 14, padding: 18,
         background: sectionPaper(category),
@@ -532,7 +540,7 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
   // Trim very long notes so the card stays a card.
   const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
   return (
-    <button onClick={open} className="glass-card alive-card"
+    <button onClick={open} className="glass-card alive-card frost-card"
       style={{
         marginTop: 22,
         padding: 18,
@@ -568,7 +576,7 @@ function WeeklyHealthCheckCard({ go }) {
   const item = weeklyHealthCheck()
   if (!item) return null
   return (
-    <button onClick={() => go('watch')} className="glass-card alive-card"
+    <button onClick={() => go('watch')} className="glass-card alive-card frost-card"
       style={{
         marginTop: 22,
         padding: 18,
@@ -612,7 +620,7 @@ function AlwaysHere({ wellness, markWellness }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {nudges.map((n) => (
-          <div key={n.key} className="glass-card alive-card"
+          <div key={n.key} className="glass-card alive-card frost-card"
             style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
               {n.label}
@@ -659,7 +667,7 @@ function ForTodayRow({ phase, go, goArticle }) {
         {items.map((it, idx) => {
           const c = sectionColors(it.category)
           return (
-            <button key={it.key} onClick={it.onTap} className="stagger-card alive-card"
+            <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
               style={{
                 flex: '0 0 64%',
                 maxWidth: 220,
@@ -1006,7 +1014,7 @@ export default function Home() {
                     : `${Math.abs(preg.daysToDue)} days past your due date.`}
               </div>
               {preg.content && (
-                <div className="alive-card" style={{ marginTop: 22, padding: 20, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${trimColor}40`, textAlign: 'left' }}>
+                <div className="alive-card frost-card" style={{ marginTop: 22, padding: 20, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${trimColor}40`, textAlign: 'left' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.3, marginBottom: 12, letterSpacing: -0.2 }}>
                     About the size of {preg.content.size}.
                   </div>
@@ -1022,39 +1030,50 @@ export default function Home() {
             </div>
           )}
 
-          {/* Cover — Cycle variant. The cover is now CENTERED: phase
-              eyebrow + flourish + giant italic day number + phase name
-              + context + mood all sit on the visual axis of the
-              screen. Made female-glance friendly — the eye lands on
-              the number first, not on a left-aligned wall of type.
-              Split into two ref-tagged sections so the scroll-fade
-              can stage them independently. */}
+          {/* Cover — Cycle variant. The cover is the magazine moment:
+              eyebrow → flourish → giant italic day number → phase name
+              → ONE narrative line (mood) → ONE italic presence line.
+              The WHOLE cover is the affordance — tap anywhere to open
+              the phase detail (Apple-style: the surface IS the button,
+              no explicit "more →" CTA renting a row). Streamlined to
+              get QuickActions visible above the fold. */}
           {!isPreg && (
-          <div ref={coverRef} style={{
-            marginBottom: 4,
-            textAlign: 'center',
-          }}>
+          <div ref={coverRef}
+            role={phase ? 'button' : undefined}
+            tabIndex={phase ? 0 : undefined}
+            onClick={(e) => {
+              // Don't navigate when the user is tapping a button INSIDE the
+              // cover (period CTA). Only the outer cover surface itself
+              // navigates to phase detail.
+              if (e.target.closest('button')) return
+              if (phase) goPhase(phase.id)
+            }}
+            style={{
+              marginBottom: 4,
+              textAlign: 'center',
+              cursor: phase ? 'pointer' : 'default',
+            }}>
             <div ref={headlineRef} style={{
               willChange: 'opacity, max-height',
               overflow: 'hidden',
-              padding: '8px 0 4px',
+              padding: '4px 0 0',
             }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 8, opacity: 0.9 }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 4, opacity: 0.9 }}>
                 {onHormonalBC
                   ? `day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
                   : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
               </div>
               {phase && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: phase.color, opacity: 0.7 }} aria-hidden="true">
-                  <PhaseFlourish phaseId={phase.id} size={26} />
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2, color: phase.color, opacity: 0.7 }} aria-hidden="true">
+                  <PhaseFlourish phaseId={phase.id} size={22} />
                 </div>
               )}
               <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
                 className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 124, fontWeight: 300, fontStyle: 'italic', color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.92, letterSpacing: -6, transition: 'color 0.6s ease-out' }}>
+                style={{ fontFamily: T.serif, fontSize: 116, fontWeight: 300, fontStyle: 'italic', color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -5.5, transition: 'color 0.6s ease-out' }}>
                 {cycleDay ? animatedDay : '—'}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.6, lineHeight: 1.05, marginTop: 10, color: T.text }}>
+              <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, lineHeight: 1.1, marginTop: 4, color: T.text }}>
                 {phase?.name || 'Just getting started'}.
               </div>
             </div>
@@ -1064,12 +1083,12 @@ export default function Home() {
               overflow: 'hidden',
             }}>
               {contextLine && (
-                <div style={{ marginTop: 14, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, letterSpacing: -0.1 }}>
+                <div style={{ marginTop: 10, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
                     {contextLine.text}
                   </div>
                   {contextLine.sub && (
-                    <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
+                    <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
                       {contextLine.sub}
                     </div>
                   )}
@@ -1077,31 +1096,24 @@ export default function Home() {
               )}
 
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.5, marginTop: 10, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   {phase.bodyMood}
                 </div>
               )}
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.55, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.5, marginTop: 6, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   {phasePresence[phase.id]}
                 </div>
               )}
               {phase && onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.55, marginTop: 12, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  Your hormones are steadied by your method — but patterns can still emerge. Keep noticing.
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.5, marginTop: 10, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                  Your hormones are steadied by your method — but patterns can still emerge.
                 </div>
-              )}
-
-              {phase && (
-                <button onClick={() => goPhase(phase.id)}
-                  style={{ marginTop: 18, background: 'transparent', border: `1px solid ${T.text}40`, padding: '10px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.text, borderRadius: 999 }}>
-                  More about this phase →
-                </button>
               )}
 
               {/* Period-start nudge — only when relevant */}
               {showPeriodCTA && (
-                <div className="alive-card" style={{ marginTop: 22, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
+                <div className="alive-card frost-card" style={{ marginTop: 22, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
                     {cycleDay > cycleLength
                       ? 'Wondering if your period has arrived.'
@@ -1200,7 +1212,7 @@ export default function Home() {
             return null
           })()}
           {showEveningIntention && todayIntention && (
-            <button onClick={() => go('reflect')} className="glass-card alive-card"
+            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
               style={{ marginTop: 14, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
               <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
                 You set this morning
@@ -1234,7 +1246,7 @@ export default function Home() {
               specific, this one is general; double-surfacing both
               would be redundant). */}
           {!isPreg && phase && !showMorningIntention && (
-            <button onClick={() => go('reflect')} className="glass-card alive-card"
+            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
               style={{
                 marginTop: 26, padding: 18,
                 borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
@@ -1260,7 +1272,7 @@ export default function Home() {
               Tap to open a brief conversation with Luna. */}
           {!isPreg && phase && thoughtText && (
             <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              className="alive-card"
+              className="alive-card frost-card"
               style={{ marginTop: 14, padding: 18, background: 'rgba(200,78,46,0.05)', borderLeft: `2px solid ${phase.color}`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${phase.color}50`, textAlign: 'left', border: 'none', borderLeftWidth: 2, borderLeftStyle: 'solid', borderLeftColor: phase.color, cursor: 'pointer', display: 'block', width: '100%', fontFamily: 'inherit', color: 'inherit' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
