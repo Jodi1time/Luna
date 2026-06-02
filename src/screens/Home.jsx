@@ -159,8 +159,8 @@ function Greeting({ name, phaseId }) {
     ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
     : [`${opener}${NBSP}`, timeOfDay, '.']
   return (
-    <div style={{ paddingTop: 6, marginBottom: 14 }}>
-      <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
+    <div style={{ paddingTop: 2, marginBottom: 10 }}>
+      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
         {segments.map((seg, i) => {
           const text = typeof seg === 'string' ? seg : seg.text
           const italic = typeof seg === 'string' ? true : seg.italic !== false
@@ -219,34 +219,33 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   })
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 18 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 12 }}>
       {cells.map(({ iso, day, label, isToday, hasLogged, hasPredicted }) => (
         <button key={iso} onClick={() => {
-          // Past or today → open Log for that day. Future → just go to Calendar.
           if (iso <= todayISO) { setActiveLogDate(iso); go('log') } else { go('calendar') }
         }}
-          style={{ background: 'transparent', border: 'none', padding: 4, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, fontFamily: 'inherit', color: 'inherit' }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>{label}</div>
-          <div style={{ position: 'relative', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, fontFamily: 'inherit', color: 'inherit' }}>
+          <div style={{ fontFamily: T.mono, fontSize: 9, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>{label}</div>
+          <div style={{ position: 'relative', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isToday && (
-              <div className="today-disc" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent }} />
+              <div className="today-disc" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent, boxShadow: `0 6px 14px -6px ${T.accent}60` }} />
             )}
             <span style={{
               position: 'relative',
               fontFamily: T.serif,
-              fontSize: 16,
+              fontSize: 14.5,
               fontWeight: isToday ? 600 : 400,
               color: isToday ? '#fff' : T.text,
             }}>
               {day}
             </span>
           </div>
-          <div style={{ height: 5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ height: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {hasLogged && (
-              <div style={{ width: 5, height: 5, background: T.accent, borderRadius: '50%' }} />
+              <div style={{ width: 4, height: 4, background: T.accent, borderRadius: '50%' }} />
             )}
             {hasPredicted && (
-              <div style={{ width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
+              <div style={{ width: 4, height: 4, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
             )}
           </div>
         </button>
@@ -339,14 +338,22 @@ function Hydration({ wellness, markWellness }) {
   const today = wellness?.hydration
   const glasses = (today && today.date === todayISO) ? (today.glasses || 0) : 0
   const set = (n) => markWellness('hydration', { date: todayISO, glasses: n })
+  const colors = sectionColors('care')
   return (
-    <div style={{ marginTop: 26 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+    <div className="alive-card frost-card" style={{
+      marginTop: 22, padding: 18,
+      background: sectionPaper('care'),
+      border: `1px solid ${colors.accent}22`,
+      borderLeft: `3px solid ${colors.accent}`,
+      borderRadius: 22,
+      boxShadow: `0 14px 30px -22px ${colors.accent}50`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', letterSpacing: -0.2 }}>
           A glass of water.
         </div>
-        <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, letterSpacing: 0.3 }}>
-          {glasses} / 8 today
+        <div style={{ fontFamily: T.mono, fontSize: 10, color: colors.accent, letterSpacing: 0.4, fontWeight: 600 }}>
+          {glasses} / 8
         </div>
       </div>
       <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between' }}>
@@ -357,17 +364,17 @@ function Hydration({ wellness, markWellness }) {
               onClick={() => set(filled ? i : i + 1)}
               aria-label={`${i + 1} glasses`}
               style={{
-                flex: 1, aspectRatio: '1 / 1.4', maxWidth: 28,
+                flex: 1, aspectRatio: '1 / 1.4', maxWidth: 30,
                 position: 'relative',
-                background: 'transparent',
-                border: `1.5px solid ${filled ? T.accent : 'rgba(26,19,16,0.18)'}`,
-                borderRadius: '8px 8px 14px 14px',
+                background: filled ? 'transparent' : 'rgba(253,250,245,0.55)',
+                border: `1.5px solid ${filled ? colors.accent : 'rgba(26,19,16,0.12)'}`,
+                borderRadius: '10px 10px 16px 16px',
                 cursor: 'pointer', padding: 0, overflow: 'hidden',
-                transition: 'border-color .2s',
+                transition: 'border-color .25s, background .25s',
               }}>
               {filled && (
                 <span key={`fill-${i}-${glasses}`} className="glass-fill"
-                  style={{ background: T.accent + '88' }} aria-hidden="true" />
+                  style={{ background: colors.accent + 'aa' }} aria-hidden="true" />
               )}
             </button>
           )
@@ -1096,18 +1103,13 @@ export default function Home() {
               )}
 
               {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.5, marginTop: 10, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  {phase.bodyMood}
-                </div>
-              )}
-              {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.5, marginTop: 6, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 300, marginLeft: 'auto', marginRight: 'auto', letterSpacing: -0.1 }}>
                   {phasePresence[phase.id]}
                 </div>
               )}
               {phase && onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.5, marginTop: 10, color: T.text, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  Your hormones are steadied by your method — but patterns can still emerge.
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: T.muted, maxWidth: 300, marginLeft: 'auto', marginRight: 'auto' }}>
+                  Your method steadies your hormones — patterns still emerge.
                 </div>
               )}
 
@@ -1356,49 +1358,75 @@ export default function Home() {
             />
           )}
 
-          {/* How are you, today? */}
-          <div style={{ borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '18px 0', marginTop: 24, marginBottom: 8 }}>
-            <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
-              How are you, today?
+          {/* How are you, today? — Soft frosted pill row. Each mood is
+              a tinted circle (icon) above a tiny label. No top/bottom
+              rules (newspaper register). The selected pill blooms with
+              the mood's color; others stay quiet glass. */}
+          <div style={{ padding: '20px 0 4px', marginTop: 16, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
+                How are you, today?
+              </div>
+              <button onClick={() => go('log')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
+                Log more →
+              </button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              {[['calm','Calm'],['energy','Bright'],['tired','Tired'],['cramps','Sore'],['low','Low']].map(([id, l]) => {
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+              {[
+                ['calm','Calm','#9D6F8C'],
+                ['energy','Bright','#E8B765'],
+                ['tired','Tired','#7D7269'],
+                ['cramps','Sore','#C84E2E'],
+                ['low','Low','#5A4A72'],
+              ].map(([id, l, color]) => {
                 const isSelected = quickMood === l
                 return (
                   <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
-                    className={isSelected ? 'tap-bloom' : ''}
+                    className={`alive-card frost-card${isSelected ? ' tap-bloom' : ''}`}
                     style={{
-                      border: 'none', cursor: 'pointer', background: isSelected ? T.accent + '22' : 'transparent',
-                      outline: isSelected ? `1.5px solid ${T.accent}` : 'none',
-                      padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                      minWidth: 56, borderRadius: 18,
-                      color: isSelected ? T.accent : T.text, fontFamily: T.sans,
+                      flex: 1,
+                      border: `1px solid ${isSelected ? color + '55' : 'rgba(26,19,16,0.06)'}`,
+                      cursor: 'pointer',
+                      background: isSelected ? `${color}1f` : 'rgba(253,250,245,0.55)',
+                      padding: '14px 6px 12px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                      borderRadius: 20,
+                      color: isSelected ? color : T.text, fontFamily: T.sans,
+                      boxShadow: isSelected
+                        ? `0 14px 28px -18px ${color}60`
+                        : '0 14px 26px -22px rgba(26,19,16,0.18)',
+                      transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease',
+                    }}>
+                    <span style={{
+                      width: 36, height: 36, borderRadius: 999,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      background: isSelected ? `${color}28` : `${color}14`,
+                      color: color,
                       transition: 'background .25s ease',
                     }}>
-                    <SymptomIcon id={id} size={26} />
-                    <span style={{ fontSize: 11, fontWeight: 500 }}>{l}</span>
+                      <SymptomIcon id={id} size={22} />
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{l}</span>
                   </button>
                 )
               })}
             </div>
             {moodInsight && (
               <div key={`${phase?.id}-${quickMood}`}
-                style={{ marginTop: 14, padding: 16, background: 'rgba(200,78,46,0.06)', borderLeft: `3px solid ${T.accent}`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
+                className="frost-card"
+                style={{ marginTop: 14, padding: 18, background: `rgba(200,78,46,0.08)`, border: `1px solid ${T.accent}25`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
                 <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
                   {moodInsight.text}
                 </div>
                 {moodInsight.read && (
                   <button onClick={() => goArticle(moodInsight.read)}
-                    style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                    style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
                     Read more →
                   </button>
                 )}
               </div>
             )}
-            <button onClick={() => go('log')}
-              style={{ marginTop: 14, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
-              Log more →
-            </button>
           </div>
 
           <div style={{ height: 16 }} />

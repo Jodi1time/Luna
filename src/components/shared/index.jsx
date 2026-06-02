@@ -93,23 +93,24 @@ export function TabBar({ active, onChange }) {
       width: '100%', maxWidth: 430,
       paddingBottom: 'env(safe-area-inset-bottom, 8px)',
       paddingTop: 10,
-      background: 'rgba(244,239,229,0.94)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderTop: `0.5px solid ${T.hair}`,
+      background: 'rgba(244,239,229,0.72)',
+      backdropFilter: 'blur(28px) saturate(1.4)',
+      WebkitBackdropFilter: 'blur(28px) saturate(1.4)',
+      borderTop: '0.5px solid rgba(26,19,16,0.06)',
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 50,
     }}>
       {items.map((it) => {
         if (it.key === 'log') {
           return (
-            <button key="log" onClick={() => onChange('log')}
+            <button key="log" onClick={() => onChange('log')} className="alive-card"
               style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
               <div style={{
-                width: 44, height: 44,
+                width: 50, height: 50,
                 background: T.accent, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: T.r, marginBottom: 2,
+                borderRadius: 999, marginBottom: 2,
+                boxShadow: `0 14px 30px -10px ${T.accent}60, 0 2px 0 ${T.accent}40 inset`,
               }}>{Icons.plus}</div>
             </button>
           )
