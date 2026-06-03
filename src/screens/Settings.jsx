@@ -161,31 +161,44 @@ export default function Settings() {
       {/* Live stats — days logged, cycles tracked, saved reads */}
       <LunaStats logs={logs} cyclesLogged={cyclesLogged} savedArticles={settings?.savedArticles} accent={acc} />
 
-      {session && <div className="insight-stagger" style={{ animationDelay: '240ms' }}>
+      {/* Your account — always shown, even when session is null, so
+          the user never finds herself stuck with no auth affordance.
+          Signed in: email + sign out + verify-email when applicable.
+          Signed out: sign-in row that routes to Auth. */}
+      <div className="insight-stagger" style={{ animationDelay: '240ms' }}>
         <SectionLabel color={acc}>Your account</SectionLabel>
         <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
-          <Row label="Signed in as" value={session.user.email} />
-          <Row label="Sign out" onTap={handleSignOut} />
-          {!session.user.email_confirmed_at && (
-            <Row label="Verify email" onTap={async () => {
-              try {
-                const { supabase } = await import('../lib/supabase')
-                const { error } = await supabase.auth.resend({
-                  type: 'signup',
-                  email: session.user.email,
-                  options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
-                })
-                window.alert(error ? `Could not resend: ${error.message}` : `Verification email sent to ${session.user.email}.`)
-              } catch (e) {
-                window.alert(`Could not resend: ${e.message}`)
-              }
-            }} />
+          {session ? (
+            <>
+              <Row label="Signed in as" value={session.user.email} />
+              <Row label="Sign out" onTap={handleSignOut} />
+              {!session.user.email_confirmed_at && (
+                <Row label="Verify email" onTap={async () => {
+                  try {
+                    const { supabase } = await import('../lib/supabase')
+                    const { error } = await supabase.auth.resend({
+                      type: 'signup',
+                      email: session.user.email,
+                      options: { emailRedirectTo: `${window.location.origin}${window.location.pathname}` },
+                    })
+                    window.alert(error ? `Could not resend: ${error.message}` : `Verification email sent to ${session.user.email}.`)
+                  } catch (e) {
+                    window.alert(`Could not resend: ${e.message}`)
+                  }
+                }} />
+              )}
+            </>
+          ) : (
+            <>
+              <Row label="Not signed in" value="local only" />
+              <Row label="Sign in or create an account" onTap={() => go('auth')} />
+            </>
           )}
         </div>
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-          Sign in on any device to come back to your cycle.
+          {session ? 'Sign in on any device to come back to your cycle.' : 'Without an account, your cycle lives only on this device.'}
         </div>
-      </div>}
+      </div>
 
       <div className="insight-stagger" style={{ animationDelay: '290ms' }}>
       <SectionLabel color={acc}>Your cycle</SectionLabel>
