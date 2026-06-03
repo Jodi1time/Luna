@@ -66,11 +66,7 @@ Not done in this pass (require server or external services):
 - [ ] **Real legal review of the Privacy Policy + ToS by counsel** — drafts now live in the app at Settings → Privacy Policy / Terms of Service, but they need lawyer eyes before public launch
 - [x] **Supabase Edge Function for true server-side account deletion** — deployed 2026-05-27. Reachable at `/functions/v1/delete-account`, wired into Settings → Delete my account.
 - [ ] **In-app subscriptions via RevenueCat + native IAP** — code shipped (`src/lib/revenuecat.js`, Paywall wired to call `purchasePackage()` with restore link + entitlement sync). Setup walkthrough in `REVENUECAT_SETUP.md`. Still need: RevenueCat dashboard config, App Store + Play Console product setup, plugin install (after Capacitor platforms added), and flipping `isPro: true` → `false` once real purchases work.
-- [x] (code) **Re-enable Supabase email confirmation with verify-in-background pattern** — implementation shipped:
-      - signUp now passes emailRedirectTo
-      - Onboarding shows "Check your email" note without blocking entry to Home
-      - Settings has a Verify email resend row when user.email_confirmed_at is null
-      - To activate: flip "Confirm email" ON in Supabase dashboard → Authentication → Providers → Email
+- [x] **Email confirmation decision (2026-06-03): SKIP email confirmation** — matches Flo / Clue / Whoop / industry default for consumer wellness apps. Verify-in-background was a facade (Jodi's framing — user can use the app without being signed in); strict confirm-before-entry is the friction it was designed to avoid. *Action item:* Jodi to flip Supabase dashboard → Authentication → Providers → Email → **"Confirm email" OFF**. Code already handles this — Auth.jsx + Onboarding.jsx propagate `data.session` to the store when returned, Settings shows the signed-in email. Resend SMTP confirmed working 2026-06-03; stays in service for password reset emails. Defensive "Check your email" fallback paths and the Settings "Verify email" row are preserved in case the toggle is ever flipped back.
 - [ ] **Rotate the Supabase anon key** — deferred. Anon key is public by design (RLS is the actual security boundary, now load-bearing for user data after the 2026-05-29 architecture change). Hygiene-only rotation; do it before public launch. Note: requires JWT secret reset → invalidates all signed-in sessions.
 - [x] **Domain live: `lunadiary.app`** (purchased + DNS configured + HTTPS enforced 2026-05-29). Luna serves at https://lunadiary.app with valid Let's Encrypt cert. Still need: update Supabase auth redirect URLs to use the new domain.
 - [x] **Sentry error monitoring** — DSN wired up 2026-05-27. ErrorBoundary reports via `reportError`. PII scrubbing (email patterns in messages + stacktraces) is in place via `beforeSend`. Sample rate: 10% traces, 0% session replay, replay-on-error 10%.
@@ -86,16 +82,7 @@ Not done in this pass (require server or external services):
 
 ## Authentication & accounts
 
-- [ ] **Re-enable email confirmation with verify-in-background pattern**
-  - Currently OFF in Supabase for testing seamless onboarding
-  - Before launch: flip "Confirm email" ON in Supabase dashboard
-  - Update onboarding `signUp` to use `emailRedirectTo` so a session is returned immediately even though the email is unconfirmed
-  - Add a Settings row "Verify email" (only when `auth.user.email_confirmed_at` is null) that re-sends the confirmation link
-  - Gate **recovery flows** behind a confirmed email:
-    - Forgot password
-    - Account deletion
-  - Optional: dismissible banner on Home until verified
-  - Estimate: ~2 hours
+- [x] **Email confirmation: decided to skip (2026-06-03)** — see "Critical for launch" section. Matches consumer wellness industry default. Action remaining: Jodi flips Supabase toggle OFF.
 
 - [x] **Vault passcode recovery path** — no longer applicable. Data
       lives on the server; sign-in is the gate. Standard "forgot
