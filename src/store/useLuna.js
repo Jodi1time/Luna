@@ -279,6 +279,10 @@ const useLuna = create(
       activeSymptomId: 'cramps',
       activeSchoolId:  'understanding-luteal',
       activeConditionId: null,
+      // Active share invite code — populated when the user opens a
+      // /share?code=… deep-link. AcceptShare reads it; clears it on
+      // accept or decline.
+      activeShareCode: null,
       // When set, the Reflect screen auto-opens this practice on mount
       // and then clears the value. Lets any helper / surface deep-link
       // straight into the right exercise instead of dumping the user

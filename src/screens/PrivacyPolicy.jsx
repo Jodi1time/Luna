@@ -68,6 +68,17 @@ export default function PrivacyPolicy() {
           You can export your full data as a CSV file from Settings. You can permanently delete your account and all associated data from Settings. You can withdraw your consent at any time by deleting your account. To exercise any right not directly available in the app, contact us at the address below.
         </P>
 
+        <H>Sharing with someone you choose</H>
+        <P>
+          Luna's Pro plan includes a "Share with someone" feature that lets you grant read-only access to your cycle data to another Luna account you choose — a partner, family member, doula, or friend. You select the scope (basic cycle picture, or full picture including logged symptoms), and the other person must accept the invite using a code you send them.
+        </P>
+        <P>
+          What's shared depends on the scope you pick: the cycle picture is your phase, cycle day, period prediction, and fertile window. The full picture adds your logged symptoms, mood, flow, sleep, and BBT. <strong>Diary entries, journal photos, voice journaling, and saved articles are never shared, regardless of scope.</strong> The recipient cannot edit, log, or delete any of your data — they have read-only access only.
+        </P>
+        <P>
+          You can revoke any active share instantly from Settings → Share with someone, and the recipient's access becomes blank. The recipient can also stop receiving the share from their side at any time. Deleting your account ends all shares you've created. We don't notify any third party of your activity without your explicit consent in the share setup.
+        </P>
+
         <H>Law enforcement</H>
         <P>
           Because your data is stored on our servers in a form we can decrypt to provide the service to you, we may be compelled by valid legal process to disclose it. We will object to overbroad or unlawful requests, push for narrow scope where we are able, and notify affected users unless prohibited by law. We do not voluntarily share user data with anyone.

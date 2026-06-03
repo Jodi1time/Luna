@@ -22,6 +22,7 @@ export default function Paywall() {
   const [offering, setOffering] = useState(null)
 
   const features = [
+    ['Share with someone',       'Bring a partner, your mother, a doula into the loop. Read-only, revokable, no diary exposed.'],
     ['Weekly editorial',         'Plain-language patterns, written for your phase.'],
     ['Full Library access',      'Every article and phase brief unlocked.'],
     ['Predictions with reasoning','Every "Why" badge expanded.'],

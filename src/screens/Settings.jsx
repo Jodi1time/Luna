@@ -318,6 +318,8 @@ export default function Settings() {
         <Row label="What we've noticed" onTap={() => go('insights')} />
         <Row label="Your year with Luna" onTap={() => go('yourYear')} />
         <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
+        <Row label="Share with someone" value="Pro" onTap={() => go('shareWith')} />
+        <Row label="Shared with you" onTap={() => go('sharedWithYou')} />
       </div>
       </div>
 

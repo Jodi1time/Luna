@@ -65,6 +65,9 @@ const LowLibidoHelper = lazy(() => import('./screens/LowLibidoHelper'))
 const BodyImageHelper = lazy(() => import('./screens/BodyImageHelper'))
 const KickCounter     = lazy(() => import('./screens/KickCounter'))
 const ContractionsTimer = lazy(() => import('./screens/ContractionsTimer'))
+const ShareWith       = lazy(() => import('./screens/ShareWith'))
+const AcceptShare     = lazy(() => import('./screens/AcceptShare'))
+const SharedWithYou   = lazy(() => import('./screens/SharedWithYou'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -105,6 +108,21 @@ export default function App() {
     if (isEmailConfirm) {
       setTimeout(() => useLuna.getState().setCelebration('email-confirmed'), 900)
     }
+
+    // Detect a share-accept deep-link — /share?code=ABC123 (the URL
+    // the data owner copies and sends to the partner). Stash the code
+    // in the store and route to AcceptShare. If the user isn't signed
+    // in yet, the AcceptShare screen prompts for sign-in first; the
+    // code persists in the store across the Auth flow.
+    try {
+      const url = new URL(window.location.href)
+      const sharePathMatch = url.pathname.endsWith('/share') || url.pathname === '/share'
+      const shareCode = url.searchParams.get('code')
+      if (sharePathMatch && shareCode) {
+        useLuna.setState({ activeShareCode: shareCode })
+        useLuna.getState().go('acceptShare')
+      }
+    } catch { /* malformed URL — skip */ }
     // Restore the existing Supabase session on cold start. If present,
     // pull fresh profile + logs from the cloud so we paint correct
     // state even if the localStorage cache is stale.
@@ -231,6 +249,9 @@ function ScreenRenderer({ screen }) {
     case 'bodyImage':  return <BodyImageHelper />
     case 'kickCounter': return <KickCounter />
     case 'contractions': return <ContractionsTimer />
+    case 'shareWith':     return <ShareWith />
+    case 'acceptShare':   return <AcceptShare />
+    case 'sharedWithYou': return <SharedWithYou />
     default:         return <Home />
   }
 }
