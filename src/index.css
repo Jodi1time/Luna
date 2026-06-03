@@ -345,6 +345,20 @@ button.glass-card:active {
   50%      { transform: scale(1.35); opacity: 1; }
 }
 
+/* Talk to Luna — three dots inside the chat bubble pulse in
+   sequence, like a typing indicator. Reads as "Luna composing
+   something." Off-tempo against the other QuickAction icons. */
+.icon-anim-talk .dot {
+  transform-origin: center;
+  animation: anim-talk-pulse 1.6s ease-in-out infinite;
+}
+.icon-anim-talk .dot-2 { animation-delay: 0.18s; }
+.icon-anim-talk .dot-3 { animation-delay: 0.36s; }
+@keyframes anim-talk-pulse {
+  0%, 60%, 100% { transform: scale(1);    opacity: 0.55; }
+  25%           { transform: scale(1.35); opacity: 1; }
+}
+
 /* Cheatsheet — checklist write-fade. Three lines draw in sequence
    like a doctor's notepad being filled, hold longer than the Log
    card so the "persistence" feel differs, then fade-erase together
@@ -372,7 +386,8 @@ button.glass-card:active {
   .icon-anim-cheatsheet .ln { animation: none; stroke-dashoffset: 0; opacity: 1; }
   .icon-anim-ask .glass,
   .icon-anim-insights .ring,
-  .icon-anim-insights .dot { animation: none; }
+  .icon-anim-insights .dot,
+  .icon-anim-talk .dot { animation: none; }
 }
 
 /* ── Horizontal scroller polish ──────────────────────────────────

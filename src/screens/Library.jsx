@@ -84,9 +84,10 @@ export default function Library() {
           Every piece is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named at the top of each article, not buried.
         </div>
 
-        {/* Ask Luna — text search across every article, condition,
-            phase, and body-literacy lesson. The depth differentiator —
-            no buried table of contents, just ask. */}
+        {/* Look it up — full-text search across every article,
+            condition, phase, and body-literacy lesson. Distinct from
+            the AI ("Talk to Luna") which lives on Home — this surface
+            is the silent reference, no model, no chat. */}
         <button onClick={() => go('askLuna')}
           className="insight-stagger alive-card frost-card"
           style={{
@@ -106,10 +107,10 @@ export default function Library() {
             <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
           </span>
           <div style={{ flex: 1, fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
-            Ask Luna anything — cramps, PCOS, why am I tired…
+            Search the library — cramps, PCOS, why am I tired…
           </div>
           <span aria-hidden="true" style={{ fontFamily: T.mono, fontSize: 9.5, color: sectionColors('read').accent, letterSpacing: 1, fontWeight: 600 }}>
-            ASK
+            SEARCH
           </span>
         </button>
 

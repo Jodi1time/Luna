@@ -76,7 +76,7 @@ src/
 │   ├── Home.jsx                     # Cover + diary + thought + daily insight + smart helpers
 │   ├── Log.jsx                      # Daily log with phase-aware micro-teaching
 │   ├── Calendar.jsx                 # Month view + 3 explainable predictions
-│   ├── Library.jsx                  # Articles + Ask Luna entry + Conditions Atlas
+│   ├── Library.jsx                  # Articles + Look-it-up search entry + Conditions Atlas
 │   ├── Settings.jsx                 # "You" tab — sub-sectioned by section palette
 │   ├── Insights.jsx                 # Cycle wheel + ovulation panel + pattern detection
 │   ├── AskLuna.jsx                  # Plain-text search over articles/conditions/phases/lessons
@@ -231,19 +231,22 @@ Writes are fire-and-forget (`fireAndForget()` wrapper) — UI doesn't block on t
 
 ---
 
-## 3. The "Ask Luna" AI feature
+## 3. The "Talk to Luna" AI feature
 
-> **Note**: the project has TWO things called "Ask":
+> **Naming note** (disambiguated as of the current branch):
 >
-> 1. **AskLuna search** (`src/screens/AskLuna.jsx`) — pure client-side
->    full-text search over articles, conditions, phases, symptoms, and
->    body-literacy lessons. No AI. Works offline. Not what this section
->    is about.
+> 1. **"Look it up"** (`src/screens/AskLuna.jsx`, internal route name
+>    `askLuna`) — pure client-side full-text search over articles,
+>    conditions, phases, symptoms, and body-literacy lessons. No AI.
+>    Works offline. Labeled "Look it up" in the QuickActions row and
+>    "Search the library" in Library. Not what this section is about.
 >
-> 2. **Luna chat / daily thought** — what this section IS about. The
->    Anthropic-backed reflection prompt + conversational companion,
->    surfaced as the "a thought, today" card on Home and via the
->    `LunaChat` overlay component.
+> 2. **"Talk to Luna"** — what this section IS about. The Anthropic-
+>    backed reflection prompt + conversational companion, surfaced as
+>    the "a thought, today / talk it through" hero card on Home (lead
+>    differentiator) AND as the "Talk to Luna" QuickAction card (chat-
+>    bubble icon with typing-dot pulse animation). Both entry points
+>    open the same `LunaChat` overlay component.
 
 ### Architecture
 
@@ -764,7 +767,7 @@ There is currently a 7-day trial signaled in the store (`trialDaysLeft: 7`).
 - All cycle tracking, predictions, phase calculations
 - All daily logging (mood/flow/symptoms/BBT/mucus/sex/sleep/note)
 - Full Library reading (currently 30 articles)
-- Ask Luna search (no AI cost; pure client-side full-text search)
+- "Look it up" search (no AI cost; pure client-side full-text search)
 - Conditions Atlas (6 conditions + pattern matching)
 - Cycle wheel + ovulation triangulation panel
 - All 11 helper screens (cramps, anxiety, insomnia, UTI, late period, missed pill, painful sex, postpartum bleeding, heavy, migraine, low libido, body image)

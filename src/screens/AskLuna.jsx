@@ -178,7 +178,7 @@ export default function AskLuna() {
   return (
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="ask luna" onBack={back} />
+        <Masthead issue="look it up" onBack={back} />
       </div>
 
       <div style={{ padding: '8px 22px 14px' }}>
@@ -186,7 +186,7 @@ export default function AskLuna() {
           <Eyebrow color={accent}>Sourced, plain English</Eyebrow>
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 12, animationDelay: '40ms' }}>
-          What would you like<br /><em>to understand?</em>
+          Look it up.
         </div>
 
         <div className="insight-stagger frost-card" style={{
@@ -225,7 +225,7 @@ export default function AskLuna() {
         {!query && (
           <div className="insight-stagger" style={{ animationDelay: '200ms' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 10 }}>
-              TRY ASKING
+              TRY SEARCHING
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {SUGGESTED.map((s) => (

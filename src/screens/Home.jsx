@@ -424,7 +424,7 @@ function dueWellnessNudges(wellness) {
 // to live in AlwaysHere. "A note" used to be here too — removed,
 // because the sticky note in the corner of Home now covers that
 // gimmick and a dedicated card became redundant.
-function QuickActions({ go, setActiveLogDate }) {
+function QuickActions({ go, setActiveLogDate, onOpenChat }) {
   const todayISO = new Date().toISOString().slice(0, 10)
   const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
   // Each card carries its functional category. Category drives the
@@ -446,7 +446,20 @@ function QuickActions({ go, setActiveLogDate }) {
         </svg>
       ),
       onTap: openLogToday },
-    { key: 'ask', category: 'read', label: 'Ask Luna', sub: 'Sourced, plain-English answers',
+    { key: 'talk', category: 'reflect', label: 'Talk to Luna', sub: 'A real conversation, on her phase',
+      icon: (
+        <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          {/* Chat bubble with three pulsing dots — typing-indicator
+              motif. The dots cycle in sequence so the bubble reads
+              as "Luna composing something for you". */}
+          <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+          <circle className="dot dot-1" cx="7" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+          <circle className="dot dot-2" cx="10" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+          <circle className="dot dot-3" cx="13" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      ),
+      onTap: () => onOpenChat?.() },
+    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library — sourced',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* The whole glass-and-handle tilts around the end of the
@@ -1430,6 +1443,7 @@ export default function Home() {
             <QuickActions
               go={go}
               setActiveLogDate={setActiveLogDate}
+              onOpenChat={() => { setChatOpener(null); setChatOpen(true) }}
             />
           )}
 
