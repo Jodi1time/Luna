@@ -193,6 +193,117 @@ export const CYCLE_SCHOOLS = [
       },
     ],
   },
+  // ────────────────────────────────────────────────────────────
+  // Program 4 — Postpartum recovery (first six weeks)
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'postpartum-recovery',
+    title: 'Postpartum recovery, week by week',
+    subtitle: 'A gentler map of the first six weeks',
+    phase: 'menstrual',
+    category: 'care',
+    duration: 5,
+    intro:
+      "The fourth trimester gets called 'recovery' like there's a finish line. There isn't. It's a hormonal cliff (estrogen and progesterone drop ~99% within hours of birth), a body actively healing, and a brain learning a new person. Five days of literacy so you stop measuring yourself against an arrival date that doesn't exist.",
+    days: [
+      {
+        n: 1,
+        title: 'The hormonal cliff',
+        body: "Within 24 hours of birth, estrogen and progesterone — the hormones that climbed steadily for nine months — collapse by ~99%. It is the largest hormonal shift the human body ever undergoes. Mood swings, weeping at small things, hot flashes at night, hair shedding around three months postpartum — all downstream of that drop. Your reaction is biology, not weakness, and not yet a sign that something is wrong.",
+        practice:
+          "Today, when you feel a wave of emotion, try saying out loud: 'this is the cliff, not me.' Naming the chemistry doesn't fix the feeling but it widens the gap between you and it.",
+        source: 'Schiller et al., Hormones and the Postpartum Brain; ACOG Postpartum Care',
+      },
+      {
+        n: 2,
+        title: 'What healing actually means',
+        body: "Your uterus shrinks from grapefruit-sized back to a pear over six weeks (involution). Lochia — the postpartum bleed — is the lining shedding and the placental wound healing, typically 4-6 weeks. Pelvic floor muscles, perineal tissue, and (if you had one) C-section incisions all need 6-12 weeks of REAL rest. The 'bouncing back' culture is medically incorrect. Your tissue heals on its own clock.",
+        practice:
+          "Today, sit or lie down for ten minutes without your phone. Notice what your body is doing without an external prompt. It is healing whether you watch it or not, but watching it helps you respect the timeline.",
+        source: 'ACOG — Postpartum Optimization; Royal College of OB-GYN (UK)',
+      },
+      {
+        n: 3,
+        title: 'Sleep, in fragments',
+        body: "Fragmented sleep is its own injury. Even 7 total hours broken into three pieces does not equal 7 consolidated hours — your body doesn't reach the deep REM cycles where physical and emotional repair happens. This is why postpartum brain fog and mood swings worsen even with 'enough' sleep on paper. The fix isn't more hours — it's any consolidated stretch, however short. A protected 3-4 hour block matters more than 8 broken ones.",
+        practice:
+          "If you can, ask someone to take one feed or hold the baby for one stretch tonight. Even three hours of uninterrupted sleep changes your brain's recovery curve. This isn't a luxury — it's a clinical need.",
+        source: 'Mindell et al., Sleep in the Postpartum; Cleveland Clinic',
+      },
+      {
+        n: 4,
+        title: 'When to call — postpartum red flags',
+        body: "Most discomfort in postpartum is normal. Some isn't. Call your provider same-day for: heavy bleeding (saturating a pad in under an hour, large clots), severe headache that doesn't lift with hydration + rest (possible postpartum preeclampsia, which can develop up to 6 weeks after birth), calf pain or swelling on one side (possible blood clot), fever over 100.4°F, or persistent thoughts of harming yourself or the baby. Postpartum depression and psychosis are treatable but need immediate attention — not 'when you can get to it.'",
+        practice:
+          "Save your OB's after-hours number into your phone right now if you haven't. Tell one trusted person what the red flags are so they can prompt you to call if you're too foggy to assess.",
+        source: 'ACOG Practice Bulletin — Postpartum; CDC Maternal Mortality Brief',
+      },
+      {
+        n: 5,
+        title: 'The fourth trimester is real',
+        body: "The phrase 'fourth trimester' was coined by Harvey Karp to acknowledge that the 12 weeks after birth are physiologically as significant as the three trimesters before it — for both you and the baby. Some cultures formalize this with 40+ days of mandated rest, family support, and ritual care for the new mother. Western postpartum culture mostly doesn't. You are not failing by needing what other cultures explicitly build in. You are just under-resourced.",
+        practice:
+          "Today, refuse one expectation that has nothing to do with healing — a thank-you note, a load of laundry, a tidy house when visitors come. Use the saved energy to nap, to eat, or to sit in the sun for ten minutes. Recovery counts as productive.",
+        source: 'Karp — The Happiest Baby; Postpartum Support International',
+      },
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // Program 5 — TTC fundamentals (trying to conceive)
+  // ────────────────────────────────────────────────────────────
+  {
+    id: 'ttc-fundamentals',
+    title: 'TTC, without the noise',
+    subtitle: 'Five days on what actually moves the needle when trying',
+    phase: 'follicular',
+    category: 'plan',
+    duration: 5,
+    intro:
+      "Fertility content is a marketplace of pills, supplements, apps, and influencers. Most of it is noise; some of it is harmful. Five days of evidence-based literacy on what actually moves the needle when you're trying to conceive — and how to tell when the timeline warrants a workup vs more patience.",
+    days: [
+      {
+        n: 1,
+        title: 'The fertile window, named',
+        body: "The fertile window is the 5 days BEFORE ovulation plus ovulation day itself — six days total. Sperm survives 3-5 days in fertile cervical mucus; the egg lives 12-24 hours. So the window is built around sperm timing, not egg timing. The single day with the highest pregnancy probability is the day before ovulation, NOT ovulation day. This is the most-missed nuance in fertility timing — and the reason BBT alone (which confirms ovulation AFTER it happens) doesn't help your timing this cycle.",
+        practice:
+          "Today, look at your last cycle's logged signals (cervical mucus, BBT, libido) on Luna's Insights screen. Notice the days before your ovulation marker — that's where your fertile window actually sat.",
+        source: 'Wilcox et al., NEJM 1995; ACOG — Fertility Awareness Methods',
+      },
+      {
+        n: 2,
+        title: 'Cervical mucus is your best free signal',
+        body: "Egg-white cervical mucus — stretchy, clear, slippery — peaks 1-2 days before ovulation when estrogen crests. It is biologically designed to keep sperm alive AND transport them through the cervix. If you're tracking only one fertility signal, mucus beats BBT (which confirms ovulation post-event) and LH strips (which catch the surge but not the days before). Most fertility apps' free tiers ignore mucus because it's qualitative; Luna doesn't.",
+        practice:
+          "Today, check your cervical mucus once (clean finger, just inside the vagina). Note the texture in Luna's Log. Even one data point gets you started; three cycles of tracking and you'll know your own pattern better than most providers do.",
+        source: 'WHO — Cervical Mucus Method; Billings Ovulation Method',
+      },
+      {
+        n: 3,
+        title: 'What actually helps — the short list',
+        body: "Most TTC content is noise. The evidence-based short list: prenatal vitamin with at least 400 mcg folate (start 3 months before trying — neural tube formation happens before most people know they're pregnant), regular sex across the fertile window (every 1-2 days beats once at 'peak'), within 3 BMI units of your healthy weight, limited alcohol (especially in the second half of the cycle), no smoking. Supplements beyond a prenatal — CoQ10, NAC, inositol — have evidence in specific clinical contexts (PCOS, low egg quality) but are not magic for everyone.",
+        practice:
+          "Today, audit your prenatal. Is it at least 400 mcg of folate (or methylfolate if you have an MTHFR variant)? Does it include iodine, choline, and vitamin D? If not, the upgrade matters more than any other supplement on the market.",
+        source: 'CDC — Pre-Pregnancy Folate; Endocrine Society Fertility Guidelines',
+      },
+      {
+        n: 4,
+        title: 'When to ask for help',
+        body: "The medical definition of infertility: 12 months of well-timed unprotected sex without pregnancy under 35, or 6 months over 35. Below those thresholds, patience and tracking are usually the right answer. At or above them, a workup is reasonable — testing CAN catch issues (low AMH, blocked tubes, sperm quality, thyroid) that won't resolve on their own. Asking earlier is also reasonable if you have a known condition (PCOS, endometriosis, irregular cycles, history of pelvic infection) — don't wait 12 months when there's a clinical reason to look sooner.",
+        practice:
+          "Today, write down how many fully-tracked cycles you've had (logged ovulation signals + timed sex within the fertile window). That's the number that matters — not how long you've been 'thinking about' trying. Calendar months feel longer than tracked cycles.",
+        source: 'ASRM — Infertility Definition; NICE Fertility Guideline CG156',
+      },
+      {
+        n: 5,
+        title: 'Holding the timeline',
+        body: "TTC is one of the few life experiences where the body is on its own clock and there's almost nothing you can do to accelerate it. That mismatch — the willingness to do anything for something that mostly requires waiting — is what wears people down. The emotional cost is real and tracked: people TTC report stress levels comparable to those of people with cancer diagnoses. Find a therapist who specializes in fertility if it's hard. Keep one room of your life that has nothing to do with trying.",
+        practice:
+          "Today, do one thing that has nothing to do with conceiving — see a friend, finish a book, go for a walk somewhere new. The waiting is the work, and you can't earn the result by trying harder. Protecting the rest of your life is part of holding the timeline.",
+        source: 'Domar et al., Psychological Impact of Infertility; ASRM Patient Education',
+      },
+    ],
+  },
 ]
 
 // Helper — lookup a school by id.
