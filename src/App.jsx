@@ -60,6 +60,9 @@ const CycleSchools    = lazy(() => import('./screens/CycleSchools'))
 const CycleSchool     = lazy(() => import('./screens/CycleSchool'))
 const Conditions      = lazy(() => import('./screens/Conditions'))
 const AskLuna         = lazy(() => import('./screens/AskLuna'))
+const MigraineHelper  = lazy(() => import('./screens/MigraineHelper'))
+const LowLibidoHelper = lazy(() => import('./screens/LowLibidoHelper'))
+const BodyImageHelper = lazy(() => import('./screens/BodyImageHelper'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -247,6 +250,9 @@ function ScreenRenderer({ screen }) {
     case 'cycleSchool': return <CycleSchool />
     case 'conditions': return <Conditions />
     case 'askLuna':    return <AskLuna />
+    case 'migraine':   return <MigraineHelper />
+    case 'lowLibido':  return <LowLibidoHelper />
+    case 'bodyImage':  return <BodyImageHelper />
     default:         return <Home />
   }
 }
