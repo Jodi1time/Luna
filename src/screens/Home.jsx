@@ -1509,22 +1509,63 @@ export default function Home() {
           )}
 
           {/* ─── WHAT MAKES LUNA, LUNA ────────────────────────────────
-              The differentiators come FIRST after the cover + triggered
-              helpers. Nobody else gives women a 5-day phase-aware
-              literacy program, a doula-toned daily reflection, or a
-              full diary with photos + voice. These run above the
-              commodity daily-log surfaces.
+              Differentiators come FIRST after the cover + triggered
+              helpers.
 
-              Order: diary FIRST (the Luna gimmick most loved), then
-              the cycle school card when active, then morning thought,
-              then daily insight. The user reaches her own writing in
-              two taps from app open. */}
+              Order (intentional): Luna's voice FIRST (the morning
+              thought + talk-it-through is the core differentiator
+              against Flo/Clue — nobody else gives women a
+              conversational companion this warm). Diary second
+              (loved gimmick, but private to the user). Cycle School
+              when active. Daily insight after that. */}
+
+          {/* Morning thought — promoted to lead the differentiators
+              tier (step 2 of the AI promotion pass). Large italic
+              serif quote, soft phase-tinted glass, opening serif
+              quotation mark as the visual signature, with a clear
+              "talk it through" affordance. Tap opens the LunaChat
+              overlay IMMEDIATELY, seeded with this thought, so the
+              gesture-to-conversation is one tap. */}
+          {!isPreg && phase && thoughtText && (
+            <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
+              className="alive-card frost-card sheen-once"
+              style={{
+                position: 'relative',
+                marginTop: 22, padding: '26px 24px 22px',
+                background: `linear-gradient(160deg, ${phase.color}18, ${phase.color}08 60%, rgba(253,250,245,0.5))`,
+                border: `1px solid ${phase.color}30`,
+                borderRadius: 26,
+                boxShadow: `0 20px 44px -20px ${phase.color}70`,
+                textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
+                fontFamily: 'inherit', color: 'inherit',
+                overflow: 'hidden',
+              }}>
+              <div aria-hidden="true" style={{
+                position: 'absolute', top: -10, left: 14,
+                fontFamily: T.serif, fontSize: 96, lineHeight: 1, fontStyle: 'italic',
+                color: phase.color, opacity: 0.2, fontWeight: 400,
+                userSelect: 'none', pointerEvents: 'none',
+              }}>"</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
+                  a thought, today
+                </div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                  </svg>
+                  talk it through
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
+                {thoughtText}
+              </div>
+            </button>
+          )}
 
           {/* The diary — multi-entry writing with photos + voice +
-              customisable paper. A Luna-distinctive surface (Flo /
-              Clue have no diary at all). Moved to the top of the
-              differentiators tier so the user finds her own writing
-              before everything else. */}
+              customisable paper. Still high in the order; the user's
+              own writing is sacred. */}
           {!isPreg && (
             <JournalCard
               entries={settings?.journalEntries}
@@ -1540,44 +1581,6 @@ export default function Home() {
               thing on the page, so it leads. */}
           {!isPreg && phase && (
             <CycleSchoolCard phase={phase} settings={settings} go={go} />
-          )}
-
-          {/* Morning thought — the visual HERO of the reflective area.
-              Large italic serif quote, soft phase-tinted glass, opening
-              serif quotation mark as the visual signature. Tap opens a
-              conversation with Luna seeded by this thought. */}
-          {!isPreg && phase && thoughtText && (
-            <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              className="alive-card frost-card sheen-once"
-              style={{
-                position: 'relative',
-                marginTop: 22, padding: '24px 22px 22px',
-                background: `linear-gradient(160deg, ${phase.color}14, ${phase.color}06 60%, rgba(253,250,245,0.5))`,
-                border: `1px solid ${phase.color}28`,
-                borderRadius: 26,
-                boxShadow: `0 18px 40px -22px ${phase.color}60`,
-                textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
-                fontFamily: 'inherit', color: 'inherit',
-                overflow: 'hidden',
-              }}>
-              <div aria-hidden="true" style={{
-                position: 'absolute', top: -10, left: 14,
-                fontFamily: T.serif, fontSize: 90, lineHeight: 1, fontStyle: 'italic',
-                color: phase.color, opacity: 0.18, fontWeight: 400,
-                userSelect: 'none', pointerEvents: 'none',
-              }}>"</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12, position: 'relative' }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
-                  a thought, today
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
-                  talk it through →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
-                {thoughtText}
-              </div>
-            </button>
           )}
 
           {/* Daily body-literacy moment — Luna's "today's insights"
