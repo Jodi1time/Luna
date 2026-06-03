@@ -27,7 +27,16 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001'
+// Per-mode model selection. Defaults to Claude Haiku 4.5 for both —
+// matches existing behaviour, keeps cost minimal. Operator can flip
+// the chat mode to a stronger model (e.g. Sonnet) without touching
+// daily-thought, which is short, cached client-side, and well-served
+// by Haiku. Read once at module load so a deploy of new env values
+// takes effect; the function instance is short-lived enough that
+// stale env caching isn't a real concern.
+const ANTHROPIC_MODEL_DEFAULT       = 'claude-haiku-4-5-20251001'
+const ANTHROPIC_MODEL_DAILY_THOUGHT = Deno.env.get('ANTHROPIC_MODEL_DAILY_THOUGHT') || ANTHROPIC_MODEL_DEFAULT
+const ANTHROPIC_MODEL_CHAT          = Deno.env.get('ANTHROPIC_MODEL_CHAT')          || ANTHROPIC_MODEL_DEFAULT
 
 // Luna's voice + safety rails. Lives server-side so the client can't
 // override it. Wording mirrors what Luna says elsewhere in the UI.
@@ -104,7 +113,12 @@ interface AnthropicMessage {
   content: string
 }
 
-async function callAnthropic(messages: AnthropicMessage[], system: string, maxTokens = 200): Promise<string> {
+async function callAnthropic(
+  messages: AnthropicMessage[],
+  system: string,
+  model: string,
+  maxTokens = 200,
+): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -115,7 +129,7 @@ async function callAnthropic(messages: AnthropicMessage[], system: string, maxTo
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
+      model,
       max_tokens: maxTokens,
       system,
       messages,
@@ -169,10 +183,13 @@ Deno.serve(async (req) => {
     const context = body.context || {}
 
     let reply = ''
+    let modelUsed = ''
     if (mode === 'daily-thought') {
+      modelUsed = ANTHROPIC_MODEL_DAILY_THOUGHT
       reply = await callAnthropic(
         [{ role: 'user', content: dailyThoughtUserPrompt(context) }],
         SYSTEM_PROMPT,
+        modelUsed,
         120,
       )
     } else if (mode === 'chat') {
@@ -185,9 +202,11 @@ Deno.serve(async (req) => {
       }
       // Hard cap conversation length to prevent runaway cost.
       const trimmed = messages.slice(-12)
+      modelUsed = ANTHROPIC_MODEL_CHAT
       reply = await callAnthropic(
         trimmed,
         `${SYSTEM_PROMPT}\n\n${chatSystemAddition(context)}`,
+        modelUsed,
         220,
       )
     } else {
@@ -197,7 +216,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ text: reply, model: ANTHROPIC_MODEL }), {
+    return new Response(JSON.stringify({ text: reply, model: modelUsed }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

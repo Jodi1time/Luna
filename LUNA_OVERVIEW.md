@@ -250,7 +250,7 @@ Writes are fire-and-forget (`fireAndForget()` wrapper) — UI doesn't block on t
 
 ### Architecture
 
-- **Model**: `claude-haiku-4-5-20251001` (Claude Haiku 4.5)
+- **Model**: per-mode, env-var configurable. Defaults to `claude-haiku-4-5-20251001` (Claude Haiku 4.5) for both modes. `ANTHROPIC_MODEL_DAILY_THOUGHT` and `ANTHROPIC_MODEL_CHAT` can override independently — typical production posture is Haiku for daily-thought (short, cached, fired often) and a stronger model (e.g. Sonnet) for chat (interactive, multi-turn, prompt-instruction-sensitive). Response payload returns `model` field so the client can verify which model served the request.
 - **Hosted in**: Supabase Edge Function `luna-chat` (Deno runtime)
 - **Auth**: User's Supabase JWT in `Authorization: Bearer` header; function
   rejects without a valid session
@@ -326,7 +326,16 @@ function chatSystemAddition(ctx: any): string {
 ### Anthropic call (verbatim)
 
 ```typescript
-async function callAnthropic(messages: AnthropicMessage[], system: string, maxTokens = 200): Promise<string> {
+const ANTHROPIC_MODEL_DEFAULT       = 'claude-haiku-4-5-20251001'
+const ANTHROPIC_MODEL_DAILY_THOUGHT = Deno.env.get('ANTHROPIC_MODEL_DAILY_THOUGHT') || ANTHROPIC_MODEL_DEFAULT
+const ANTHROPIC_MODEL_CHAT          = Deno.env.get('ANTHROPIC_MODEL_CHAT')          || ANTHROPIC_MODEL_DEFAULT
+
+async function callAnthropic(
+  messages: AnthropicMessage[],
+  system: string,
+  model: string,
+  maxTokens = 200,
+): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not configured')
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -337,7 +346,7 @@ async function callAnthropic(messages: AnthropicMessage[], system: string, maxTo
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: ANTHROPIC_MODEL,
+      model,
       max_tokens: maxTokens,
       system,
       messages,
