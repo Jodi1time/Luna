@@ -133,16 +133,26 @@ function search(corpus, query) {
   return scored.slice(0, 12).map((x) => x.entry)
 }
 
+// Each suggestion is tuned to surface at least one strong result —
+// usually an article match — so the shortcut doesn't promise an answer
+// the corpus can't deliver. Reviewed when new articles land.
 const SUGGESTED = [
-  'cramps that won\'t stop',
+  'cramps endometriosis',
   'spotting between periods',
   'PMDD',
-  'why am I tired in luteal',
+  'why am I tired',
   'egg white mucus',
   'painful sex',
-  'iron and heavy bleeding',
+  'iron heavy bleeding',
   'PCOS',
-  'BBT shift',
+  'BBT charting',
+  'late period',
+  'perimenopause',
+  'birth control side effects',
+  'stress missed period',
+  'mittelschmerz ovulation pain',
+  'cervical screening Pap HPV',
+  'jaw acne hormonal',
 ]
 
 export default function AskLuna() {
