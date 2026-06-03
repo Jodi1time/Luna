@@ -59,6 +59,11 @@ const COPY = {
     line: 'You ovulated this cycle.',
     flourish: 'ovulation',
   },
+  'email-confirmed': {
+    eyebrow: 'Your email is in',
+    line: "We're all set. Welcome home.",
+    flourish: 'ovulation',
+  },
 }
 
 export default function Celebration({ kind, onClose }) {

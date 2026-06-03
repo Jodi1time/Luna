@@ -10,7 +10,6 @@ import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import Celebration from '../components/Celebration'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
@@ -1077,14 +1076,6 @@ export default function Home() {
     // Lazy-load sounds to avoid pulling AudioContext into the eager path.
     import('../lib/sounds').then(({ bloomSound }) => bloomSound(Boolean(settings?.sounds)))
   }
-  const celebration = useLuna((s) => s.celebration)
-  const setCelebration = useLuna((s) => s.setCelebration)
-  useEffect(() => {
-    if (!celebration) return
-    const t = setTimeout(() => setCelebration(null), 3200)
-    return () => clearTimeout(t)
-  }, [celebration, setCelebration])
-
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift, ovulation: cycle.ovulation }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)
 
@@ -1625,9 +1616,8 @@ export default function Home() {
             )}
           </div>
 
-          {/* Soft milestone moment — period day one, etc. Auto-clears
-              after ~3s via the useEffect above. */}
-          <Celebration kind={celebration} onClose={() => setCelebration(null)} />
+          {/* Celebration moments now live at the app level (App.jsx
+              GlobalCelebration) so they show wherever the user lands. */}
 
           {/* First-run tour — 4 cards explaining the cover, the diary,
               and the customisation. Shows once; persisted via

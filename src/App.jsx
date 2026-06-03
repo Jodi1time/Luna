@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense, useState } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import GradualBlur from './components/GradualBlur'
+import Celebration from './components/Celebration'
 
 // Pick a time-of-day class. Re-checked every 15 minutes.
 function timeClass() {
@@ -91,6 +92,15 @@ export default function App() {
     if (isRecovery) {
       useLuna.getState().go('resetPassword')
     }
+    // Detect an email-confirmation deep-link. Supabase appends
+    // type=signup when the user clicks the verification link in
+    // their inbox. We fire a celebration once the auth session has
+    // settled — the small "we're all set" moment users expected
+    // but weren't getting after clicking the link.
+    const isEmailConfirm = hash.includes('type=signup')
+    if (isEmailConfirm) {
+      setTimeout(() => useLuna.getState().setCelebration('email-confirmed'), 900)
+    }
     // Restore the existing Supabase session on cold start. If present,
     // pull fresh profile + logs from the cloud so we paint correct
     // state even if the localStorage cache is stale.
@@ -153,8 +163,24 @@ export default function App() {
           <TabBar active={resolvedScreen} onChange={go} />
         </>
       )}
+      {/* Celebration moments live at the app level so they're visible
+          wherever the user lands — including the moment they land
+          back from an email-confirmation link onto Welcome or
+          Onboarding, not just on Home. */}
+      <GlobalCelebration />
     </AppShell>
   )
+}
+
+function GlobalCelebration() {
+  const celebration = useLuna((s) => s.celebration)
+  const setCelebration = useLuna((s) => s.setCelebration)
+  useEffect(() => {
+    if (!celebration) return
+    const t = setTimeout(() => setCelebration(null), 3200)
+    return () => clearTimeout(t)
+  }, [celebration, setCelebration])
+  return <Celebration kind={celebration} onClose={() => setCelebration(null)} />
 }
 
 function ScreenRenderer({ screen }) {
