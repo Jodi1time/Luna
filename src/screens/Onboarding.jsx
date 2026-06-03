@@ -279,6 +279,14 @@ export default function Onboarding({ step }) {
         try {
           const data = await signUp(email, password)
           acct = { email }
+          // Propagate the session to the store immediately so the rest
+          // of the app (Settings auth row, etc.) knows the user is
+          // authenticated. Supabase returns a session here when
+          // "Confirm email" is OFF in the dashboard; otherwise the
+          // session lands once they click the verify link.
+          if (data?.session) {
+            useLuna.getState().setSession(data.session)
+          }
           if (data && !data.session) {
             setSignupError("Check your email — we sent you a link to confirm your account. Your Luna is set up either way.")
           }
@@ -287,8 +295,11 @@ export default function Onboarding({ step }) {
           // registered. Fall back to signin so the same form handles
           // both new and returning users.
           try {
-            await signIn(email, password)
+            const data = await signIn(email, password)
             acct = { email }
+            if (data?.session) {
+              useLuna.getState().setSession(data.session)
+            }
           } catch (signInErr) {
             setSignupError(e?.message || signInErr?.message || 'Could not create account — please try again.')
             setFinishing(false)
