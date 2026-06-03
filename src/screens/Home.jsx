@@ -449,9 +449,14 @@ function QuickActions({ go, setActiveLogDate }) {
     { key: 'ask', category: 'read', label: 'Ask Luna', sub: 'Sourced, plain-English answers',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="9" r="5.5"/>
-          <path d="M13 13l4 4"/>
-          <circle className="probe" cx="9" cy="5" r="1.1" fill="currentColor" stroke="none"/>
+          {/* The whole glass-and-handle tilts around the end of the
+              handle (17,17) — like a hand holding it and tilting
+              to look at different spots. The handle stays "in the
+              user's hand" while the glass sweeps. */}
+          <g className="glass">
+            <circle cx="9" cy="9" r="5.5"/>
+            <path d="M13 13l4 4"/>
+          </g>
         </svg>
       ),
       onTap: () => go('askLuna') },

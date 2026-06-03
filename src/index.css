@@ -201,18 +201,38 @@ button.glass-card:active {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: rgba(244, 239, 229, 0.72);
-  -webkit-backdrop-filter: blur(28px) saturate(1.4);
-          backdrop-filter: blur(28px) saturate(1.4);
-  border: 0.5px solid rgba(26, 19, 16, 0.08);
+  /* Vertical gradient background — slightly lighter at the top
+     edge, deeper at the bottom. This mimics how real glass catches
+     light unevenly across its surface and gives the pill physical
+     dimensionality (not a uniform flat tint). */
+  background: linear-gradient(
+    180deg,
+    rgba(253, 250, 245, 0.60) 0%,
+    rgba(244, 239, 229, 0.58) 100%
+  );
+  /* Stronger blur + saturation + brightness boost than before.
+     The backdrop-filter is what makes content peeking through the
+     pill look like it's being seen through real glass — blur 42px
+     reads as a thicker pane, saturate 1.7 makes colours behind
+     glow as glass does, brightness 1.05 keeps the pill itself
+     legible against deep phase backdrops. */
+  -webkit-backdrop-filter: blur(42px) saturate(1.7) brightness(1.05);
+          backdrop-filter: blur(42px) saturate(1.7) brightness(1.05);
+  /* Border uses a near-white tint with extra alpha — reads as the
+     refractive edge of glass, not a UI hairline. */
+  border: 0.5px solid rgba(255, 255, 255, 0.55);
   border-radius: 999px;
-  /* Soft drop shadow (lift) + inset highlight (glass top) — combined,
-     they make the pill read as a piece of frosted glass floating
-     above the content rather than a flat strip stuck to the bottom. */
+  /* Four-layer shadow system for depth + refraction:
+       1. Outer drop — the pill hovers above the page
+       2. Tight outer halo — softens the floating edge
+       3. Inset top highlight — bright glass-edge refraction
+       4. Inset bottom shadow — depth from below, makes the glass
+          feel like it has thickness rather than being a sticker */
   box-shadow:
-    0 12px 32px -14px rgba(26, 19, 16, 0.28),
-    0 2px 8px -2px rgba(26, 19, 16, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    0 18px 42px -16px rgba(26, 19, 16, 0.34),
+    0 4px 14px -2px rgba(26, 19, 16, 0.08),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(26, 19, 16, 0.05);
   opacity: var(--tabbar-frost, 1);
   pointer-events: none;
   /* Opacity transition smooths any jitter in the JS-driven variable
@@ -251,16 +271,27 @@ button.glass-card:active {
   100% { stroke-dashoffset: -100; }
 }
 
-/* Ask Luna — small probe orbiting inside the glass like a radar
-   sweep. The magnifying glass itself stays put (visual stability);
-   only the inner dot rotates around the glass's centre point. */
-.icon-anim-ask .probe {
-  transform-origin: 9px 9px;
-  animation: anim-ask-orbit 3.2s linear infinite;
+/* Ask Luna — the whole glass-and-handle tilts around the END of
+   the handle (17,17) as if held in a hand examining different
+   spots. A single rich keyframe sweeps left→right with natural
+   micro-corrections at each step, so the motion reads as actually
+   searching, not a metronome. */
+.icon-anim-ask .glass {
+  transform-origin: 17px 17px;
+  animation: anim-ask-search 4.4s ease-in-out infinite;
 }
-@keyframes anim-ask-orbit {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+@keyframes anim-ask-search {
+  0%   { transform: rotate(-14deg); }
+  12%  { transform: rotate(-10deg); }
+  22%  { transform: rotate(-12deg); } /* hesitation — "what's there?" */
+  35%  { transform: rotate(-2deg); }
+  46%  { transform: rotate(4deg); }
+  52%  { transform: rotate(2deg); }   /* tiny correction — "wait, here?" */
+  62%  { transform: rotate(11deg); }
+  72%  { transform: rotate(9deg); }   /* another small pause */
+  82%  { transform: rotate(0deg); }
+  92%  { transform: rotate(-8deg); }
+  100% { transform: rotate(-14deg); }
 }
 
 /* Conditions — medical scan. Ring traces clockwise, then the cross
@@ -339,7 +370,7 @@ button.glass-card:active {
   .icon-anim-conditions .cv,
   .icon-anim-conditions .ch,
   .icon-anim-cheatsheet .ln { animation: none; stroke-dashoffset: 0; opacity: 1; }
-  .icon-anim-ask .probe,
+  .icon-anim-ask .glass,
   .icon-anim-insights .ring,
   .icon-anim-insights .dot { animation: none; }
 }
