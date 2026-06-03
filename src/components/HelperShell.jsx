@@ -258,10 +258,19 @@ export default function HelperShell({
                   {row.options.map((o) => {
                     const on = triageState[row.key] === o.id
                     return (
-                      <button key={o.id} onClick={() => setTriage(row.key, on ? null : o.id)}
-                        style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 6px 8px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>{o.label}</span>
-                        {o.sub && <span style={{ fontSize: 9.5, color: T.muted, lineHeight: 1.3, textAlign: 'center', fontWeight: 500 }}>{o.sub}</span>}
+                      <button key={`${o.id}-${on ? 'on' : 'off'}`} onClick={() => setTriage(row.key, on ? null : o.id)}
+                        className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
+                        style={{
+                          border: `1px solid ${on ? T.accent + '55' : 'rgba(26,19,16,0.06)'}`,
+                          background: on ? T.accent + '14' : 'rgba(253,250,245,0.55)',
+                          color: on ? T.accent : T.text,
+                          padding: '12px 6px 10px', borderRadius: 16, cursor: 'pointer',
+                          fontFamily: T.sans, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                          boxShadow: on ? `0 12px 22px -16px ${T.accent}60` : '0 10px 22px -22px rgba(26,19,16,0.18)',
+                          transition: 'all 0.2s var(--ease-out)',
+                        }}>
+                        <span style={{ fontFamily: T.serif, fontStyle: on ? 'italic' : 'normal', fontSize: 13, fontWeight: 500, letterSpacing: -0.1 }}>{o.label}</span>
+                        {o.sub && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 10.5, color: T.muted, lineHeight: 1.3, textAlign: 'center' }}>{o.sub}</span>}
                       </button>
                     )
                   })}
@@ -298,17 +307,36 @@ export default function HelperShell({
               {helpedOptions.map((o) => {
                 const on = helped.includes(o.id)
                 return (
-                  <button key={o.id} onClick={() => toggleHelped(o.id)}
-                    style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '12px 6px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600 }}>
+                  <button key={`${o.id}-${on ? 'on' : 'off'}`} onClick={() => toggleHelped(o.id)}
+                    className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
+                    style={{
+                      border: `1px solid ${on ? T.accent + '55' : 'rgba(26,19,16,0.06)'}`,
+                      background: on ? T.accent + '14' : 'rgba(253,250,245,0.55)',
+                      color: on ? T.accent : T.text,
+                      padding: '13px 6px', borderRadius: 16, cursor: 'pointer',
+                      fontFamily: T.serif, fontSize: 13, fontWeight: 500,
+                      fontStyle: on ? 'italic' : 'normal', letterSpacing: -0.1,
+                      boxShadow: on ? `0 12px 22px -16px ${T.accent}60` : '0 10px 22px -22px rgba(26,19,16,0.18)',
+                      transition: 'all 0.2s var(--ease-out)',
+                    }}>
                     {o.label}
                   </button>
                 )
               })}
             </div>
             <button onClick={recordEpisode} disabled={helped.length === 0}
-              className={saved ? 'success-pulse' : ''}
-              style={{ width: '100%', background: helped.length === 0 ? T.hair : T.accent, color: helped.length === 0 ? T.muted : '#fff', border: 'none', padding: '12px 14px', borderRadius: T.r, cursor: helped.length === 0 ? 'default' : 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
-              {saved ? 'Saved to your playbook' : 'Remember this for me'}
+              className={`alive-card${saved ? ' success-pulse tap-bloom' : ''}`}
+              style={{
+                width: '100%',
+                background: helped.length === 0 ? 'rgba(26,19,16,0.08)' : T.accent,
+                color: helped.length === 0 ? T.muted : '#fff',
+                border: 'none', padding: '14px 16px', borderRadius: 999,
+                cursor: helped.length === 0 ? 'default' : 'pointer',
+                fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4,
+                boxShadow: helped.length === 0 ? 'none' : `0 14px 28px -14px ${T.accent}80`,
+                transition: 'all 0.25s var(--ease-out)',
+              }}>
+              {saved ? '✓  Saved to your playbook' : 'Remember this for me'}
             </button>
           </>
         )}

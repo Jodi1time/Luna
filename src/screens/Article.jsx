@@ -113,12 +113,13 @@ export default function Article() {
           </div>
 
           {a.sources?.length > 0 && (
-            <div className="insight-stagger" style={{ marginTop: 16, padding: '10px 14px', display: 'inline-flex', alignItems: 'center', gap: 8, background: accent + '14', border: `1px solid ${accent}55`, borderRadius: T.r, animationDelay: '140ms' }}>
-              <span style={{ fontFamily: T.sans, fontSize: 9.5, fontWeight: 700, letterSpacing: 1.4, color: accent }}>
-                DOCTOR-SOURCED
+            <div className="insight-stagger frost-card" style={{ marginTop: 16, padding: '10px 14px', display: 'inline-flex', alignItems: 'center', gap: 8, background: accent + '12', border: `1px solid ${accent}40`, borderRadius: 999, animationDelay: '140ms' }}>
+              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: 999, background: accent, opacity: 0.85 }} />
+              <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, fontWeight: 500, color: accent, letterSpacing: -0.1 }}>
+                doctor-sourced
               </span>
-              <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted }}>
-                {a.sources.length} reference{a.sources.length === 1 ? '' : 's'} · {a.cat}
+              <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11.5, color: T.muted, letterSpacing: -0.1, opacity: 0.85 }}>
+                · {a.sources.length} reference{a.sources.length === 1 ? '' : 's'}
               </span>
             </div>
           )}
@@ -147,11 +148,14 @@ export default function Article() {
               <PhaseFlourish phaseId={phaseId || 'follicular'} size={28} />
             </div>
           </div>
-          <div className="insight-stagger" style={{ marginTop: 18, padding: 16, background: T.subtle, borderRadius: T.r, borderLeft: `3px solid ${accent}`, animationDelay: `${200 + a.body.length * 80 + 120}ms` }}>
-            <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: accent, fontFamily: T.sans, marginBottom: 8 }}>SOURCES</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="insight-stagger" style={{ marginTop: 18, padding: 18, background: 'rgba(253,250,245,0.55)', borderRadius: 18, borderLeft: `3px solid ${accent}`, border: '1px solid rgba(26,19,16,0.06)', boxShadow: `0 14px 30px -22px ${accent}40`, animationDelay: `${200 + a.body.length * 80 + 120}ms` }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: accent, letterSpacing: -0.1, marginBottom: 10 }}>sources</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {a.sources.map((s, i) => (
-                <div key={i} style={{ fontSize: 11.5, fontFamily: T.mono, lineHeight: 1.4, color: T.text }}>{String(i + 1).padStart(2, '0')} — {s}</div>
+                <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: T.serif, fontSize: 13, lineHeight: 1.45, color: T.text }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 9.5, color: accent, fontWeight: 600, letterSpacing: 0.5, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span>{s}</span>
+                </div>
               ))}
             </div>
           </div>

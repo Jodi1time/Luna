@@ -246,9 +246,17 @@ export default function Log() {
             <button onClick={() => shiftDate(1)} disabled={!canGoNext} aria-label="Next day"
               style={{ background: 'transparent', border: 'none', cursor: canGoNext ? 'pointer' : 'default', color: canGoNext ? T.text : 'rgba(26,19,16,0.18)', fontSize: 16, padding: '4px 10px', fontFamily: T.serif, borderRadius: 999 }}>›</button>
           </div>
-          <button onClick={save} className={`alive-card${savedJustNow ? ' success-pulse' : ''}`}
-            style={{ background: acc, border: 'none', cursor: 'pointer', color: '#fff', padding: '8px 16px', fontWeight: 600, fontSize: 12.5, letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 999, boxShadow: `0 10px 22px -10px ${acc}80` }}>
-            {savedJustNow ? 'Saved' : 'Save'}
+          <button onClick={save} className={`alive-card${savedJustNow ? ' save-bloom' : ''}`}
+            style={{
+              background: acc, border: 'none', cursor: 'pointer', color: '#fff',
+              padding: '8px 16px', fontWeight: 600, fontSize: 12.5,
+              letterSpacing: 0.3, fontFamily: T.sans, borderRadius: 999,
+              boxShadow: `0 10px 22px -10px ${acc}80`,
+              // Phase-tinted bloom — the ring that emanates outward
+              // on save picks up today's phase colour at ~50% alpha.
+              '--save-bloom-color': `${acc}80`,
+            }}>
+            {savedJustNow ? '✓  Saved' : 'Save'}
           </button>
         </div>
 
