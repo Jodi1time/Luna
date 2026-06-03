@@ -242,11 +242,31 @@ export default function Log() {
             </div>
           )}
         </div>
-        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 16, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
           {isToday
-            ? <>Whatever you noticed. None of these are required — tap the <span style={{ fontFamily: T.mono }}>?</span> on any symptom for the science behind it.</>
+            ? <>Whatever you noticed. None of these are required — tap anything for the science behind it.</>
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
+
+        {/* Persistent affordance — small inviting chip that tells the
+            user the teach layer exists before they ever tap. Helps the
+            depth not stay hidden behind the gesture. */}
+        {isToday && (
+          <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '120ms' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px',
+              background: `${acc}10`,
+              border: `1px solid ${acc}28`,
+              borderRadius: 999,
+              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12,
+              color: acc, letterSpacing: -0.1, fontWeight: 500,
+            }}>
+              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: 999, background: acc, opacity: 0.85 }} />
+              every tap teaches something — sourced
+            </div>
+          </div>
+        )}
 
         {/* Mood — frosted soft pills with each mood's own color tint */}
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>

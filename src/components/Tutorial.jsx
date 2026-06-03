@@ -15,7 +15,17 @@ const SLIDES = [
   {
     glyph: '3',
     title: 'The cover is where you are.',
-    body:  'The big number is your cycle day. Scroll to see today\'s quick actions, the diary, and small surfaces Luna saves for you.',
+    body:  'The big number is your cycle day. Tap it for a deep read of your current phase. Tap "show the math" to see how Luna predicts.',
+  },
+  {
+    glyph: 'ⓘ',
+    title: 'Every tap teaches.',
+    body:  'Tap a flow level, a discharge type, a sleep rating, a temperature — Luna explains what it means, sourced from ACOG or Cleveland Clinic. The log is the lesson.',
+  },
+  {
+    glyph: '?',
+    title: 'Ask Luna anything.',
+    body:  'PCOS, perimenopause, why am I tired — there is a search across every article, condition, and lesson. The Conditions Atlas sits on Home, too.',
   },
   {
     glyph: '✿',
@@ -25,7 +35,7 @@ const SLIDES = [
   {
     glyph: '✦',
     title: 'Make the room yours.',
-    body:  'Open the diary, tap DECORATE. Backdrop, paper, ornaments, time-of-day vibe. The whole app is your room.',
+    body:  'Open the diary, tap DECORATE. Backdrop, paper, ornaments. The whole app is your room.',
   },
 ]
 

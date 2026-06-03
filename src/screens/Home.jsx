@@ -432,20 +432,33 @@ function QuickActions({ go, setActiveLogDate }) {
   // Each card carries its functional category. Category drives the
   // card's soft tint + icon accent via SECTION_PALETTE — so the row
   // reads as chromatic variety instead of seven cream cards in a line.
+  // Reordered so the depth surfaces — Ask Luna, Conditions, What
+  // we've noticed — sit near the front. The commodity log/edit
+  // actions are still here, just not leading. Helps the user
+  // discover that Luna teaches, not just tracks.
   const items = [
     { key: 'log', category: 'body', label: 'Log today', sub: 'Mood, flow, anything',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>),
       onTap: openLogToday },
+    { key: 'ask', category: 'read', label: 'Ask Luna', sub: 'Sourced, plain-English answers',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>),
+      onTap: () => go('askLuna') },
+    { key: 'conditions', category: 'urgent', label: 'Conditions Atlas', sub: 'PCOS, endo, PMDD, more',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h14M10 3v14"/><circle cx="10" cy="10" r="7"/></svg>),
+      onTap: () => go('conditions') },
     { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/><circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/></svg>),
       onTap: () => go('insights') },
+    { key: 'schools', category: 'plan', label: 'Cycle Schools', sub: '5-day phase programs',
+      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5l7-3 7 3-7 3-7-3z"/><path d="M5 9v4l5 2 5-2V9"/></svg>),
+      onTap: () => go('cycleSchools') },
     { key: 'period', category: 'urgent', label: 'Edit period', sub: 'When it really started',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2a6 6 0 0 1 5 9.5C13.5 14 10 18 10 18s-3.5-4-5-6.5A6 6 0 0 1 10 2z"/><circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>),
       onTap: () => go('editPeriodStart') },
     { key: 'intimate', category: 'intimate', label: 'Your sexual life', sub: 'Desire, lubrication, pleasure',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6z"/><circle cx="10" cy="11" r="1" fill="currentColor" stroke="none"/></svg>),
       onTap: () => go('intimate') },
-    { key: 'watch', category: 'read', label: 'When something feels off', sub: 'Spot the patterns',
+    { key: 'watch', category: 'urgent', label: 'When something feels off', sub: 'Spot the patterns',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg>),
       onTap: () => go('watch') },
     { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
@@ -1261,6 +1274,33 @@ export default function Home() {
                   {contextLine.sub && (
                     <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
                       {contextLine.sub}
+                    </div>
+                  )}
+                  {/* Show the math — clickable disclosure that exposes
+                      the underlying cycle numbers. The transparency Flo
+                      never offers, lives on Home next to the prediction. */}
+                  {phase && cycleDay != null && (
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6 }}>
+                      <WhyChip
+                        label="show the math"
+                        color={phase.color}
+                        source={cycle.cyclesLogged > 0 ? `Your last ${Math.min(6, cycle.cyclesLogged)} cycle${cycle.cyclesLogged === 1 ? '' : 's'}` : 'Anchored to your onboarding date'}
+                      >
+                        {phase.id === 'menstrual' && (
+                          <>You're on day <strong>{cycleDay}</strong> of your bleed. Period length averages <strong>{periodLength} day{periodLength === 1 ? '' : 's'}</strong>, cycle length <strong>{cycleLength} days</strong>{cycle.variance?.stdDev != null ? ` (±${cycle.variance.stdDev.toFixed(1)})` : ''}.</>
+                        )}
+                        {phase.id === 'follicular' && (
+                          <>Day <strong>{cycleDay}</strong> of <strong>{cycleLength}</strong>. {cycle.ovulation
+                            ? <>Ovulation triangulated to day <strong>{cycle.ovulation.day}</strong> from {cycle.ovulation.signals.length} signal{cycle.ovulation.signals.length === 1 ? '' : 's'}.</>
+                            : <>Ovulation estimated around day <strong>{Math.round(cycleLength / 2)}</strong> — calendar midpoint. Logging BBT or mucus tightens this.</>}</>
+                        )}
+                        {phase.id === 'ovulation' && (
+                          <>Day <strong>{cycleDay}</strong>. The fertile window stretches 5 days before ovulation through ovulation day itself — sperm survives 3-5 days, the egg 12-24 hours.{cycle.ovulation ? <> Your signals: {cycle.ovulation.signals.map((s) => s.type === 'bbt' ? 'BBT shift' : s.type === 'mucus' ? 'egg-white mucus' : 'libido peak').join(', ')}.</> : null}</>
+                        )}
+                        {phase.id === 'luteal' && (
+                          <>Day <strong>{cycleDay}</strong> of <strong>{cycleLength}</strong>. Luteal runs a 12-14 day clock after ovulation — once the corpus luteum dissolves, your period starts. {cycleLength - cycleDay + 1} day{cycleLength - cycleDay + 1 === 1 ? '' : 's'} until predicted start.</>
+                        )}
+                      </WhyChip>
                     </div>
                   )}
                 </div>
