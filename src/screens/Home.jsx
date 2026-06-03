@@ -1498,12 +1498,12 @@ export default function Home() {
             </button>
           )}
 
-          {/* Daily body-literacy lesson — Luna's answer to Flo's
-              "today's insights." Sourced, phase-aware, adapts to
-              what the user logged today. One per day; rotates by
-              cycle day. Sits as a teach surface BELOW the thought
-              (emotional) and ABOVE the diary (writing) — the
-              "today, what to know" slot. */}
+          {/* Daily body-literacy moment — Luna's "today's insights"
+              equivalent, dialled back from a sourced lesson card into
+              a doula quote. The title is the thing Luna would say to
+              you over coffee — sourced still, but the source lives
+              behind a tap, not stamped on the card. Adapts to today's
+              log; rotates by cycle day. */}
           {!isPreg && phase && (() => {
             const lesson = adaptiveLessonFor({
               phaseId: phase.id,
@@ -1513,17 +1513,33 @@ export default function Home() {
             })
             if (!lesson) return null
             return (
-              <div style={{ marginTop: 22 }}>
-                <LiteracyCard
-                  eyebrow={lesson.eyebrow || 'Body literacy'}
-                  title={lesson.title}
-                  body={lesson.body}
-                  source={lesson.source}
-                  color={phase.color}
-                  onReadMore={lesson.readId ? () => goArticle(lesson.readId) : null}
-                  readMoreLabel="Read deeper →"
-                />
-              </div>
+              <button onClick={() => lesson.readId ? goArticle(lesson.readId) : null}
+                disabled={!lesson.readId}
+                className="alive-card frost-card"
+                style={{
+                  position: 'relative',
+                  marginTop: 22, padding: '18px 20px 16px',
+                  background: `linear-gradient(160deg, ${phase.color}0d, rgba(253,250,245,0.45))`,
+                  border: `1px solid ${phase.color}1f`,
+                  borderRadius: 22,
+                  boxShadow: `0 14px 30px -22px ${phase.color}38`,
+                  textAlign: 'left', cursor: lesson.readId ? 'pointer' : 'default',
+                  width: '100%', display: 'block',
+                  color: T.text, fontFamily: 'inherit',
+                  overflow: 'hidden',
+                }}>
+                <div aria-hidden="true" title={lesson.source} style={{
+                  position: 'absolute', top: 14, right: 16,
+                  width: 6, height: 6, borderRadius: 999,
+                  background: phase.color, opacity: 0.4,
+                }} />
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1, marginBottom: 8 }}>
+                  a small thing to know
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.3 }}>
+                  {lesson.title}
+                </div>
+              </button>
             )
           })()}
 

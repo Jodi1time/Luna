@@ -15,17 +15,7 @@ const SLIDES = [
   {
     glyph: '3',
     title: 'The cover is where you are.',
-    body:  'The big number is your cycle day. Tap it for a deep read of your current phase. Tap "show the math" to see how Luna predicts.',
-  },
-  {
-    glyph: 'ⓘ',
-    title: 'Every tap teaches.',
-    body:  'Tap a flow level, a discharge type, a sleep rating, a temperature — Luna explains what it means, sourced from ACOG or Cleveland Clinic. The log is the lesson.',
-  },
-  {
-    glyph: '?',
-    title: 'Ask Luna anything.',
-    body:  'PCOS, perimenopause, why am I tired — there is a search across every article, condition, and lesson. The Conditions Atlas sits on Home, too.',
+    body:  'The big number is your cycle day. Tap it for a deeper read. Scroll for your diary, today\'s notes, the small surfaces Luna saves for you.',
   },
   {
     glyph: '✿',

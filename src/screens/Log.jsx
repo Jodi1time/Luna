@@ -7,7 +7,6 @@ import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, SEX_LESSONS, BBT_LESSONS } 
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
-import { LiteracyCard } from '../components/Sourced'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
@@ -35,6 +34,29 @@ const SEX_OPTIONS = [
   { id: 'unprotected', label: 'Unprotected' },
   { id: 'none',        label: 'None' },
 ]
+
+// Quiet inline lesson — replaces the labeled "Body literacy" /
+// "Source:" school-card pattern. One italic-serif sentence, soft
+// phase-tinted background, source available on long-press as a
+// native tooltip (title attribute). Reads like a doula's aside,
+// not a textbook callout.
+function QuietLesson({ lesson, color, keyId }) {
+  if (!lesson) return null
+  return (
+    <div key={keyId} className="frost-card" title={lesson.source ? `Source · ${lesson.source}` : undefined}
+      style={{
+        padding: '12px 14px',
+        background: `linear-gradient(160deg, ${color}0d, rgba(253,250,245,0.45))`,
+        border: `1px solid ${color}1f`,
+        borderRadius: 16,
+        animation: 'fadeUp 0.32s ease-out both',
+      }}>
+      <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
+        {lesson.body || lesson.title}
+      </div>
+    </div>
+  )
+}
 
 export default function Log() {
   const store = useLuna()
@@ -242,31 +264,11 @@ export default function Log() {
             </div>
           )}
         </div>
-        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 16, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
+        <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
           {isToday
-            ? <>Whatever you noticed. None of these are required — tap anything for the science behind it.</>
+            ? <>Whatever you noticed. None of these are required.</>
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
-
-        {/* Persistent affordance — small inviting chip that tells the
-            user the teach layer exists before they ever tap. Helps the
-            depth not stay hidden behind the gesture. */}
-        {isToday && (
-          <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '120ms' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px',
-              background: `${acc}10`,
-              border: `1px solid ${acc}28`,
-              borderRadius: 999,
-              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12,
-              color: acc, letterSpacing: -0.1, fontWeight: 500,
-            }}>
-              <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: 999, background: acc, opacity: 0.85 }} />
-              every tap teaches something — sourced
-            </div>
-          </div>
-        )}
 
         {/* Mood — frosted soft pills with each mood's own color tint */}
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
@@ -401,15 +403,7 @@ export default function Log() {
         </div>
         {teachField === 'flow' && teachLesson && (
           <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <LiteracyCard
-              key={`flow-${flow}-${phaseId}`}
-              eyebrow="Body literacy"
-              title={teachLesson.title}
-              body={teachLesson.body}
-              source={teachLesson.source}
-              color={acc}
-              compact
-            />
+            <QuietLesson lesson={teachLesson} color={acc} keyId={`flow-${flow}-${phaseId}`} />
           </div>
         )}
         </div>
@@ -448,15 +442,7 @@ export default function Log() {
         </div>
         {teachField === 'bbt' && teachLesson && (
           <div style={{ marginBottom: 24 }}>
-            <LiteracyCard
-              key={`bbt-${bbt}-${phaseId}`}
-              eyebrow="What this reading means"
-              title={teachLesson.title}
-              body={teachLesson.body}
-              source={teachLesson.source}
-              color={acc}
-              compact
-            />
+            <QuietLesson lesson={teachLesson} color={acc} keyId={`bbt-${bbt}-${phaseId}`} />
           </div>
         )}
         </div>
@@ -493,15 +479,7 @@ export default function Log() {
         </div>
         {teachField === 'mucus' && teachLesson && (
           <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <LiteracyCard
-              key={`mucus-${mucus}`}
-              eyebrow="Fertility signal"
-              title={teachLesson.title}
-              body={teachLesson.body}
-              source={teachLesson.source}
-              color={acc}
-              compact
-            />
+            <QuietLesson lesson={teachLesson} color={acc} keyId={`mucus-${mucus}`} />
           </div>
         )}
         </div>
@@ -526,15 +504,7 @@ export default function Log() {
         </div>
         {teachField === 'sleep' && teachLesson && (
           <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <LiteracyCard
-              key={`sleep-${sleep}-${phaseId}`}
-              eyebrow="Sleep in this phase"
-              title={teachLesson.title}
-              body={teachLesson.body}
-              source={teachLesson.source}
-              color={acc}
-              compact
-            />
+            <QuietLesson lesson={teachLesson} color={acc} keyId={`sleep-${sleep}-${phaseId}`} />
           </div>
         )}
         </div>
@@ -559,15 +529,7 @@ export default function Log() {
         </div>
         {teachField === 'sex' && teachLesson && (
           <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <LiteracyCard
-              key={`sex-${sex}-${phaseId}`}
-              eyebrow="What this means today"
-              title={teachLesson.title}
-              body={teachLesson.body}
-              source={teachLesson.source}
-              color={acc}
-              compact
-            />
+            <QuietLesson lesson={teachLesson} color={acc} keyId={`sex-${sex}-${phaseId}`} />
           </div>
         )}
         </div>

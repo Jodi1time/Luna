@@ -554,53 +554,43 @@ export default function Insights() {
         )}
         </div>
 
-        {/* Worth knowing about — gentle condition surfacing when log
-            patterns match. NEVER diagnostic. Routes to the Conditions
-            Atlas where the full explainer + tests-to-ask live. */}
+        {/* Quiet condition surfacing — when log patterns line up with
+            something worth knowing, Luna leaves a soft note. NEVER
+            diagnostic — just the language to bring to a conversation
+            if she ever wants it. Two cards max so it feels considered,
+            not a screening report. */}
         {conditionMatches.length > 0 && (
           <div className="insight-stagger" style={{ marginTop: 28, animationDelay: '420ms' }}>
-            <Eyebrow>Worth knowing about</Eyebrow>
-            <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, fontStyle: 'italic', marginBottom: 12, lineHeight: 1.55 }}>
-              Your logs share patterns with these conditions. Not diagnoses — just things worth understanding so you have the words if you ever need them.
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', letterSpacing: -0.2, marginBottom: 4 }}>
+              Some reading, if you want it.
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {conditionMatches.slice(0, 3).map((m, i) => (
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', marginBottom: 14, lineHeight: 1.55 }}>
+              A few pieces Luna pulled — they line up with what you've been logging. No conclusions, just a doorway in.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {conditionMatches.slice(0, 2).map((m) => (
                 <button key={m.id} onClick={() => go('conditions', { activeConditionId: m.id })}
                   className="alive-card frost-card"
                   style={{
                     padding: 16,
-                    background: sectionPaper('urgent'),
-                    border: `1px solid ${sectionColors('urgent').accent}28`,
+                    background: 'rgba(253,250,245,0.55)',
+                    border: `1px solid ${sectionColors('urgent').accent}22`,
                     borderLeft: `3px solid ${sectionColors('urgent').accent}`,
-                    borderRadius: 20,
-                    boxShadow: `0 1px 0 ${sectionColors('urgent').accent}10, 0 12px 26px -20px ${sectionColors('urgent').accent}50`,
+                    borderRadius: 18,
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                     color: T.text, fontFamily: 'inherit',
                   }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-                    <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
-                      {m.condition.name}
-                    </div>
-                    <div style={{ fontFamily: T.mono, fontSize: 9.5, color: sectionColors('urgent').accent, letterSpacing: 0.8, fontWeight: 600 }}>
-                      worth a read →
-                    </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2, marginBottom: 4 }}>
+                    Reading on {m.condition.name}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 8 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55 }}>
                     {m.condition.summary}
                   </div>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>
-                    WHAT YOUR LOGS SHOW
-                  </div>
-                  <ul style={{ margin: 0, paddingLeft: 16, fontFamily: T.serif, fontSize: 13, color: T.text, lineHeight: 1.5 }}>
-                    {m.signals.slice(0, 2).map((s, si) => (
-                      <li key={si} style={{ marginBottom: 2 }}>{s}</li>
-                    ))}
-                  </ul>
                 </button>
               ))}
               <button onClick={() => go('conditions')}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, padding: '4px 0', textAlign: 'left', letterSpacing: -0.1 }}>
-                See the full atlas →
+                More like this →
               </button>
             </div>
           </div>
