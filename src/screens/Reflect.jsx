@@ -886,9 +886,27 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
   }
 
   const s = BODY_SCAN_STEPS[step]
+  // Soft progress dots beneath the step card — visual sense of
+  // "you've moved through this many stops, this many to go" without
+  // a sterile progress bar.
+  const dots = (
+    <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginBottom: 14 }}>
+      {BODY_SCAN_STEPS.map((_, i) => (
+        <span key={i} style={{
+          width: i === step ? 16 : 5, height: 5, borderRadius: 999,
+          background: i <= step ? T.accent : 'rgba(26,19,16,0.14)',
+          opacity: i === step ? 1 : (i < step ? 0.5 : 1),
+          transition: 'all 0.4s var(--ease-out)',
+        }} />
+      ))}
+    </div>
+  )
   return (
     <SheetShell onClose={onClose} title="A quick body scan" sub={`${step + 1} of ${BODY_SCAN_STEPS.length}`}>
-      <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+      {dots}
+      {/* key={step} forces a remount per step so the fadeUp animation
+          replays — each stop on the tour arrives, doesn't just swap. */}
+      <div key={step} className="glass-card" style={{ padding: 20, borderLeft: `3px solid ${T.accent}`, borderRadius: 18, marginBottom: 14, animation: 'fadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both' }}>
         <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.4, color: T.text, marginBottom: 10, letterSpacing: -0.2 }}>
           {s.title}
         </div>
@@ -897,7 +915,8 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
         </div>
       </div>
       <button onClick={() => setStep(step + 1)}
-        style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '13px 14px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4 }}>
+        className="alive-card"
+        style={{ width: '100%', background: T.accent, color: '#fff', border: 'none', padding: '14px 16px', borderRadius: 999, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, boxShadow: `0 12px 24px -12px ${T.accent}70` }}>
         {step === BODY_SCAN_STEPS.length - 1 ? 'Hold the whole body' : 'Move on, slowly'}
       </button>
     </SheetShell>

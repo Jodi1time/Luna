@@ -52,6 +52,16 @@ export default function CycleSchool() {
   const canPrev = dayN > 1
   const canNext = dayN < school.duration
 
+  // Mark-complete celebration moment — when the user transitions
+  // from undone → done, fire a phase-tinted save-bloom on the button
+  // briefly so the action feels earned. Auto-clears after 0.9s.
+  const [justCompleted, setJustCompleted] = useState(false)
+  useEffect(() => {
+    if (!justCompleted) return
+    const t = setTimeout(() => setJustCompleted(false), 900)
+    return () => clearTimeout(t)
+  }, [justCompleted])
+
   const markDay = (n, done) => {
     const next = { ...(settings?.schools || {}) }
     const cur = next[school.id] || { startedAt: new Date().toISOString() }
@@ -62,7 +72,11 @@ export default function CycleSchool() {
     updateSetting('schools', next)
   }
 
-  const toggleDone = () => markDay(dayN, !isDone)
+  const toggleDone = () => {
+    const willBeDone = !isDone
+    markDay(dayN, willBeDone)
+    if (willBeDone) setJustCompleted(true)
+  }
   const goPrev = () => canPrev && setDayN(dayN - 1)
   const goNext = () => {
     // Mark current day done when advancing — feels intuitive: "I read this, move on."
@@ -165,7 +179,7 @@ export default function CycleSchool() {
         {/* Day actions: mark complete + navigation */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>
           <button onClick={toggleDone}
-            className="alive-card frost-card"
+            className={`alive-card frost-card${justCompleted ? ' save-bloom' : ''}`}
             style={{
               background: isDone ? accent : 'rgba(253,250,245,0.55)',
               color: isDone ? '#fff' : T.text,
@@ -176,6 +190,10 @@ export default function CycleSchool() {
               fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.3,
               boxShadow: isDone ? `0 12px 24px -14px ${accent}aa` : '0 10px 22px -22px rgba(26,19,16,0.18)',
               transition: 'all .22s var(--ease-out)',
+              // Phase-tinted bloom ring — same vocabulary as the
+              // Log save button, so completing a day reads as a
+              // small but earned moment.
+              '--save-bloom-color': `${accent}80`,
             }}>
             {isDone ? '✓  Marked complete' : 'Mark today complete'}
           </button>

@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense, useState } from 'react'
+import { useEffect, lazy, Suspense, useState, useRef } from 'react'
 import { AppShell, TabBar } from './components/shared'
 import Celebration from './components/Celebration'
 
@@ -80,6 +80,32 @@ export default function App() {
     document.body.classList.remove('time-morning', 'time-midday', 'time-evening', 'time-night')
     document.body.classList.add(tod)
   }, [tod])
+
+  // Directional navigation hint — track whether the stack just grew
+  // (forward push) or shrunk (back pop) and set a CSS var on body
+  // so Screen reads the correct entry keyframe. Auto-clears after
+  // the animation duration so subsequent renders default to forward.
+  const stack = useLuna((s) => s.stack)
+  const prevLen = useRef(stack.length)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (stack.length === prevLen.current) {
+      prevLen.current = stack.length
+      return
+    }
+    const wentBack = stack.length < prevLen.current
+    document.body.style.setProperty(
+      '--screen-enter-anim',
+      wentBack ? 'screenEnterBack' : 'screenEnterForward'
+    )
+    prevLen.current = stack.length
+    const t = setTimeout(() => {
+      // Reset so screens that re-render without a nav event play
+      // the neutral keyframe rather than re-using the last direction.
+      document.body.style.removeProperty('--screen-enter-anim')
+    }, 520)
+    return () => clearTimeout(t)
+  }, [stack.length])
 
   useEffect(() => {
     // Detect a password-reset deep-link on cold start. Supabase
