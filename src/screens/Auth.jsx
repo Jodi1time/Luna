@@ -71,8 +71,21 @@ export default function Auth() {
         const profileOnboarded = useLuna.getState().onboarded
         go(profileOnboarded ? 'home' : 'onb3')
       } else if (mode === 'signup') {
-        await signUp(email, password)
-        setInfo('Check your email to confirm your account.')
+        const data = await signUp(email, password)
+        // Supabase returns a session when 'Confirm email' is OFF — the
+        // user is already authenticated. Propagate it to the store so
+        // the rest of the app knows they're signed in (Settings was
+        // showing "not signed in · local only" otherwise — bug).
+        // When confirm-email is ON, no session is returned and the
+        // user goes through email verification.
+        if (data?.session) {
+          useLuna.getState().setSession(data.session)
+          await hydrateFromCloud().catch(() => {})
+          const profileOnboarded = useLuna.getState().onboarded
+          go(profileOnboarded ? 'home' : 'onb3')
+        } else {
+          setInfo('Account created. Check your email for a confirmation link, then come back to sign in.')
+        }
       } else if (mode === 'reset') {
         await requestPasswordReset(email)
         setInfo('Check your email for a reset link.')

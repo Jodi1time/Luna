@@ -9,8 +9,8 @@ import { T } from '../data/theme'
 const SLIDES = [
   {
     glyph: '☾',
-    title: 'Welcome to Luna.',
-    body:  'Cycle tracking that sounds like a doula, not a dashboard. Take what helps; ignore the rest.',
+    title: 'Welcome.',
+    body:  'Take your time. Nothing here is required.',
   },
   {
     glyph: '3',

@@ -1267,7 +1267,7 @@ export default function Home() {
                   {phase && cycleDay != null && (
                     <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6 }}>
                       <WhyChip
-                        label="show the math"
+                        label="learn more"
                         color={phase.color}
                         source={cycle.cyclesLogged > 0 ? `Your last ${Math.min(6, cycle.cyclesLogged)} cycle${cycle.cyclesLogged === 1 ? '' : 's'}` : 'Anchored to your onboarding date'}
                       >

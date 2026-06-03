@@ -294,7 +294,7 @@ export default function Calendar() {
                   {/* Show your work — expandable underlying math. The
                       transparency Flo never offers. */}
                   <WhyChip
-                    label="show the math"
+                    label="learn more"
                     color={accentColor}
                     source={
                       p.label === 'Next period' ? 'Computed from your logged cycle starts' :
