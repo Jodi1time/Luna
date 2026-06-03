@@ -1280,10 +1280,9 @@ export default function Home() {
 
           {/* Period-start nudge — lives OUTSIDE the cover so its
               buttons stay tappable. (Previously it lived inside the
-              cover's bodyRef, which collapses on scroll and pulls
-              the day-one button into the GradualBlur fade zone —
-              meaning users couldn't reach the very CTA Luna asked
-              them to tap.) */}
+              cover's bodyRef, which collapses on scroll, meaning
+              users couldn't reach the very CTA Luna asked them
+              to tap.) */}
           {!isPreg && showPeriodCTA && (
             <div className="alive-card frost-card" style={{ marginTop: 18, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
               <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>

@@ -1,6 +1,5 @@
 import { useEffect, lazy, Suspense, useState } from 'react'
 import { AppShell, TabBar } from './components/shared'
-import GradualBlur from './components/GradualBlur'
 import Celebration from './components/Celebration'
 
 // Pick a time-of-day class. Re-checked every 15 minutes.
@@ -151,17 +150,7 @@ export default function App() {
         <ScreenRenderer screen={resolvedScreen} />
       </Suspense>
       {TAB_SCREENS.includes(resolvedScreen) && (
-        <>
-          {/* Soft fade — scroll content dissolves into atmosphere
-              before passing under the floating pill. Now positioned
-              above the lifted pill (which floats at ~62px from the
-              bottom including safe area) rather than directly behind
-              a flush bar. Z 40 keeps it under the pill (z 50). */}
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))', height: 80, pointerEvents: 'none', zIndex: 40 }}>
-            <GradualBlur position="bottom" height="100%" strength={1.6} divCount={6} curve="bezier" exponential />
-          </div>
-          <TabBar active={resolvedScreen} onChange={go} />
-        </>
+        <TabBar active={resolvedScreen} onChange={go} />
       )}
       {/* Celebration moments live at the app level so they're visible
           wherever the user lands — including the moment they land
