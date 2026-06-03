@@ -35,10 +35,25 @@ async function callFunction(payload) {
 
 // Returns today's reflection — cached client-side so the user sees the
 // same thought all day even if Home re-renders. Cache key includes
-// user id so different accounts on the same device don't collide.
-export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycleLength }) {
+// user id AND a hash of the pattern summary so a pattern shift mid-day
+// produces a fresh reflection instead of serving yesterday's cached
+// text against today's patterns.
+//
+// `patternSummary` is the natural-language string produced by
+// buildPatternSummary() in src/hooks/useCycle.js — derived, qualitative,
+// never raw logs / dates / identifiers.
+export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycleLength, patternSummary }) {
   const todayISO = new Date().toISOString().slice(0, 10)
-  const key = `${CACHE_PREFIX}${userId || 'anon'}:${todayISO}`
+  const summaryHash = (() => {
+    if (!patternSummary) return 'nopat'
+    let h = 0
+    for (let i = 0; i < patternSummary.length; i++) {
+      h = ((h << 5) - h) + patternSummary.charCodeAt(i)
+      h |= 0
+    }
+    return Math.abs(h).toString(36)
+  })()
+  const key = `${CACHE_PREFIX}${userId || 'anon'}:${todayISO}:${summaryHash}`
   try {
     const cached = localStorage.getItem(key)
     if (cached) return cached
@@ -51,6 +66,7 @@ export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycle
       cycle_day: cycleDay,
       cycle_length: cycleLength,
       hour: new Date().getHours(),
+      pattern_summary: patternSummary || null,
     },
   })
   if (text) {
@@ -60,9 +76,11 @@ export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycle
 }
 
 // Continue a chat. `messages` is an array of { role, content } in
-// chronological order. Returns Luna's next reply text, or null on
-// failure (caller decides how to present).
-export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength }) {
+// chronological order. `patternSummary` is the derived natural-
+// language string from buildPatternSummary() in useCycle.js.
+// Returns Luna's next reply text, or null on failure (caller decides
+// how to present).
+export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength, patternSummary }) {
   return callFunction({
     mode: 'chat',
     messages,
@@ -71,6 +89,7 @@ export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength
       phase_name: phaseName,
       cycle_day: cycleDay,
       cycle_length: cycleLength,
+      pattern_summary: patternSummary || null,
     },
   })
 }

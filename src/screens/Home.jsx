@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
@@ -9,7 +9,7 @@ import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
@@ -1116,6 +1116,17 @@ export default function Home() {
   // Bottom-sheet for the "A note" quick action — focused textarea
   // that saves into today's log without opening the full Log form.
   const [quickNoteOpen, setQuickNoteOpen] = useState(false)
+  // Derive a privacy-safe pattern summary the AI can root in. Pure
+  // qualitative — "tends toward low mood and cramps in late luteal;
+  // cycles steady" — no raw logs, no dates, no identifiers. Includes
+  // the variance label so first-cycle users still get the rhythm
+  // signal even before patterns emerge.
+  const patternSummary = useMemo(() => {
+    if (!cycle.cycleLength || !cycle.periodLength) return ''
+    const patterns = detectSymptomPatterns(logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength)
+    return buildPatternSummary(patterns, cycle.variance, cycle.cycleLength, cycle.periodLength)
+  }, [logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength, cycle.variance])
+
   useEffect(() => {
     if (!phase || !session?.user?.id) return
     let cancelled = false
@@ -1125,9 +1136,10 @@ export default function Home() {
       phaseName: phase.name,
       cycleDay: cycle.cycleDay,
       cycleLength: cycle.cycleLength,
+      patternSummary,
     }).then((text) => { if (!cancelled && text) setAiThought(text) })
     return () => { cancelled = true }
-  }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id])
+  }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
   // Use the AI thought if we have one, otherwise the local static prompt.
   const thoughtText = aiThought || (phase ? getReflectionPrompt(phase.id) : null)
   const logPeriodStart = () => {
@@ -1729,6 +1741,7 @@ export default function Home() {
               phaseName: phase.name,
               cycleDay: cycle.cycleDay,
               cycleLength: cycle.cycleLength,
+              patternSummary,
             } : {}}
           />
 

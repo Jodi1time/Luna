@@ -68,7 +68,19 @@ function dailyThoughtUserPrompt(ctx: any): string {
   const cycleLen = ctx?.cycle_length || 28
   const hour = ctx?.hour ?? new Date().getUTCHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  // Pattern summary is a derived, qualitative string from the client
+  // (e.g. "tends toward low mood and cramps in late luteal; cycles
+  // steady"). NEVER contains raw logs / dates / identifiers. When
+  // present, lets the reflection root in patterns the user actually
+  // lives. When absent, fall back to the un-personalised prompt so
+  // first-cycle users still get a clean reflection.
+  const patternSummary = (ctx?.pattern_summary || '').toString().trim()
+  const patternLine = patternSummary
+    ? `Her cycle pattern, observed across her own tracking: ${patternSummary}. Let this shape the reflection if it genuinely fits — for instance, speaking to the late-luteal heaviness she's lived before — but never list it back to her like a chart.`
+    : ''
   return `Generate ONE short reflection — 1–2 sentences max, ending in a question or open invitation — for a woman in her ${phaseName} phase, day ${cycleDay} of ${cycleLen}, this ${timeOfDay}.
+
+${patternLine}
 
 Topic should be one of: cycle-aware self-care, mental health in hormonal context, body literacy, embodied presence, emotional acceptance, the meaning of small daily acts.
 
@@ -77,7 +89,11 @@ Do not say "you should" or "you must". Do not begin with "Today" or "It's day ${
 
 function chatSystemAddition(ctx: any): string {
   const phase = ctx?.phase_name ? `Currently in their ${ctx.phase_name} phase, day ${ctx.cycle_day} of ${ctx.cycle_length}.` : ''
-  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. ${phase}`
+  const patternSummary = (ctx?.pattern_summary || '').toString().trim()
+  const patternLine = patternSummary
+    ? `Their cycle pattern, derived from their own tracking: ${patternSummary}. You may reference this when it's genuinely relevant — for instance, naming that the late-luteal heaviness is a pattern she's lived before — but never list it back like a chart. Speak to her, not about her.`
+    : ''
+  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. ${phase} ${patternLine}`.trim()
 }
 
 interface AnthropicMessage {

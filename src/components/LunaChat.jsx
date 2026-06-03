@@ -85,6 +85,7 @@ export default function LunaChat({ open, onClose, opener, context }) {
         phaseName: context?.phaseName,
         cycleDay: context?.cycleDay,
         cycleLength: context?.cycleLength,
+        patternSummary: context?.patternSummary,
       })
       if (reply) {
         setMessages([...nextMessages, { role: 'assistant', content: reply }])

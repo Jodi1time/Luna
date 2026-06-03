@@ -462,6 +462,91 @@ export function detectOvulation(logs, periodStarts, cycleLength) {
   return { day, confidence, signals, spread, why }
 }
 
+// Build a short, natural-language summary of a user's cycle patterns
+// suitable for passing to the AI chat. The output is DERIVED and
+// QUALITATIVE — no raw logs, no dates, no specific counts, no symptom
+// IDs verbatim, no cycle-day numbers. The summary is meant to give
+// Luna AI enough texture to acknowledge a user's patterns without
+// ever transmitting identifying log data.
+//
+// Examples of output:
+//   "tends toward low mood and cramps in late luteal; cycles steady"
+//   "headaches cluster around ovulation; cycles vary by a day or two"
+//   "cycles steady" (if no patterns yet)
+//   ""                (if not enough data even for the rhythm note)
+//
+// Inputs are the already-detected pattern set and the variance summary
+// (both computed locally by detectSymptomPatterns + cycleVariance).
+// Pure function — safe to call on every render; callers can memoise.
+export function buildPatternSummary(patterns, variance, cycleLength, periodLength) {
+  // Group same-phase patterns together so the summary reads like a
+  // natural sentence ("low mood and cramps in late luteal") instead
+  // of a comma-separated list.
+  const phaseGroups = {}
+  if (Array.isArray(patterns) && patterns.length > 0) {
+    // Cap at the top 4 patterns by occurrence — beyond that, the
+    // summary gets noisy and starts leaking identifying detail.
+    for (const p of patterns.slice(0, 4)) {
+      const key = p.phase || 'other'
+      if (!phaseGroups[key]) phaseGroups[key] = []
+      phaseGroups[key].push(p)
+    }
+  }
+
+  // Pretty phrase per pattern. For moods we append " mood" / " moods"
+  // so a single-word label like "low" reads as "low mood" not "low".
+  // For symptoms we lowercase and otherwise leave as-is — the SYMPTOMS
+  // dictionary already uses noun-shaped labels.
+  const labelFor = (p) => {
+    const raw = String(p.label || '').toLowerCase()
+    if (!raw) return null
+    if (p.type === 'mood') return `${raw} mood`
+    return raw
+  }
+
+  // For luteal patterns, split early vs late based on whether the
+  // pattern's median day is past the midpoint of the luteal window.
+  // ("late luteal" is the clinically meaningful descriptor — PMDD,
+  // PMS, late-cycle hormonal drops all cluster there.)
+  const phaseDescriptor = (phaseId, list) => {
+    if (phaseId !== 'luteal' || !cycleLength) return phaseId
+    const lutealStart = Math.round(cycleLength / 2) + 1
+    const lutealEnd   = cycleLength
+    const midpoint   = (lutealStart + lutealEnd) / 2
+    const medianOfGroup = list.reduce((a, p) => a + (p.median || 0), 0) / list.length
+    if (medianOfGroup > midpoint) return 'late luteal'
+    return 'early luteal'
+  }
+
+  const phaseOrder = ['menstrual', 'follicular', 'ovulation', 'luteal']
+  const parts = []
+  for (const phaseId of phaseOrder) {
+    const list = phaseGroups[phaseId]
+    if (!list || list.length === 0) continue
+    const labels = list
+      .slice(0, 2)
+      .map(labelFor)
+      .filter(Boolean)
+    if (labels.length === 0) continue
+    const joined = labels.length === 1
+      ? labels[0]
+      : `${labels[0]} and ${labels[1]}`
+    parts.push(`${joined} in ${phaseDescriptor(phaseId, list)}`)
+  }
+
+  // Variance phrase — only when we have meaningful cycle data.
+  let varStr = ''
+  if (variance?.conf === 'high')        varStr = 'cycles steady'
+  else if (variance?.conf === 'medium') varStr = 'cycles vary by a day or two'
+  else if (variance?.conf === 'low' && (variance.stdDev != null)) varStr = 'cycles variable'
+
+  // Compose
+  if (parts.length === 0 && !varStr) return ''
+  if (parts.length === 0) return varStr
+  const main = `tends toward ${parts.join('; also ')}`
+  return varStr ? `${main}; ${varStr}` : main
+}
+
 // Detect recurring mood / symptom patterns across multiple cycles.
 // For each mood and each symptom, computes the median cycle day and the
 // concentration of occurrences within ±3 days of that median. Returns
