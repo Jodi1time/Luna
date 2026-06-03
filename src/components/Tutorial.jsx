@@ -10,7 +10,7 @@ const SLIDES = [
   {
     glyph: '☾',
     title: 'Welcome.',
-    body:  'Take your time. Nothing here is required.',
+    body:  'Take what helps. Ignore the rest.',
   },
   {
     glyph: '3',
