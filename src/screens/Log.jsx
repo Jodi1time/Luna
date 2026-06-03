@@ -3,9 +3,11 @@ import { T } from '../data/theme'
 import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS, MOOD_COLORS, MOOD_TINTS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
+import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, SEX_LESSONS, BBT_LESSONS } from '../data/bodyLiteracy'
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { LiteracyCard } from '../components/Sourced'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
@@ -59,6 +61,11 @@ export default function Log() {
   // Last-tapped symptom (for the inline insight). Cleared when the
   // user untaps the same symptom or taps a different one.
   const [activeSym, setActiveSym] = useState(null)
+  // Which field surfaces its body-literacy micro-teach right now.
+  // Set to flow / mucus / sleep / sex / bbt when the user taps that
+  // section. Cleared when they tap the same value again (deselection)
+  // or pick something different in another section.
+  const [teachField, setTeachField] = useState(null)
 
   const toggleSym = (id) => {
     setSymptoms((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
@@ -66,6 +73,41 @@ export default function Log() {
   }
 
   const symInsight = (activeSym && phase) ? SYMPTOM_INSIGHTS[activeSym]?.[phase.id] : null
+
+  // Phase-aware fertile-window detector for the sex teach lookup
+  const phaseIsFertile = phase?.id === 'ovulation' || (phase?.id === 'follicular' && cycle.cycleDay >= cycle.cycleLength / 2 - 3)
+  const phaseId = phase?.id || 'follicular'
+
+  // Resolve which lesson to show, based on the field that was just tapped
+  const teachLesson = (() => {
+    if (!teachField) return null
+    if (teachField === 'flow') {
+      if (!flow) return null
+      const m = FLOW_LESSONS[flow] || {}
+      return m[phaseId] || m.any || null
+    }
+    if (teachField === 'mucus') return mucus ? MUCUS_LESSONS[mucus] || null : null
+    if (teachField === 'sleep') {
+      if (!sleep) return null
+      const m = SLEEP_LESSONS[sleep] || {}
+      return m[phaseId] || m.any || null
+    }
+    if (teachField === 'sex') {
+      if (!sex) return null
+      const m = SEX_LESSONS[sex] || {}
+      return phaseIsFertile && m.fertile ? m.fertile : (m.any || null)
+    }
+    if (teachField === 'bbt') {
+      const v = parseFloat(bbt)
+      if (!v) return null
+      // C → F for the threshold check
+      const vF = bbtUnit === 'C' ? v * 9/5 + 32 : v
+      if (vF >= 98.6) return BBT_LESSONS.high
+      if (phaseId === 'luteal' || phaseId === 'ovulation') return BBT_LESSONS.post
+      return BBT_LESSONS.pre
+    }
+    return null
+  })()
 
   // When the user navigates to a different date in-screen, re-load
   // that date's existing log into the form state so it shows as the
@@ -315,7 +357,10 @@ export default function Log() {
             const on = flow === f
             const fc = FLOW_COLORS[f]
             return (
-              <button key={f} onClick={() => setFlow(on ? null : f)}
+              <button key={f} onClick={() => {
+                setFlow(on ? null : f)
+                setTeachField(on ? null : 'flow')
+              }}
                 className="alive-card frost-card"
                 style={{
                   flex: 1,
@@ -334,6 +379,19 @@ export default function Log() {
             )
           })}
         </div>
+        {teachField === 'flow' && teachLesson && (
+          <div style={{ marginTop: -10, marginBottom: 24 }}>
+            <LiteracyCard
+              key={`flow-${flow}-${phaseId}`}
+              eyebrow="Body literacy"
+              title={teachLesson.title}
+              body={teachLesson.body}
+              source={teachLesson.source}
+              color={acc}
+              compact
+            />
+          </div>
+        )}
         </div>
 
         {/* Temperature (BBT) — frosted input + segmented unit toggle */}
@@ -345,7 +403,7 @@ export default function Log() {
             inputMode="decimal"
             step="0.01"
             value={bbt}
-            onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError('') }}
+            onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError(''); setTeachField(e.target.value ? 'bbt' : null) }}
             placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
             style={{ flex: 1, background: 'rgba(253,250,245,0.55)', border: `1px solid ${bbtError ? T.accent : 'rgba(26,19,16,0.08)'}`, borderRadius: 16, padding: '14px 16px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
             onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
@@ -365,9 +423,22 @@ export default function Log() {
             {bbtError}
           </div>
         )}
-        <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 24, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>
           Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
         </div>
+        {teachField === 'bbt' && teachLesson && (
+          <div style={{ marginBottom: 24 }}>
+            <LiteracyCard
+              key={`bbt-${bbt}-${phaseId}`}
+              eyebrow="What this reading means"
+              title={teachLesson.title}
+              body={teachLesson.body}
+              source={teachLesson.source}
+              color={acc}
+              compact
+            />
+          </div>
+        )}
         </div>
 
         {/* Discharge — frosted soft cards with care tint */}
@@ -378,7 +449,10 @@ export default function Log() {
             const on = mucus === m.id
             const careColors = sectionColors('care')
             return (
-              <button key={m.id} onClick={() => setMucus(on ? null : m.id)}
+              <button key={m.id} onClick={() => {
+                setMucus(on ? null : m.id)
+                setTeachField(on ? null : 'mucus')
+              }}
                 className="alive-card frost-card"
                 style={{
                   border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
@@ -397,6 +471,19 @@ export default function Log() {
             )
           })}
         </div>
+        {teachField === 'mucus' && teachLesson && (
+          <div style={{ marginTop: -10, marginBottom: 24 }}>
+            <LiteracyCard
+              key={`mucus-${mucus}`}
+              eyebrow="Fertility signal"
+              title={teachLesson.title}
+              body={teachLesson.body}
+              source={teachLesson.source}
+              color={acc}
+              compact
+            />
+          </div>
+        )}
         </div>
 
         {/* Sleep — frosted pill cards */}
@@ -406,7 +493,10 @@ export default function Log() {
           {['Great','Okay','Restless','Poor'].map((s) => {
             const on = sleep === s
             return (
-              <button key={s} onClick={() => setSleep(on ? null : s)}
+              <button key={s} onClick={() => {
+                setSleep(on ? null : s)
+                setTeachField(on ? null : 'sleep')
+              }}
                 className="alive-card frost-card"
                 style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
                 {s}
@@ -414,6 +504,19 @@ export default function Log() {
             )
           })}
         </div>
+        {teachField === 'sleep' && teachLesson && (
+          <div style={{ marginTop: -10, marginBottom: 24 }}>
+            <LiteracyCard
+              key={`sleep-${sleep}-${phaseId}`}
+              eyebrow="Sleep in this phase"
+              title={teachLesson.title}
+              body={teachLesson.body}
+              source={teachLesson.source}
+              color={acc}
+              compact
+            />
+          </div>
+        )}
         </div>
 
         {/* Sex — frosted pill cards */}
@@ -423,7 +526,10 @@ export default function Log() {
           {SEX_OPTIONS.map((s) => {
             const on = sex === s.id
             return (
-              <button key={s.id} onClick={() => setSex(on ? null : s.id)}
+              <button key={s.id} onClick={() => {
+                setSex(on ? null : s.id)
+                setTeachField(on ? null : 'sex')
+              }}
                 className="alive-card frost-card"
                 style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
                 {s.label}
@@ -431,6 +537,19 @@ export default function Log() {
             )
           })}
         </div>
+        {teachField === 'sex' && teachLesson && (
+          <div style={{ marginTop: -10, marginBottom: 24 }}>
+            <LiteracyCard
+              key={`sex-${sex}-${phaseId}`}
+              eyebrow="What this means today"
+              title={teachLesson.title}
+              body={teachLesson.body}
+              source={teachLesson.source}
+              color={acc}
+              compact
+            />
+          </div>
+        )}
         </div>
 
         {/* Note — frosted glass textarea */}

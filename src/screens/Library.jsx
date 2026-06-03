@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
 import { Eyebrow, Rule, Screen } from '../components/shared'
 import { ARTICLES, PHASES } from '../data/lunaData'
+import { CONDITIONS } from '../data/conditions'
 import { useCycle } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { ARTICLE_PHASE, articleAccent as accentFor } from '../lib/articlePhase'
@@ -55,10 +56,12 @@ export default function Library() {
   const store = useLuna()
   const cycle = useCycle(store)
   const goArticle = useLuna((s) => s.goArticle)
+  const go = useLuna((s) => s.go)
   const phaseId = cycle?.phase?.id || null
   const heroArticle = useMemo(() => pickHeroArticle(phaseId), [phaseId])
   const heroAccent = accentFor(heroArticle.id)
   const heroPhaseId = ARTICLE_PHASE[heroArticle.id] || phaseId || 'follicular'
+  const conditionsAccent = sectionColors('urgent').accent
 
   // The body of the Library — every article except the hero, grouped
   // into sections so the page reads as an editorial table of contents.
@@ -77,9 +80,71 @@ export default function Library() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '50ms' }}>
           Doctor-sourced, plain-English pieces on what your body is doing — and why.
         </div>
-        <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 26, animationDelay: '100ms' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 16, animationDelay: '100ms' }}>
           Every piece is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named at the top of each article, not buried.
         </div>
+
+        {/* Ask Luna — text search across every article, condition,
+            phase, and body-literacy lesson. The depth differentiator —
+            no buried table of contents, just ask. */}
+        <button onClick={() => go('askLuna')}
+          className="insight-stagger alive-card frost-card"
+          style={{
+            width: '100%',
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: 'rgba(253,250,245,0.55)',
+            border: `1px solid ${sectionColors('read').accent}28`,
+            borderRadius: 18,
+            padding: '12px 14px',
+            cursor: 'pointer',
+            marginBottom: 22,
+            textAlign: 'left',
+            color: T.text, fontFamily: 'inherit',
+            animationDelay: '140ms',
+          }}>
+          <span aria-hidden="true" style={{ color: sectionColors('read').accent, display: 'inline-flex' }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>
+          </span>
+          <div style={{ flex: 1, fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
+            Ask Luna anything — cramps, PCOS, why am I tired…
+          </div>
+          <span aria-hidden="true" style={{ fontFamily: T.mono, fontSize: 9.5, color: sectionColors('read').accent, letterSpacing: 1, fontWeight: 600 }}>
+            ASK
+          </span>
+        </button>
+
+        {/* Conditions Atlas entry — the named-things-you-can-ask-for
+            surface. Pulls from the conditions data. */}
+        <button onClick={() => go('conditions')}
+          className="insight-stagger alive-card"
+          style={{
+            width: '100%',
+            background: sectionPaper('urgent'),
+            border: `1px solid ${conditionsAccent}22`,
+            borderLeft: `3px solid ${conditionsAccent}`,
+            borderRadius: 22,
+            padding: '16px 18px',
+            cursor: 'pointer',
+            marginBottom: 28,
+            textAlign: 'left',
+            color: T.text, fontFamily: 'inherit',
+            animationDelay: '180ms',
+          }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: conditionsAccent, fontWeight: 600 }}>
+              The Conditions Atlas
+            </div>
+            <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 0.5 }}>
+              {CONDITIONS.length} CONDITIONS
+            </div>
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.3, marginBottom: 4 }}>
+            Six conditions, named.
+          </div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, lineHeight: 1.55 }}>
+            PCOS · Endo · PMDD · Thyroid · Fibroids · HA — what they are, what to ask for, what works.
+          </div>
+        </button>
 
         {/* Hero — phase-matched feature with editorial treatment.
             Background now uses the article's subject-category tint

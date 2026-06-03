@@ -7,6 +7,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionPaper } from '../data/sectionPalette'
+import { WhyChip, SourceTag } from '../components/Sourced'
 
 const MS_PER_DAY = 86400000
 
@@ -290,6 +291,36 @@ export default function Calendar() {
                   <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
                     {p.why}
                   </div>
+                  {/* Show your work — expandable underlying math. The
+                      transparency Flo never offers. */}
+                  <WhyChip
+                    label="show the math"
+                    color={accentColor}
+                    source={
+                      p.label === 'Next period' ? 'Computed from your logged cycle starts' :
+                      p.label === 'Fertile window' ? 'BBT + mucus + libido fusion' :
+                      'Late luteal — late-cycle hormone drop'
+                    }
+                  >
+                    {p.label === 'Next period' && (
+                      <>
+                        Cycle length averages <strong>{cycle.cycleLength} days</strong> across your last {Math.min(6, cycle.cyclesLogged)} logged cycle{cycle.cyclesLogged === 1 ? '' : 's'}{cycle.variance?.stdDev != null ? `, varying by ±${cycle.variance.stdDev.toFixed(1)} days` : ''}.
+                        {' '}Today is day <strong>{cycle.cycleDay}</strong>. Add {cycle.cycleLength - cycle.cycleDay + 1} days from today → predicted start.
+                      </>
+                    )}
+                    {p.label === 'Fertile window' && (
+                      <>
+                        {cycle.ovulation
+                          ? <>Your fertile window centers on day <strong>{cycle.ovulation.day}</strong> — triangulated from {cycle.ovulation.signals.length} signal{cycle.ovulation.signals.length === 1 ? '' : 's'} ({cycle.ovulation.signals.map((s) => s.type === 'bbt' ? 'BBT shift' : s.type === 'mucus' ? 'egg-white mucus' : 'libido peak').join(', ')}). Sperm survives 3-5 days, so the window stretches before ovulation, not after.</>
+                          : <>Without logged BBT or mucus, this is anchored to the calendar midpoint of your <strong>{cycle.cycleLength}-day</strong> cycle. Logging mucus and BBT tightens this materially.</>}
+                      </>
+                    )}
+                    {p.label === 'PMS window' && (
+                      <>
+                        PMS-pattern symptoms cluster in the final ~5 days of luteal — estrogen and progesterone both drop sharply, serotonin follows. With a {cycle.cycleLength}-day cycle, that's days <strong>{cycle.cycleLength - cycle.periodLength - 4}–{cycle.cycleLength - 1}</strong>.
+                      </>
+                    )}
+                  </WhyChip>
                 </div>
               )
             })}

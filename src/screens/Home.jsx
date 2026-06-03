@@ -3,6 +3,9 @@ import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
+import { adaptiveLessonFor } from '../data/bodyLiteracy'
+import { matchConditions } from '../data/conditions'
+import { LiteracyCard, WhyChip } from '../components/Sourced'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
@@ -1450,6 +1453,35 @@ export default function Home() {
               </div>
             </button>
           )}
+
+          {/* Daily body-literacy lesson — Luna's answer to Flo's
+              "today's insights." Sourced, phase-aware, adapts to
+              what the user logged today. One per day; rotates by
+              cycle day. Sits as a teach surface BELOW the thought
+              (emotional) and ABOVE the diary (writing) — the
+              "today, what to know" slot. */}
+          {!isPreg && phase && (() => {
+            const lesson = adaptiveLessonFor({
+              phaseId: phase.id,
+              cycleDay: cycle.cycleDay,
+              todayLog,
+              recentLogs: logs,
+            })
+            if (!lesson) return null
+            return (
+              <div style={{ marginTop: 22 }}>
+                <LiteracyCard
+                  eyebrow={lesson.eyebrow || 'Body literacy'}
+                  title={lesson.title}
+                  body={lesson.body}
+                  source={lesson.source}
+                  color={phase.color}
+                  onReadMore={lesson.readId ? () => goArticle(lesson.readId) : null}
+                  readMoreLabel="Read deeper →"
+                />
+              </div>
+            )
+          })()}
 
           {/* The diary — multi-entry writing with photos + voice +
               customisable paper. A Luna-distinctive surface (Flo /

@@ -278,6 +278,7 @@ const useLuna = create(
       activeArticleId: 'pmdd',
       activeSymptomId: 'cramps',
       activeSchoolId:  'understanding-luteal',
+      activeConditionId: null,
       // When set, the Reflect screen auto-opens this practice on mount
       // and then clears the value. Lets any helper / surface deep-link
       // straight into the right exercise instead of dumping the user

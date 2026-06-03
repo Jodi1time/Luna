@@ -2,9 +2,11 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
 import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
+import { matchConditions } from '../data/conditions'
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCountUp } from '../hooks/useCountUp'
+import { WhyChip, SourceTag } from '../components/Sourced'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
@@ -32,7 +34,9 @@ function arcPath(cx, cy, innerR, outerR, startAngle, endAngle) {
 // is today (with a slow pulsing ring so it reads as alive). When the
 // user is in or approaching the fertile window, a soft outer halo
 // surrounds the fertile days. Distinctly Luna: cycles are circles.
-function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
+// Each phase segment is now tappable — tap any phase to open its
+// teaching surface (PhaseDetail) so the wheel doubles as a textbook.
+function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase }) {
   if (!cycleDay || !cycleLength) return null
   const animatedCenter = useCountUp(cycleDay, 1100)
   const size = 260
@@ -90,13 +94,17 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
             className="fertile-glow"
             style={{ filter: 'blur(5px)' }} />
         )}
-        {/* Per-day arc segments — much quieter now, function as a ring */}
+        {/* Per-day arc segments — much quieter now, function as a ring.
+            Each segment is tappable and routes to that phase's teaching
+            surface so the wheel reads as a textbook, not just an indicator. */}
         {segments.map((s, idx) => (
           <path key={s.d} d={s.path} fill={s.color}
             className="arc-draw"
+            onClick={onTapPhase ? () => onTapPhase(getPhaseForDay(s.d, cycleLength, periodLength).id) : undefined}
             style={{
               animationDelay: `${idx * 18}ms`,
               '--final-opacity': s.isToday ? 0.85 : 0.18,
+              cursor: onTapPhase ? 'pointer' : undefined,
             }} />
         ))}
         {/* Soft glow under the marker — quiet phase-color halo */}
@@ -117,14 +125,24 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift }) {
           of {cycleLength}
         </text>
       </svg>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18 }}>
+      <button
+        type="button"
+        onClick={onTapPhase ? () => onTapPhase(todayPhase.id) : undefined}
+        disabled={!onTapPhase}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, background: 'transparent', border: 'none', padding: 0, cursor: onTapPhase ? 'pointer' : 'default', fontFamily: 'inherit' }}
+      >
         <div style={{ fontFamily: T.serif, fontSize: 18, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
           You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
         </div>
         <span style={{ color: todayPhase.color, opacity: 0.78, display: 'inline-flex' }} aria-hidden="true">
           <PhaseFlourish phaseId={todayPhase.id} size={22} />
         </span>
-      </div>
+      </button>
+      {onTapPhase && (
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 6, opacity: 0.75 }}>
+          tap any phase to read about it
+        </div>
+      )}
     </div>
   )
 }
@@ -297,6 +315,11 @@ export default function Insights() {
   const bbtShift = !onHormonalBC ? cycle.bbtShift : null
   const ovulation = !onHormonalBC ? cycle.ovulation : null
   const cycleDay = cycle.cycleDay
+  const goPhase = useLuna((s) => s.goPhase)
+  // Gentle condition matching — surfaces conditions worth knowing about
+  // based on log patterns. Never diagnostic. Hidden when no matches
+  // clear the score threshold.
+  const conditionMatches = matchConditions(logs, cycle)
 
   const blobColor = (phase?.color) || T.accent
 
@@ -318,7 +341,7 @@ export default function Insights() {
         <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '80ms' }}>
           {cycleDay ? (
             <>
-              <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} bbtShift={bbtShift} />
+              <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} bbtShift={bbtShift} onTapPhase={goPhase} />
               {onHormonalBC && (
                 <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 280, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
                   Your method softens the natural phase pattern — this is the underlying cycle Luna still tracks for you.
@@ -327,7 +350,7 @@ export default function Insights() {
             </>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
-              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} bbtShift={null} />
+              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} bbtShift={null} onTapPhase={goPhase} />
               <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
                 Log your first period and Luna will mark where you are on the wheel.
               </div>
@@ -466,6 +489,10 @@ export default function Insights() {
                 ? `Your ${display.toLowerCase()} tend to land in your ${p.phase} phase — ${dayLabel}`
                 : `You often feel '${display}' in your ${p.phase} phase — ${dayLabel}`
               const concentration = Math.round((p.concentration || 0) * 100)
+              // Pull body-literacy depth from SYMPTOMS for symptom patterns.
+              // The dict has why + evidence + source — surface these so each
+              // pattern card teaches instead of just stating the pattern.
+              const sym = p.type === 'symptom' ? SYMPTOMS[p.label] : null
               return (
                 <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 14px 30px -20px ${color}40`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -487,12 +514,97 @@ export default function Insights() {
                       </div>
                     </div>
                   </div>
+                  {/* Teach layer — sourced "why" + actionable "what helps".
+                      Pulled from SYMPTOMS dict so every pattern doubles as a
+                      body-literacy moment instead of just a stat. */}
+                  {sym && (
+                    <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${color}14` }}>
+                      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: color, marginBottom: 6 }}>
+                        Why this happens
+                      </div>
+                      <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic', marginBottom: 10 }}>
+                        {sym.why}
+                      </div>
+                      {Array.isArray(sym.evidence) && sym.evidence.length > 0 && (
+                        <>
+                          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+                            What helps
+                          </div>
+                          <ul style={{ margin: 0, paddingLeft: 18, fontFamily: T.serif, fontSize: 13, lineHeight: 1.55, color: T.text }}>
+                            {sym.evidence.slice(0, 3).map((e, ei) => (
+                              <li key={ei} style={{ marginBottom: 4 }}>{e}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {sym.source && <SourceTag color={color} compact>{sym.source}</SourceTag>}
+                        {sym.redFlag && (
+                          <WhyChip label="when to ask a doctor" color={PHASES.menstrual.color} source={sym.source}>
+                            {sym.redFlag}
+                          </WhyChip>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
         )}
         </div>
+
+        {/* Worth knowing about — gentle condition surfacing when log
+            patterns match. NEVER diagnostic. Routes to the Conditions
+            Atlas where the full explainer + tests-to-ask live. */}
+        {conditionMatches.length > 0 && (
+          <div className="insight-stagger" style={{ marginTop: 28, animationDelay: '420ms' }}>
+            <Eyebrow>Worth knowing about</Eyebrow>
+            <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, fontStyle: 'italic', marginBottom: 12, lineHeight: 1.55 }}>
+              Your logs share patterns with these conditions. Not diagnoses — just things worth understanding so you have the words if you ever need them.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {conditionMatches.slice(0, 3).map((m, i) => (
+                <button key={m.id} onClick={() => go('conditions', { activeConditionId: m.id })}
+                  className="alive-card frost-card"
+                  style={{
+                    padding: 16,
+                    background: sectionPaper('urgent'),
+                    border: `1px solid ${sectionColors('urgent').accent}28`,
+                    borderLeft: `3px solid ${sectionColors('urgent').accent}`,
+                    borderRadius: 20,
+                    boxShadow: `0 1px 0 ${sectionColors('urgent').accent}10, 0 12px 26px -20px ${sectionColors('urgent').accent}50`,
+                    cursor: 'pointer', textAlign: 'left', width: '100%',
+                    color: T.text, fontFamily: 'inherit',
+                  }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+                    <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
+                      {m.condition.name}
+                    </div>
+                    <div style={{ fontFamily: T.mono, fontSize: 9.5, color: sectionColors('urgent').accent, letterSpacing: 0.8, fontWeight: 600 }}>
+                      worth a read →
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 8 }}>
+                    {m.condition.summary}
+                  </div>
+                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>
+                    WHAT YOUR LOGS SHOW
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: 16, fontFamily: T.serif, fontSize: 13, color: T.text, lineHeight: 1.5 }}>
+                    {m.signals.slice(0, 2).map((s, si) => (
+                      <li key={si} style={{ marginBottom: 2 }}>{s}</li>
+                    ))}
+                  </ul>
+                </button>
+              ))}
+              <button onClick={() => go('conditions')}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, padding: '4px 0', textAlign: 'left', letterSpacing: -0.1 }}>
+                See the full atlas →
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Long-form reflection — only shown once there's something
             real to look back on. The gate lives in buildYearNarrative. */}

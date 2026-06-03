@@ -58,6 +58,8 @@ const Journal         = lazy(() => import('./screens/Journal'))
 const ResetPassword   = lazy(() => import('./screens/ResetPassword'))
 const CycleSchools    = lazy(() => import('./screens/CycleSchools'))
 const CycleSchool     = lazy(() => import('./screens/CycleSchool'))
+const Conditions      = lazy(() => import('./screens/Conditions'))
+const AskLuna         = lazy(() => import('./screens/AskLuna'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -202,6 +204,8 @@ function ScreenRenderer({ screen }) {
     case 'resetPassword': return <ResetPassword />
     case 'cycleSchools': return <CycleSchools />
     case 'cycleSchool': return <CycleSchool />
+    case 'conditions': return <Conditions />
+    case 'askLuna':    return <AskLuna />
     default:         return <Home />
   }
 }
