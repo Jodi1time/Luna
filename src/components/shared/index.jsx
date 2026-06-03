@@ -89,10 +89,15 @@ export function TabBar({ active, onChange }) {
   ]
   return (
     <div className="luna-tabbar" style={{
-      position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-      width: '100%', maxWidth: 430,
-      paddingBottom: 'env(safe-area-inset-bottom, 8px)',
-      paddingTop: 10,
+      // Floating pill: lifted off the bottom edge, inset from the
+      // sides. Scale lives in a CSS var so Screen.jsx can shrink the
+      // pill smoothly as the user scrolls away from the top.
+      position: 'fixed',
+      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+      left: '50%',
+      transform: 'translateX(-50%) scale(var(--tabbar-scale, 1))',
+      width: 'calc(100% - 28px)',
+      maxWidth: 392,
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 50,
     }}>
@@ -229,7 +234,7 @@ export function BrickList({ title, items, positive = false }) {
 // of content isn't trapped behind a translucent blur. Toggling a
 // body class lets TabBar respond via CSS transition (smooth) without
 // either component needing knowledge of the other.
-export const Screen = forwardRef(function Screen({ children, padBottom = 96, style: s = {}, onScroll }, ref) {
+export const Screen = forwardRef(function Screen({ children, padBottom = 120, style: s = {}, onScroll }, ref) {
   const innerRef = useRef(null)
   const setRef = (el) => {
     innerRef.current = el
@@ -248,9 +253,18 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 96, sty
     // than a hard at/not-at toggle: as the user nears the end of
     // content, the bar visibly steps out of the way.
     const FADE_DISTANCE = 160
+    // Pill-shrink threshold: stays full size for the first ~20px of
+    // scroll (treat as "still at top"), then linearly shrinks over
+    // the next ~70px until it bottoms out at 88% scale. Independent
+    // of the bottom-of-content frost-fade so the two interactions
+    // don't fight each other.
+    const SHRINK_START = 20
+    const SHRINK_RANGE = 70
+    const SHRINK_FLOOR = 0.88
     const root = document.documentElement
-    const apply = (frost) => {
+    const apply = (frost, scale) => {
       root.style.setProperty('--tabbar-frost', String(frost))
+      root.style.setProperty('--tabbar-scale', String(scale))
       // Keep the body class for any downstream selector that wants
       // the binary at/not-at state (e.g., other components hooking in).
       document.body.classList.toggle('scroll-at-bottom', frost < 0.05)
@@ -260,7 +274,10 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 96, sty
       const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
       // 0 at bottom → frost 0. ≥ FADE_DISTANCE → frost 1. Linear between.
       const frost = Math.min(1, Math.max(0, remaining / FADE_DISTANCE))
-      apply(frost)
+      // Scale: full at top, floor when scrolled past SHRINK_START + SHRINK_RANGE.
+      const shrinkP = Math.min(1, Math.max(0, (el.scrollTop - SHRINK_START) / SHRINK_RANGE))
+      const scale = 1 - (1 - SHRINK_FLOOR) * shrinkP
+      apply(frost, scale)
     }
     const onScrollLocal = () => { if (raf) return; raf = requestAnimationFrame(check) }
     el.addEventListener('scroll', onScrollLocal, { passive: true })
@@ -268,9 +285,12 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 96, sty
     return () => {
       el.removeEventListener('scroll', onScrollLocal)
       if (raf) cancelAnimationFrame(raf)
-      // Reset to full frost so the next screen doesn't inherit our
-      // last frame's value until its own initial check runs.
+      // Reset to full frost + full scale so the next screen doesn't
+      // inherit our last frame's values until its own initial check
+      // runs. Screens without scroll containers should look as if
+      // they're at the top.
       root.style.setProperty('--tabbar-frost', '1')
+      root.style.setProperty('--tabbar-scale', '1')
       document.body.classList.remove('scroll-at-bottom')
     }
   }, [])

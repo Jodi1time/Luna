@@ -152,12 +152,12 @@ export default function App() {
       </Suspense>
       {TAB_SCREENS.includes(resolvedScreen) && (
         <>
-          {/* Soft fade — the scroll content dissolves into atmosphere
-              before meeting the tab bar instead of cutting hard.
-              Renders above content (z 40), below the tab bar (z 50).
-              Positioned just above the tab bar's height + safe area
-              so the fade sits in the right band. */}
-          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(54px + env(safe-area-inset-bottom, 8px))', height: 70, pointerEvents: 'none', zIndex: 40 }}>
+          {/* Soft fade — scroll content dissolves into atmosphere
+              before passing under the floating pill. Now positioned
+              above the lifted pill (which floats at ~62px from the
+              bottom including safe area) rather than directly behind
+              a flush bar. Z 40 keeps it under the pill (z 50). */}
+          <div style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(70px + env(safe-area-inset-bottom, 0px))', height: 80, pointerEvents: 'none', zIndex: 40 }}>
             <GradualBlur position="bottom" height="100%" strength={1.6} divCount={6} curve="bezier" exponential />
           </div>
           <TabBar active={resolvedScreen} onChange={go} />
