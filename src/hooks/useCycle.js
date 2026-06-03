@@ -598,7 +598,18 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength, varia
   const range = variance?.range ?? 3
   const conf  = variance?.conf  ?? 'medium'
 
-  const nextPeriod = new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
+  // Period prediction — anchor to ovulation + 14d luteal when we
+  // have high-confidence ovulation, otherwise fall back to cycle-
+  // length math. Luteal phase length (12-16 days, median ~14) is far
+  // more stable across the population than total cycle length, so
+  // for users with detected ovulation this prediction is materially
+  // tighter. For users without ovulation detection, the original
+  // cycle-length math is preserved (no regression).
+  const LUTEAL_DEFAULT_DAYS = 14
+  const useLutealAnchor = ovulation && (ovulation.confidence === 'very-high' || ovulation.confidence === 'high')
+  const nextPeriod = useLutealAnchor
+    ? new Date(currentCycleStart.getTime() + (ovulation.day + LUTEAL_DEFAULT_DAYS) * MS_PER_DAY)
+    : new Date(currentCycleStart.getTime() + cycleLength * MS_PER_DAY)
 
   // Multi-signal ovulation fusion. If detectOvulation produced a day
   // from any combination of BBT/mucus/libido, anchor here. Otherwise
@@ -610,7 +621,9 @@ export function getPredictions(lastPeriodStart, cycleLength, periodLength, varia
   const pmsStart     = new Date(currentCycleStart.getTime() + (cycleLength - periodLength - 4) * MS_PER_DAY)
   const pmsEnd       = new Date(currentCycleStart.getTime() + (cycleLength - 1) * MS_PER_DAY)
 
-  const periodWhy = variance?.why ?? `Based on your ${cycleLength}-day cycle.`
+  const periodWhy = useLutealAnchor
+    ? `Anchored to your detected ovulation + a typical 14-day luteal phase. ${variance?.why ?? ''}`.trim()
+    : (variance?.why ?? `Based on your ${cycleLength}-day cycle.`)
   const fertileConf =
     ovulation?.confidence === 'very-high' ? 'high' :  // 'very-high' renders as 'high' in the UI
     ovulation?.confidence === 'high'      ? 'high' :

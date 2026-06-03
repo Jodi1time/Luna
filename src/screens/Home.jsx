@@ -435,7 +435,7 @@ function QuickActions({ go, setActiveLogDate }) {
   // still exist via Settings → sub-sections, so cutting them here
   // removes redundancy without removing the ability.
   const items = [
-    { key: 'log', category: 'body', label: 'Log today', sub: 'Mood, flow, anything',
+    { key: 'log', category: 'body', label: 'Log today', sub: 'Keeps your predictions sharp',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>),
       onTap: openLogToday },
     { key: 'ask', category: 'read', label: 'Ask Luna', sub: 'Sourced, plain-English answers',
@@ -992,6 +992,37 @@ export default function Home() {
   const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
   const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
 
+  // Catch-up state — predictions degrade silently when a user stops
+  // logging. Detect two flavours of "Luna has gone stale" so we can
+  // proactively ask the user to re-anchor without pestering everyone.
+  //
+  //   stalePeriod: predicted period was 10+ days ago AND no flow
+  //                logged since — the anchor is almost certainly
+  //                wrong, predictions are way off.
+  //   staleLogs:  the user hasn't logged ANYTHING in 21+ days —
+  //                they've drifted away from Luna, gently invite
+  //                them back without scolding.
+  //
+  // Suppressed when the regular period CTA is already showing, when
+  // the user is on hormonal BC (no cycle to predict), and during
+  // pregnancy. Only one stale state surfaces at a time.
+  const showCatchUp = (() => {
+    if (isPreg || onHormonalBC) return null
+    if (showPeriodCTA) return null
+    // stalePeriod: cycleDay has rolled past expected by 10+ days
+    if (cycleDay != null && cycleDay > cycleLength + 10) {
+      return { kind: 'stalePeriod', daysOver: cycleDay - cycleLength }
+    }
+    // staleLogs: 21+ days since any log
+    const allLogDates = Object.keys(logs || {}).sort()
+    const lastLogISO = allLogDates[allLogDates.length - 1]
+    if (lastLogISO) {
+      const daysSince = Math.floor((Date.now() - new Date(lastLogISO + 'T00:00:00').getTime()) / 86400000)
+      if (daysSince >= 21) return { kind: 'staleLogs', daysSince }
+    }
+    return null
+  })()
+
   // Measure natural heights of the headline + body sections AFTER
   // each render that may have changed their contents. scrollHeight
   // returns the unconstrained content height even when maxHeight
@@ -1276,6 +1307,40 @@ export default function Home() {
 
             </div>
           </div>
+          )}
+
+          {/* Catch-up nudge — surfaces when Luna's anchor is almost
+              certainly stale (predicted period was 10+ days ago) or
+              the user has drifted from logging entirely (21+ days
+              with no log). Routes to EditPeriodStart for a quick
+              re-anchor. The doula version of Flo's "did your period
+              happen?" — gentle, not pestering. */}
+          {showCatchUp && (
+            <div className="alive-card frost-card" style={{ marginTop: 18, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 8 }}>
+                {showCatchUp.kind === 'stalePeriod' ? 'a quick catch-up' : "it's been a minute"}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
+                {showCatchUp.kind === 'stalePeriod'
+                  ? 'Help Luna catch up on your last period.'
+                  : 'Anything to log from the past few weeks?'}
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
+                {showCatchUp.kind === 'stalePeriod'
+                  ? `Luna's been working off a guess for the last ${showCatchUp.daysOver} days. A quick update sharpens every prediction from here.`
+                  : `It's been ${showCatchUp.daysSince} days since you last logged. Predictions drift without fresh data — a few taps catches Luna up.`}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => go('editPeriodStart')}
+                  style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
+                  {showCatchUp.kind === 'stalePeriod' ? 'Update period start' : 'Log a past day'}
+                </button>
+                <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
+                  style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
+                  Log today
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Period-start nudge — lives OUTSIDE the cover so its
