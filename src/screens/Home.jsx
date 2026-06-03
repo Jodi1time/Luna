@@ -5,7 +5,6 @@ import { SymptomIcon } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor } from '../data/bodyLiteracy'
 import { matchConditions } from '../data/conditions'
-import { LiteracyCard, WhyChip } from '../components/Sourced'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
@@ -1250,33 +1249,6 @@ export default function Home() {
                   {contextLine.sub && (
                     <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
                       {contextLine.sub}
-                    </div>
-                  )}
-                  {/* Show the math — clickable disclosure that exposes
-                      the underlying cycle numbers. The transparency Flo
-                      never offers, lives on Home next to the prediction. */}
-                  {phase && cycleDay != null && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: 6 }}>
-                      <WhyChip
-                        label="learn more"
-                        color={phase.color}
-                        source={cycle.cyclesLogged > 0 ? `Your last ${Math.min(6, cycle.cyclesLogged)} cycle${cycle.cyclesLogged === 1 ? '' : 's'}` : 'Anchored to your onboarding date'}
-                      >
-                        {phase.id === 'menstrual' && (
-                          <>You're on day <strong>{cycleDay}</strong> of your bleed. Period length averages <strong>{periodLength} day{periodLength === 1 ? '' : 's'}</strong>, cycle length <strong>{cycleLength} days</strong>{cycle.variance?.stdDev != null ? ` (±${cycle.variance.stdDev.toFixed(1)})` : ''}.</>
-                        )}
-                        {phase.id === 'follicular' && (
-                          <>Day <strong>{cycleDay}</strong> of <strong>{cycleLength}</strong>. {cycle.ovulation
-                            ? <>Ovulation triangulated to day <strong>{cycle.ovulation.day}</strong> from {cycle.ovulation.signals.length} signal{cycle.ovulation.signals.length === 1 ? '' : 's'}.</>
-                            : <>Ovulation estimated around day <strong>{Math.round(cycleLength / 2)}</strong> — calendar midpoint. Logging BBT or mucus tightens this.</>}</>
-                        )}
-                        {phase.id === 'ovulation' && (
-                          <>Day <strong>{cycleDay}</strong>. The fertile window stretches 5 days before ovulation through ovulation day itself — sperm survives 3-5 days, the egg 12-24 hours.{cycle.ovulation ? <> Your signals: {cycle.ovulation.signals.map((s) => s.type === 'bbt' ? 'BBT shift' : s.type === 'mucus' ? 'egg-white mucus' : 'libido peak').join(', ')}.</> : null}</>
-                        )}
-                        {phase.id === 'luteal' && (
-                          <>Day <strong>{cycleDay}</strong> of <strong>{cycleLength}</strong>. Luteal runs a 12-14 day clock after ovulation — once the corpus luteum dissolves, your period starts. {cycleLength - cycleDay + 1} day{cycleLength - cycleDay + 1 === 1 ? '' : 's'} until predicted start.</>
-                        )}
-                      </WhyChip>
                     </div>
                   )}
                 </div>
