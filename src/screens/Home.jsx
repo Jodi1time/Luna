@@ -432,10 +432,10 @@ function QuickActions({ go, setActiveLogDate }) {
   // Each card carries its functional category. Category drives the
   // card's soft tint + icon accent via SECTION_PALETTE — so the row
   // reads as chromatic variety instead of seven cream cards in a line.
-  // Reordered so the depth surfaces — Ask Luna, Conditions, What
-  // we've noticed — sit near the front. The commodity log/edit
-  // actions are still here, just not leading. Helps the user
-  // discover that Luna teaches, not just tracks.
+  // Five essential cards — the ones a user actually reaches for
+  // every day. Edit period, Intimate, Watch, Care, Schools all
+  // still exist via Settings → sub-sections, so cutting them here
+  // removes redundancy without removing the ability.
   const items = [
     { key: 'log', category: 'body', label: 'Log today', sub: 'Mood, flow, anything',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>),
@@ -449,24 +449,9 @@ function QuickActions({ go, setActiveLogDate }) {
     { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/><circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/></svg>),
       onTap: () => go('insights') },
-    { key: 'schools', category: 'plan', label: 'Cycle Schools', sub: '5-day phase programs',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5l7-3 7 3-7 3-7-3z"/><path d="M5 9v4l5 2 5-2V9"/></svg>),
-      onTap: () => go('cycleSchools') },
-    { key: 'period', category: 'urgent', label: 'Edit period', sub: 'When it really started',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 2a6 6 0 0 1 5 9.5C13.5 14 10 18 10 18s-3.5-4-5-6.5A6 6 0 0 1 10 2z"/><circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>),
-      onTap: () => go('editPeriodStart') },
-    { key: 'intimate', category: 'intimate', label: 'Your sexual life', sub: 'Desire, lubrication, pleasure',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4c-3 2-4 4-4 6a4 4 0 0 0 8 0c0-2-1-4-4-6z"/><circle cx="10" cy="11" r="1" fill="currentColor" stroke="none"/></svg>),
-      onTap: () => go('intimate') },
-    { key: 'watch', category: 'urgent', label: 'When something feels off', sub: 'Spot the patterns',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/></svg>),
-      onTap: () => go('watch') },
     { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
       icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>),
       onTap: () => go('cheatsheet') },
-    { key: 'care', category: 'care', label: 'Care checklist', sub: 'Checkups, screenings',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M6 12l2 2 4-4"/></svg>),
-      onTap: () => go('care') },
   ]
   // One-shot scroll teaser — runs once on mount unless the user
   // touches the row first, in which case it cancels immediately so
@@ -1446,7 +1431,26 @@ export default function Home() {
               helpers. Nobody else gives women a 5-day phase-aware
               literacy program, a doula-toned daily reflection, or a
               full diary with photos + voice. These run above the
-              commodity daily-log surfaces. */}
+              commodity daily-log surfaces.
+
+              Order: diary FIRST (the Luna gimmick most loved), then
+              the cycle school card when active, then morning thought,
+              then daily insight. The user reaches her own writing in
+              two taps from app open. */}
+
+          {/* The diary — multi-entry writing with photos + voice +
+              customisable paper. A Luna-distinctive surface (Flo /
+              Clue have no diary at all). Moved to the top of the
+              differentiators tier so the user finds her own writing
+              before everything else. */}
+          {!isPreg && (
+            <JournalCard
+              entries={settings?.journalEntries}
+              journalTheme={settings?.journalTheme}
+              phaseColor={phase?.color}
+              onTap={() => go('journal')}
+            />
+          )}
 
           {/* Cycle School card — appears only when the user's current
               phase matches an enrolled school AND it's not completed.
@@ -1522,19 +1526,6 @@ export default function Home() {
               </div>
             )
           })()}
-
-          {/* The diary — multi-entry writing with photos + voice +
-              customisable paper. A Luna-distinctive surface (Flo /
-              Clue have no diary at all). Lives in the "differentiators"
-              tier above the commodity log gestures. */}
-          {!isPreg && (
-            <JournalCard
-              entries={settings?.journalEntries}
-              journalTheme={settings?.journalTheme}
-              phaseColor={phase?.color}
-              onTap={() => go('journal')}
-            />
-          )}
 
           {/* For today — horizontal scroll of curated phase-tuned
               cards (nourishment + article + movement). Phase-aware
