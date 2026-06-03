@@ -301,12 +301,9 @@ export const Screen = forwardRef(function Screen({ children, padBottom = 120, st
       overflowY: 'auto', overflowX: 'hidden',
       scrollbarWidth: 'none',
       paddingBottom: padBottom,
-      /* Directional screen entry — body class toggles which keyframe
-         plays. Forward nav slides in slightly from the right; back
-         nav slides in from the left. Small X-offset preserves the
-         existing fadeUp+scale feel; direction is a hint, not a
-         transition. */
-      animation: 'var(--screen-enter-anim, screenEnter) .45s cubic-bezier(0.32, 0.72, 0.36, 1) both',
+      /* screenEnter is a slightly longer + scale-touched fade so tab
+         changes feel less abrupt than a hard render swap. */
+      animation: 'screenEnter .45s cubic-bezier(0.32, 0.72, 0.36, 1) both',
       ...s,
     }}>
       {children}

@@ -94,24 +94,10 @@ button.no-tap, button.no-tap:active { transform: none; }
 }
 
 /* Screen-level entry — slightly longer than fadeUp, with the iOS
-   drawer curve so tab changes feel like a single confident gesture.
-   Two variants: forward (slide-in slightly from the right) and back
-   (slide-in slightly from the left). The X offset is small (6px)
-   so the existing fadeUp+scale feel is preserved — directionality
-   is a hint, not a transition. Default keyframe stays the same
-   shape as before so any caller that doesn't toggle a direction
-   still works untouched. */
+   drawer curve so tab changes feel like a single confident gesture. */
 @keyframes screenEnter {
   from { opacity: 0; transform: translateY(6px) scale(0.995); filter: blur(3px); }
   to   { opacity: 1; transform: translateY(0)    scale(1);     filter: blur(0);   }
-}
-@keyframes screenEnterForward {
-  from { opacity: 0; transform: translateY(6px) translateX(6px) scale(0.995); filter: blur(3px); }
-  to   { opacity: 1; transform: translateY(0)   translateX(0)   scale(1);     filter: blur(0);   }
-}
-@keyframes screenEnterBack {
-  from { opacity: 0; transform: translateY(6px) translateX(-6px) scale(0.995); filter: blur(3px); }
-  to   { opacity: 1; transform: translateY(0)   translateX(0)    scale(1);     filter: blur(0);   }
 }
 
 @keyframes fadeIn {
