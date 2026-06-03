@@ -24,7 +24,7 @@ export default function Welcome() {
           A companion for the body<br /><em>you live in.</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.6, color: T.muted, marginTop: 20 }}>
-          Luna learns your cycle and meets you where you are — in the energy of follicular, the quiet of menstrual, the heat of luteal. A wise older sister, on the days you need one.
+          Luna learns your cycle and meets you where you are — in the energy of follicular, the quiet of menstrual, the heat of luteal. A companion, on the days you need one.
         </div>
       </div>
 
