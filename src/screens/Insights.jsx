@@ -473,10 +473,36 @@ export default function Insights() {
         <div className="insight-stagger" style={{ animationDelay: '280ms' }}>
         <Eyebrow>What's repeating in your cycle</Eyebrow>
         {patterns.length === 0 ? (
-          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8, lineHeight: 1.55 }}>
-            {cyclesLogged < 2
-              ? <>Patterns surface after about a full cycle of logging. Keep going.</>
-              : <>No strong patterns yet. Keep logging — they'll surface here as they emerge.</>}
+          <div className="alive-card frost-card" style={{
+            marginTop: 6, padding: 20,
+            background: `linear-gradient(160deg, ${(phase?.color || T.accent)}0c, rgba(253,250,245,0.55))`,
+            border: `1px solid ${(phase?.color || T.accent)}1f`,
+            borderRadius: 22,
+            boxShadow: `0 14px 30px -22px ${(phase?.color || T.accent)}38`,
+          }}>
+            {/* Tiny constellation forming — three dots connected by
+                soft lines, suggesting "patterns become visible
+                with more points." Phase-tinted, subtle. */}
+            <svg width="40" height="40" viewBox="0 0 40 40" style={{ marginBottom: 10, opacity: 0.85 }} aria-hidden="true">
+              <line x1="8" y1="14" x2="20" y2="26" stroke={phase?.color || T.accent} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
+              <line x1="20" y1="26" x2="32" y2="10" stroke={phase?.color || T.accent} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
+              <circle cx="8" cy="14" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
+              <circle cx="20" cy="26" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
+              <circle cx="32" cy="10" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
+            </svg>
+            <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 6 }}>
+              {cyclesLogged < 2 ? 'Your patterns are still forming.' : 'No strong patterns yet.'}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+              {cyclesLogged < 2
+                ? 'Patterns surface after about a cycle of logging. Luna is paying attention — keep going.'
+                : "Keep logging and they'll arrive here as they emerge. Three connected dots make a constellation."}
+            </div>
+            {cyclesLogged > 0 && (
+              <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>
+                {cyclesLogged} CYCLE{cyclesLogged === 1 ? '' : 'S'} TRACKED · {Object.keys(logs || {}).length} DAY{Object.keys(logs || {}).length === 1 ? '' : 'S'} LOGGED
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>

@@ -326,8 +326,27 @@ export default function Calendar() {
             })}
           </div>
         ) : (
-          <div style={{ fontFamily: T.serif, fontSize: 15, color: T.muted, fontStyle: 'italic', marginTop: 8, lineHeight: 1.55 }}>
-            Log your first period and Luna will start learning your rhythm from there.
+          <div className="alive-card frost-card" style={{
+            padding: 22,
+            background: `linear-gradient(160deg, ${T.accent}0c, rgba(253,250,245,0.55))`,
+            border: `1px solid ${T.accent}1f`,
+            borderRadius: 22,
+            boxShadow: `0 14px 30px -22px ${T.accent}38`,
+          }}>
+            {/* Three soft phase-dots forming a small arc — visualises
+                "your rhythm" without literal cycle data yet. */}
+            <svg width="56" height="20" viewBox="0 0 56 20" style={{ marginBottom: 12, opacity: 0.85 }} aria-hidden="true">
+              <path d="M4 14 Q 28 -2 52 14" stroke={T.accent} strokeWidth="1" fill="none" opacity="0.4" strokeLinecap="round"/>
+              <circle cx="4" cy="14" r="2.5" fill={PHASES.menstrual.color}/>
+              <circle cx="28" cy="3" r="2.5" fill={PHASES.ovulation.color}/>
+              <circle cx="52" cy="14" r="2.5" fill={PHASES.luteal.color}/>
+            </svg>
+            <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.25, marginBottom: 8 }}>
+              Your rhythm starts here.
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+              Log your first period and Luna begins learning. Three or four cycles in, predictions sharpen — you'll feel the difference.
+            </div>
           </div>
         )}
         <div style={{ height: 16 }} />

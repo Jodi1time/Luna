@@ -7,10 +7,12 @@ import { getSession } from '../lib/supabase'
 import { StatusView } from '../components/StatusView'
 import { validateName, validateAccountPassword, validateEmail } from '../lib/validation'
 
-// Editorial progress bar — three numbered chips with the current step
-// lit in accent. Reads as "you are here" rather than "fill these in."
+// Editorial progress indicator — three small italic-serif step labels,
+// current step lit in accent, completed steps dimmed but legible.
+// Lowercase to match Luna's literary register; uppercase mono was
+// the form-wizard tell that didn't belong here.
 function ProgressBar({ step, total = 3 }) {
-  const labels = ['Your last period', 'Your cycle', 'Your name']
+  const labels = ['your last period', 'your cycle', 'your name']
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 30 }}>
       {Array.from({ length: total }).map((_, i) => {
@@ -18,24 +20,26 @@ function ProgressBar({ step, total = 3 }) {
         const active = n === step
         const done = n < step
         return (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
+          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
             <div style={{
-              width: 22, height: 22, borderRadius: '50%',
+              width: 24, height: 24, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, fontWeight: 500,
-              background: active ? T.accent : (done ? T.accent + '22' : 'transparent'),
+              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500,
+              background: active ? T.accent : (done ? T.accent + '22' : 'rgba(253,250,245,0.55)'),
               color: active ? '#fff' : (done ? T.accent : T.muted),
-              border: active ? 'none' : `1px solid ${done ? T.accent + '55' : T.hair}`,
+              border: active ? 'none' : `1px solid ${done ? T.accent + '40' : 'rgba(26,19,16,0.08)'}`,
+              boxShadow: active ? `0 6px 14px -6px ${T.accent}80` : 'none',
               transition: 'all 0.3s var(--ease-out)',
             }}>
               {n}
             </div>
             <div style={{
-              fontFamily: T.mono, fontSize: 8.5, letterSpacing: 0.9, fontWeight: 600,
+              fontFamily: T.serif, fontStyle: 'italic',
+              fontSize: 11, fontWeight: 500,
               color: active ? T.accent : T.muted,
-              opacity: active ? 1 : 0.55,
+              opacity: active ? 1 : 0.6,
+              letterSpacing: -0.1,
               transition: 'all 0.3s var(--ease-out)',
-              textTransform: 'uppercase',
             }}>
               {labels[i]}
             </div>
@@ -83,38 +87,51 @@ function StepDate({ value, onChange }) {
   }
 
   return (
-    <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderRadius: T.r }}>
-      {/* Month navigation header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+    <div className="frost-card" style={{
+      background: 'rgba(253,250,245,0.55)',
+      padding: 18,
+      border: '1px solid rgba(26,19,16,0.06)',
+      borderRadius: 22,
+      backdropFilter: 'blur(14px)',
+      WebkitBackdropFilter: 'blur(14px)',
+      boxShadow: '0 14px 30px -22px rgba(26,19,16,0.18)',
+    }}>
+      {/* Month navigation header — frosted circular nav buttons,
+          italic-serif month label. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <button onClick={() => stepMonth(-1)} disabled={!canGoBack}
           aria-label="Previous month"
+          className="alive-card"
           style={{
-            background: 'transparent', border: `1px solid ${T.hair}`,
-            color: canGoBack ? T.text : T.hair,
-            width: 30, height: 30, borderRadius: T.r,
+            background: 'rgba(253,250,245,0.55)',
+            border: '1px solid rgba(26,19,16,0.06)',
+            color: canGoBack ? T.text : 'rgba(26,19,16,0.18)',
+            width: 32, height: 32, borderRadius: 999,
             cursor: canGoBack ? 'pointer' : 'default',
-            fontFamily: T.sans, fontSize: 16, padding: 0,
+            fontFamily: T.serif, fontSize: 17, padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>‹</button>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, fontSize: 17, letterSpacing: -0.2, color: T.text }}>
-          {monthLabel}
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, fontSize: 18, letterSpacing: -0.2, color: T.text }}>
+          {monthLabel.toLowerCase()}
         </div>
         <button onClick={() => stepMonth(1)} disabled={!canGoForward}
           aria-label="Next month"
+          className="alive-card"
           style={{
-            background: 'transparent', border: `1px solid ${T.hair}`,
-            color: canGoForward ? T.text : T.hair,
-            width: 30, height: 30, borderRadius: T.r,
+            background: 'rgba(253,250,245,0.55)',
+            border: '1px solid rgba(26,19,16,0.06)',
+            color: canGoForward ? T.text : 'rgba(26,19,16,0.18)',
+            width: 32, height: 32, borderRadius: 999,
             cursor: canGoForward ? 'pointer' : 'default',
-            fontFamily: T.sans, fontSize: 16, padding: 0,
+            fontFamily: T.serif, fontSize: 17, padding: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>›</button>
       </div>
-      {/* Day-of-week headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
-        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
+      {/* Day-of-week headers — italic serif lowercase, not mono caps */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
+        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, opacity: 0.7 }}>{d.toLowerCase()}</div>)}
       </div>
-      {/* Day cells */}
+      {/* Day cells — rounded, soft selection, today gets a dashed ring */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {Array.from({ length: offset }).map((_, i) => <div key={`e${i}`} />)}
         {dates.map((d) => {
@@ -128,32 +145,32 @@ function StepDate({ value, onChange }) {
               style={{
                 aspectRatio: '1',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 13, fontFamily: T.serif,
+                fontSize: 14, fontFamily: T.serif,
                 cursor: isFuture ? 'default' : 'pointer',
-                border: isToday && !isSelected ? `1px dashed ${T.accent}66` : 'none',
+                border: isToday && !isSelected ? `1.5px dashed ${T.accent}66` : 'none',
                 background: isSelected ? T.accent : 'transparent',
-                color: isSelected ? '#fff' : isFuture ? T.hair : T.text,
+                color: isSelected ? '#fff' : isFuture ? 'rgba(26,19,16,0.18)' : T.text,
                 opacity: isFuture ? 0.4 : 1,
-                borderRadius: T.r,
+                borderRadius: 999,
                 fontWeight: isSelected ? 600 : 400,
+                fontStyle: isSelected ? 'italic' : 'normal',
                 padding: 0,
-                transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out)',
+                boxShadow: isSelected ? `0 6px 14px -6px ${T.accent}80` : 'none',
+                transition: 'all 0.2s var(--ease-out)',
               }}>
               {d}
             </button>
           )
         })}
       </div>
-      {/* Selected-date readback — confirms the user's choice in a
-          conversational line so they don't have to recompute the
-          month they're looking at. */}
+      {/* Selected-date readback — italic serif sentence */}
       {value && (
         <div style={{
-          marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`,
-          fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic',
-          color: T.muted, textAlign: 'center', letterSpacing: -0.1,
+          marginTop: 16, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.06)',
+          fontFamily: T.serif, fontSize: 14, fontStyle: 'italic',
+          color: T.text, textAlign: 'center', letterSpacing: -0.1,
         }}>
-          {new Date(value + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.
+          {new Date(value + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toLowerCase()}.
         </div>
       )}
     </div>
@@ -178,10 +195,19 @@ function StepCycle({ value, onChange }) {
   )
 }
 
+// Field — italic-serif lowercase label, frost-card input, accent
+// focus ring. Matches the Settings + Auth register. The previous
+// uppercase-mono labels + square inputs were the last form-wizard
+// tell on this screen.
 function Field({ label, type = 'text', value, onChange, placeholder }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>{label}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{
+        fontFamily: T.serif, fontStyle: 'italic', fontSize: 13,
+        fontWeight: 500, color: T.muted, letterSpacing: -0.1,
+      }}>
+        {String(label).toLowerCase()}
+      </div>
       <input
         type={type}
         value={value}
@@ -189,9 +215,22 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
         placeholder={placeholder}
         autoCapitalize="off"
         autoCorrect="off"
-        style={{ background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '13px 14px', fontSize: 15, fontFamily: T.sans, color: T.text, outline: 'none', width: '100%' }}
-        onFocus={(e) => { e.target.style.borderColor = T.accent }}
-        onBlur={(e)  => { e.target.style.borderColor = T.hair }}
+        className="frost-card"
+        style={{
+          background: 'rgba(253,250,245,0.55)',
+          border: '1px solid rgba(26,19,16,0.08)',
+          borderRadius: 16,
+          padding: '14px 16px',
+          fontSize: 15,
+          fontFamily: T.sans,
+          color: T.text,
+          outline: 'none',
+          width: '100%',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+        }}
+        onFocus={(e) => { e.target.style.borderColor = T.accent; e.target.style.boxShadow = `0 0 0 3px ${T.accent}18` }}
+        onBlur={(e)  => { e.target.style.borderColor = 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }}
       />
     </div>
   )
@@ -199,23 +238,33 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
 
 function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <Field label="Your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <Field label="your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
 
       {signedInEmail ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Signed in as</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
+            signed in as
+          </div>
           <div style={{ fontFamily: T.sans, fontSize: 14, color: T.text }}>{signedInEmail}</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 14, borderTop: `1px solid ${T.hair}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>Your account</div>
-          <Field label="Email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
-          <Field label="Password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="Min. 8 characters" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
+            your account
+          </div>
+          <Field label="email" type="email" value={email} onChange={(v) => onChange('email', v)} placeholder="you@example.com" />
+          <Field label="password" type="password" value={accountPassword} onChange={(v) => onChange('accountPassword', v)} placeholder="At least 8 characters" />
         </div>
       )}
 
-      <div style={{ fontSize: 12, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, padding: '12px 14px', background: T.subtle, borderRadius: T.r }}>
+      <div className="frost-card" style={{
+        fontSize: 12.5, color: T.muted, fontFamily: T.serif, fontStyle: 'italic',
+        lineHeight: 1.6, padding: '14px 16px',
+        background: 'rgba(253,250,245,0.55)',
+        border: '1px solid rgba(26,19,16,0.06)',
+        borderRadius: 16,
+      }}>
         Sign in on any device to come back to your cycle. Your data is encrypted at rest — only you can read it.
       </div>
     </div>
@@ -365,7 +414,7 @@ export default function Onboarding({ step }) {
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .3s ease-out both', overflowY: 'auto', minHeight: 0 }}>
       <ProgressBar step={step} />
 
-      <div className="insight-stagger" style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, marginBottom: 6, animationDelay: '0ms' }}>STEP {step} / 3</div>
+      <div className="insight-stagger" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, color: T.muted, marginBottom: 6, fontWeight: 500, animationDelay: '0ms' }}>step {step} of 3</div>
 
       {step === 1 && <>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10, animationDelay: '50ms' }}>
@@ -417,19 +466,30 @@ export default function Onboarding({ step }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {step === 3 && blockReason && (
-          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.accent, lineHeight: 1.5, padding: '10px 14px', background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: T.r }}>
+          <div className="frost-card" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.accent, lineHeight: 1.5, padding: '12px 16px', background: T.accent + '14', border: `1px solid ${T.accent}40`, borderRadius: 16 }}>
             {blockReason}
           </div>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
           {step > 1 && (
             <button onClick={() => go(`onb${step - 1}`)}
-              style={{ border: `1px solid ${T.text}`, background: 'transparent', color: T.text, padding: '15px 18px', borderRadius: T.r, cursor: 'pointer' }}>
+              className="alive-card"
+              aria-label="Back"
+              style={{
+                border: '1px solid rgba(26,19,16,0.08)',
+                background: 'rgba(253,250,245,0.55)',
+                color: T.text,
+                padding: '14px 18px',
+                borderRadius: 999,
+                cursor: 'pointer',
+                backdropFilter: 'blur(14px)',
+                WebkitBackdropFilter: 'blur(14px)',
+              }}>
               {Icons.back}
             </button>
           )}
-          <CTAButton full onClick={() => { if (canAdvance && !finishing) next() }} style={{ opacity: canAdvance && !finishing ? 1 : 0.5 }}>
-            {finishing ? 'GETTING THINGS READY…' : (step < 3 ? 'CONTINUE' : 'WELCOME TO LUNA')} {Icons.arrow}
+          <CTAButton full onClick={() => { if (canAdvance && !finishing) next() }} style={{ opacity: canAdvance && !finishing ? 1 : 0.5, letterSpacing: 0.3, textTransform: 'none', fontSize: 13 }}>
+            {finishing ? 'Getting things ready…' : (step < 3 ? 'Continue' : 'Welcome to Luna')} {Icons.arrow}
           </CTAButton>
         </div>
 
