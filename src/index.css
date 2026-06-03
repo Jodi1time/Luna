@@ -219,6 +219,126 @@ button.glass-card:active {
   .luna-tabbar-frost { transition: none; }
 }
 
+/* ── QuickAction animated icons ────────────────────────────────
+   Each card on Home gets its own motion motif so the row reads as
+   alive surfaces, not static glyphs. Five unique patterns at
+   off-tempo durations (3.2s → 7s) to avoid mechanical-feeling sync.
+   Stroke colour is inherited from currentColor so the existing
+   section-tinted accent on each card is preserved.
+
+   Log — typewriter list write-then-erase
+   Each of the three horizontal lines draws in left-to-right
+   (stroke-dashoffset 100 → 0), holds, then erases off the right
+   (offset → -100). Lines stagger so it reads like a list being
+   written then cleared. */
+.icon-anim-log .ln {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: anim-log-write 4.2s ease-in-out infinite;
+}
+.icon-anim-log .ln-2 { animation-delay: 0.35s; }
+.icon-anim-log .ln-3 { animation-delay: 0.70s; }
+@keyframes anim-log-write {
+  0%   { stroke-dashoffset: 100; }
+  18%  { stroke-dashoffset: 0; }
+  62%  { stroke-dashoffset: 0; }
+  85%  { stroke-dashoffset: -100; }
+  100% { stroke-dashoffset: -100; }
+}
+
+/* Ask Luna — small probe orbiting inside the glass like a radar
+   sweep. The magnifying glass itself stays put (visual stability);
+   only the inner dot rotates around the glass's centre point. */
+.icon-anim-ask .probe {
+  transform-origin: 9px 9px;
+  animation: anim-ask-orbit 3.2s linear infinite;
+}
+@keyframes anim-ask-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Conditions — medical scan. Ring traces clockwise, then the cross
+   strokes appear from the centre outward, hold, then everything
+   fades and the cycle restarts. Reads as a diagnostic completing. */
+.icon-anim-conditions .ring {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: anim-conditions-ring 5s ease-in-out infinite;
+}
+.icon-anim-conditions .cv,
+.icon-anim-conditions .ch {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0;
+  animation: anim-conditions-cross 5s ease-in-out infinite;
+}
+.icon-anim-conditions .ch { animation-delay: 0.25s; }
+@keyframes anim-conditions-ring {
+  0%   { stroke-dashoffset: 100; opacity: 1; }
+  35%  { stroke-dashoffset: 0; opacity: 1; }
+  78%  { stroke-dashoffset: 0; opacity: 1; }
+  92%  { opacity: 0.3; }
+  100% { stroke-dashoffset: 100; opacity: 0; }
+}
+@keyframes anim-conditions-cross {
+  0%, 30%   { stroke-dashoffset: 100; opacity: 0; }
+  55%       { stroke-dashoffset: 0; opacity: 1; }
+  82%       { stroke-dashoffset: 0; opacity: 1; }
+  100%      { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* Insights — slow rotating dashed wheel + softly pulsing centre.
+   The dashes naturally suggest motion; rotation makes them read as
+   a pattern-detection scanner. Centre dot pulses on an offset beat
+   so the surface feels alive without being busy. */
+.icon-anim-insights .ring {
+  transform-origin: 10px 10px;
+  animation: anim-insights-spin 7s linear infinite;
+}
+.icon-anim-insights .dot {
+  transform-origin: 10px 10px;
+  animation: anim-insights-pulse 2.8s ease-in-out infinite;
+}
+@keyframes anim-insights-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes anim-insights-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.35); opacity: 1; }
+}
+
+/* Cheatsheet — checklist write-fade. Three lines draw in sequence
+   like a doctor's notepad being filled, hold longer than the Log
+   card so the "persistence" feel differs, then fade-erase together
+   for the reset. Slightly slower cycle than Log for distinction. */
+.icon-anim-cheatsheet .ln {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: anim-cheatsheet-write 5s ease-in-out infinite;
+}
+.icon-anim-cheatsheet .ln-2 { animation-delay: 0.30s; }
+.icon-anim-cheatsheet .ln-3 { animation-delay: 0.60s; }
+@keyframes anim-cheatsheet-write {
+  0%   { stroke-dashoffset: 100; }
+  24%  { stroke-dashoffset: 0; }
+  88%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 100; }
+}
+
+/* Reduced-motion users: freeze everything in the "filled" rest state. */
+@media (prefers-reduced-motion: reduce) {
+  .icon-anim-log .ln,
+  .icon-anim-conditions .ring,
+  .icon-anim-conditions .cv,
+  .icon-anim-conditions .ch,
+  .icon-anim-cheatsheet .ln { animation: none; stroke-dashoffset: 0; opacity: 1; }
+  .icon-anim-ask .probe,
+  .icon-anim-insights .ring,
+  .icon-anim-insights .dot { animation: none; }
+}
+
 /* ── Horizontal scroller polish ──────────────────────────────────
    Apple-grade horizontal rows. The mask-image fades the rightmost
    ~36px so the peek card softly dissolves into the screen, telling

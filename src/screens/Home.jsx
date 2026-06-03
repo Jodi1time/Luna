@@ -430,25 +430,57 @@ function QuickActions({ go, setActiveLogDate }) {
   // Each card carries its functional category. Category drives the
   // card's soft tint + icon accent via SECTION_PALETTE — so the row
   // reads as chromatic variety instead of seven cream cards in a line.
-  // Five essential cards — the ones a user actually reaches for
-  // every day. Edit period, Intimate, Watch, Care, Schools all
-  // still exist via Settings → sub-sections, so cutting them here
-  // removes redundancy without removing the ability.
+  // Five essential cards — each with its own animated icon motif so
+  // the row reads as alive surfaces instead of static glyphs. Motion
+  // is unique per card (write-erase, orbiting probe, scan-trace,
+  // slow rotation + pulse, line writing) so no two cards share the
+  // same beat. Off-tempo durations (3.2 → 7s) avoid synchronized
+  // mechanical feel. Animations respect prefers-reduced-motion.
   const items = [
     { key: 'log', category: 'body', label: 'Log today', sub: 'Keeps your predictions sharp',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5h14M3 10h14M3 15h9"/></svg>),
+      icon: (
+        <svg className="icon-anim-log" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path className="ln ln-1" pathLength="100" d="M3 5h14"/>
+          <path className="ln ln-2" pathLength="100" d="M3 10h14"/>
+          <path className="ln ln-3" pathLength="100" d="M3 15h9"/>
+        </svg>
+      ),
       onTap: openLogToday },
     { key: 'ask', category: 'read', label: 'Ask Luna', sub: 'Sourced, plain-English answers',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="9" r="5.5"/><path d="M13 13l4 4"/></svg>),
+      icon: (
+        <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="9" cy="9" r="5.5"/>
+          <path d="M13 13l4 4"/>
+          <circle className="probe" cx="9" cy="5" r="1.1" fill="currentColor" stroke="none"/>
+        </svg>
+      ),
       onTap: () => go('askLuna') },
     { key: 'conditions', category: 'urgent', label: 'Conditions Atlas', sub: 'PCOS, endo, PMDD, more',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h14M10 3v14"/><circle cx="10" cy="10" r="7"/></svg>),
+      icon: (
+        <svg className="icon-anim-conditions" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle className="ring" cx="10" cy="10" r="7" pathLength="100"/>
+          <path className="cv" pathLength="100" d="M10 5v10"/>
+          <path className="ch" pathLength="100" d="M5 10h10"/>
+        </svg>
+      ),
       onTap: () => go('conditions') },
     { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/><circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/></svg>),
+      icon: (
+        <svg className="icon-anim-insights" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <circle className="ring" cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/>
+          <circle className="dot" cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/>
+        </svg>
+      ),
       onTap: () => go('insights') },
     { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
-      icon: (<svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="12" height="14" rx="1.5"/><path d="M7 7h6M7 10h6M7 13h4"/></svg>),
+      icon: (
+        <svg className="icon-anim-cheatsheet" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="3" width="12" height="14" rx="1.5"/>
+          <path className="ln ln-1" pathLength="100" d="M7 7h6"/>
+          <path className="ln ln-2" pathLength="100" d="M7 10h6"/>
+          <path className="ln ln-3" pathLength="100" d="M7 13h4"/>
+        </svg>
+      ),
       onTap: () => go('cheatsheet') },
   ]
   // One-shot scroll teaser — runs once on mount unless the user
