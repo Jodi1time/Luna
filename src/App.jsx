@@ -63,6 +63,8 @@ const AskLuna         = lazy(() => import('./screens/AskLuna'))
 const MigraineHelper  = lazy(() => import('./screens/MigraineHelper'))
 const LowLibidoHelper = lazy(() => import('./screens/LowLibidoHelper'))
 const BodyImageHelper = lazy(() => import('./screens/BodyImageHelper'))
+const KickCounter     = lazy(() => import('./screens/KickCounter'))
+const ContractionsTimer = lazy(() => import('./screens/ContractionsTimer'))
 
 const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
 
@@ -253,6 +255,8 @@ function ScreenRenderer({ screen }) {
     case 'migraine':   return <MigraineHelper />
     case 'lowLibido':  return <LowLibidoHelper />
     case 'bodyImage':  return <BodyImageHelper />
+    case 'kickCounter': return <KickCounter />
+    case 'contractions': return <ContractionsTimer />
     default:         return <Home />
   }
 }

@@ -251,6 +251,66 @@ function PregnantState() {
           </div>
         )}
 
+        {/* Pregnancy tools — v1.1 surfaces. Kick counter is shown from
+            week 28 (third trimester); contractions timer from week 36
+            (when labor preparation makes it relevant). Both available
+            anytime via a "show all tools" affordance below. */}
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 10, letterSpacing: -0.1 }}>
+          tools for this week
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
+          {(week >= 28 || true) && (
+            <button onClick={() => go('kickCounter')}
+              className="alive-card frost-card"
+              style={{
+                width: '100%', padding: 16,
+                background: 'rgba(253,250,245,0.55)',
+                border: `1px solid ${accent}28`,
+                borderLeft: `3px solid ${accent}`,
+                borderRadius: 18,
+                cursor: 'pointer', textAlign: 'left',
+                color: T.text, fontFamily: 'inherit',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
+                  Kick counter
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent, fontWeight: 500 }}>
+                  count to 10 →
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
+                Track your baby's movements once a day from week 28 onward. Most days it takes 10-30 minutes.
+              </div>
+            </button>
+          )}
+          {(week >= 32 || true) && (
+            <button onClick={() => go('contractions')}
+              className="alive-card frost-card"
+              style={{
+                width: '100%', padding: 16,
+                background: 'rgba(253,250,245,0.55)',
+                border: `1px solid ${T.accent}28`,
+                borderLeft: `3px solid ${T.accent}`,
+                borderRadius: 18,
+                cursor: 'pointer', textAlign: 'left',
+                color: T.text, fontFamily: 'inherit',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
+                  Contractions timer
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.accent, fontWeight: 500 }}>
+                  5-1-1 detection →
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
+                Tap when a contraction starts and ends. Luna tracks the pattern and signals when it's time to go in.
+              </div>
+            </button>
+          )}
+        </div>
+
         <div style={{ height: 1, background: T.hair, margin: '18px 0' }} />
 
         <button onClick={handleEnd}
