@@ -35,6 +35,7 @@ const Terms           = lazy(() => import('./screens/Terms'))
 const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
 const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
 const PeriodDaysPicker = lazy(() => import('./screens/PeriodDaysPicker'))
+const EditSetup       = lazy(() => import('./screens/EditSetup'))
 const EditCycleNumbers = lazy(() => import('./screens/EditCycleNumbers'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
@@ -164,8 +165,8 @@ export default function App() {
   // - If onboarded but the session restored to 'welcome' (since screen
   //   isn't persisted) or any onboarding step → Home.
   const resolvedScreen = !onboarded
-    ? (['welcome','onb1','onb2','onb3','auth','terms','privacy','resetPassword'].includes(screen) ? screen : 'welcome')
-    : (['welcome','onb1','onb2','onb3'].includes(screen) ? 'home' : screen)
+    ? (['welcome','onbIntent','onbConditions','onb1','onb2','onbPriorities','onbPayoff','onb3','auth','terms','privacy','resetPassword'].includes(screen) ? screen : 'welcome')
+    : (['welcome','onbIntent','onbConditions','onb1','onb2','onbPriorities','onbPayoff','onb3'].includes(screen) ? 'home' : screen)
 
   return (
     <AppShell>
@@ -198,8 +199,12 @@ function GlobalCelebration() {
 function ScreenRenderer({ screen }) {
   switch (screen) {
     case 'welcome':  return <Welcome />
+    case 'onbIntent':     return <Onboarding slug="intent" />
+    case 'onbConditions': return <Onboarding slug="conditions" />
     case 'onb1':     return <Onboarding step={1} />
     case 'onb2':     return <Onboarding step={2} />
+    case 'onbPriorities': return <Onboarding slug="priorities" />
+    case 'onbPayoff':     return <Onboarding slug="payoff" />
     case 'onb3':     return <Onboarding step={3} />
     case 'care':     return <Care />
     case 'home':     return <Home />
@@ -219,6 +224,7 @@ function ScreenRenderer({ screen }) {
     case 'periodHistory': return <PeriodHistory />
     case 'editPeriodStart': return <EditPeriodStart />
     case 'periodDays': return <PeriodDaysPicker />
+    case 'editSetup': return <EditSetup />
     case 'editCycleNumbers': return <EditCycleNumbers />
     case 'birthControl': return <BirthControl />
     case 'pregnancy': return <Pregnancy />

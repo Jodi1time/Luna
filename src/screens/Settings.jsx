@@ -13,6 +13,26 @@ import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { hasMood } from '../lib/moods'
 
+// Short readback of the onboarding answers — appears as the sub-label
+// on the "Your setup" Settings row. Keeps it scannable: intent first,
+// "irregular" if she flagged it. Falls back to "tap to set" so the row
+// stays useful for users who pre-date this feature.
+const INTENT_SHORT = {
+  'understanding':       'Understanding her body',
+  'managing-condition':  'Managing a condition',
+  'ttc':                 'Trying to conceive',
+  'avoiding':            'Avoiding pregnancy',
+  'pregnant':            'Pregnant or postpartum',
+  'menopause':           'Menopause',
+  'just-tracking':       'Just tracking',
+}
+function setupSummary(settings) {
+  if (!settings?.intent) return 'tap to set'
+  const bits = [INTENT_SHORT[settings.intent] || 'set']
+  if (settings.irregular) bits.push('irregular')
+  return bits.join(' · ').toLowerCase()
+}
+
 // Section label — italic serif lowercase with a small accent dot.
 // Soft + literary, not a config header. The dot picks up whichever
 // section color is associated with the group below.
@@ -199,6 +219,17 @@ export default function Settings() {
         <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
           {session ? 'Sign in on any device to come back to your cycle.' : 'Without an account, your cycle lives only on this device.'}
         </div>
+      </div>
+
+      {/* Your setup — single entry into the EditSetup screen, which
+          edits every onboarding answer (intent, conditions, irregular,
+          priorities) in place. Sub-label shows a short readback of what
+          she said so she can see what's pinned at a glance. */}
+      <div className="insight-stagger" style={{ animationDelay: '270ms' }}>
+      <SectionLabel color={acc}>Your Luna</SectionLabel>
+      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+        <Row label="Your setup" value={setupSummary(settings)} onTap={() => go('editSetup')} />
+      </div>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '290ms' }}>

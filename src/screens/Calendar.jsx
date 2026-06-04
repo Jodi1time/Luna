@@ -8,6 +8,7 @@ import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionPaper } from '../data/sectionPalette'
 import { WhyChip, SourceTag } from '../components/Sourced'
+import ContextualTip from '../components/ContextualTip'
 
 const MS_PER_DAY = 86400000
 
@@ -115,6 +116,10 @@ export default function Calendar() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic', animationDelay: '60ms' }}>
           Logged days are filled; predicted days are outlined.
         </div>
+
+        <ContextualTip tipId="calendar-tap">
+          Tap any past day to log what happened, or change what you wrote. Future days are predictions you can soften by logging.
+        </ContextualTip>
 
         {/* Month header with arrow nav + flourish next to month name */}
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, animationDelay: '100ms' }}>

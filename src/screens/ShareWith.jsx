@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Screen, Eyebrow } from '../components/shared'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import ContextualTip from '../components/ContextualTip'
 import {
   createInvite,
   listOutgoingShares,
@@ -204,6 +205,10 @@ export default function ShareWith() {
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5, color: T.muted, lineHeight: 1.55, marginBottom: 22 }}>
           A partner, your mother, a sister, a doula. You choose what they see and you can revoke any time. They need to download Luna and accept your invite.
         </div>
+
+        <ContextualTip tipId="share-link" accent={accent}>
+          The link works anywhere — Messages, WhatsApp, email. Diary entries and photos are never shared, even at the full-picture scope.
+        </ContextualTip>
 
         {/* Newly created invite — show the link prominently */}
         {newInvite && (

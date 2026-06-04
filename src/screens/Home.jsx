@@ -4,7 +4,7 @@ import { Screen, SourceLine } from '../components/shared'
 import { SymptomIcon, MOOD_LABELS as MOOD_LABELS_CANON, MOOD_COLORS as MOOD_COLORS_CANON } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor } from '../data/bodyLiteracy'
-import { matchConditions } from '../data/conditions'
+import { matchConditions, getCondition } from '../data/conditions'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
@@ -16,7 +16,6 @@ import { moodIdsOf } from '../lib/moods'
 import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
 import Backdrop, { useBackdropKind } from '../components/Backdrop'
-import Tutorial from '../components/Tutorial'
 import { usePregnancy } from '../hooks/usePregnancy'
 import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
@@ -766,6 +765,49 @@ function CycleSchoolCard({ phase, settings, go }) {
   )
 }
 
+// Pinned condition card — surfaces on Home for users who said in
+// onboarding that they're managing a specific condition. Opens straight
+// into that condition's Conditions Atlas detail page. Sits in the
+// differentiator tier above the AI thought because for someone with
+// PCOS / endo / PMDD, this is the surface they came here for. Quiet
+// editorial card, never alarmist.
+function PinnedConditionCard({ conditionId, go }) {
+  const condition = getCondition(conditionId)
+  if (!condition) return null
+  const colors = sectionColors('urgent')
+  const open = () => {
+    useLuna.setState({ activeConditionId: conditionId })
+    go('conditions')
+  }
+  return (
+    <button onClick={open} className="alive-card frost-card sheen-once"
+      style={{
+        position: 'relative',
+        marginTop: 22, padding: 20,
+        background: sectionPaper('urgent'),
+        border: `1px solid ${colors.accent}28`,
+        borderRadius: 22,
+        boxShadow: `0 14px 30px -22px ${colors.accent}55`,
+        textAlign: 'left', cursor: 'pointer', width: '100%',
+        color: T.text, fontFamily: 'inherit', display: 'block',
+        overflow: 'hidden',
+      }}>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: colors.accent, fontWeight: 500, letterSpacing: -0.1, marginBottom: 8 }}>
+        your condition
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.3, marginBottom: 6 }}>
+        {condition.name}
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, lineHeight: 1.55, marginBottom: 6 }}>
+        {condition.summary}
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: colors.accent, fontWeight: 500, marginTop: 6 }}>
+        read deeper →
+      </div>
+    </button>
+  )
+}
+
 // Phase-tuned + milestone-aware "invite someone in" card. The strategic
 // purpose: surface Luna's Share with someone Pro feature in the editorial
 // register, not the surveillance-coded "Partner tab" register that Flo
@@ -957,6 +999,24 @@ export default function Home() {
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
+
+  // ─── Adaptive Home flags ─────────────────────────────────────
+  // Drive section ordering + visibility from onboarding answers
+  // (settings.intent + settings.priorities). The home feed feels
+  // tailored when these decide what leads + what's hidden; it
+  // feels cluttered when it doesn't. Defaults from intent keep
+  // behaviour sensible if priorities was never visited.
+  const userIntent = settings?.intent
+  const userPriorities = (settings?.priorities && settings.priorities.length > 0)
+    ? settings.priorities
+    : null  // null means "fall back to defaults / show universal stack"
+  const pinnedConditionId = (userIntent === 'managing-condition' && settings?.conditions?.[0]) || null
+  const reflectFirst = userPriorities ? userPriorities.includes('reflect') : false
+  const hideEducational = userIntent === 'just-tracking'
+  // Circle (Share with someone) feels off-key when the user said
+  // "just tracking, simply" — they didn't sign up for a haven, they
+  // signed up for utility. Quiet by default for that intent.
+  const hideCircleCard = userIntent === 'just-tracking'
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
   // Smart cramps surface: if today's log has cramps as a mood OR as a
   // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
@@ -1470,6 +1530,28 @@ export default function Home() {
               (loved gimmick, but private to the user). Cycle School
               when active. Daily insight after that. */}
 
+          {/* Adaptive: pinned condition card. Only mounts for users who
+              said in onboarding that they're managing a specific
+              condition AND named at least one. Leads the differentiator
+              tier for them because for someone with PCOS / endo / PMDD,
+              this is what they came here for. */}
+          {!isPreg && pinnedConditionId && (
+            <PinnedConditionCard conditionId={pinnedConditionId} go={go} />
+          )}
+
+          {/* Adaptive: reflect-first variant. When she picked "A
+              private space to reflect" as a priority, the diary leads
+              the differentiator tier instead of the AI thought. Her
+              writing is what she came here for. */}
+          {!isPreg && reflectFirst && (
+            <JournalCard
+              entries={settings?.journalEntries}
+              journalTheme={settings?.journalTheme}
+              phaseColor={phase?.color}
+              onTap={() => go('journal')}
+            />
+          )}
+
           {/* Morning thought — promoted to lead the differentiators
               tier (step 2 of the AI promotion pass). Large italic
               serif quote, soft phase-tinted glass, opening serif
@@ -1518,8 +1600,9 @@ export default function Home() {
               for the Share with someone Pro feature. Doula voice,
               phase-tuned, conditional + dismissable. Sits in the
               differentiator tier alongside the AI thought, never
-              tab-bar real estate. */}
-          {!isPreg && (
+              tab-bar real estate. Suppressed for just-tracking intent
+              — they didn't sign up for a haven, they signed up for utility. */}
+          {!isPreg && !hideCircleCard && (
             <CircleCard
               phase={phase}
               settings={settings}
@@ -1530,9 +1613,9 @@ export default function Home() {
           )}
 
           {/* The diary — multi-entry writing with photos + voice +
-              customisable paper. Still high in the order; the user's
-              own writing is sacred. */}
-          {!isPreg && (
+              customisable paper. Skipped here when reflectFirst is set
+              (it already led the tier above). */}
+          {!isPreg && !reflectFirst && (
             <JournalCard
               entries={settings?.journalEntries}
               journalTheme={settings?.journalTheme}
@@ -1544,8 +1627,10 @@ export default function Home() {
           {/* Cycle School card — appears only when the user's current
               phase matches an enrolled school AND it's not completed.
               When it appears, it's the rarest and most distinctive
-              thing on the page, so it leads. */}
-          {!isPreg && phase && (
+              thing on the page, so it leads. Hidden when intent is
+              just-tracking — schools are body-literacy depth, not what
+              that user came for. */}
+          {!isPreg && phase && !hideEducational && (
             <CycleSchoolCard phase={phase} settings={settings} go={go} />
           )}
 
@@ -1554,8 +1639,9 @@ export default function Home() {
               a doula quote. The title is the thing Luna would say to
               you over coffee — sourced still, but the source lives
               behind a tap, not stamped on the card. Adapts to today's
-              log; rotates by cycle day. */}
-          {!isPreg && phase && (() => {
+              log; rotates by cycle day. Hidden when intent is
+              just-tracking — they explicitly opted out of teach moments. */}
+          {!isPreg && phase && !hideEducational && (() => {
             const lesson = adaptiveLessonFor({
               phaseId: phase.id,
               cycleDay: cycle.cycleDay,
@@ -1678,14 +1764,10 @@ export default function Home() {
           {/* Celebration moments now live at the app level (App.jsx
               GlobalCelebration) so they show wherever the user lands. */}
 
-          {/* First-run tour — 4 cards explaining the cover, the diary,
-              and the customisation. Shows once; persisted via
-              settings.tutorialSeen. */}
-          <Tutorial
-            open={settings?.tutorialSeen === false}
-            onClose={() => updateSetting('tutorialSeen', true)}
-            accent={phase?.color}
-          />
+          {/* The 4-slide first-run Tutorial wall was removed. Tutorials
+              get skipped; in-context tips get read. Each feature now
+              carries its own one-line ContextualTip the first time the
+              user opens it. See src/components/ContextualTip.jsx. */}
 
           {/* Quick-note bottom-sheet — opens from the "A note" quick
               action, focuses straight to a textarea, saves to today's

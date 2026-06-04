@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Screen, Eyebrow } from '../components/shared'
 import { ARTICLES, SYMPTOMS, PHASES } from '../data/lunaData'
 import { CONDITIONS } from '../data/conditions'
+import ContextualTip from '../components/ContextualTip'
 import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, BBT_LESSONS, DAILY_LESSON_POOL } from '../data/bodyLiteracy'
 import { SourceTag } from '../components/Sourced'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
@@ -188,6 +189,10 @@ export default function AskLuna() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 12, animationDelay: '40ms' }}>
           Look it up.
         </div>
+
+        <ContextualTip tipId="lookup-intro" accent={accent}>
+          Search anything — “PCOS”, “late period”, “heavy bleeding”. Luna pulls the sourced article that answers it, or the closest condition.
+        </ContextualTip>
 
         <div className="insight-stagger frost-card" style={{
           marginTop: 10, marginBottom: 14, padding: '4px 6px',

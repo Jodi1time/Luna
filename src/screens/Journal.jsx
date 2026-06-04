@@ -8,6 +8,7 @@ import JournalDecorations from '../components/JournalDecorations'
 import JournalCustomizer from '../components/JournalCustomizer'
 import Polaroid, { makePhotoMeta } from '../components/Polaroid'
 import PhotoPermissionSheet from '../components/PhotoPermissionSheet'
+import ContextualTip from '../components/ContextualTip'
 import { compressImage } from '../lib/imageCompress'
 import { createRecognizer, isVoiceSupported } from '../lib/voiceRecognition'
 import useLuna from '../store/useLuna'
@@ -530,6 +531,13 @@ export default function Journal() {
               DECORATE
             </button>
           </div>
+
+          {/* Contextual tip — explains the diary's relationship to the
+              sticky note on Home. Fires once per user, persisted in
+              settings.tipsSeen. */}
+          <ContextualTip tipId="diary-intro" accent={theme.accent}>
+            The sticky note is a line to your future self. The diary is for everything else — write, photograph, decorate.
+          </ContextualTip>
 
           {/* New-page composer */}
           <div className="insight-stagger" style={{ animationDelay: '50ms' }}>

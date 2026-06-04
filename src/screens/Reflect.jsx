@@ -23,6 +23,7 @@ import { useCycle } from '../hooks/useCycle'
 import QuickNote from '../components/QuickNote'
 import LunaChat from '../components/LunaChat'
 import { useScrollLock } from '../lib/useScrollLock'
+import ContextualTip from '../components/ContextualTip'
 import Portal from '../lib/Portal'
 
 // Reflect — interactive journaling + short guided practices for
@@ -1184,6 +1185,11 @@ export default function Reflect() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.muted, marginTop: 12, fontStyle: 'italic', animationDelay: '90ms' }}>
           {opening || 'Write what wants to be written. Or pick a practice — short, gentle, evidence-grown.'}
         </div>
+
+        <ContextualTip tipId="reflect-intro" accent={phase?.color}>
+          Practices are short — two minutes, sometimes less. Pick the one that fits the day; nothing here is required.
+        </ContextualTip>
+
         <Rule />
 
         {/* Phase-aware practice recommendation — the feature that makes
