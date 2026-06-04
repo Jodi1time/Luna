@@ -59,6 +59,9 @@ export default function AcceptShare() {
     try {
       await acceptInvite(code)
       setActiveShareCode(null)
+      // Success haptic — the moment two people land in each other's
+      // app via the share link is a small ceremony.
+      import('../lib/haptics').then(({ hapticSuccess }) => hapticSuccess())
       go('sharedWithYou')
     } catch (e) {
       setError(e?.message || 'Could not accept this invite. It may have expired.')

@@ -1164,10 +1164,11 @@ export default function Home() {
     const today = new Date()
     saveLog(today, { ...(todayLog || {}), flow: 'Medium' })
     setLastPeriodStart(today)
-    // Soft milestone moment + bloom sound.
+    // Soft milestone moment + bloom sound + success haptic.
     useLuna.getState().setCelebration('day-one')
     // Lazy-load sounds to avoid pulling AudioContext into the eager path.
     import('../lib/sounds').then(({ bloomSound }) => bloomSound(Boolean(settings?.sounds)))
+    import('../lib/haptics').then(({ hapticSuccess }) => hapticSuccess())
   }
   const contextLine = !isPreg ? contextualLine({ phase, cycleDay, cycleLength, periodLength, variance: cycle.variance, bbtShift: cycle.bbtShift, ovulation: cycle.ovulation }) : null
   const blobColor = isPreg ? trimColor : (phase?.color || T.accent)

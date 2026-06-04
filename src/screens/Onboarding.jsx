@@ -944,6 +944,8 @@ export default function Onboarding({ step, slug: slugProp }) {
         const { capture } = await import('../lib/posthog')
         capture('onboarding_completed', { account_created: Boolean(acct) })
       } catch {}
+      // Success haptic on arrival — the "you're in" moment.
+      import('../lib/haptics').then(({ hapticSuccess }) => hapticSuccess())
 
       go('home')
     } catch (e) {

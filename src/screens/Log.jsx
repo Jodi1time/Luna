@@ -10,6 +10,7 @@ import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
+import { hapticSoft, hapticSuccess } from '../lib/haptics'
 
 // Bleeding intensity colors — soft Luna palette, not stoplight red.
 // Each step deepens slightly so the row reads as a gradient of
@@ -197,6 +198,10 @@ export default function Log() {
     const soundsOn = Boolean(useLuna.getState().settings?.sounds)
     if (wasNewPeriodStart) bloomSound(soundsOn)
     else chime(soundsOn)
+    // Haptics — soft tap for an ordinary save, success notification
+    // for a first-of-period save. No-op on web.
+    if (wasNewPeriodStart) hapticSuccess()
+    else hapticSoft()
     // Celebration — period day one only fires this overlay.
     if (wasNewPeriodStart) {
       useLuna.setState({ celebration: 'day-one' })

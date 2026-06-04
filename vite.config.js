@@ -10,8 +10,27 @@ import { VitePWA } from 'vite-plugin-pwa'
 // VITE_NATIVE is kept as an env var in case other build-time switches
 // need it later, but base path no longer depends on it.
 
+// Capacitor packages are dynamic-imported at runtime in main.jsx and
+// lib/haptics.js with try/catch wrappers. On web they intentionally
+// fail and the code falls back to no-ops; on native they resolve
+// through the Capacitor runtime. Marking them external keeps the
+// build from trying to statically resolve them, so the web bundle
+// stays buildable even if the packages aren't physically installed
+// (e.g. during pre-npm-install fresh clones).
+const CAPACITOR_EXTERNALS = [
+  '@capacitor/core',
+  '@capacitor/status-bar',
+  '@capacitor/splash-screen',
+  '@capacitor/haptics',
+]
+
 export default defineConfig({
   base: '/',
+  build: {
+    rolldownOptions: {
+      external: CAPACITOR_EXTERNALS,
+    },
+  },
   plugins: [
     react(),
     VitePWA({

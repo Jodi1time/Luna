@@ -227,6 +227,51 @@ billing, etc).
   - Replaces the iOS apple-touch-startup-image PNGs we made — native
     splash is more reliable and instant. Same brand mark.
 
+### Capacitor polish pass (2026-06-04)
+
+Plugins added to `package.json` and wired in code. Still need an
+`npm install` on Jodi's side, then `npx cap sync` after the platform
+folders exist.
+
+- [ ] **Run `npm install`** — picks up `@capacitor/status-bar`,
+      `@capacitor/splash-screen`, `@capacitor/haptics`. The wiring in
+      `src/main.jsx` and `src/lib/haptics.js` is no-op on web, so
+      everything still works in dev / web until iOS is added.
+- [ ] **`npx cap add ios`** (and `android` if shipping Play Store too).
+      Generates the native project folders. Commit them.
+- [ ] **`npx cap sync`** — copies `dist/` into the native projects and
+      registers the new plugins. Re-run after every `npm install` or
+      plugin add.
+- [ ] **Open Xcode** (`npx cap open ios`) and add app icons + splash
+      artwork to `Assets.xcassets`. Sizes Apple requires:
+      - App icon: 1024px master, plus auto-generated sizes
+      - Splash: a single full-bleed image works (Capacitor handles
+        scaling); cream `#F4EFE5` background is in config already
+- [ ] **Test on a real device.** The simulator lies about scroll
+      inertia, haptics, and WebView perf. iPhone in hand is the only
+      real check.
+- [ ] **Confirm haptic moments fire** — save a log, log a period
+      start, accept a share invite, finish onboarding. Each should
+      give a small physical confirmation. (Web users feel nothing,
+      which is correct.)
+
+What the polish pass shipped, code-side:
+- `capacitor.config.json` upgraded: `contentInset: never` (Luna
+  manages its own safe-areas), `overrideUserInterfaceStyle: light`
+  (no dark-mode confusion), `preferredContentMode: mobile`, plus
+  config blocks for SplashScreen / StatusBar / Haptics.
+- `src/main.jsx` — on native platforms only, sets StatusBar style to
+  Light (= dark glyphs on cream), tints to `#F4EFE5`, and hides the
+  native splash with a 320ms fade once React has painted.
+- `src/lib/haptics.js` — thin wrapper exposing `hapticSoft`,
+  `hapticMedium`, `hapticSuccess`. Lazy-imports the Capacitor module
+  only when `Capacitor.isNativePlatform()` is true; no-op on web.
+  Errors swallowed so a missing plugin never breaks the UI thread.
+- Haptic calls seeded sparingly: Log save (soft / success on
+  period-start), Home period-start CTA (success), onboarding finish
+  (success), AcceptShare accept (success). Deliberately NOT on
+  every tap — restraint is the design.
+
 ### iOS / App Store
 
 - [ ] **Apple Developer Program enrollment** — $99/year. Required to

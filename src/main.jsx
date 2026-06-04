@@ -11,6 +11,33 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 // the 'Anonymous analytics' row (which calls setAnalyticsEnabled).
 initPostHog()
 
+// Native (iOS / Android via Capacitor) — set the status bar to match
+// Luna's cream paper register and hide the native splash once React
+// has mounted. Both calls are no-ops on web. Fully lazy-imported so a
+// missing @capacitor/core in pure-web builds (or during initial
+// development before plugins are npm-installed) doesn't break the
+// build. Errors silently swallowed — a missing plugin or older OS
+// version should never break the launch sequence.
+;(async () => {
+  let core
+  try { core = await import('@capacitor/core') } catch { return }
+  if (!core?.Capacitor?.isNativePlatform?.()) return
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar')
+    // "Light" content style = dark glyphs over the cream background.
+    StatusBar.setStyle({ style: Style.Light }).catch(() => {})
+    StatusBar.setBackgroundColor({ color: '#F4EFE5' }).catch(() => {})
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
+  } catch {}
+  try {
+    const { SplashScreen } = await import('@capacitor/splash-screen')
+    // launchAutoHide is false in capacitor.config.json so we control
+    // exactly when the splash leaves — once React has painted, fade
+    // it out to match the in-app splash timing on web.
+    SplashScreen.hide({ fadeOutDuration: 320 }).catch(() => {})
+  } catch {}
+})()
+
 // Silent auto-update: as soon as a new service worker takes control,
 // reload the page so the user is on the latest build without ever
 // being asked. Combined with skipWaiting/clientsClaim in vite.config.js,

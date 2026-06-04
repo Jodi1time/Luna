@@ -3,14 +3,39 @@
   "appName": "Luna by Gloria",
   "webDir": "dist",
   "ios": {
-    "contentInset": "automatic",
+    "contentInset": "never",
     "scrollEnabled": true,
-    "backgroundColor": "#F4EFE5"
+    "backgroundColor": "#F4EFE5",
+    "overrideUserInterfaceStyle": "light",
+    "preferredContentMode": "mobile",
+    "limitsNavigationsToAppBoundDomains": false
   },
   "android": {
-    "backgroundColor": "#F4EFE5"
+    "backgroundColor": "#F4EFE5",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
   },
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "launchAutoHide": false,
+      "backgroundColor": "#F4EFE5",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "backgroundColor": "#F4EFE5",
+      "style": "LIGHT",
+      "overlaysWebView": false
+    },
+    "Haptics": {}
   }
 }
