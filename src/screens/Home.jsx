@@ -400,6 +400,20 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => onOpenChat?.() },
+    { key: 'share', category: 'plan', label: 'Share with someone', sub: 'A partner, your mother, a friend',
+      icon: (
+        <svg className="icon-anim-share" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          {/* Two soft rings — a Venn meeting. The right ring drifts
+              inward, the left drifts outward (reversed direction), so
+              they pulse toward each other and back. A tiny heart fades
+              in at the overlap at the moment of closest meeting —
+              kept abstract, never literal. */}
+          <circle className="ring-a" cx="7.5" cy="10" r="4.5"/>
+          <circle className="ring-b" cx="12.5" cy="10" r="4.5"/>
+          <path className="heart" d="M10 11.5l-1.4-1.4a1 1 0 0 1 1.4-1.4l0 0a1 1 0 0 1 1.4 1.4z" fill="currentColor" stroke="none"/>
+        </svg>
+      ),
+      onTap: () => go('shareWith') },
     { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library — sourced',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -747,6 +761,90 @@ function CycleSchoolCard({ phase, settings, go }) {
             transition: 'background .25s ease-out',
           }} />
         ))}
+      </div>
+    </button>
+  )
+}
+
+// Phase-tuned + milestone-aware "invite someone in" card. The strategic
+// purpose: surface Luna's Share with someone Pro feature in the editorial
+// register, not the surveillance-coded "Partner tab" register that Flo
+// uses. Copy is doula-toned, phase-resonant, and gender-neutral about the
+// recipient (user = she/you, recipient = someone/them — never assumed to
+// be male partner OR female friend). First-cycle milestone overrides
+// phase copy as a one-time moment of pride.
+//
+// Dismissal: tapping × writes today's ISO to settings.circleDismissedISO
+// so the card hides for the rest of today. Re-surfaces tomorrow with
+// (possibly) different copy as the phase rolls. Persistence is light on
+// purpose — we don't want a permanent dismiss because the right moment
+// might come next week.
+function CircleCard({ phase, settings, updateSetting, cycle, go }) {
+  if (!phase) return null  // hides during pregnancy / hormonal BC
+  const todayISO = new Date().toISOString().slice(0, 10)
+  if (settings?.circleDismissedISO === todayISO) return null
+
+  // First-cycle milestone — one-time, overrides phase copy. Treats the
+  // moment "Luna has watched you through one full cycle" as the right
+  // gentle prompt to consider inviting someone else into the rhythm.
+  const isFirstCycleMoment =
+    !settings?.circleSeenFirstCycle &&
+    (cycle?.cyclesLogged ?? 0) >= 1
+
+  const phaseCopy = {
+    menstrual:  { eyebrow: 'days that ask for softness',     title: 'Want someone with you this week?' },
+    follicular: { eyebrow: 'the rising stretch',             title: 'Let someone meet you while you’re climbing.' },
+    ovulation:  { eyebrow: 'the week you’re most yourself',  title: 'You’re easiest to find this week. Hand someone the map.' },
+    luteal:     { eyebrow: 'the quiet stretch',              title: 'Tomorrow could be a hard day. Someone you trust could already know.' },
+  }
+  const copy = isFirstCycleMoment
+    ? { eyebrow: 'a small milestone', title: 'You have a rhythm worth sharing now.' }
+    : (phaseCopy[phase.id] || phaseCopy.follicular)
+
+  const colors = sectionColors('plan')
+  const onOpen = () => {
+    if (isFirstCycleMoment) updateSetting('circleSeenFirstCycle', true)
+    go('shareWith')
+  }
+  const onDismiss = (e) => {
+    e.stopPropagation()
+    updateSetting('circleDismissedISO', todayISO)
+    if (isFirstCycleMoment) updateSetting('circleSeenFirstCycle', true)
+  }
+  return (
+    <button onClick={onOpen} className="alive-card frost-card sheen-once"
+      style={{
+        position: 'relative',
+        marginTop: 22, padding: 20,
+        background: sectionPaper('plan'),
+        border: `1px solid ${colors.accent}28`,
+        borderRadius: 22,
+        boxShadow: `0 14px 30px -22px ${colors.accent}55`,
+        textAlign: 'left', cursor: 'pointer', width: '100%',
+        color: T.text, fontFamily: 'inherit', display: 'block',
+        overflow: 'hidden',
+      }}>
+      {/* Dismiss × — quiet, top-right. Tap propagation stopped so the
+          card body doesn't route to ShareWith when the user dismisses. */}
+      <button onClick={onDismiss} aria-label="Not right now"
+        style={{
+          position: 'absolute', top: 10, right: 12,
+          width: 28, height: 28, borderRadius: 999,
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          color: T.muted, fontSize: 18, lineHeight: 1, opacity: 0.6,
+          fontFamily: T.serif, padding: 0,
+        }}>×</button>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: colors.accent, fontWeight: 500, letterSpacing: -0.1, marginBottom: 8 }}>
+        {copy.eyebrow}
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 8, paddingRight: 28 }}>
+        {copy.title}
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, lineHeight: 1.55, marginBottom: 6 }}>
+        A partner, your mother, a doula, a friend. You pick what they see — diary stays yours.
+      </div>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: colors.accent, fontWeight: 500, marginTop: 6 }}>
+        invite someone in →
       </div>
     </button>
   )
@@ -1414,6 +1512,21 @@ export default function Home() {
                 {thoughtText}
               </div>
             </button>
+          )}
+
+          {/* Circle card — phase-resonant "let someone in" surface
+              for the Share with someone Pro feature. Doula voice,
+              phase-tuned, conditional + dismissable. Sits in the
+              differentiator tier alongside the AI thought, never
+              tab-bar real estate. */}
+          {!isPreg && (
+            <CircleCard
+              phase={phase}
+              settings={settings}
+              updateSetting={updateSetting}
+              cycle={cycle}
+              go={go}
+            />
           )}
 
           {/* The diary — multi-entry writing with photos + voice +

@@ -359,6 +359,29 @@ button.glass-card:active {
   25%           { transform: scale(1.35); opacity: 1; }
 }
 
+/* Share — two soft circles drifting toward each other, then back.
+   Reads as "two becoming one circle, briefly" — invitation, not lock.
+   A small dot fades in at the overlap at peak intimacy then fades out
+   as they drift apart. Off-tempo against the rest of the row. */
+.icon-anim-share .ring-a,
+.icon-anim-share .ring-b {
+  transform-origin: 10px 10px;
+  animation: anim-share-drift 5.6s ease-in-out infinite;
+}
+.icon-anim-share .ring-b { animation-direction: reverse; }
+.icon-anim-share .heart {
+  transform-origin: 10px 10px;
+  animation: anim-share-heart 5.6s ease-in-out infinite;
+}
+@keyframes anim-share-drift {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(2.2px); }
+}
+@keyframes anim-share-heart {
+  0%, 30%, 70%, 100% { opacity: 0; transform: scale(0.7); }
+  50%                { opacity: 0.85; transform: scale(1); }
+}
+
 /* Cheatsheet — checklist write-fade. Three lines draw in sequence
    like a doctor's notepad being filled, hold longer than the Log
    card so the "persistence" feel differs, then fade-erase together
