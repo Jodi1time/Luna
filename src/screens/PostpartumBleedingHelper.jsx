@@ -50,7 +50,7 @@ const DAYS_OPTIONS = [
 
 function Card({ children, accent = false }) {
   return (
-    <div className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${accent ? T.accent : T.muted}`, borderRadius: T.r, marginBottom: 12, background: accent ? T.accent + '10' : undefined }}>
+    <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 12, background: accent ? T.accent + '10' : undefined }}>
       {children}
     </div>
   )

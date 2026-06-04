@@ -48,7 +48,6 @@ function SoftCard({ children, accent, tint, category, style = {} }) {
       padding: 18,
       background: bg,
       border: `1px solid ${a}22`,
-      borderLeft: `3px solid ${a}`,
       borderRadius: 22,
       boxShadow: `0 1px 0 ${a}10, 0 14px 30px -20px ${a}40`,
       ...style,

@@ -153,7 +153,6 @@ export default function ContractionsTimer() {
               padding: 24,
               background: sectionPaper('urgent'),
               border: `1px solid ${accent}28`,
-              borderLeft: `3px solid ${accent}`,
               borderRadius: 22,
               boxShadow: `0 14px 30px -22px ${accent}55`,
               marginBottom: 18,
@@ -200,7 +199,6 @@ export default function ContractionsTimer() {
                 padding: 18,
                 background: T.accent + '14',
                 border: `1px solid ${T.accent}55`,
-                borderLeft: `3px solid ${T.accent}`,
                 borderRadius: 18,
                 marginBottom: 18,
               }}>

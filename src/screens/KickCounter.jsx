@@ -119,7 +119,6 @@ export default function KickCounter() {
             padding: 24,
             background: sectionPaper('plan'),
             border: `1px solid ${accent}28`,
-            borderLeft: `3px solid ${accent}`,
             borderRadius: 22,
             boxShadow: `0 14px 30px -22px ${accent}55`,
             marginBottom: 18,

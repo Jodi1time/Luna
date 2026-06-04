@@ -205,7 +205,6 @@ export default function TTC() {
           marginTop: 18, padding: 20,
           background: `linear-gradient(160deg, ${stageColor}14, rgba(253,250,245,0.5))`,
           border: `1px solid ${stageColor}33`,
-          borderLeft: `3px solid ${stageColor}`,
           borderRadius: 22,
           boxShadow: `0 14px 30px -22px ${stageColor}55`,
           animationDelay: '60ms',
@@ -227,7 +226,6 @@ export default function TTC() {
             marginTop: 14, padding: 16,
             background: sectionPaper('plan'),
             border: `1px solid ${planAccent}28`,
-            borderLeft: `3px solid ${planAccent}`,
             borderRadius: 18,
             boxShadow: `0 14px 30px -22px ${planAccent}55`,
             animationDelay: '100ms',
@@ -306,7 +304,6 @@ export default function TTC() {
             marginTop: 22, padding: 18,
             background: sectionPaper('care'),
             border: `1px solid ${sectionColors('care').accent}28`,
-            borderLeft: `3px solid ${sectionColors('care').accent}`,
             borderRadius: 18,
             boxShadow: `0 14px 30px -22px ${sectionColors('care').accent}55`,
           }}>
@@ -341,7 +338,6 @@ export default function TTC() {
             marginTop: 18, padding: 18,
             background: sectionPaper('urgent'),
             border: `1px solid ${sectionColors('urgent').accent}33`,
-            borderLeft: `3px solid ${sectionColors('urgent').accent}`,
             borderRadius: 18,
             boxShadow: `0 14px 30px -22px ${sectionColors('urgent').accent}55`,
           }}>

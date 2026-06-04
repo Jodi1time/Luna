@@ -196,7 +196,6 @@ export default function CrampsHelper() {
           padding: 18,
           background: sectionPaper('urgent'),
           border: `1px solid ${sectionColors('urgent').accent}22`,
-          borderLeft: `3px solid ${sectionColors('urgent').accent}`,
           boxShadow: `0 1px 0 ${sectionColors('urgent').accent}10, 0 12px 24px -18px ${sectionColors('urgent').accent}30`,
           borderRadius: T.r, marginBottom: 18,
         }}>
@@ -228,7 +227,7 @@ export default function CrampsHelper() {
         </button>
 
         {severe && (
-          <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               When it's this loud
             </div>

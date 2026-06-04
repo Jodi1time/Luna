@@ -272,7 +272,6 @@ export default function Calendar() {
                   padding: 16,
                   background: sectionPaper(category),
                   border: `1px solid ${accentColor}22`,
-                  borderLeft: `3px solid ${accentColor}`,
                   boxShadow: `0 1px 0 ${accentColor}10, 0 10px 22px -18px ${accentColor}30`,
                   borderRadius: T.r,
                   animationDelay: `${680 + i * 80}ms`,

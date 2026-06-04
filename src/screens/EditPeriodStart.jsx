@@ -114,7 +114,7 @@ export default function EditPeriodStart() {
         <CalendarBlock year={now.getFullYear()} month={now.getMonth()} selectedISO={selected} onPick={setSelected} />
 
         {selected && preview && (
-          <div className="glass-card alive-card frost-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}50`, marginBottom: 14 }}>
+          <div className="glass-card alive-card frost-card" style={{ padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}50`, marginBottom: 14 }}>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1, marginBottom: 8 }}>
               {preview.tooFarBack ? 'heads up' : 'what this will do'}
             </div>

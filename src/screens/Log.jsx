@@ -364,7 +364,7 @@ export default function Log() {
         {symInsight && (
           <div key={`${phase?.id}-${activeSym}`}
             className="frost-card"
-            style={{ marginTop: -10, marginBottom: 24, padding: 16, background: acc + '12', border: `1px solid ${acc}28`, borderLeft: `3px solid ${acc}`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}50`, animation: 'fadeUp 0.35s ease-out both' }}>
+            style={{ marginTop: -10, marginBottom: 24, padding: 16, background: acc + '12', border: `1px solid ${acc}28`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}50`, animation: 'fadeUp 0.35s ease-out both' }}>
             <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic' }}>
               {symInsight.text}
             </div>

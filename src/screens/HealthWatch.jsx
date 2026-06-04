@@ -141,7 +141,7 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
             return (
               <button key={id} onClick={() => goArticle(id)}
                 className="alive-card frost-card"
-                style={{ background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderLeft: `3px solid ${acc}`, textAlign: 'left', padding: 16, cursor: 'pointer', color: T.text, fontFamily: 'inherit', borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}40` }}>
+                style={{ background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', textAlign: 'left', padding: 16, cursor: 'pointer', color: T.text, fontFamily: 'inherit', borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}40` }}>
                 <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1 }}>{a.title} →</div>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 4 }}>{a.read} · {a.cat}</div>
               </button>

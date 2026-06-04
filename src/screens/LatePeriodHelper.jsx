@@ -87,7 +87,7 @@ export default function LatePeriodHelper() {
         </div>
         <Rule />
 
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 18 }}>
           <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
             What Luna sees
           </div>
@@ -100,7 +100,7 @@ export default function LatePeriodHelper() {
         </div>
 
         {daysLate > 4 && (
-          <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               About testing
             </div>
@@ -111,7 +111,7 @@ export default function LatePeriodHelper() {
         )}
 
         {hasBC && (
-          <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.muted}`, borderRadius: T.r, marginBottom: 18 }}>
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18 }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               On your method
             </div>

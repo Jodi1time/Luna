@@ -100,7 +100,7 @@ ${points.map((p, i) => `
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {points.map((p, i) => (
-            <div key={p.id} className="insight-stagger alive-card" style={{ padding: 16, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${acc}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, animationDelay: `${140 + i * 70}ms` }}>
+            <div key={p.id} className="insight-stagger alive-card" style={{ padding: 16, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, animationDelay: `${140 + i * 70}ms` }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 10 }}>
                 <div style={{ fontFamily: T.mono, fontSize: 11, color: acc, fontWeight: 700, letterSpacing: 1 }}>
                   {String(i + 1).padStart(2, '0')}

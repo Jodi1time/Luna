@@ -122,7 +122,7 @@ export default function PrivacyDashboard() {
         )}
 
         <Eyebrow color={acc}>Where it lives</Eyebrow>
-        <div className="glass-card" style={{ padding: 16, borderRadius: T.r, borderLeft: `3px solid ${acc}`, marginBottom: 22 }}>
+        <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 22 }}>
           <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.4, marginBottom: 8, letterSpacing: -0.1 }}>
             On Luna's servers (Supabase), encrypted at rest.
           </div>

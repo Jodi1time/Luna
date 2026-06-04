@@ -95,7 +95,6 @@ export default function Celebration({ kind, onClose }) {
           borderRadius: 14,
           textAlign: 'center',
           maxWidth: 320,
-          borderLeft: `3px solid ${color}`,
           animation: 'celebrationBloom 3.2s ease-out both',
           pointerEvents: 'auto',
           position: 'relative',

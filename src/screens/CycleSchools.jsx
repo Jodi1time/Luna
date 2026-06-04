@@ -66,7 +66,6 @@ export default function CycleSchools() {
                   padding: 22,
                   background: sectionPaper(school.category),
                   border: `1px solid ${colors.accent}28`,
-                  borderLeft: `3px solid ${colors.accent}`,
                   borderRadius: 24,
                   cursor: 'pointer',
                   color: T.text,

@@ -94,7 +94,6 @@ function PathCard({ eyebrow, title, blurb, onTap, category = 'reflect' }) {
         width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
         background: sectionPaper(category),
         border: `1px solid ${c.accent}22`,
-        borderLeft: `3px solid ${c.accent}`,
         boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
         cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
       }}>
@@ -160,7 +159,7 @@ export default function HeavyHelper() {
 
         {/* Phase context — only in luteal, where it actually changes the read */}
         {isLuteal && (
-          <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${phase.color}`, borderRadius: T.r, marginBottom: 18 }}>
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18 }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               On where you are in your cycle
             </div>

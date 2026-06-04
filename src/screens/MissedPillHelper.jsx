@@ -21,10 +21,9 @@ const SEX_OPTIONS = [
   { id: 'unsure', label: 'Unsure / longer ago' },
 ]
 
-function Card({ children, accent = false, muted = false }) {
-  const border = accent ? `3px solid ${T.accent}` : muted ? `3px solid ${T.muted}` : `1px solid ${T.hair}`
+function Card({ children, accent = false }) {
   return (
-    <div className="glass-card" style={{ padding: 16, borderLeft: border, borderRadius: T.r, marginBottom: 14, background: accent ? T.accent + '10' : undefined }}>
+    <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 14, background: accent ? T.accent + '10' : undefined }}>
       {children}
     </div>
   )

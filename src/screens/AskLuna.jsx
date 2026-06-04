@@ -263,7 +263,6 @@ export default function AskLuna() {
                   padding: 16,
                   background: sectionPaper('read'),
                   border: `1px solid ${accent}22`,
-                  borderLeft: `3px solid ${accent}`,
                   borderRadius: 18,
                   textAlign: 'left', cursor: r.route ? 'pointer' : 'default',
                   color: T.text, fontFamily: 'inherit',

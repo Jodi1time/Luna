@@ -80,7 +80,7 @@ export default function Library() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '50ms' }}>
           Doctor-sourced, plain-English pieces on what your body is doing — and why.
         </div>
-        <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 16, animationDelay: '100ms' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderRadius: T.r, marginBottom: 16, animationDelay: '100ms' }}>
           Every piece is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named at the top of each article, not buried.
         </div>
 
@@ -122,7 +122,6 @@ export default function Library() {
             width: '100%',
             background: sectionPaper('urgent'),
             border: `1px solid ${conditionsAccent}22`,
-            borderLeft: `3px solid ${conditionsAccent}`,
             borderRadius: 22,
             padding: '16px 18px',
             cursor: 'pointer',
@@ -162,7 +161,6 @@ export default function Library() {
             padding: '20px 20px 22px',
             background: sectionPaper(articleSection(heroArticle.cat)),
             border: `1px solid ${sectionColors(articleSection(heroArticle.cat)).accent}22`,
-            borderLeft: `3px solid ${heroAccent}`,
             boxShadow: `0 1px 0 ${heroAccent}10, 0 12px 28px -20px ${heroAccent}30`,
             borderRadius: T.r,
             cursor: 'pointer',
@@ -227,7 +225,6 @@ export default function Library() {
                       style={{
                         background: sectionPaper(secKey),
                         border: `1px solid ${secCol.accent}22`,
-                        borderLeft: `3px solid ${ac}`,
                         textAlign: 'left',
                         padding: '14px 16px',
                         cursor: 'pointer',

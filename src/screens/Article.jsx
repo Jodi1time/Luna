@@ -148,7 +148,7 @@ export default function Article() {
               <PhaseFlourish phaseId={phaseId || 'follicular'} size={28} />
             </div>
           </div>
-          <div className="insight-stagger" style={{ marginTop: 18, padding: 18, background: 'rgba(253,250,245,0.55)', borderRadius: 18, borderLeft: `3px solid ${accent}`, border: '1px solid rgba(26,19,16,0.06)', boxShadow: `0 14px 30px -22px ${accent}40`, animationDelay: `${200 + a.body.length * 80 + 120}ms` }}>
+          <div className="insight-stagger" style={{ marginTop: 18, padding: 18, background: 'rgba(253,250,245,0.55)', borderRadius: 18, border: '1px solid rgba(26,19,16,0.06)', boxShadow: `0 14px 30px -22px ${accent}40`, animationDelay: `${200 + a.body.length * 80 + 120}ms` }}>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: accent, letterSpacing: -0.1, marginBottom: 10 }}>sources</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {a.sources.map((s, i) => (

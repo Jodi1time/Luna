@@ -69,7 +69,7 @@ function LossEntry({ entry, onRemove }) {
   const date = new Date(entry.dateISO + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
   const typeLabel = LOSS_TYPES.find((t) => t.id === entry.type)?.label || entry.type
   return (
-    <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 10 }}>
+    <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3 }}>
@@ -234,7 +234,7 @@ export default function PregnancyLoss() {
         <Eyebrow>People who answer the phone</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
           {RESOURCES.map((r) => (
-            <div key={r.label} className="glass-card" style={{ padding: 14, borderRadius: T.r, borderLeft: `3px solid ${T.accent}` }}>
+            <div key={r.label} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
               <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, color: T.text, lineHeight: 1.3 }}>
                 {r.label}
               </div>

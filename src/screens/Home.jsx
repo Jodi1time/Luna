@@ -271,7 +271,7 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   const taken = wellness?.bcTakenToday === todayISO
   if (taken) return null
   return (
-    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ flex: 1 }}>
         <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>
           Have you taken your pill today?
@@ -327,7 +327,7 @@ function buildMonthlyRecap(logs) {
 function MonthlyRecap({ recap }) {
   if (!recap) return null
   return (
-    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
+    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         The last 30 days
       </div>
@@ -568,7 +568,6 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
         marginTop: 14, padding: 18,
         background: sectionPaper(category),
         border: `1px solid ${colors.accent}33`,
-        borderLeft: `3px solid ${colors.accent}`,
         boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -20px ${colors.accent}50`,
         borderRadius: 22, textAlign: 'left', cursor: 'pointer', width: '100%',
         color: T.text, fontFamily: 'inherit', display: 'block',
@@ -601,7 +600,6 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
         position: 'relative',
         marginTop: 22,
         padding: 18,
-        borderLeft: `3px solid ${T.accent}`,
         borderRadius: 22,
         boxShadow: `0 14px 30px -20px ${T.accent}40`,
         textAlign: 'left',
@@ -638,7 +636,6 @@ function WeeklyHealthCheckCard({ go }) {
       style={{
         marginTop: 22,
         padding: 18,
-        borderLeft: `3px solid ${T.accent}`,
         borderRadius: 22,
         boxShadow: `0 14px 30px -20px ${T.accent}40`,
         textAlign: 'left',
@@ -679,7 +676,7 @@ function AlwaysHere({ wellness, markWellness }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {nudges.map((n) => (
           <div key={n.key} className="glass-card alive-card frost-card"
-            style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
+            style={{ padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
               {n.label}
             </div>
@@ -722,7 +719,6 @@ function CycleSchoolCard({ phase, settings, go }) {
         marginTop: 22, padding: 20,
         background: sectionPaper(school.category),
         border: `1px solid ${colors.accent}28`,
-        borderLeft: `3px solid ${colors.accent}`,
         borderRadius: 22,
         boxShadow: `0 14px 30px -22px ${colors.accent}55`,
         textAlign: 'left', cursor: 'pointer', width: '100%',
@@ -1112,7 +1108,7 @@ export default function Home() {
                     : `${Math.abs(preg.daysToDue)} days past your due date.`}
               </div>
               {preg.content && (
-                <div className="alive-card frost-card" style={{ marginTop: 22, padding: 20, background: T.card, border: `1px solid ${T.hair}`, borderLeft: `3px solid ${trimColor}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${trimColor}40`, textAlign: 'left' }}>
+                <div className="alive-card frost-card" style={{ marginTop: 22, padding: 20, background: T.card, border: `1px solid ${T.hair}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${trimColor}40`, textAlign: 'left' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.3, marginBottom: 12, letterSpacing: -0.2 }}>
                     About the size of {preg.content.size}.
                   </div>
@@ -1355,7 +1351,7 @@ export default function Home() {
           })()}
           {showEveningIntention && todayIntention && (
             <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
-              style={{ marginTop: 14, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+              style={{ marginTop: 14, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
               <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
                 You set this morning
               </div>
@@ -1642,8 +1638,7 @@ export default function Home() {
           {!isPreg && phase && !showMorningIntention && (
             <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
               style={{
-                marginTop: 22, padding: 20,
-                borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
+                marginTop: 22, padding: 20, borderRadius: 22,
                 boxShadow: `0 14px 30px -20px ${phase.color}50`,
                 textAlign: 'left', cursor: 'pointer', width: '100%',
                 color: T.text, fontFamily: 'inherit', display: 'block',

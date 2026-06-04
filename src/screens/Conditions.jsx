@@ -97,7 +97,7 @@ function ConditionDetail({ condition, onBack, onOpenArticle }) {
             className="alive-card frost-card"
             style={{
               width: '100%', padding: 16, background: 'rgba(253,250,245,0.55)',
-              border: `1px solid ${accent}28`, borderLeft: `3px solid ${accent}`,
+              border: `1px solid ${accent}28`,
               borderRadius: 18, cursor: 'pointer', textAlign: 'left',
               color: T.text, fontFamily: 'inherit',
             }}>
@@ -150,7 +150,7 @@ function ConditionsAtlas({ matches, onOpen, onBack }) {
                 className="alive-card"
                 style={{
                   padding: 18, background: sectionPaper('urgent'),
-                  border: `1px solid ${accent}28`, borderLeft: `3px solid ${accent}`,
+                  border: `1px solid ${accent}28`,
                   borderRadius: 20, boxShadow: `0 1px 0 ${accent}10, 0 14px 30px -22px ${accent}50`,
                   textAlign: 'left', cursor: 'pointer', width: '100%',
                   color: T.text, fontFamily: 'inherit', display: 'block',
@@ -188,7 +188,7 @@ function ConditionsAtlas({ matches, onOpen, onBack }) {
               className="alive-card"
               style={{
                 padding: 16, background: 'rgba(253,250,245,0.55)',
-                border: `1px solid rgba(26,19,16,0.08)`, borderLeft: `3px solid ${accent}80`,
+                border: `1px solid rgba(26,19,16,0.08)`,
                 borderRadius: 18, textAlign: 'left', cursor: 'pointer', width: '100%',
                 color: T.text, fontFamily: 'inherit', display: 'block',
               }}>

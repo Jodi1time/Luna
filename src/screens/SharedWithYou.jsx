@@ -85,7 +85,6 @@ function CycleCard({ profile, logs }) {
         padding: 24,
         background: `linear-gradient(160deg, ${accent}14, rgba(253,250,245,0.55))`,
         border: `1px solid ${accent}28`,
-        borderLeft: `3px solid ${accent}`,
         borderRadius: 22,
         boxShadow: `0 14px 30px -22px ${accent}50`,
         marginBottom: 18,
@@ -137,7 +136,6 @@ function CycleCard({ profile, logs }) {
                   padding: 14,
                   background: 'rgba(253,250,245,0.55)',
                   border: `1px solid ${c}22`,
-                  borderLeft: `3px solid ${c}`,
                   borderRadius: 16,
                 }}>
                   <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: c, marginBottom: 4 }}>

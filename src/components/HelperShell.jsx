@@ -197,7 +197,6 @@ export default function HelperShell({
           padding: 18,
           background: sectionPaper(category),
           border: `1px solid ${c.accent}22`,
-          borderLeft: `3px solid ${c.accent}`,
           boxShadow: `0 1px 0 ${c.accent}10, 0 12px 24px -18px ${c.accent}30`,
           borderRadius: T.r,
           marginBottom: 18,
@@ -229,7 +228,7 @@ export default function HelperShell({
         )}
 
         {showEscalation && escalation && (
-          <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
+          <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               Worth a conversation
             </div>
@@ -286,7 +285,7 @@ export default function HelperShell({
             <Eyebrow>If you need a person tonight</Eyebrow>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
               {resources.map((r) => (
-                <div key={r.label} className="glass-card" style={{ padding: 14, borderRadius: T.r, borderLeft: `3px solid ${T.accent}` }}>
+                <div key={r.label} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
                   <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, color: T.text, lineHeight: 1.3 }}>{r.label}</div>
                   {r.sub && <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>{r.sub}</div>}
                   {r.detail && <div style={{ fontFamily: T.mono, fontSize: 10.5, color: T.accent, marginTop: 5, letterSpacing: 0.2, fontWeight: 600 }}>{r.detail}</div>}

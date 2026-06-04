@@ -190,7 +190,7 @@ function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged })
   const plTag = periodLengthTag(periodLength)
   const vTag  = varianceTag(variance?.conf)
   return (
-    <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, borderLeft: `3px solid ${T.accent}`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 14px 30px -20px ${sectionColors('body').accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '120ms' }}>
+    <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 14px 30px -20px ${sectionColors('body').accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '120ms' }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
         Your cycles
       </div>
@@ -403,7 +403,7 @@ export default function Insights() {
         {ovulation && (
           <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '240ms' }}>
             <Eyebrow>Your ovulation marker</Eyebrow>
-            <div className="alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 14px 30px -20px ${sectionColors('care').accent}40`, borderRadius: 20, marginTop: 4 }}>
+            <div className="alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 14px 30px -20px ${sectionColors('care').accent}40`, borderRadius: 20, marginTop: 4 }}>
               {/* Confidence pill — multi-signal cases get visibly louder.
                   Very-high / high cases use phase color; medium grey; low grey. */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
@@ -520,7 +520,7 @@ export default function Insights() {
               // pattern card teaches instead of just stating the pattern.
               const sym = p.type === 'symptom' ? SYMPTOMS[p.label] : null
               return (
-                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, borderLeft: `3px solid ${color}`, boxShadow: `0 1px 0 ${color}10, 0 14px 30px -20px ${color}40`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
+                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, boxShadow: `0 1px 0 ${color}10, 0 14px 30px -20px ${color}40`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
                       <SymptomIcon id={iconId} size={32} />
@@ -601,7 +601,6 @@ export default function Insights() {
                     padding: 16,
                     background: 'rgba(253,250,245,0.55)',
                     border: `1px solid ${sectionColors('urgent').accent}22`,
-                    borderLeft: `3px solid ${sectionColors('urgent').accent}`,
                     borderRadius: 18,
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                     color: T.text, fontFamily: 'inherit',
@@ -627,7 +626,7 @@ export default function Insights() {
         {(cycle.cyclesLogged >= 2 || Object.keys(logs || {}).length >= 30) && (
           <button onClick={() => go('yourYear')}
             className="glass-card insight-stagger alive-card"
-            style={{ marginTop: 22, padding: 20, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', animationDelay: '420ms' }}>
+            style={{ marginTop: 22, padding: 20, borderRadius: 22, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', animationDelay: '420ms' }}>
             <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
               A longer look back
             </div>

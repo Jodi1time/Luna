@@ -136,7 +136,7 @@ function NotPregnantState() {
         ))}
 
         {selected && inRange && due && (
-          <div className="glass-card" style={{ padding: '14px 16px', borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+          <div className="glass-card" style={{ padding: '14px 16px', borderRadius: T.r, marginBottom: 14 }}>
             <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               You're due around
             </div>
@@ -220,7 +220,7 @@ function PregnantState() {
           {dueLine}.
         </div>
 
-        <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18 }}>
           <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>You're due</div>
           <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
             {formatLongDate(preg.dueDate)}
@@ -228,7 +228,7 @@ function PregnantState() {
         </div>
 
         {content && (
-          <div className="glass-card" style={{ padding: 16, borderLeft: `3px solid ${accent}`, borderRadius: T.r, marginBottom: 18 }}>
+          <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 18 }}>
             <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
               This week
             </div>
@@ -266,7 +266,6 @@ function PregnantState() {
                 width: '100%', padding: 16,
                 background: 'rgba(253,250,245,0.55)',
                 border: `1px solid ${accent}28`,
-                borderLeft: `3px solid ${accent}`,
                 borderRadius: 18,
                 cursor: 'pointer', textAlign: 'left',
                 color: T.text, fontFamily: 'inherit',
@@ -291,7 +290,6 @@ function PregnantState() {
                 width: '100%', padding: 16,
                 background: 'rgba(253,250,245,0.55)',
                 border: `1px solid ${T.accent}28`,
-                borderLeft: `3px solid ${T.accent}`,
                 borderRadius: 18,
                 cursor: 'pointer', textAlign: 'left',
                 color: T.text, fontFamily: 'inherit',

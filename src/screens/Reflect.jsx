@@ -167,7 +167,7 @@ function GratitudeSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
     const recent = history.filter((e) => e.kind === 'gratitude' && new Date(e.dateISO + 'T12:00:00') >= cutoff).length
     return (
       <SheetShell onClose={reset} title="Three small things" sub="Done.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 12 }}>
             You named {savedItems.length} thing{savedItems.length === 1 ? '' : 's'} that landed today.
           </div>
@@ -185,7 +185,7 @@ function GratitudeSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
             </div>
           ))}
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -361,7 +361,7 @@ function FeelingSheet({ open, onClose, onSave, phase, history = [], onOpenNote, 
     const help = feelingHelp(doneAt, phase?.id)
     return (
       <SheetShell onClose={reset} title="Named." sub={`You wrote: ${doneAt.toLowerCase()}.`}>
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
             {doneAt} — named. The body usually relaxes a fraction the moment you name precisely.
           </div>
@@ -376,7 +376,7 @@ function FeelingSheet({ open, onClose, onSave, phase, history = [], onOpenNote, 
             </div>
           )}
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -445,7 +445,7 @@ function FeelingSheet({ open, onClose, onSave, phase, history = [], onOpenNote, 
             })}
           </div>
           {note && (
-            <div className="glass-card" style={{ padding: 14, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r }}>
+            <div className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
               <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text, fontStyle: 'italic' }}>
                 {note}
               </div>
@@ -503,7 +503,7 @@ function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNot
       : null
     return (
       <SheetShell onClose={reset} title="Held." sub="A small kindness landed.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
             Two minutes of softness toward yourself. The body registers that, even when you don't feel it.
           </div>
@@ -528,7 +528,7 @@ function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNot
             </div>
           </div>
         )}
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -558,7 +558,7 @@ function CompassionSheet({ open, onClose, onSave, phase, history = [], onOpenNot
     const line = lines[step]
     return (
       <SheetShell onClose={onClose} title="A self-compassion pause" sub={`Three breaths — ${step + 1} of ${lines.length}.`}>
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 22, fontStyle: 'italic', lineHeight: 1.3, color: T.text, letterSpacing: -0.3, marginBottom: 12 }}>
             {line.title}
           </div>
@@ -614,7 +614,7 @@ function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
     const recent = history.filter((e) => e.kind === 'reframe').length
     return (
       <SheetShell onClose={reset} title="Reframed." sub="Two voices, side by side.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ marginBottom: 14 }}>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
               The worry, as it lives
@@ -637,7 +637,7 @@ function ReframeSheet({ open, onClose, onSave, history = [], onOpenChat }) {
             <strong style={{ fontWeight: 600 }}>The second voice is the truer one</strong> — and the one you usually withhold from yourself. Read both back when the worry returns. {recent >= 3 && <span style={{ color: T.muted, fontStyle: 'italic' }}>{recent} reframes saved so far — they accumulate.</span>}
           </div>
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -721,7 +721,7 @@ function IntentionSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
     const recent = history.filter((e) => e.kind === 'intention').length
     return (
       <SheetShell onClose={reset} title="Set." sub="Luna will hold this for you today.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 8 }}>
             Today is about
           </div>
@@ -732,7 +732,7 @@ function IntentionSheet({ open, onClose, onSave, history = [], onOpenNote, onOpe
             Luna will bring this back this evening — to ask how the day landed against it. {recent >= 4 && <strong style={{ fontWeight: 600, fontStyle: 'normal', color: T.accent }}>{recent} intentions set so far — a real practice.</strong>}
           </div>
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -837,7 +837,7 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
             : null
     return (
       <SheetShell onClose={reset} title="Held." sub="The body was noticed.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
             Eight stops on the body's tour. Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed.
           </div>
@@ -852,7 +852,7 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
             </div>
           )}
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -875,7 +875,7 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
   if (isLast) {
     return (
       <SheetShell onClose={onClose} title="A quick body scan" sub="Last step.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
             Whatever you noticed — tension, warmth, an ache that wanted attention — was the practice. Nothing to fix; just noticed.
           </div>
@@ -906,7 +906,7 @@ function BodyScanSheet({ open, onClose, onSave, phase, history = [], onOpenNote 
       {dots}
       {/* key={step} forces a remount per step so the fadeUp animation
           replays — each stop on the tour arrives, doesn't just swap. */}
-      <div key={step} className="glass-card" style={{ padding: 20, borderLeft: `3px solid ${T.accent}`, borderRadius: 18, marginBottom: 14, animation: 'fadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both' }}>
+      <div key={step} className="glass-card" style={{ padding: 20, borderRadius: 18, marginBottom: 14, animation: 'fadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both' }}>
         <div style={{ fontFamily: T.serif, fontSize: 19, fontStyle: 'italic', lineHeight: 1.4, color: T.text, marginBottom: 10, letterSpacing: -0.2 }}>
           {s.title}
         </div>
@@ -988,7 +988,7 @@ function BedtimeSheet({ open, onClose, onSave, history = [], onOpenHelper }) {
     const recent = history.filter((e) => e.kind === 'bedtime').length
     return (
       <SheetShell onClose={reset} title="Released." sub="The day is closing.">
-        <div className="glass-card" style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: T.r, marginBottom: 14 }}>
+        <div className="glass-card" style={{ padding: 18, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
             You put it down. {savedText ? 'Whatever you wrote will be there if you need it tomorrow.' : 'The breath did its work — the body knows it can rest now.'}
           </div>
@@ -998,7 +998,7 @@ function BedtimeSheet({ open, onClose, onSave, history = [], onOpenHelper }) {
             </div>
           )}
         </div>
-        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14, borderLeft: `3px solid ${T.muted}` }}>
+        <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 14 }}>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: T.muted, marginBottom: 6 }}>
             What helps next
           </div>
@@ -1193,7 +1193,6 @@ export default function Reflect() {
           <button onClick={() => setOpenPractice(recommendation.id)} className="glass-card"
             style={{
               width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-              borderLeft: `3px solid ${phase.color}`,
               cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
               marginBottom: 22,
             }}>
@@ -1215,8 +1214,7 @@ export default function Reflect() {
         <Eyebrow>Write</Eyebrow>
         <button onClick={() => setQuickNoteOpen(true)} className="glass-card"
           style={{
-            width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-            borderLeft: `3px solid ${T.accent}`, cursor: 'pointer', color: T.text, fontFamily: 'inherit',
+            width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit',
             display: 'block', marginBottom: 22,
           }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
@@ -1240,7 +1238,6 @@ export default function Reflect() {
                   cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
                   background: sectionPaper(PRACTICE_SECTION[p.id] || 'reflect'),
                   border: `1px solid ${c.accent}22`,
-                  borderLeft: `3px solid ${c.accent}`,
                   boxShadow: `0 1px 0 ${c.accent}10, 0 10px 22px -18px ${c.accent}30`,
                 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
@@ -1272,7 +1269,6 @@ export default function Reflect() {
         <button onClick={() => setChatOpen(true)} className="glass-card"
           style={{
             width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-            borderLeft: `3px solid ${phase?.color || T.accent}`,
             cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', marginBottom: 22,
           }}>
           <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
