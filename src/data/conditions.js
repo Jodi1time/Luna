@@ -12,6 +12,7 @@
 // WHO. A licensed clinician must read before shipping wider.
 
 import { detectSymptomPatterns } from '../hooks/useCycle'
+import { moodIdsOf } from '../lib/moods'
 
 export const CONDITIONS = [
   {
@@ -255,7 +256,7 @@ function endoMatcher(logs, cycle) {
   const signals = []
   let score = 0
 
-  const crampsCount = countLogs(logs, (l) => (l.symptoms || []).includes('cramps') || l.mood === 'sore')
+  const crampsCount = countLogs(logs, (l) => (l.symptoms || []).includes('cramps') || moodIdsOf(l).includes('cramps'))
   if (crampsCount >= 6) {
     score += 0.25
     signals.push(`Cramps logged ${crampsCount} times across recent cycles`)
@@ -303,7 +304,7 @@ function pmddMatcher(logs, cycle) {
     signals.push(`Difficult moods cluster in your luteal phase (${total} occurrences across cycles)`)
   }
   // Pre-period crisis-level moods
-  const crisisCount = countLogs(logs, (l) => l.mood === 'low')
+  const crisisCount = countLogs(logs, (l) => moodIdsOf(l).includes('low'))
   if (crisisCount >= 4) {
     score += 0.20
     signals.push(`'Low' mood logged ${crisisCount} times in the last 90 days`)
@@ -314,7 +315,7 @@ function pmddMatcher(logs, cycle) {
 function thyroidMatcher(logs, cycle) {
   const signals = []
   let score = 0
-  const fatigueCount = countLogs(logs, (l) => (l.symptoms || []).includes('fatigue') || l.mood === 'tired')
+  const fatigueCount = countLogs(logs, (l) => (l.symptoms || []).includes('fatigue') || moodIdsOf(l).includes('tired'))
   if (fatigueCount >= 8) {
     score += 0.25
     signals.push(`Fatigue or 'tired' logged ${fatigueCount} times`)

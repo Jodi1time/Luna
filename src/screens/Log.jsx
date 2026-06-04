@@ -69,7 +69,11 @@ export default function Log() {
   const initialISO = activeLogDate && activeLogDate <= todayISO ? activeLogDate : todayISO
   const [editingISO, setEditingISO] = useState(initialISO)
   const existing = getLog(editingISO) || {}
-  const [mood,     setMood]     = useState(existing.mood || null)
+  const [moods,    setMoods]    = useState(() => {
+    if (Array.isArray(existing.moods)) return existing.moods
+    if (existing.mood) return [existing.mood]
+    return []
+  })
   const [symptoms, setSymptoms] = useState(existing.symptoms || [])
   const [flow,     setFlow]     = useState(existing.flow || null)
   const [bbt,      setBbt]      = useState(existing.bbt?.value ?? '')
@@ -137,7 +141,7 @@ export default function Log() {
   // values over).
   useEffect(() => {
     const log = getLog(editingISO) || {}
-    setMood(log.mood || null)
+    setMoods(Array.isArray(log.moods) ? log.moods : (log.mood ? [log.mood] : []))
     setSymptoms(log.symptoms || [])
     setFlow(log.flow || null)
     setBbt(log.bbt?.value ?? '')
@@ -188,7 +192,7 @@ export default function Log() {
       const days = (new Date(editingISO + 'T00:00:00') - new Date(latestStart + 'T00:00:00')) / 86400000
       return days > 7
     })()
-    saveLog(editingISO, { mood, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
+    saveLog(editingISO, { moods, mood: moods[0] || null, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
     // Sounds — gated on the user's settings.sounds toggle.
     const soundsOn = Boolean(useLuna.getState().settings?.sounds)
     if (wasNewPeriodStart) bloomSound(soundsOn)
@@ -203,7 +207,8 @@ export default function Log() {
     // Analytics: which CATEGORIES of fields were filled, not contents.
     // Fire-and-forget — never block navigation on analytics.
     import('../lib/posthog').then(({ capture }) => capture('log_saved', {
-      has_mood: Boolean(mood),
+      has_mood: moods.length > 0,
+      mood_count: moods.length,
       symptom_count: (symptoms || []).length,
       has_flow: Boolean(flow),
       has_bbt: Boolean(bbtPayload),
@@ -285,9 +290,9 @@ export default function Log() {
           {MOOD_IDS.map((id) => {
             const moodAccent = MOOD_COLORS[id] || acc
             const moodTint   = MOOD_TINTS[id]
-            const on = mood === id
+            const on = moods.includes(id)
             return (
-              <button key={id} onClick={() => setMood(on ? null : id)}
+              <button key={id} onClick={() => setMoods((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id])}
                 className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
                 style={{
                   flex: 1,

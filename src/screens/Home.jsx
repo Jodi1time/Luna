@@ -12,6 +12,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
+import { moodIdsOf } from '../lib/moods'
 import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
 import Backdrop, { useBackdropKind } from '../components/Backdrop'
@@ -298,9 +299,8 @@ function buildMonthlyRecap(logs) {
     .filter(([d]) => new Date(d + 'T00:00:00') >= cutoff)
     .map(([d, l]) => ({ date: d, ...l }))
   if (recentLogs.length < 5) return null
-  const moods = recentLogs.filter((l) => l.mood)
   const moodCount = {}
-  moods.forEach((l) => { moodCount[l.mood] = (moodCount[l.mood] || 0) + 1 })
+  recentLogs.forEach((l) => moodIdsOf(l).forEach((m) => { moodCount[m] = (moodCount[m] || 0) + 1 }))
   const topMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0]
   const symptomCount = {}
   recentLogs.forEach((l) => (l.symptoms || []).forEach((s) => {
@@ -863,10 +863,11 @@ export default function Home() {
   // Smart cramps surface: if today's log has cramps as a mood OR as a
   // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
   // She doesn't have to dig for help when she already told us it hurts.
-  const hasCrampsToday = todayLog?.mood === 'cramps' || (todayLog?.symptoms || []).includes('cramps')
+  const todayMoods = moodIdsOf(todayLog)
+  const hasCrampsToday = todayMoods.includes('cramps') || (todayLog?.symptoms || []).includes('cramps')
   // Other smart helper surfaces — only show when she's already told us
   // something is happening. Quiet by default; act when relevant.
-  const hasAnxietyToday = todayLog?.mood === 'low' || todayLog?.mood === 'frustrated'
+  const hasAnxietyToday = todayMoods.includes('low') || todayMoods.includes('frustrated')
   const hasInsomniaToday = todayLog?.sleep === 'Poor' || todayLog?.sleep === 'Restless' || (todayLog?.symptoms || []).includes('insomnia') || (todayLog?.symptoms || []).includes('sleep')
   const hasUTIToday = (todayLog?.symptoms || []).includes('uti')
   const isTTC = settings?.lifecycle === 'ttc'
@@ -1235,13 +1236,9 @@ export default function Home() {
                   : `It's been ${showCatchUp.daysSince} days since you last logged. Predictions drift without fresh data — a few taps catches Luna up.`}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => go('editPeriodStart')}
+                <button onClick={() => go('periodDays')}
                   style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
-                  {showCatchUp.kind === 'stalePeriod' ? 'Update period start' : 'Log a past day'}
-                </button>
-                <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
-                  style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
-                  Log today
+                  Select days
                 </button>
               </div>
             </div>

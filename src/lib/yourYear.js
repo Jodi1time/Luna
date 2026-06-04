@@ -14,6 +14,7 @@
 
 import { SYMPTOMS } from '../data/lunaData'
 import { MOOD_LABELS } from '../components/symptomIcons'
+import { moodIdsOf } from './moods'
 
 function recentLogs(logs, days = 365) {
   const cutoff = new Date(); cutoff.setHours(0,0,0,0)
@@ -56,7 +57,7 @@ export function buildYearNarrative({ logs, cycle, patterns = [], displayName }) 
   let firstISO = null, lastISO = null
 
   recent.forEach((l) => {
-    if (l.mood) moodCount[l.mood] = (moodCount[l.mood] || 0) + 1
+    moodIdsOf(l).forEach((m) => { moodCount[m] = (moodCount[m] || 0) + 1 })
     ;(l.symptoms || []).forEach((s) => { symptomCount[s] = (symptomCount[s] || 0) + 1 })
     if (l.flow && l.flow !== 'Spotting') totalPeriodDays += 1
     if (l.bbt?.value != null) bbtReadings += 1

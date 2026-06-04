@@ -9,6 +9,7 @@
 // talk, body-literacy framing, sources visible.
 
 import { PHASES } from './lunaData'
+import { moodIdsOf } from '../lib/moods'
 
 // ── Flow at the moment of log ───────────────────────────────────
 // Phase-aware so the same flow level reads differently in luteal
@@ -187,7 +188,7 @@ export function dailyLessonFor(phaseId, cycleDay) {
 export function adaptiveLessonFor({ phaseId, cycleDay, todayLog, recentLogs }) {
   if (!phaseId) return null
   const symptoms = todayLog?.symptoms || []
-  const mood = todayLog?.mood
+  const moods = moodIdsOf(todayLog)
   const flow = todayLog?.flow
 
   // Menstrual — heavy flow → iron lesson
@@ -199,7 +200,7 @@ export function adaptiveLessonFor({ phaseId, cycleDay, todayLog, recentLogs }) {
     return { eyebrow: 'For today', title: 'Cramps come from prostaglandins.', body: "Heat works as well as ibuprofen for many people — RCT-supported. Magnesium 400mg may reduce intensity over 3 cycles. Light movement reduces them; sitting still often makes them worse.", source: 'ACOG; Cochrane Reviews' }
   }
   // Late-luteal Low mood → PMDD literacy
-  if (phaseId === 'luteal' && mood === 'low' && cycleDay >= 21) {
+  if (phaseId === 'luteal' && moods.includes('low') && cycleDay >= 21) {
     return { eyebrow: 'For today', title: 'When late-luteal lows are disabling.', body: "If you experience hopelessness, panic, or thoughts of harm only in the week before your period — and they lift within days of bleeding — that's PMDD. Affects 3-8% of menstruating people, formally recognised, treatable. Track two cycles, then talk to a doctor.", source: 'ACOG PMDD Practice Bulletin', readId: 'pmdd' }
   }
   // Late luteal headache → menstrual migraine

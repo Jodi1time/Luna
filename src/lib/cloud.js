@@ -56,6 +56,7 @@ export async function loadLogs() {
     map[row.date] = {
       date: row.date,
       mood: row.mood,
+      moods: Array.isArray(row.moods) ? row.moods : (row.mood ? [row.mood] : []),
       symptoms: row.symptoms || [],
       flow: row.flow,
       bbt: row.bbt != null ? Number(row.bbt) : null,
@@ -82,7 +83,7 @@ export async function upsertLog(date, log) {
   const base = {
     user_id: user.id,
     date,
-    mood: log.mood ?? null,
+    mood: log.mood ?? (Array.isArray(log.moods) && log.moods[0]) ?? null,
     symptoms: log.symptoms ?? [],
     flow: log.flow ?? null,
     bbt: log.bbt ?? null,
@@ -91,36 +92,57 @@ export async function upsertLog(date, log) {
     note: log.note ?? null,
     updated_at: new Date().toISOString(),
   }
-  // Try full payload first, then defensively drop columns that may
-  // not be migrated server-side yet. Each newer optional column lives
-  // in its own retry tier so an older Supabase instance can still
-  // accept what it does know about.
-  const withSleepAndIntimate = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null }
-  const { error: firstError } = await supabase
-    .from('logs')
-    .upsert(withSleepAndIntimate, { onConflict: 'user_id,date' })
-  if (!firstError) return
-  const msg = String(firstError.message || '').toLowerCase()
-  const isMissingColumn = (col) => msg.includes(col) && (msg.includes('column') || msg.includes('not found'))
-  if (!isMissingColumn('intimate') && !isMissingColumn('sleep')) throw firstError
-  // Drop intimate first (newest), retry. Then drop sleep too if needed.
-  if (isMissingColumn('intimate')) {
+  // Try the richest payload first, then defensively drop newer optional
+  // columns one tier at a time if Supabase reports them missing. Tiers,
+  // newest → oldest: moods, intimate, sleep. Each retry catches up an
+  // older Supabase instance that hasn't run the latest migration yet.
+  const isMissingColumn = (msg, col) => msg.includes(col) && (msg.includes('column') || msg.includes('not found'))
+  const tryUpsert = async (payload) => {
+    const { error } = await supabase.from('logs').upsert(payload, { onConflict: 'user_id,date' })
+    return error
+  }
+  const moodsArr = Array.isArray(log.moods) ? log.moods : (log.mood ? [log.mood] : [])
+  const full = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null, moods: moodsArr }
+  const err1 = await tryUpsert(full)
+  if (!err1) return
+  const msg1 = String(err1.message || '').toLowerCase()
+  if (isMissingColumn(msg1, 'moods')) {
     // eslint-disable-next-line no-console
-    console.warn('[cloud] intimate column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable intimate tracking server-side.')
-    const withSleepOnly = { ...base, sleep: log.sleep ?? null }
-    const { error: secondError } = await supabase
-      .from('logs')
-      .upsert(withSleepOnly, { onConflict: 'user_id,date' })
-    if (!secondError) return
-    const msg2 = String(secondError.message || '').toLowerCase()
-    if (!(msg2.includes('sleep') && (msg2.includes('column') || msg2.includes('not found')))) throw secondError
+    console.warn('[cloud] moods column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable multi-mood logging server-side.')
+    const noMoods = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null }
+    const err2 = await tryUpsert(noMoods)
+    if (!err2) return
+    const msg2 = String(err2.message || '').toLowerCase()
+    if (!isMissingColumn(msg2, 'intimate') && !isMissingColumn(msg2, 'sleep')) throw err2
+    if (isMissingColumn(msg2, 'intimate')) {
+      // eslint-disable-next-line no-console
+      console.warn('[cloud] intimate column missing on logs table — saving without it.')
+      const noIntimate = { ...base, sleep: log.sleep ?? null }
+      const err3 = await tryUpsert(noIntimate)
+      if (!err3) return
+      const msg3 = String(err3.message || '').toLowerCase()
+      if (!isMissingColumn(msg3, 'sleep')) throw err3
+    }
+    // eslint-disable-next-line no-console
+    console.warn('[cloud] sleep column missing on logs table — saving without it.')
+    const err4 = await tryUpsert(base)
+    if (err4) throw err4
+    return
+  }
+  if (!isMissingColumn(msg1, 'intimate') && !isMissingColumn(msg1, 'sleep')) throw err1
+  if (isMissingColumn(msg1, 'intimate')) {
+    // eslint-disable-next-line no-console
+    console.warn('[cloud] intimate column missing on logs table — saving without it.')
+    const noIntimate = { ...base, sleep: log.sleep ?? null }
+    const err5 = await tryUpsert(noIntimate)
+    if (!err5) return
+    const msg5 = String(err5.message || '').toLowerCase()
+    if (!isMissingColumn(msg5, 'sleep')) throw err5
   }
   // eslint-disable-next-line no-console
-  console.warn('[cloud] sleep column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable sleep tracking server-side.')
-  const { error: retryError } = await supabase
-    .from('logs')
-    .upsert(base, { onConflict: 'user_id,date' })
-  if (retryError) throw retryError
+  console.warn('[cloud] sleep column missing on logs table — saving without it.')
+  const err6 = await tryUpsert(base)
+  if (err6) throw err6
 }
 
 export async function deleteLog(date) {

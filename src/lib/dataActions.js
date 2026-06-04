@@ -4,6 +4,7 @@
 
 import { signOut, supabase } from './supabase'
 import { resetAnalytics } from './posthog'
+import { moodIdsOf } from './moods'
 
 // CSV-injection defuse: prepend a tab so cells beginning with
 // =, +, -, @, tab, or CR aren't interpreted as a formula by Excel.
@@ -33,7 +34,7 @@ export function exportLunaCSV(state) {
     const bbtUnit = log.bbt ? `°${log.bbt.unit}` : ''
     lines.push([
       csvCell(date),
-      csvCell(log.mood || ''),
+      csvCell(moodIdsOf(log).join('; ')),
       csvCell(symptoms),
       csvCell(log.flow || ''),
       csvCell(bbtVal),

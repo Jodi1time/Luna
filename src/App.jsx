@@ -34,6 +34,7 @@ const PrivacyPolicy   = lazy(() => import('./screens/PrivacyPolicy'))
 const Terms           = lazy(() => import('./screens/Terms'))
 const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
 const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
+const PeriodDaysPicker = lazy(() => import('./screens/PeriodDaysPicker'))
 const EditCycleNumbers = lazy(() => import('./screens/EditCycleNumbers'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
@@ -217,6 +218,7 @@ function ScreenRenderer({ screen }) {
     case 'terms':    return <Terms />
     case 'periodHistory': return <PeriodHistory />
     case 'editPeriodStart': return <EditPeriodStart />
+    case 'periodDays': return <PeriodDaysPicker />
     case 'editCycleNumbers': return <EditCycleNumbers />
     case 'birthControl': return <BirthControl />
     case 'pregnancy': return <Pregnancy />

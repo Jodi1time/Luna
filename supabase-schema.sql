@@ -100,6 +100,11 @@ alter table public.logs add column if not exists sleep text;
 -- don't each need a schema migration. Defaults to null.
 alter table public.logs add column if not exists intimate jsonb;
 
+-- Add moods text[] to logs — multi-select moods. The old `mood text`
+-- column stays as a back-compat mirror of moods[0] so anything that
+-- only reads `mood` still sees the dominant mood. Idempotent.
+alter table public.logs add column if not exists moods text[];
+
 -- Add pregnancy_history jsonb array to profiles — gentle record of
 -- pregnancy outcomes (miscarriage / stillbirth / abortion / ectopic /
 -- chemical / live birth) so we can both honour what happened and

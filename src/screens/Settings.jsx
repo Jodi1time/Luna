@@ -11,6 +11,7 @@ import { signOut } from '../lib/supabase'
 import { setAnalyticsEnabled, capture, resetAnalytics } from '../lib/posthog'
 import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { hasMood } from '../lib/moods'
 
 // Section label — italic serif lowercase with a small accent dot.
 // Soft + literary, not a config header. The dot picks up whichever
@@ -56,7 +57,7 @@ function LunaStats({ logs, cyclesLogged, savedArticles, accent }) {
     if (!logs) return 0
     let n = 0
     for (const l of Object.values(logs)) {
-      if (l && (l.mood || (l.symptoms?.length) || l.flow || l.bbt || l.mucus || l.sex || l.sleep || l.note)) n++
+      if (l && (hasMood(l) || (l.symptoms?.length) || l.flow || l.bbt || l.mucus || l.sex || l.sleep || l.note)) n++
     }
     return n
   }, [logs])

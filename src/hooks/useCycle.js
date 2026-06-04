@@ -7,6 +7,7 @@
 //   Luteal     : remainder through cycleLength
 
 import { PHASES } from '../data/lunaData'
+import { moodIdsOf } from '../lib/moods'
 
 const MS_PER_DAY = 86400000
 
@@ -573,9 +574,9 @@ export function detectSymptomPatterns(logs, periodStarts, cycleLength, periodLen
   for (const [date, log] of Object.entries(logs || {})) {
     const day = cycleDayFor(date)
     if (day == null) continue
-    if (log.mood) {
-      const id = `mood_${log.mood}`
-      groups[id] = groups[id] || { type: 'mood', label: log.mood, days: [] }
+    for (const m of moodIdsOf(log)) {
+      const id = `mood_${m}`
+      groups[id] = groups[id] || { type: 'mood', label: m, days: [] }
       groups[id].days.push(day)
     }
     for (const sym of (log.symptoms || [])) {

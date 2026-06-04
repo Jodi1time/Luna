@@ -7,6 +7,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCountUp } from '../hooks/useCountUp'
 import { setAnalyticsEnabled, capture } from '../lib/posthog'
 import { exportLunaCSV, deleteLunaAccount } from '../lib/dataActions'
+import { hasMood } from '../lib/moods'
 
 // Live counts derived from current store state so the dashboard
 // reflects exactly what's on the server right now. These are
@@ -17,7 +18,7 @@ function dataStats(state, cycle) {
   const values = entries.map(([, l]) => l)
   const bbtCount = values.filter((l) => l?.bbt?.value != null).length
   const noteCount = values.filter((l) => (l?.note || '').trim().length > 0).length
-  const moodCount = values.filter((l) => Boolean(l?.mood)).length
+  const moodCount = values.filter((l) => hasMood(l)).length
   const symptomCount = values.reduce((acc, l) => acc + (l?.symptoms?.length || 0), 0)
   const sortedDates = entries.map(([d]) => d).sort()
   const firstDate = sortedDates[0]

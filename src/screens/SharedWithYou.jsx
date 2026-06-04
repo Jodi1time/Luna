@@ -21,6 +21,7 @@ import {
   dynamicPeriodLength,
 } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
+import { moodIdsOf } from '../lib/moods'
 
 // SharedWithYou — read-only surface where the recipient sees a data
 // owner's selected cycle picture. Clear visual markers that this is
@@ -166,7 +167,7 @@ function CycleCard({ profile, logs }) {
             {logs.slice(0, 7).map((l, i) => {
               const symptoms = Array.isArray(l.symptoms) ? l.symptoms : []
               const bits = [
-                l.mood,
+                moodIdsOf(l).join(', ') || null,
                 l.flow && `flow: ${l.flow.toLowerCase()}`,
                 symptoms.length > 0 && symptoms.slice(0, 3).join(', '),
                 l.sleep && `sleep: ${l.sleep.toLowerCase()}`,
