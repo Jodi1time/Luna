@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
-import { SymptomIcon } from '../components/symptomIcons'
+import { SymptomIcon, MOOD_LABELS as MOOD_LABELS_CANON, MOOD_COLORS as MOOD_COLORS_CANON } from '../components/symptomIcons'
 import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor } from '../data/bodyLiteracy'
 import { matchConditions } from '../data/conditions'
@@ -338,59 +338,6 @@ function MonthlyRecap({ recap }) {
   )
 }
 
-// Hydration micro-tracker — eight quiet glass icons in a row. Tap to
-// add a glass; tap again to remove. Resets daily. Lives on Home as a
-// small habit, not a goal.
-function Hydration({ wellness, markWellness }) {
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const today = wellness?.hydration
-  const glasses = (today && today.date === todayISO) ? (today.glasses || 0) : 0
-  const set = (n) => markWellness('hydration', { date: todayISO, glasses: n })
-  const colors = sectionColors('care')
-  return (
-    <div className="alive-card frost-card" style={{
-      marginTop: 22, padding: 18,
-      background: sectionPaper('care'),
-      border: `1px solid ${colors.accent}22`,
-      borderLeft: `3px solid ${colors.accent}`,
-      borderRadius: 22,
-      boxShadow: `0 14px 30px -22px ${colors.accent}50`,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', letterSpacing: -0.2 }}>
-          A glass of water.
-        </div>
-        <div style={{ fontFamily: T.mono, fontSize: 10, color: colors.accent, letterSpacing: 0.4, fontWeight: 600 }}>
-          {glasses} / 8
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'space-between' }}>
-        {Array.from({ length: 8 }, (_, i) => {
-          const filled = i < glasses
-          return (
-            <button key={i}
-              onClick={() => set(filled ? i : i + 1)}
-              aria-label={`${i + 1} glasses`}
-              style={{
-                flex: 1, aspectRatio: '1 / 1.4', maxWidth: 30,
-                position: 'relative',
-                background: filled ? 'transparent' : 'rgba(253,250,245,0.55)',
-                border: `1.5px solid ${filled ? colors.accent : 'rgba(26,19,16,0.12)'}`,
-                borderRadius: '10px 10px 16px 16px',
-                cursor: 'pointer', padding: 0, overflow: 'hidden',
-                transition: 'border-color .25s, background .25s',
-              }}>
-              {filled && (
-                <span key={`fill-${i}-${glasses}`} className="glass-fill"
-                  style={{ background: colors.accent + 'aa' }} aria-hidden="true" />
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
 
 // Compute the wellness habit nudges that should surface on Home —
 // only when overdue, so they don't always clutter the screen.
@@ -437,15 +384,9 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
   // same beat. Off-tempo durations (3.2 → 7s) avoid synchronized
   // mechanical feel. Animations respect prefers-reduced-motion.
   const items = [
-    { key: 'log', category: 'body', label: 'Log today', sub: 'Keeps your predictions sharp',
-      icon: (
-        <svg className="icon-anim-log" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <path className="ln ln-1" pathLength="100" d="M3 5h14"/>
-          <path className="ln ln-2" pathLength="100" d="M3 10h14"/>
-          <path className="ln ln-3" pathLength="100" d="M3 15h9"/>
-        </svg>
-      ),
-      onTap: openLogToday },
+    // "Log today" QuickAction was a direct duplicate of the center
+    // [+] button in the TabBar. Cut to enforce the "one canonical
+    // home per job" rule — the [+] button is the canonical entry.
     { key: 'talk', category: 'reflect', label: 'Talk to Luna', sub: 'A real conversation, on her phase',
       icon: (
         <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -815,105 +756,10 @@ function CycleSchoolCard({ phase, settings, go }) {
   )
 }
 
-function ForTodayRow({ phase, go, goArticle }) {
-  // Same spring teaser as QuickActions, slightly delayed + cancels
-  // on user touch. The two scrollers tease at different times so they
-  // feel related, not synchronized.
-  const scrollerRef = useRef(null)
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el || !phase) return
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    let cancelled = false
-    let startTimer = 0
-    const cancel = () => {
-      cancelled = true
-      if (startTimer) clearTimeout(startTimer)
-      if (raf) cancelAnimationFrame(raf)
-    }
-    el.addEventListener('touchstart', cancel, { passive: true, once: true })
-    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
-    el.addEventListener('wheel', cancel, { passive: true, once: true })
-    const start = performance.now()
-    const duration = 1500
-    const peak = 52
-    const tick = (now) => {
-      if (cancelled) return
-      const t = Math.min(1, (now - start) / duration)
-      let x = 0
-      if (t < 0.42) {
-        const p = t / 0.42
-        x = peak * (1 - Math.pow(1 - p, 3))
-      } else if (t < 0.78) {
-        const p = (t - 0.42) / 0.36
-        const eased = 1 - Math.pow(1 - p, 2.5)
-        x = peak + (-peak - 6) * eased
-      } else {
-        const p = (t - 0.78) / 0.22
-        const eased = Math.sin((p * Math.PI) / 2)
-        x = -6 + 6 * eased
-      }
-      el.scrollLeft = Math.max(0, x)
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 1300)
-    return () => {
-      cancel()
-      el.removeEventListener('touchstart', cancel)
-      el.removeEventListener('pointerdown', cancel)
-      el.removeEventListener('wheel', cancel)
-    }
-  }, [phase?.id])
-  if (!phase) return null
-  const article = ARTICLES.find((a) => a.id === phaseArticle[phase.id]) || ARTICLES[0]
-  const items = [
-    { key: 'nourish', category: 'care', eyebrow: 'To nourish', title: phase.nutrition.headline, onTap: () => go('nourish') },
-    { key: 'read',    category: 'read', eyebrow: `${article.read} read`, title: article.title, onTap: () => goArticle(article.id) },
-    { key: 'move',    category: 'plan', eyebrow: 'To move', title: phase.exercise.headline, onTap: () => go('care') },
-  ]
-  return (
-    <div>
-      <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 10, letterSpacing: -0.2 }}>
-        For today.
-      </div>
-      <div ref={scrollerRef} className="h-scroller" style={{
-        display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-        marginLeft: -22, marginRight: -22, padding: '4px 22px 6px',
-      }}>
-        {items.map((it, idx) => {
-          const c = sectionColors(it.category)
-          return (
-            <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
-              style={{
-                flex: '0 0 64%',
-                maxWidth: 220,
-                scrollSnapAlign: 'start',
-                textAlign: 'left',
-                background: sectionPaper(it.category),
-                border: `1px solid ${c.accent}22`,
-                borderLeft: `3px solid ${phase.color}`,
-                boxShadow: `0 1px 0 ${c.accent}10, 0 14px 30px -22px ${c.accent}50`,
-                borderRadius: 22,
-                padding: '16px 16px 18px',
-                cursor: 'pointer',
-                color: T.text,
-                fontFamily: 'inherit',
-                animationDelay: `${idx * 80}ms`,
-              }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.5, fontWeight: 600, color: c.accent, marginBottom: 8 }}>
-                {it.eyebrow}
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2 }}>
-                {it.title}
-              </div>
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
+// ForTodayRow removed (Keep/Merge/Cut pass 1): "read" card was a
+// dupe of Daily Insight; Nourish + Move sub-cards are still covered
+// inline by PhaseDetail. See the deletion site in the render tree
+// for the full rationale.
 
 export default function Home() {
   const store = useLuna()
@@ -1476,8 +1322,8 @@ export default function Home() {
             if (hasAnxietyToday) return (
               <SmartHelperCard
                 category="reflect"
-                onTap={() => go('heavy')}
-                eyebrow="Heavy today"
+                onTap={() => go('anxiety')}
+                eyebrow="A heavy day"
                 line="A few ways in — body, words, breath, or someone to talk to."
               />
             )
@@ -1642,14 +1488,13 @@ export default function Home() {
             )
           })()}
 
-          {/* For today — horizontal scroll of curated phase-tuned
-              cards (nourishment + article + movement). Phase-aware
-              curation is distinctive even if the format is common. */}
-          {!isPreg && phase && (
-            <div style={{ marginTop: 22 }}>
-              <ForTodayRow phase={phase} go={go} goArticle={goArticle} />
-            </div>
-          )}
+          {/* For-Today row removed (Keep/Merge/Cut pass 1).
+              The "{read time} read" card duplicated Daily Insight
+              ("today's phase-curated article"); cutting it eliminates
+              the dupe. Nourish + Move sub-cards are still reachable
+              via PhaseDetail (which contains both as inline sections).
+              The Move card also wrongly routed to Care (preventive
+              checkups) — that mismatch is gone with the cut. */}
 
           {/* ─── DAILY LOG GESTURE ────────────────────────────────────
               Mood pills — the essential one-tap log surface every
@@ -1765,8 +1610,12 @@ export default function Home() {
           {/* Daily BC pill reminder, when applicable */}
           {!isPreg && <BCReminder bcMethod={birthControl?.method} wellness={wellness} markWellness={markWellness} />}
 
-          {/* Hydration micro-tracker — daily small habit */}
-          {!isPreg && <Hydration wellness={wellness} markWellness={markWellness} />}
+          {/* Hydration tracker removed (Keep/Merge/Cut pass 1).
+              Generic-wellness off-thesis for Luna's cycle-first
+              positioning — same critique as the Hydration cut in the
+              landing review. The `markWellness('hydration', ...)`
+              store action is still defined; future feature can reuse
+              if we ever bring it back as a phase-specific surface. */}
 
           {/* Monthly recap — quiet narrative summary of the last 30 days */}
           {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}

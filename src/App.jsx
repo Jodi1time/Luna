@@ -29,7 +29,6 @@ const SymptomDetail   = lazy(() => import('./screens/SymptomDetail'))
 const Article         = lazy(() => import('./screens/Article'))
 const HealthWatch     = lazy(() => import('./screens/HealthWatch'))
 const Paywall         = lazy(() => import('./screens/Paywall'))
-const Nourish         = lazy(() => import('./screens/Nourish'))
 const Care            = lazy(() => import('./screens/Care'))
 const PrivacyPolicy   = lazy(() => import('./screens/PrivacyPolicy'))
 const Terms           = lazy(() => import('./screens/Terms'))
@@ -201,7 +200,6 @@ function ScreenRenderer({ screen }) {
     case 'onb1':     return <Onboarding step={1} />
     case 'onb2':     return <Onboarding step={2} />
     case 'onb3':     return <Onboarding step={3} />
-    case 'nourish':  return <Nourish />
     case 'care':     return <Care />
     case 'home':     return <Home />
     case 'phase':    return <PhaseDetail />

@@ -196,12 +196,17 @@ export function SymptomIcon({ id, size = 20, color }) {
 }
 
 // Mood ids used in Quick Log + the Log screen mood row.
+// Labels are now canonical across Home + Log + MOOD_INSIGHTS keys.
+// Prior labels "Energy" and "Cramps" diverged from Home's display
+// ("Bright" / "Sore") and from MOOD_INSIGHTS' key set — same id, two
+// different display strings depending on the surface. Unified to the
+// gentler Luna-voice set: Bright (not Energy), Sore (not Cramps).
 export const MOOD_IDS = ['calm', 'energy', 'tired', 'cramps', 'low', 'hopeful', 'frustrated']
 export const MOOD_LABELS = {
   calm: 'Calm',
-  energy: 'Energy',
+  energy: 'Bright',
   tired: 'Tired',
-  cramps: 'Cramps',
+  cramps: 'Sore',
   low: 'Low',
   hopeful: 'Hopeful',
   frustrated: 'Tense',

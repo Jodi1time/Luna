@@ -345,7 +345,6 @@ export default function Settings() {
         border: `1px solid ${sectionColors('care').accent}22`,
       }}>
         <Row label="For your next visit" onTap={() => go('cheatsheet')} />
-        <Row label="Eat for your phase" onTap={() => go('nourish')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
       </div>
       </div>
