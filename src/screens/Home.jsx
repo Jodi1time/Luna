@@ -775,7 +775,15 @@ function PinnedConditionCard({ conditionId, go }) {
   const condition = getCondition(conditionId)
   if (!condition) return null
   const colors = sectionColors('urgent')
+  // PCOS users land on the PCOS Deep Mode dashboard, not the generic
+  // Atlas detail — that's where their ongoing cycle pattern, signal
+  // summary, next-thing surface, and (soon) bloodwork + meds live.
+  // Other conditions still route to the Atlas detail for now.
   const open = () => {
+    if (conditionId === 'pcos') {
+      go('pcos')
+      return
+    }
     useLuna.setState({ activeConditionId: conditionId })
     go('conditions')
   }

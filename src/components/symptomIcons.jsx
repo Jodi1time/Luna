@@ -174,6 +174,49 @@ const PATHS = {
       <path d="M10 11l-2 -1.5M10 11l2 -1.5" opacity="0.5" />
     </>
   ),
+
+  // ── PCOS-relevant symptoms ───────────────────────────────────
+  // Mark-style icons, never literal. Each carries a small visual
+  // signature of the thing it points to — strands for hair, a thin
+  // crescent for skin darkening, a drop+arc for sugar, a fading
+  // wave for the energy crash.
+  hirsutism: (
+    <>
+      <path d="M5 16c0 -4 1.5 -7 2.5 -10" />
+      <path d="M10 16c0 -5 1 -8 2 -11" />
+      <path d="M15 16c0 -3.5 1 -6 1.5 -8.5" opacity="0.7" />
+    </>
+  ),
+  scalpThinning: (
+    <>
+      <path d="M4 11c0 -4 3 -7 6 -7s6 3 6 7" />
+      <path d="M7.5 7.5l0 2" opacity="0.6" />
+      <path d="M10 6l0 2" opacity="0.4" />
+      <path d="M12.5 7.5l0 2" opacity="0.6" />
+      <path d="M5 13c1 1 3 1.5 5 1.5s4 -0.5 5 -1.5" />
+    </>
+  ),
+  acanthosis: (
+    <>
+      <path d="M3 7c2 1 5 1.5 7 1.5s5 -0.5 7 -1.5" />
+      <path d="M3 9.5c2 1 5 1.5 7 1.5s5 -0.5 7 -1.5" opacity="0.7" />
+      <path d="M3 12c2 1 5 1.5 7 1.5s5 -0.5 7 -1.5" opacity="0.4" />
+    </>
+  ),
+  sugarCraving: (
+    <>
+      <path d="M10 3c2 3 4 5 4 8a4 4 0 0 1 -8 0c0 -3 2 -5 4 -8z" />
+      <circle cx="10" cy="11" r="1.2" fill="currentColor" stroke="none" />
+    </>
+  ),
+  energyCrash: (
+    <>
+      <path d="M3 7l4 0" />
+      <path d="M3 11l5 -3" opacity="0.85" />
+      <path d="M3 14l9 -4" opacity="0.6" />
+      <path d="M3 17l13 -4" opacity="0.35" />
+    </>
+  ),
 }
 
 export function SymptomIcon({ id, size = 20, color }) {

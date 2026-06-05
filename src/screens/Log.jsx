@@ -369,6 +369,53 @@ export default function Log() {
         </div>
         </div>
 
+        {/* PCOS-relevant symptom row — only mounts when user said
+            in onboarding they're managing PCOS. PCOS-specific signals
+            (hirsutism, scalp thinning, acanthosis, sugar cravings,
+            post-meal energy crashes) don't fit the universal 8-grid
+            but are load-bearing for PCOS users. Same tap-to-toggle +
+            ? for literacy as the main row. */}
+        {(useLuna.getState().settings?.conditions || []).includes('pcos') && (
+          <div className="insight-stagger" style={{ animationDelay: '195ms', marginTop: -8, marginBottom: 24 }}>
+            <Eyebrow color={acc}>For your PCOS</Eyebrow>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+              {['hirsutism', 'scalpThinning', 'acanthosis', 'sugarCraving', 'energyCrash'].map((id) => {
+                const s = SYMPTOMS[id]
+                if (!s) return null
+                const on = symptoms.includes(id)
+                const planColors = sectionColors('plan')
+                return (
+                  <div key={`${id}-${on ? 'on' : 'off'}`}
+                    className={`alive-card frost-card${on && activeSym === id ? ' tap-bloom' : ''}`}
+                    style={{
+                      border: `1px solid ${on ? planColors.accent + '55' : 'rgba(26,19,16,0.06)'}`,
+                      background: on ? planColors.accent + '15' : sectionPaper('plan'),
+                      padding: '12px 4px 8px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                      position: 'relative',
+                      borderRadius: 16,
+                      boxShadow: on ? `0 12px 22px -16px ${planColors.accent}70` : `0 10px 22px -22px ${planColors.accent}40`,
+                      transition: 'all 0.2s var(--ease-out)',
+                    }}>
+                    <button onClick={() => toggleSym(id)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, fontFamily: 'inherit', color: on ? planColors.accent : T.text, padding: 0, width: '100%' }}>
+                      <span style={{
+                        width: 26, height: 26, borderRadius: 999,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        background: on ? `${planColors.accent}24` : `${planColors.accent}14`,
+                        color: on ? planColors.accent : planColors.accent,
+                      }}>
+                        <SymptomIcon id={id} size={16} />
+                      </span>
+                      <span style={{ fontSize: 9.5, fontWeight: 500, lineHeight: 1.15, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Phase-aware insight for the last-tapped symptom — same pattern
             as the mood-tap insights on Home. */}
         {symInsight && (

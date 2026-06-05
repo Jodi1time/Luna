@@ -36,6 +36,7 @@ const PeriodHistory   = lazy(() => import('./screens/PeriodHistory'))
 const EditPeriodStart = lazy(() => import('./screens/EditPeriodStart'))
 const PeriodDaysPicker = lazy(() => import('./screens/PeriodDaysPicker'))
 const EditSetup       = lazy(() => import('./screens/EditSetup'))
+const Pcos            = lazy(() => import('./screens/Pcos'))
 const EditCycleNumbers = lazy(() => import('./screens/EditCycleNumbers'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
@@ -225,6 +226,7 @@ function ScreenRenderer({ screen }) {
     case 'editPeriodStart': return <EditPeriodStart />
     case 'periodDays': return <PeriodDaysPicker />
     case 'editSetup': return <EditSetup />
+    case 'pcos': return <Pcos />
     case 'editCycleNumbers': return <EditCycleNumbers />
     case 'birthControl': return <BirthControl />
     case 'pregnancy': return <Pregnancy />
