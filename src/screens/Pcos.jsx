@@ -386,12 +386,29 @@ export default function Pcos() {
               </div>
             </button>
 
-            {/* Doctor-script still ahead — Week 3 of the PRD */}
-            <ComingSoonCard
-              accent={accent}
-              title="Doctor-script generator"
-              body="A formatted, sourced summary of your symptoms + the tests to ask for by name — printable, ready for your next visit."
-            />
+            {/* Doctor-script generator — live */}
+            <button onClick={() => go('pcosDoctorScript')}
+              className="alive-card frost-card"
+              style={{
+                padding: '14px 16px',
+                background: sectionPaper('plan'),
+                border: `1px solid ${accent}28`,
+                borderRadius: 16,
+                textAlign: 'left', cursor: 'pointer',
+                color: T.text, fontFamily: 'inherit', width: '100%',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
+                  For your next appointment
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
+                  open →
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
+                Stitch your symptoms, cycle, bloodwork, and treatments into a one-page doctor-ready summary. Print, or copy into a portal message.
+              </div>
+            </button>
           </div>
         </div>
 

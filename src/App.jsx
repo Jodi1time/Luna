@@ -40,6 +40,7 @@ const Pcos            = lazy(() => import('./screens/Pcos'))
 const PcosBloodwork   = lazy(() => import('./screens/PcosBloodwork'))
 const PcosMedications = lazy(() => import('./screens/PcosMedications'))
 const BcMethodDetail  = lazy(() => import('./screens/BcMethodDetail'))
+const PcosDoctorScript = lazy(() => import('./screens/PcosDoctorScript'))
 const EditCycleNumbers = lazy(() => import('./screens/EditCycleNumbers'))
 const BirthControl    = lazy(() => import('./screens/BirthControl'))
 const Pregnancy       = lazy(() => import('./screens/Pregnancy'))
@@ -233,6 +234,7 @@ function ScreenRenderer({ screen }) {
     case 'pcosBloodwork': return <PcosBloodwork />
     case 'pcosMedications': return <PcosMedications />
     case 'bcMethod': return <BcMethodDetail />
+    case 'pcosDoctorScript': return <PcosDoctorScript />
     case 'editCycleNumbers': return <EditCycleNumbers />
     case 'birthControl': return <BirthControl />
     case 'pregnancy': return <Pregnancy />
