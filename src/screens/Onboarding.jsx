@@ -754,7 +754,12 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
           border: '1px solid rgba(26,19,16,0.08)',
           borderRadius: 16,
           padding: '14px 16px',
-          fontSize: 15,
+          // 16px is the iOS Safari threshold — anything under triggers
+          // auto-zoom-in on focus AND doesn't always reset cleanly,
+          // leaving the page zoomed past the viewport edges (the user
+          // then has to manually pinch back to fit). Stay at 16+ on
+          // every text-entry input app-wide.
+          fontSize: 16,
           fontFamily: T.sans,
           color: T.text,
           outline: 'none',
