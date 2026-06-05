@@ -358,8 +358,16 @@ const useLuna = create(
             merged[iso] = localLog
           }
         }
+        // Never downgrade onboarded true→false on hydrate. Race
+        // condition: signUp triggers handle_new_user which creates a
+        // profile with the column default onboarded=false. If the
+        // user's setOnboarding cloud write hasn't landed yet when
+        // hydrate fetches, the stale row would un-onboard them and
+        // App.jsx would route them back to Welcome. Cloud can only
+        // ever upgrade onboarded; once local is true, it stays true.
+        const localOnboarded = get().onboarded
         set({
-          onboarded:       Boolean(profile.onboarded),
+          onboarded:       localOnboarded || Boolean(profile.onboarded),
           displayName:     profile.display_name || '',
           lastPeriodStart: profile.last_period_start || null,
           cycleLength:     profile.cycle_length || 28,

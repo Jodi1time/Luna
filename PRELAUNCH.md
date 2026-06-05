@@ -233,10 +233,18 @@ Plugins added to `package.json` and wired in code. Still need an
 `npm install` on Jodi's side, then `npx cap sync` after the platform
 folders exist.
 
-- [ ] **Run `npm install`** — picks up `@capacitor/status-bar`,
-      `@capacitor/splash-screen`, `@capacitor/haptics`. The wiring in
-      `src/main.jsx` and `src/lib/haptics.js` is no-op on web, so
-      everything still works in dev / web until iOS is added.
+- [ ] **Install the three Capacitor plugins** (run this in `~`,
+      the Luna project root):
+      ```
+      npm install @capacitor/status-bar @capacitor/splash-screen @capacitor/haptics --save
+      ```
+      The wiring in `src/main.jsx` and `src/lib/haptics.js` is fully
+      lazy with try/catch, so the web build is unaffected — these
+      packages are intentionally NOT in package.json by default to
+      keep the GitHub Pages deploy unblocked. They only need to be
+      installed when you're actually about to build for iOS / Android.
+      After install, commit `package.json` + `package-lock.json` so
+      CI stays in sync.
 - [ ] **`npx cap add ios`** (and `android` if shipping Play Store too).
       Generates the native project folders. Commit them.
 - [ ] **`npx cap sync`** — copies `dist/` into the native projects and
