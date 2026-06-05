@@ -16,6 +16,7 @@ import {
   INSULIN_PATTERN_SIGNALS,
   ANDROGEN_PATTERN_SIGNALS,
 } from '../data/pcos'
+import { homaIR, homaIRReading } from '../data/pcosClinical'
 
 // PCOS Deep Mode — dashboard.
 //
@@ -156,8 +157,27 @@ export default function Pcos() {
     [signalCounts]
   )
 
-  // Has she logged any bloodwork? Drives the next-thing suggestion.
-  const hasBloodwork = Array.isArray(settings?.pcos?.bloodwork) && settings.pcos.bloodwork.length > 0
+  // Bloodwork + medications summaries — drive both the next-thing
+  // recommender and the new live tracker cards on the dashboard.
+  const bloodwork = settings?.pcos?.bloodwork || []
+  const hasBloodwork = bloodwork.length > 0
+  const meds = settings?.pcos?.medications || []
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const takenTodayCount = meds.filter((m) => m.dailyLog?.[todayISO] === 'taken').length
+
+  // Latest HOMA-IR for the bloodwork summary card.
+  const homaSummary = useMemo(() => {
+    const byPanel = {}
+    for (const r of bloodwork) {
+      if (!byPanel[r.panelId]) byPanel[r.panelId] = []
+      byPanel[r.panelId].push(r)
+    }
+    const g = (byPanel['fasting-glucose'] || []).slice().sort((a, b) => b.dateISO.localeCompare(a.dateISO))[0]
+    const i = (byPanel['fasting-insulin'] || []).slice().sort((a, b) => b.dateISO.localeCompare(a.dateISO))[0]
+    if (!g || !i) return null
+    const score = homaIR({ glucose: g.value, glucoseUnit: g.unit, insulin: i.value })
+    return { score, interp: homaIRReading(score) }
+  }, [bloodwork])
 
   const nextThing = useMemo(
     () => pcosNextThing({
@@ -306,21 +326,67 @@ export default function Pcos() {
 
         <Rule />
 
-        {/* Coming-soon — the v2 surfaces. Visible stubs so she knows
-            where this is going. None tappable yet. */}
-        <div className="insight-stagger" style={{ marginTop: 8, marginBottom: 8, animationDelay: '320ms' }}>
-          <Eyebrow color={accent}>What’s landing here next</Eyebrow>
+        {/* Bloodwork + medications — real tappable cards now that the
+            two trackers exist. Each shows a one-line live summary so
+            she sees at a glance whether she's been logging. */}
+        <div className="insight-stagger" style={{ marginTop: 8, marginBottom: 18, animationDelay: '320ms' }}>
+          <Eyebrow color={accent}>Your tracking</Eyebrow>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-            <ComingSoonCard
-              accent={accent}
-              title="Bloodwork tracker"
-              body="Testosterone, AMH, fasting insulin, SHBG, DHEA-S, TSH — log values, see trends, export for your doctor."
-            />
-            <ComingSoonCard
-              accent={accent}
-              title="Treatments you’re tracking"
-              body="Daily check-ins for inositol, metformin, spironolactone, GLP-1s, and BC — with side effects and how-it’s-going notes."
-            />
+            {/* Bloodwork summary card */}
+            <button onClick={() => go('pcosBloodwork')}
+              className="alive-card frost-card"
+              style={{
+                padding: '14px 16px',
+                background: sectionPaper('plan'),
+                border: `1px solid ${accent}28`,
+                borderRadius: 16,
+                textAlign: 'left', cursor: 'pointer',
+                color: T.text, fontFamily: 'inherit', width: '100%',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
+                  Bloodwork
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
+                  open →
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
+                {hasBloodwork
+                  ? (homaSummary
+                      ? `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged · HOMA-IR ${homaSummary.score} (${homaSummary.interp?.label})`
+                      : `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged — log fasting glucose + insulin for HOMA-IR`)
+                  : 'Log testosterone, AMH, fasting insulin, SHBG, DHEA-S, TSH — Luna pairs each with what it means in PCOS.'}
+              </div>
+            </button>
+
+            {/* Medications summary card with today's check-in state */}
+            <button onClick={() => go('pcosMedications')}
+              className="alive-card frost-card"
+              style={{
+                padding: '14px 16px',
+                background: sectionPaper('plan'),
+                border: `1px solid ${accent}28`,
+                borderRadius: 16,
+                textAlign: 'left', cursor: 'pointer',
+                color: T.text, fontFamily: 'inherit', width: '100%',
+              }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
+                  Treatments
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
+                  open →
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
+                {meds.length === 0
+                  ? 'Inositol, metformin, spironolactone, GLP-1s, BC — track what you’re taking, day by day.'
+                  : `${meds.length} tracking · ${takenTodayCount}/${meds.length} taken today`}
+              </div>
+            </button>
+
+            {/* Doctor-script still ahead — Week 3 of the PRD */}
             <ComingSoonCard
               accent={accent}
               title="Doctor-script generator"

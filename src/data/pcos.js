@@ -189,9 +189,9 @@ export function pcosNextThing({ cycleDay, cycleLength, signalCounts, hasBloodwor
       kind: 'log-bloodwork',
       eyebrow: 'a small step',
       title: 'Log your latest bloodwork',
-      body: 'When you have testosterone, fasting insulin, AMH, or SHBG results, logging them lets Luna track trends over time and build a doctor-ready summary.',
-      cta: 'Coming soon',
-      disabled: true,
+      body: 'When you have testosterone, fasting insulin, AMH, or SHBG results, logging them lets Luna track trends over time and pair every number with what it means in PCOS.',
+      cta: 'Open bloodwork →',
+      route: 'pcosBloodwork',
     }
   }
   if ((signalCounts?.acanthosis || 0) + (signalCounts?.energyCrash || 0) + (signalCounts?.sugarCraving || 0) >= 4) {
