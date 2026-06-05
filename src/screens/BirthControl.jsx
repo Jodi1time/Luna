@@ -150,6 +150,34 @@ export default function BirthControl() {
           next-thing surface (shot countdown, pack-week, since insertion). */}
       <StartDateField method={selectedId} value={pendingDate} onChange={updateDate} />
 
+      {/* Method-detail link — opens the deep reference page so she
+          can read sourced info on the method she's on. Hidden for
+          'none' (nothing to read). */}
+      {selectedId !== 'none' && (
+        <div style={{ margin: '14px 16px 0' }}>
+          <button onClick={() => useLuna.getState().go('bcMethod')}
+            className="alive-card frost-card"
+            style={{
+              width: '100%',
+              padding: '14px 16px',
+              background: 'rgba(253,250,245,0.55)',
+              border: `1px solid ${T.accent}28`,
+              borderRadius: 16,
+              textAlign: 'left',
+              cursor: 'pointer',
+              color: T.text,
+              fontFamily: 'inherit',
+            }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginBottom: 4 }}>
+              the deeper read
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, letterSpacing: -0.2 }}>
+              How {BC_LABELS[selectedId]?.toLowerCase() || 'your method'} works, what to expect, when to call your doctor →
+            </div>
+          </button>
+        </div>
+      )}
+
       <div style={{ padding: '20px 22px 8px', fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.5 }}>
         Change this any time. Logged cycle data isn't affected.
       </div>
