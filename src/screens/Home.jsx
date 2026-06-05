@@ -10,6 +10,7 @@ import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary } from '../hooks/useCycle'
+import { getBcCycleModel } from '../lib/bcCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import { moodIdsOf } from '../lib/moods'
@@ -918,6 +919,12 @@ export default function Home() {
   const [quickMood, setQuickMood] = useState(null)
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
+  // Per-method cycle model — drives the cover and the BC-aware "next
+  // thing" surface (shot countdown, pack-week tracker, etc.). For
+  // 'none' and 'copper-iud' this returns kind: 'natural' and the rest
+  // of Home renders unchanged.
+  const bcModel = useMemo(() => getBcCycleModel(birthControl), [birthControl?.method, birthControl?.startDate])
+  const bcUsesCover = onHormonalBC && bcModel?.cover
 
   // Blob tap effects — ripple/bloom only fire when the user's
   // chosen backdrop IS the blob. Other backdrops (moons, aurora,
@@ -1320,23 +1327,25 @@ export default function Home() {
               overflow: 'hidden',
               padding: '4px 0 0',
             }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 4, opacity: 0.9 }}>
-                {onHormonalBC
-                  ? `day ${cycleDay || '—'} · ${bcLabel.toLowerCase()}`
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 4, opacity: 0.9 }}>
+                {bcUsesCover
+                  ? bcModel.cover.eyebrow
                   : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
               </div>
-              {phase && (
+              {phase && !bcUsesCover && (
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2, color: phase.color, opacity: 0.7 }} aria-hidden="true">
                   <PhaseFlourish phaseId={phase.id} size={22} />
                 </div>
               )}
-              <div key={cycleDay /* re-key on day change so the bloom replays on rollover */}
-                className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 116, fontWeight: 300, fontStyle: 'italic', color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -5.5, transition: 'color 0.6s ease-out' }}>
-                {cycleDay ? animatedDay : '—'}
+              <div key={bcUsesCover ? `bc-${bcModel.cover.bigNumber ?? 'x'}` : cycleDay}
+                className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength && !bcUsesCover ? ' countdown' : ''}`}
+                style={{ fontFamily: T.serif, fontSize: 116, fontWeight: 300, fontStyle: 'italic', color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -5.5, transition: 'color 0.6s ease-out' }}>
+                {bcUsesCover
+                  ? (bcModel.cover.bigNumber != null ? bcModel.cover.bigNumber : '—')
+                  : (cycleDay ? animatedDay : '—')}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, lineHeight: 1.1, marginTop: 4, color: T.text }}>
-                {phase?.name || 'Just getting started'}.
+                {bcUsesCover ? bcModel.cover.headline : (phase?.name || 'Just getting started')}.
               </div>
             </div>
 
@@ -1344,7 +1353,7 @@ export default function Home() {
               willChange: 'opacity, max-height',
               overflow: 'hidden',
             }}>
-              {contextLine && (
+              {contextLine && !bcUsesCover && (
                 <div style={{ marginTop: 10, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   <div style={{ fontFamily: T.serif, fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
                     {contextLine.text}
@@ -1362,9 +1371,9 @@ export default function Home() {
                   {phasePresence[phase.id]}
                 </div>
               )}
-              {phase && onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: T.muted, maxWidth: 300, marginLeft: 'auto', marginRight: 'auto' }}>
-                  Your method steadies your hormones — patterns still emerge.
+              {bcUsesCover && bcModel.cover.presence && (
+                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: T.muted, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                  {bcModel.cover.presence}
                 </div>
               )}
               {/* Affordance hint — tells the user the whole cover is
@@ -1379,6 +1388,51 @@ export default function Home() {
 
             </div>
           </div>
+          )}
+
+          {/* BC missing-date prompt — when she's on a method that
+              needs a start date (shot, IUD, implant, pill/patch/ring)
+              and we don't have it yet. Single tap into BirthControl
+              to set it; the cover starts working the moment she does. */}
+          {bcUsesCover && bcModel.missingStartDate && (
+            <button onClick={() => go('birthControl')}
+              className="alive-card frost-card"
+              style={{ marginTop: 18, padding: 18, background: T.accent + '10', border: `1px solid ${T.accent}38`, borderRadius: 22, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 6 }}>
+                a small thing to set
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.35, marginBottom: 6 }}>
+                {bcModel.startDateLabel}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+                Once Luna knows, the cover starts working — countdown, pack-week, the right next thing. Takes one tap.
+              </div>
+            </button>
+          )}
+
+          {/* BC next-thing — shot countdown, pack-week withdrawal
+              bleed prediction, IUD pattern-discovery, etc. Replaces
+              the natural-cycle period-prediction surfaces for hormonal
+              BC users. Urgent flag (overdue shot) gets accent border. */}
+          {bcUsesCover && bcModel.nextThing && !bcModel.missingStartDate && (
+            <div className="alive-card frost-card" style={{
+              marginTop: 18, padding: 18,
+              background: bcModel.nextThing.urgent ? T.accent + '12' : 'rgba(253,250,245,0.55)',
+              border: `1px solid ${bcModel.nextThing.urgent ? T.accent + '55' : 'rgba(26,19,16,0.06)'}`,
+              borderRadius: 22,
+              boxShadow: bcModel.nextThing.urgent ? `0 14px 30px -20px ${T.accent}55` : `0 14px 30px -22px rgba(26,19,16,0.18)`,
+              textAlign: 'left',
+            }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: bcModel.nextThing.urgent ? T.accent : T.muted, letterSpacing: -0.1, marginBottom: 6 }}>
+                {bcModel.nextThing.eyebrow}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.35, marginBottom: 6 }}>
+                {bcModel.nextThing.title}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+                {bcModel.nextThing.body}
+              </div>
+            </div>
           )}
 
           {/* Catch-up nudge — surfaces when Luna's anchor is almost
