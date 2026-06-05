@@ -283,60 +283,17 @@ function buildPlainText(script) {
   return lines.join('\n')
 }
 
-// ─── UI helpers ───────────────────────────────────────────────
-function SectionToggle({ label, on, onChange, count, accent }) {
-  return (
-    <button onClick={() => onChange(!on)}
-      className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
-      style={{
-        textAlign: 'left', cursor: 'pointer', width: '100%',
-        padding: '12px 14px',
-        background: on ? `${accent}14` : 'rgba(253,250,245,0.55)',
-        border: `1px solid ${on ? accent + '55' : 'rgba(26,19,16,0.06)'}`,
-        borderRadius: 14,
-        color: T.text, fontFamily: 'inherit',
-        display: 'flex', alignItems: 'center', gap: 12,
-        transition: 'all 0.2s var(--ease-out)',
-      }}>
-      <div style={{
-        width: 20, height: 20, borderRadius: 6,
-        background: on ? accent : 'transparent',
-        border: `1.5px solid ${on ? accent : 'rgba(26,19,16,0.2)'}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        {on && (
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 10l3 3 7-7" />
-          </svg>
-        )}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: on ? 'italic' : 'normal', fontSize: 14.5, fontWeight: 500, letterSpacing: -0.1, color: on ? accent : T.text }}>
-          {label}
-        </div>
-      </div>
-      {typeof count === 'number' && (
-        <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 0.5, color: T.muted, fontWeight: 600 }}>
-          {count}
-        </div>
-      )}
-    </button>
-  )
-}
-
 export default function PcosDoctorScript() {
   const store = useLuna()
   const { back, logs, settings, displayName } = store
   const cycle = useCycle(store)
   const accent = sectionColors('plan').accent
   const [purposeId, setPurposeId] = useState('first-conversation')
-  const [sections, setSections] = useState({
-    cycle: true,
-    symptoms: true,
-    bloodwork: true,
-    meds: true,
-  })
+  // HAVEN-NOT-CLASSROOM: previously had 4 visible section toggles.
+  // Killed them — every available block goes into the script by
+  // default. The user picks her visit purpose; Luna composes the rest.
+  // One decision instead of five.
+  const sections = { cycle: true, symptoms: true, bloodwork: true, meds: true }
   const [copied, setCopied] = useState(false)
 
   const bloodwork = settings?.pcos?.bloodwork || []
@@ -371,8 +328,6 @@ export default function PcosDoctorScript() {
       document.body.removeChild(ta)
     }
   }
-
-  const symptomCount = useMemo(() => topSymptomsFromLogs(logs, 90).length, [logs])
 
   return (
     <Screen padBottom={40}>
@@ -411,19 +366,8 @@ export default function PcosDoctorScript() {
           </div>
         </div>
 
-        {/* Section toggles — let her include or hide blocks */}
-        <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '100ms' }}>
-          <Eyebrow color={accent}>What to include</Eyebrow>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-            <SectionToggle label="My cycle pattern" on={sections.cycle} onChange={(v) => setSections((s) => ({ ...s, cycle: v }))} accent={accent} />
-            <SectionToggle label="Symptoms from the last 90 days" on={sections.symptoms} onChange={(v) => setSections((s) => ({ ...s, symptoms: v }))} count={symptomCount} accent={accent} />
-            <SectionToggle label="Most recent bloodwork" on={sections.bloodwork} onChange={(v) => setSections((s) => ({ ...s, bloodwork: v }))} count={bloodwork.length} accent={accent} />
-            <SectionToggle label="Current treatments" on={sections.meds} onChange={(v) => setSections((s) => ({ ...s, meds: v }))} count={meds.length} accent={accent} />
-          </div>
-        </div>
-
         {/* Live preview — soft frost card showing what the script looks like */}
-        <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '160ms' }}>
+        <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '100ms' }}>
           <Eyebrow color={accent}>Preview</Eyebrow>
           <div className="frost-card" style={{
             padding: '18px 18px 14px',

@@ -10,7 +10,6 @@ import { SymptomIcon } from '../components/symptomIcons'
 import {
   pcosCycleRead,
   pcosSignalCounts,
-  pcosAxisSummary,
   todaysPcosLiteracy,
   pcosNextThing,
   INSULIN_PATTERN_SIGNALS,
@@ -62,52 +61,6 @@ function StatCard({ label, value, hint, accent }) {
   )
 }
 
-function AxisRow({ label, total, ids, signalCounts, accent }) {
-  // Show only signals with non-zero counts. If everything's zero,
-  // render a quiet "nothing notable this month" line.
-  const named = ids
-    .map((id) => ({ id, count: signalCounts[id] || 0, label: SYMPTOMS[id]?.label || id }))
-    .filter((x) => x.count > 0)
-    .sort((a, b) => b.count - a.count)
-  return (
-    <div style={{ padding: '14px 16px', background: 'rgba(253,250,245,0.55)', border: `1px solid ${accent}22`, borderRadius: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: accent, fontWeight: 500, letterSpacing: -0.1 }}>
-          {label}
-        </div>
-        <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>
-          {total} day{total === 1 ? '' : 's'} this month
-        </div>
-      </div>
-      {named.length === 0 ? (
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
-          Nothing notable in the last 30 days. Luna will surface these as you log them.
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {named.map((x) => (
-            <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 22, height: 22, borderRadius: 999,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                background: `${accent}14`, color: accent, flexShrink: 0,
-              }}>
-                <SymptomIcon id={x.id} size={14} />
-              </span>
-              <div style={{ fontFamily: T.serif, fontSize: 14, color: T.text, flex: 1 }}>
-                {x.label}
-              </div>
-              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 600 }}>
-                ×{x.count}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function ComingSoonCard({ title, body, accent }) {
   return (
     <div className="frost-card" style={{
@@ -152,11 +105,6 @@ export default function Pcos() {
     () => pcosSignalCounts(logs, 30),
     [logs]
   )
-  const { androgenTotal, insulinTotal } = useMemo(
-    () => pcosAxisSummary(signalCounts),
-    [signalCounts]
-  )
-
   // Bloodwork + medications summaries — drive both the next-thing
   // recommender and the new live tracker cards on the dashboard.
   const bloodwork = settings?.pcos?.bloodwork || []
@@ -252,26 +200,47 @@ export default function Pcos() {
           </div>
         </div>
 
-        {/* What you're noticing — axis summary across last 30 days */}
-        <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '140ms' }}>
-          <Eyebrow color={accent}>What you’ve been noticing</Eyebrow>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-            <AxisRow
-              label="Androgen-pattern signals"
-              total={androgenTotal}
-              ids={ANDROGEN_PATTERN_SIGNALS}
-              signalCounts={signalCounts}
-              accent={accent}
-            />
-            <AxisRow
-              label="Insulin-pattern signals"
-              total={insulinTotal}
-              ids={INSULIN_PATTERN_SIGNALS}
-              signalCounts={signalCounts}
-              accent={accent}
-            />
-          </div>
-        </div>
+        {/* What she's been noticing — single quiet summary instead of
+            two separate axis cards. The androgen/insulin grouping is
+            still computed for the next-thing recommender, but the
+            dashboard just shows her the top few signals as a calm
+            "this is what's been showing up" list. HAVEN, not classroom. */}
+        {(() => {
+          const allIds = [...ANDROGEN_PATTERN_SIGNALS, ...INSULIN_PATTERN_SIGNALS]
+          const top = allIds
+            .map((id) => ({ id, label: SYMPTOMS[id]?.label || id, count: signalCounts[id] || 0 }))
+            .filter((x) => x.count > 0)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 4)
+          if (top.length === 0) return null
+          return (
+            <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '140ms' }}>
+              <Eyebrow color={accent}>What you’ve been noticing</Eyebrow>
+              <div style={{ padding: '14px 16px', background: 'rgba(253,250,245,0.55)', border: `1px solid ${accent}22`, borderRadius: 18, marginTop: 4 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {top.map((x) => (
+                    <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{
+                        width: 22, height: 22, borderRadius: 999,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        background: `${accent}14`, color: accent, flexShrink: 0,
+                      }}>
+                        <SymptomIcon id={x.id} size={14} />
+                      </span>
+                      <div style={{ fontFamily: T.serif, fontSize: 14, color: T.text, flex: 1 }}>{x.label}</div>
+                      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 600 }}>
+                        {x.count}d
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 10, lineHeight: 1.5 }}>
+                  Last 30 days. Tap “For your appointment” below to send these with you.
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Today's next thing — one quiet recommendation. */}
         <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '200ms' }}>

@@ -256,10 +256,72 @@ const CATEGORY_LABEL = {
   ovarian:   'Ovarian',
 }
 
+// Picker that opens when she taps "+ track a panel" — shows the
+// panels she's not yet tracking, grouped by category. One tap adds
+// that panel to her active list (zero readings, but it'll mount).
+function PanelPicker({ accent, alreadyTracked, onPick, onCancel }) {
+  const groups = bloodworkByCategory()
+  return (
+    <div className="frost-card insight-stagger" style={{
+      padding: 16,
+      background: `linear-gradient(160deg, ${accent}0d, rgba(253,250,245,0.55))`,
+      border: `1px solid ${accent}30`,
+      borderRadius: 18,
+      marginBottom: 14,
+      animation: 'fadeUp 0.3s ease-out both',
+    }}>
+      <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 12 }}>
+        Which one are you about to log?
+      </div>
+      {['hormones', 'metabolic', 'thyroid', 'ovarian'].map((cat) => {
+        const list = (groups[cat] || []).filter((p) => !alreadyTracked.has(p.id))
+        if (list.length === 0) return null
+        return (
+          <div key={cat} style={{ marginBottom: 12 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
+              {CATEGORY_LABEL[cat]}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {list.map((p) => (
+                <button key={p.id} onClick={() => onPick(p.id)}
+                  className="alive-card"
+                  style={{
+                    background: 'rgba(253,250,245,0.6)',
+                    border: '1px solid rgba(26,19,16,0.06)',
+                    padding: '10px 14px', borderRadius: 14,
+                    textAlign: 'left', cursor: 'pointer',
+                    color: T.text, fontFamily: 'inherit',
+                  }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500 }}>
+                    {p.name}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+      <button onClick={onCancel}
+        style={{ width: '100%', background: 'transparent', color: T.text, border: '1px solid rgba(26,19,16,0.08)', padding: '10px 14px', borderRadius: 999, cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3 }}>
+        Cancel
+      </button>
+    </div>
+  )
+}
+
 export default function PcosBloodwork() {
   const { back, settings, updateSetting } = useLuna()
   const accent = sectionColors('plan').accent
   const allReadings = settings?.pcos?.bloodwork || []
+  // Panels the user has explicitly chosen to track, even if no readings
+  // yet. Stored as settings.pcos.activePanels[]. Mounting a panel from
+  // the picker adds its id here; deleting all readings does NOT remove
+  // it (she might be about to add a new one). Migration: any panel
+  // that already has readings is treated as tracked.
+  const trackedFromReadings = new Set(allReadings.map((r) => r.panelId))
+  const explicitTracked = new Set(settings?.pcos?.activePanels || [])
+  const trackedPanels = new Set([...trackedFromReadings, ...explicitTracked])
+  const [picking, setPicking] = useState(false)
 
   // Group readings by panelId for fast lookup.
   const readingsByPanel = useMemo(() => {
@@ -274,6 +336,12 @@ export default function PcosBloodwork() {
   const writeReadings = (next) => {
     const pcos = settings?.pcos || {}
     updateSetting('pcos', { ...pcos, bloodwork: next })
+  }
+  const addPanel = (panelId) => {
+    const pcos = settings?.pcos || {}
+    const next = Array.from(new Set([...(pcos.activePanels || []), panelId]))
+    updateSetting('pcos', { ...pcos, activePanels: next })
+    setPicking(false)
   }
   const addReading = (panelId, reading) => {
     const next = [...allReadings, { id: `bw_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, panelId, ...reading }]
@@ -291,8 +359,6 @@ export default function PcosBloodwork() {
     return homaIR({ glucose: g.value, glucoseUnit: g.unit, insulin: i.value })
   }, [readingsByPanel])
   const homaInterp = homaIRReading(homaScore)
-
-  const groups = bloodworkByCategory()
 
   return (
     <Screen padBottom={40}>
@@ -334,32 +400,68 @@ export default function PcosBloodwork() {
           </div>
         )}
 
-        {/* Panels, grouped by category */}
-        {['hormones', 'metabolic', 'thyroid', 'ovarian'].map((cat) => {
-          const list = groups[cat] || []
-          if (list.length === 0) return null
-          return (
-            <div key={cat} className="insight-stagger" style={{ marginBottom: 22, animationDelay: '80ms' }}>
-              <Eyebrow color={accent}>{CATEGORY_LABEL[cat]}</Eyebrow>
-              <div style={{ marginTop: 6 }}>
-                {list.map((p) => (
-                  <PanelCard
-                    key={p.id}
-                    panel={p}
-                    readings={readingsByPanel[p.id] || []}
-                    accent={accent}
-                    onAdd={(r) => addReading(p.id, r)}
-                    onDelete={deleteReading}
-                  />
-                ))}
-              </div>
+        {/* Only show panels she's actually tracking. The other 8-9
+            panels live behind a single "+ track a panel" affordance
+            below. HAVEN-NOT-CLASSROOM: she sees what she's working
+            with, not the whole encyclopedia. */}
+        {trackedPanels.size === 0 && !picking && (
+          <div className="frost-card insight-stagger" style={{
+            padding: 22,
+            background: `linear-gradient(160deg, ${accent}0e, rgba(253,250,245,0.55))`,
+            border: `1px dashed ${accent}40`,
+            borderRadius: 18,
+            marginBottom: 14,
+            textAlign: 'center',
+            animationDelay: '40ms',
+          }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.muted, lineHeight: 1.6 }}>
+              Nothing tracked yet. Add a panel when you get a reading — testosterone, AMH, fasting insulin, or anything else your doctor ran.
             </div>
+          </div>
+        )}
+
+        {[...trackedPanels].map((panelId) => {
+          const panel = getPanel(panelId)
+          if (!panel) return null
+          return (
+            <PanelCard
+              key={panelId}
+              panel={panel}
+              readings={readingsByPanel[panelId] || []}
+              accent={accent}
+              onAdd={(r) => addReading(panelId, r)}
+              onDelete={deleteReading}
+            />
           )
         })}
 
+        {picking ? (
+          <PanelPicker
+            accent={accent}
+            alreadyTracked={trackedPanels}
+            onPick={addPanel}
+            onCancel={() => setPicking(false)}
+          />
+        ) : (
+          <button onClick={() => setPicking(true)}
+            style={{
+              marginTop: 4,
+              background: accent,
+              color: '#fff',
+              border: 'none',
+              padding: '14px 18px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4,
+              width: '100%',
+            }}>
+            + track a panel
+          </button>
+        )}
+
         <Rule />
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.55, padding: '8px 0', textAlign: 'center' }}>
-          Readings stay on your device + your encrypted Luna profile. Never shared without your explicit invitation.
+          Readings stay on your device + your encrypted Luna profile.
         </div>
       </div>
     </Screen>
