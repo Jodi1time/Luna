@@ -9,7 +9,7 @@ async function currentUser() {
     const { data: { user } } = await supabase.auth.getUser()
     return user || null
   } catch (e) {
-    reportError(e, { where: 'cloud.currentUser' })
+    reportError(wrapSupabaseError(e, 'currentUser'), { where: 'cloud.currentUser' })
     return null
   }
 }
@@ -159,10 +159,34 @@ export async function deleteLog(date) {
 // Fire-and-forget wrapper for mutations called from the store. We
 // don't want UI to wait on cloud round-trips, but we DO want failures
 // to land in Sentry so we know about silent drift.
+// Wrap a Supabase PostgrestError ({code, details, hint, message}) into
+// a real Error instance so Sentry titles the issue with a useful string
+// instead of "Object captured as exception with keys: code, details,
+// hint, message." Also preserves the original Supabase fields as
+// properties on the wrapped Error so they're still readable in the
+// Sentry detail view.
+function wrapSupabaseError(e, where) {
+  if (e instanceof Error) return e
+  const msg = e?.message || e?.code || 'unknown error'
+  const wrapped = new Error(`cloud.${where}: ${msg}`)
+  wrapped.supabaseCode = e?.code ?? null
+  wrapped.supabaseDetails = e?.details ?? null
+  wrapped.supabaseHint = e?.hint ?? null
+  wrapped.original = e
+  return wrapped
+}
+
 export function fireAndForget(promise, where) {
   promise.catch((e) => {
     // eslint-disable-next-line no-console
     console.error(`[cloud] ${where} failed:`, e)
-    reportError(e, { where: `cloud.${where}` })
+    reportError(wrapSupabaseError(e, where), {
+      where: `cloud.${where}`,
+      // Carry the structured Supabase fields into Sentry's `extra` so
+      // they show on the issue page even if someone reads only the title.
+      supabase_code: e?.code ?? null,
+      supabase_details: e?.details ?? null,
+      supabase_hint: e?.hint ?? null,
+    })
   })
 }
