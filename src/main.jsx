@@ -43,6 +43,18 @@ initPostHog()
 // being asked. Combined with skipWaiting/clientsClaim in vite.config.js,
 // this means updates land transparently on the next foreground.
 if ('serviceWorker' in navigator) {
+  // Manual SW registration — replaces vite-plugin-pwa's auto-injected
+  // /registerSW.js, which fired an unhandled rejection into Sentry
+  // when registration failed on iOS standalone / private browsing /
+  // weird cache states. Failure is expected in those contexts and not
+  // worth alerting on — we silently swallow, and the app still works
+  // (just without offline support for that session).
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .catch(() => { /* expected on iOS PWA / private browsing; not actionable */ })
+  })
+
   let reloading = false
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloading) return

@@ -35,6 +35,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Disable auto-injected /registerSW.js — its unhandled promise
+      // rejection on iOS standalone PWAs / private browsing / certain
+      // cache states fired a generic "Rejected" exception into Sentry
+      // with no actionable info. We register manually in main.jsx with
+      // a proper .catch() instead.
+      injectRegister: null,
       includeAssets: ['icon-192.png', 'icon-512.png', 'splash/*.png'],
       manifest: {
         name: 'Luna by Gloria — Cycle Companion',
