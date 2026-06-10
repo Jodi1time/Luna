@@ -248,7 +248,6 @@ export default function Settings() {
       <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
         <Row label="Your data, in the open" onTap={() => go('privacyDashboard')} />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
-        <Row label="Soft sounds" right={<Toggle on={Boolean(settings.sounds)} onChange={(v) => updateSetting('sounds', v)} />} />
         <Row label="Export everything" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
@@ -256,22 +255,20 @@ export default function Settings() {
       </div>
       </div>
 
-      <div className="insight-stagger" style={{ animationDelay: '390ms' }}>
-      <SectionLabel color={acc}>Gentle reminders</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
-        <Row label="Period reminder"  right={<Toggle on={settings.notifyPeriod} onChange={(v) => updateSetting('notifyPeriod', v)} />} />
-        <Row label="Daily check-in"   right={<Toggle on={settings.notifyLog}    onChange={(v) => updateSetting('notifyLog', v)} />} />
-        <Row label="Weekly editorial" right={<Toggle on={settings.notifyWeekly} onChange={(v) => updateSetting('notifyWeekly', v)} />} />
-      </div>
-      </div>
+      {/* "Gentle reminders" section removed 2026-06-10: the three
+          toggles weren't wired to anything — no notification code
+          exists yet (deliberately, pre-native). Dead switches break
+          trust harder than absent ones. Reintroduce with Capacitor
+          LocalNotifications in the native build. */}
 
       <div className="insight-stagger" style={{ animationDelay: '440ms' }}>
-      <SectionLabel color={acc}>On your Home screen</SectionLabel>
+      <SectionLabel color={acc}>Little touches</SectionLabel>
       <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
         <Row label="Sticky note in the corner" right={<Toggle on={settings.stickyNoteEnabled !== false} onChange={(v) => updateSetting('stickyNoteEnabled', v)} />} />
+        <Row label="Soft sounds" right={<Toggle on={Boolean(settings.sounds)} onChange={(v) => updateSetting('sounds', v)} />} />
       </div>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
-        The little hand-drawn paper that holds whatever you want to remember. Off if you'd rather a cleaner Home.
+        The hand-drawn paper on Home that holds whatever you want to remember, and the quiet chimes when you save. Off if you'd rather less.
       </div>
       </div>
 

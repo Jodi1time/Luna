@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
-import { Eyebrow, Rule, Screen } from '../components/shared'
-import { ARTICLES, PHASES } from '../data/lunaData'
-import { CONDITIONS } from '../data/conditions'
+import { Screen } from '../components/shared'
+import { ARTICLES } from '../data/lunaData'
 import { useCycle } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { ARTICLE_PHASE, articleAccent as accentFor } from '../lib/articlePhase'
@@ -23,15 +22,19 @@ const ARTICLE_CAT_TO_SECTION = {
 }
 const articleSection = (cat) => ARTICLE_CAT_TO_SECTION[cat] || 'default'
 
-// Pick a hero article for the current phase. Looks for articles
-// explicitly mapped to this phase first; falls back to the basics
-// piece, then the first article. Always returns something so the
-// hero slot stays alive even pre-onboarding.
-function pickHeroArticle(phaseId) {
+// Pick a hero article for the current phase, preferring pieces she
+// hasn't opened yet so the slot always offers something new. Falls
+// back: unread phase match → any phase match → unread anything →
+// basics → first article. Always returns something.
+function pickHeroArticle(phaseId, readSet) {
   if (phaseId) {
-    const match = ARTICLES.find((a) => ARTICLE_PHASE[a.id] === phaseId)
-    if (match) return match
+    const phaseMatches = ARTICLES.filter((a) => ARTICLE_PHASE[a.id] === phaseId)
+    const unreadMatch = phaseMatches.find((a) => !readSet.has(a.id))
+    if (unreadMatch) return unreadMatch
+    if (phaseMatches.length) return phaseMatches[0]
   }
+  const unread = ARTICLES.find((a) => !readSet.has(a.id))
+  if (unread) return unread
   return ARTICLES.find((a) => a.id === 'basics') || ARTICLES[0]
 }
 
@@ -57,8 +60,19 @@ export default function Library() {
   const cycle = useCycle(store)
   const goArticle = useLuna((s) => s.goArticle)
   const go = useLuna((s) => s.go)
+  const settings = useLuna((s) => s.settings)
   const phaseId = cycle?.phase?.id || null
-  const heroArticle = useMemo(() => pickHeroArticle(phaseId), [phaseId])
+  const readSet = useMemo(
+    () => new Set(Array.isArray(settings?.articlesRead) ? settings.articlesRead : []),
+    [settings?.articlesRead]
+  )
+  const savedArticles = useMemo(
+    () => (Array.isArray(settings?.savedArticles) ? settings.savedArticles : [])
+      .map((id) => ARTICLES.find((a) => a.id === id))
+      .filter(Boolean),
+    [settings?.savedArticles]
+  )
+  const heroArticle = useMemo(() => pickHeroArticle(phaseId, readSet), [phaseId, readSet])
   const heroAccent = accentFor(heroArticle.id)
   const heroPhaseId = ARTICLE_PHASE[heroArticle.id] || phaseId || 'follicular'
   const conditionsAccent = sectionColors('urgent').accent
@@ -77,11 +91,8 @@ export default function Library() {
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6, animationDelay: '0ms' }}>
           What to read.
         </div>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '50ms' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 16, fontStyle: 'italic', animationDelay: '50ms' }}>
           Doctor-sourced, plain-English pieces on what your body is doing — and why.
-        </div>
-        <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.55, padding: '10px 12px', background: 'rgba(200,78,46,0.07)', borderRadius: T.r, marginBottom: 16, animationDelay: '100ms' }}>
-          Every piece is grounded in peer-reviewed research, ACOG, Cleveland Clinic, or the equivalent. References are named at the top of each article, not buried.
         </div>
 
         {/* Look it up — full-text search across every article,
@@ -114,6 +125,42 @@ export default function Library() {
           </span>
         </button>
 
+        {/* Saved shelf — the payoff for the heart button on articles.
+            Only mounts once she's saved something; a quiet horizontal
+            row, newest save last so it reads like a growing stack. */}
+        {savedArticles.length > 0 && (
+          <div className="insight-stagger" style={{ marginBottom: 24, animationDelay: '160ms' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 }}>
+              <span aria-hidden="true" style={{ color: sectionColors('reflect').accent, display: 'inline-flex', transform: 'translateY(1px)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.5-9C0.5 8 3 4 6.5 4c2 0 3.4 1 5.5 3 2.1-2 3.5-3 5.5-3 3.5 0 6 4 4 8-2.5 4.5-9.5 9-9.5 9z"/></svg>
+              </span>
+              <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.3, fontStyle: 'italic' }}>
+                Saved for later.
+              </div>
+            </div>
+            <div className="h-scroller" style={{ display: 'flex', gap: 10, overflowX: 'auto', margin: '0 -22px', padding: '0 22px 4px' }}>
+              {savedArticles.map((a) => (
+                <button key={a.id} onClick={() => goArticle(a.id)}
+                  className="alive-card"
+                  style={{
+                    flexShrink: 0, width: 200, textAlign: 'left',
+                    background: sectionPaper(articleSection(a.cat)),
+                    border: `1px solid ${sectionColors(articleSection(a.cat)).accent}22`,
+                    borderRadius: 16, padding: '12px 14px',
+                    cursor: 'pointer', color: T.text, fontFamily: 'inherit',
+                  }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.4, marginBottom: 6 }}>
+                    {a.read}
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.25, letterSpacing: -0.2 }}>
+                    {a.title}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Conditions Atlas entry — the named-things-you-can-ask-for
             surface. Pulls from the conditions data. */}
         <button onClick={() => go('conditions')}
@@ -130,13 +177,8 @@ export default function Library() {
             color: T.text, fontFamily: 'inherit',
             animationDelay: '180ms',
           }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, color: conditionsAccent, fontWeight: 600 }}>
-              The Conditions Atlas
-            </div>
-            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
-              {CONDITIONS.length} CONDITIONS
-            </div>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, color: conditionsAccent, fontWeight: 600, marginBottom: 4 }}>
+            The Conditions Atlas
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.3, marginBottom: 4 }}>
             Six conditions, named.
@@ -188,11 +230,9 @@ export default function Library() {
           <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.55, color: T.text, opacity: 0.8 }}>
             {heroArticle.summary}
           </div>
-          {heroArticle.sources?.length > 0 && (
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`, fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
-              {heroArticle.sources.length} reference{heroArticle.sources.length === 1 ? '' : 's'} · open piece →
-            </div>
-          )}
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`, fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
+            open piece →
+          </div>
         </button>
 
         {/* Sectioned table of contents — by category, in the order
@@ -204,21 +244,17 @@ export default function Library() {
           const secCol = sectionColors(secKey)
           return (
             <div key={section.cat} style={{ marginBottom: 22 }}>
-              <div className="insight-stagger" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12, animationDelay: `${sectionDelay}ms` }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: secCol.accent, opacity: 0.7, transform: 'translateY(-2px)', display: 'inline-block' }} />
-                  <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.3, fontStyle: 'italic' }}>
-                    {section.cat}.
-                  </div>
-                </div>
-                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>
-                  {section.items.length} PIECE{section.items.length === 1 ? '' : 'S'}
+              <div className="insight-stagger" style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 12, animationDelay: `${sectionDelay}ms` }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: secCol.accent, opacity: 0.7, transform: 'translateY(-2px)', display: 'inline-block' }} />
+                <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.3, fontStyle: 'italic' }}>
+                  {section.cat}.
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {section.items.map((a, iIdx) => {
                   const ac = accentFor(a.id)
                   const cardDelay = sectionDelay + 60 + iIdx * 60
+                  const isRead = readSet.has(a.id)
                   return (
                     <button key={a.id} onClick={() => goArticle(a.id)}
                       className="insight-stagger alive-card"
@@ -234,6 +270,9 @@ export default function Library() {
                         borderRadius: T.r,
                         boxShadow: `0 1px 0 ${secCol.accent}10, 0 8px 18px -18px ${secCol.accent}30`,
                         animationDelay: `${cardDelay}ms`,
+                        // Read pieces settle back — still there, just quieter,
+                        // so the eye lands on what's new.
+                        opacity: isRead ? 0.62 : 1,
                       }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                         {a.tag ? (
@@ -241,7 +280,9 @@ export default function Library() {
                             {a.tag.toLowerCase()}
                           </span>
                         ) : <span />}
-                        <span style={{ fontSize: 11, color: T.muted, fontFamily: T.mono, letterSpacing: 0.4 }}>{a.read}</span>
+                        <span style={{ fontSize: 11, color: T.muted, fontFamily: T.mono, letterSpacing: 0.4 }}>
+                          {isRead ? 'read · ' : ''}{a.read}
+                        </span>
                       </div>
                       <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.25, marginBottom: 6, letterSpacing: -0.3 }}>
                         {a.title}
@@ -249,11 +290,6 @@ export default function Library() {
                       <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
                         {a.summary}
                       </div>
-                      {a.sources?.length > 0 && (
-                        <div style={{ marginTop: 8, fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4 }}>
-                          {a.sources.length} reference{a.sources.length === 1 ? '' : 's'}
-                        </div>
-                      )}
                     </button>
                   )
                 })}

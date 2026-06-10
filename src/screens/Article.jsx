@@ -81,6 +81,13 @@ export default function Article() {
   const accent = articleAccent(a.id)
   const phaseId = articlePhaseId(a.id)
   const scrollRef = useRef(null)
+  // Remember she opened this piece — Library uses it to quiet read
+  // cards and to keep the hero slot pointed at something new.
+  useEffect(() => {
+    const s = useLuna.getState()
+    const cur = Array.isArray(s.settings?.articlesRead) ? s.settings.articlesRead : []
+    if (!cur.includes(a.id)) s.updateSetting('articlesRead', [...cur, a.id])
+  }, [a.id])
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <ReadingProgress scrollRef={scrollRef} accent={accent} />
