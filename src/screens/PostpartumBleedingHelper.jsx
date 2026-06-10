@@ -128,7 +128,7 @@ export default function PostpartumBleedingHelper() {
               <button key={o.id} onClick={() => setClots(o.id)}
                 style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 6px 8px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                 <span style={{ fontSize: 12, fontWeight: 600 }}>{o.label}</span>
-                {o.sub && <span style={{ fontSize: 9.5, color: T.muted, lineHeight: 1.3, textAlign: 'center', fontWeight: 500 }}>{o.sub}</span>}
+                {o.sub && <span style={{ fontSize: 11, color: T.muted, lineHeight: 1.3, textAlign: 'center', fontWeight: 500 }}>{o.sub}</span>}
               </button>
             )
           })}
@@ -153,7 +153,7 @@ export default function PostpartumBleedingHelper() {
 
         {urgent && (
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: T.accent, marginBottom: 8 }}>This is urgent — call now</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 700, color: T.accent, marginBottom: 8 }}>This is urgent — call now</div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, color: T.text, marginBottom: 8 }}>
               Soaking a maxi pad every hour for two hours in a row, passing a clot larger than a golf ball, or a sudden foul-smelling discharge are signs of postpartum hemorrhage or infection. <strong style={{ fontWeight: 600 }}>Call your provider now, or go to the emergency room.</strong>
             </div>
@@ -165,7 +165,7 @@ export default function PostpartumBleedingHelper() {
 
         {concerning && (
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Talk to your provider soon</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Talk to your provider soon</div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.text }}>
               By this point postpartum, bleeding should be tapering. A sudden return of heavier flow can signal retained placental tissue, delayed uterine involution, or — if the bleeding is regular and rhythmic — a return of your period (especially if you're not exclusively breastfeeding). Worth a same-week appointment.
             </div>
@@ -174,7 +174,7 @@ export default function PostpartumBleedingHelper() {
 
         {expected && (
           <Card>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: T.muted, marginBottom: 8 }}>This looks like the normal arc</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 700, color: T.muted, marginBottom: 8 }}>This looks like the normal arc</div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.text }}>
               What you're describing fits the typical lochia pattern. Keep hydrating, sleep when you can, and watch for any sudden change — the body usually drops these signals on a curve, not a cliff.
             </div>
@@ -190,7 +190,7 @@ export default function PostpartumBleedingHelper() {
               <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, color: T.text, marginBottom: 4, letterSpacing: -0.2 }}>
                 {s.label}
               </div>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 0.8, color: T.accent, fontWeight: 600, marginBottom: 8 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, color: T.accent, fontWeight: 600, marginBottom: 8 }}>
                 {s.window}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 4 }}>

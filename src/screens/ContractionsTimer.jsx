@@ -164,7 +164,7 @@ export default function ContractionsTimer() {
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 56, fontWeight: 400, color: accent, lineHeight: 1, letterSpacing: -2, marginBottom: 8 }}>
                 {contractionStart ? fmtTime(contractionElapsed) : (session.contractions.length === 0 ? '—' : fmtTime(Date.now() - new Date(session.contractions[session.contractions.length - 1].endedAt).getTime()))}
               </div>
-              <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 20 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 20 }}>
                 {contractionStart ? 'DURATION' : (session.contractions.length === 0 ? 'WAITING' : 'SINCE LAST')}
               </div>
               {!contractionStart ? (
@@ -228,12 +228,12 @@ export default function ContractionsTimer() {
                       </div>
                       <div style={{ display: 'flex', gap: 14 }}>
                         <div>
-                          <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 0.8, color: T.muted, fontWeight: 600 }}>LASTED</div>
+                          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, color: T.muted, fontWeight: 600 }}>LASTED</div>
                           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.text }}>{fmtTime(c.durationMs)}</div>
                         </div>
                         {c.gapMs != null && (
                           <div>
-                            <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 0.8, color: T.muted, fontWeight: 600 }}>AFTER</div>
+                            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, color: T.muted, fontWeight: 600 }}>AFTER</div>
                             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.text }}>{fmtTime(c.gapMs)}</div>
                           </div>
                         )}
@@ -291,7 +291,7 @@ export default function ContractionsTimer() {
           Call your provider before 5-1-1 if: water breaks (any time), bright red bleeding, contractions painful enough you can't talk through them, sudden severe headache, vision changes, decreased fetal movement, or anything that feels truly wrong. Trust your gut.
         </div>
         <div style={{
-          fontFamily: T.mono, fontSize: 10, letterSpacing: 0.6, color: T.muted,
+          fontFamily: T.mono, fontSize: 11, letterSpacing: 0.6, color: T.muted,
           textAlign: 'center', marginBottom: 8,
         }}>
           SOURCE · ACOG Labor & Delivery Patient Education · Mayo Clinic

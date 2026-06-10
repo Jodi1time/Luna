@@ -101,7 +101,7 @@ function ConditionDetail({ condition, onBack, onOpenArticle }) {
               borderRadius: 18, cursor: 'pointer', textAlign: 'left',
               color: T.text, fontFamily: 'inherit',
             }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
               read deeper
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2 }}>
@@ -159,14 +159,14 @@ function ConditionsAtlas({ matches, onOpen, onBack }) {
                   <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3 }}>
                     {m.condition.name}
                   </div>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, color: accent, letterSpacing: 0.8, fontWeight: 600 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, color: accent, letterSpacing: 0.8, fontWeight: 600 }}>
                     open →
                   </div>
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 10 }}>
                   {m.condition.summary}
                 </div>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
                   WHAT LUNA NOTICED
                 </div>
                 <ul style={{ margin: 0, paddingLeft: 16, fontFamily: T.serif, fontSize: 13, color: T.text, lineHeight: 1.5 }}>
@@ -196,7 +196,7 @@ function ConditionsAtlas({ matches, onOpen, onBack }) {
                 <div style={{ fontFamily: T.serif, fontSize: 16.5, fontWeight: 500, letterSpacing: -0.2 }}>
                   {c.name}
                 </div>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 0.5 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
                   {c.fullName !== c.name ? c.fullName : ''}
                 </div>
               </div>

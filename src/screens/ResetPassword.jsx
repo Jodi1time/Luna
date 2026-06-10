@@ -9,7 +9,7 @@ import useLuna from '../store/useLuna'
 function Field({ label, type = 'text', value, onChange, placeholder }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>{label}</div>
+      <div style={{ fontSize: 11, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: T.muted, textTransform: 'uppercase' }}>{label}</div>
       <input
         type={type}
         value={value}

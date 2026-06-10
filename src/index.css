@@ -941,6 +941,22 @@ button.glass-card:active {
   animation: fadeUp 0.55s var(--ease-out) both;
 }
 
+/* Re-visit fast path — the entrance choreography plays ONCE per
+   session per screen (see lib/choreo.js). When a screen mounts with
+   .choreo-done, every one-shot reveal collapses to ~instant: same
+   final states, no waits. Looping ambience (breath, pulse rings,
+   fertile glow) is deliberately untouched — the app stays alive,
+   it just stops making her wait for content she's already seen. */
+.choreo-done .insight-stagger,
+.choreo-done .arc-draw,
+.choreo-done .sparkline-draw,
+.choreo-done .spark-dot,
+.choreo-done .word-in,
+.choreo-done .smart-arrival {
+  animation-duration: 0.01s !important;
+  animation-delay: 0s !important;
+}
+
 /* ── Alive cards ──────────────────────────────────────────────────
    Adds responsive touch feedback to any card. Lifts on hover (desktop),
    presses down on tap (mobile + desktop), and a faint shadow growth on

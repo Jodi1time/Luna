@@ -717,7 +717,7 @@ function StepCycle({ value, onChange, irregular, onIrregularChange }) {
           </div>
           <input type="range" min={21} max={45} value={value} onChange={(e) => onChange(+e.target.value)}
             style={{ width: '100%', accentColor: T.accent }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: T.muted, marginTop: 8, fontFamily: T.mono, letterSpacing: 0.8, fontWeight: 600 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: T.muted, marginTop: 8, fontFamily: T.mono, letterSpacing: 0.8, fontWeight: 600 }}>
             <span>21</span>
             <span style={{ fontStyle: 'italic', fontFamily: T.serif, fontSize: 11 }}>typical · 28</span>
             <span>45</span>

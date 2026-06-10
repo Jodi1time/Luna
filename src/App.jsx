@@ -175,7 +175,7 @@ export default function App() {
 
   return (
     <AppShell>
-      <Suspense fallback={<StatusView loading loadingMessage="LOADING" />}>
+      <Suspense fallback={<StatusView loading />}>
         <ScreenRenderer screen={resolvedScreen} />
       </Suspense>
       {TAB_SCREENS.includes(resolvedScreen) && (

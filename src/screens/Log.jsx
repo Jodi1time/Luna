@@ -319,7 +319,7 @@ export default function Log() {
                 }}>
                   <SymptomIcon id={id} size={18} />
                 </span>
-                <span style={{ fontSize: 9.5, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
+                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
               </button>
             )
           })}
@@ -356,7 +356,7 @@ export default function Log() {
                   }}>
                     <SymptomIcon id={id} size={18} />
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 500, lineHeight: 1.2 }}>{s.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.2 }}>{s.label}</span>
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); goSymptom(id) }}
                   aria-label={`Learn about ${s.label}`}
@@ -407,7 +407,7 @@ export default function Log() {
                       }}>
                         <SymptomIcon id={id} size={16} />
                       </span>
-                      <span style={{ fontSize: 9.5, fontWeight: 500, lineHeight: 1.15, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.15, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
                     </button>
                   </div>
                 )
@@ -530,14 +530,14 @@ export default function Log() {
                   background: on ? acc + '14' : sectionPaper('care'),
                   color: on ? acc : T.text,
                   padding: '12px 4px',
-                  cursor: 'pointer', fontFamily: T.sans, fontSize: 10, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600,
                   borderRadius: 16,
                   boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${careColors.accent}40`,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                   transition: 'all 0.2s var(--ease-out)',
                 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 600, fontFamily: T.serif, letterSpacing: -0.1 }}>{m.label}</span>
-                <span style={{ fontSize: 9, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
+                <span style={{ fontSize: 11, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
               </button>
             )
           })}

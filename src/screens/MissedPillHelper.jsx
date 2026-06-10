@@ -46,7 +46,7 @@ export default function MissedPillHelper() {
       advice = (
         <>
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>About the mini-pill</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>About the mini-pill</div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6 }}>
               Progestin-only pills only stay reliable within about a 3-hour window. Take the missed pill as soon as possible and use backup contraception (condoms) for the next 48 hours, regardless of time elapsed.
               {sex !== 'no' && <> If unprotected sex happened in the past 5 days, emergency contraception is on the table — Plan B is most effective within 72 hours but works up to 5 days, and the copper IUD inserted within 5 days is the most effective EC option.</>}
@@ -58,14 +58,14 @@ export default function MissedPillHelper() {
       advice = (
         <>
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6 }}>
               Take the missed pill now, even if it means two pills today. No backup contraception needed; you're still protected.
             </div>
           </Card>
           {sex !== 'no' && (
             <Card muted>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.muted, marginBottom: 6 }}>On the sex question</div>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.muted, marginBottom: 6 }}>On the sex question</div>
               <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55 }}>
                 Under 24 hours late on a combined pill means you weren't unprotected — emergency contraception isn't needed.
               </div>
@@ -77,14 +77,14 @@ export default function MissedPillHelper() {
       advice = (
         <>
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6 }}>
               Take the most recent missed pill now. Skip any earlier missed pill (don't double-double-up). Continue the pack as normal. Use backup contraception (condoms) for the next 7 days.
             </div>
           </Card>
           {sex === 'recent' && (
             <Card accent>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Emergency contraception is on the table</div>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Emergency contraception is on the table</div>
               <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6 }}>
                 Plan B (levonorgestrel) is over-the-counter, no prescription, most effective within 72 hours but works up to 120 hours. Ella (ulipristal) is more effective up to 5 days but needs a prescription. The copper IUD inserted within 5 days is the most effective EC of all and gives you ongoing contraception.
               </div>
@@ -96,14 +96,14 @@ export default function MissedPillHelper() {
       advice = (
         <>
           <Card accent>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>What to do</div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6 }}>
               Take the most recent missed pill now. Skip earlier missed pills. Continue the pack as normal. Use backup contraception (condoms) for the next 7 days. If those 7 days run into the placebo (sugar) week, skip the placebo and start a new pack straight away.
             </div>
           </Card>
           {sex !== 'no' && (
             <Card accent>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Emergency contraception is on the table</div>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.accent, marginBottom: 8 }}>Emergency contraception is on the table</div>
               <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6 }}>
                 Plan B is over-the-counter (most effective within 72h, works up to 120h). Ella is more effective up to 5 days but needs a prescription. The copper IUD within 5 days is the most effective option and is ongoing contraception once placed.
                 {sex === 'unsure' && <> If sex was longer ago than 5 days, EC won't reach it; the next step is a pregnancy test about 14 days after that exposure.</>}
@@ -163,7 +163,7 @@ export default function MissedPillHelper() {
 
         {time && sex && (
           <Card>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, fontWeight: 700, color: T.muted, marginBottom: 6 }}>Generally true</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.muted, marginBottom: 6 }}>Generally true</div>
             <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text }}>
               Missing 1 pill is rarely serious on the combined pill. Missing 2+ in a row, or anytime around the placebo week, is what reduces protection. Set a daily reminder if this happens more than once a year — there's also the patch, ring, IUD, implant, and shot if remembering a daily pill is fighting you.
             </div>

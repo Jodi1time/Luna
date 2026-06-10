@@ -139,7 +139,7 @@ function CycleCard({ profile, logs }) {
                   border: `1px solid ${c}22`,
                   borderRadius: 16,
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: c, marginBottom: 4 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: c, marginBottom: 4 }}>
                     {p.label === 'Next period' ? 'NEXT PERIOD'
                      : p.label === 'Fertile window' ? 'FERTILE WINDOW'
                      : 'PMS WINDOW'}

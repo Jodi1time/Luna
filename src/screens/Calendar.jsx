@@ -8,6 +8,7 @@ import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionPaper, sectionColors } from '../data/sectionPalette'
 import { getBcCycleModel, packDayForDate, addDaysToISO } from '../lib/bcCycle'
+import { choreoOnce } from '../lib/choreo'
 import { WhyChip, SourceTag } from '../components/Sourced'
 import ContextualTip from '../components/ContextualTip'
 
@@ -36,6 +37,9 @@ function buildSpottingSet(logs) {
 export default function Calendar() {
   const store = useLuna()
   const cycle = useCycle(store)
+  // Entrance choreography plays once per session; after that the
+  // month renders settled instead of re-assembling for ~750ms.
+  const [animate] = useState(() => choreoOnce('calendar'))
   const onHormonalBC = isOnHormonalBC(store.birthControl)
   const { go, setActiveLogDate } = store
   const openLogFor = (iso) => {
@@ -137,7 +141,7 @@ export default function Calendar() {
   const flourishColor = (cycle.phase?.color) || T.accent
 
   return (
-    <div className="home-stage">
+    <div className={`home-stage${animate ? '' : ' choreo-done'}`}>
       {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
@@ -191,7 +195,7 @@ export default function Calendar() {
 
         {/* Legend — phases for natural cycles; the method's own marks
             for hormonal BC users (phase math isn't true for them). */}
-        <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
+        <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 11, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
           {bcMode ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -241,7 +245,7 @@ export default function Calendar() {
         {/* Day headers */}
         <div className="insight-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6, animationDelay: '160ms' }}>
           {dayLetters.map((d, i) => (
-            <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
+            <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
           ))}
         </div>
 
@@ -365,7 +369,7 @@ export default function Calendar() {
                   borderRadius: T.r,
                   animationDelay: '680ms',
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: ntAccent, fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: ntAccent, fontWeight: 600, marginBottom: 6 }}>
                     {nt.eyebrow}
                   </div>
                   <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
@@ -430,7 +434,7 @@ export default function Calendar() {
                   borderRadius: T.r,
                   animationDelay: `${680 + i * 80}ms`,
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
                     {certaintyLabel}
                   </div>
                   <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>

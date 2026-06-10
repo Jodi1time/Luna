@@ -117,7 +117,7 @@ export default function PhaseDetail() {
       <div style={{ padding: '0 22px', marginBottom: 24 }}>
         <SectionHead icon="leaf" category="body" title="The body" />
         <SoftCard category="body">
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
             What your hormones are doing
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text }}>

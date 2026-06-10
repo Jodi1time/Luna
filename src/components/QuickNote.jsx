@@ -112,7 +112,7 @@ export default function QuickNote({ open, onClose }) {
             <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', color: T.text, letterSpacing: -0.2 }}>
               A note, for your future self
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10.5, color: T.muted, marginTop: 2, letterSpacing: 0.2 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 0.2 }}>
               Saved to today
             </div>
           </div>
@@ -145,7 +145,7 @@ export default function QuickNote({ open, onClose }) {
               outline: 'none',
             }}
           />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10.5, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4, padding: '0 2px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4, padding: '0 2px' }}>
             <span>
               {wordCount === 0 ? '' : `${wordCount} word${wordCount === 1 ? '' : 's'}`}
             </span>

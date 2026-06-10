@@ -149,7 +149,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
       <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.18} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: theme.accent, opacity: 0.85 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: theme.accent, opacity: 0.85 }}>
             A NEW PAGE
           </div>
           {phaseId && (
@@ -222,7 +222,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                 borderRadius: 999,
                 cursor: recording ? 'default' : 'pointer',
                 opacity: recording ? 0.4 : 1,
-                fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
               }}>
               <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
@@ -238,7 +238,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                     padding: '8px 12px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                    fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                     display: 'inline-flex', alignItems: 'center', gap: 8,
                     boxShadow: `0 0 0 0 ${T.accent}66`,
                   }}>
@@ -258,7 +258,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                     padding: '8px 12px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    fontFamily: T.sans, fontSize: 10.5, fontWeight: 700, letterSpacing: 0.8,
+                    fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                   }}>
                   <span style={{ fontSize: 12, lineHeight: 0 }}>🎤</span>
@@ -362,7 +362,7 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, on
                 display: 'block',
               }}
             />
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, color: theme.accent, opacity: 0.7, letterSpacing: 1, marginTop: 8 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, color: theme.accent, opacity: 0.7, letterSpacing: 1, marginTop: 8 }}>
               TAP OUTSIDE TO SAVE
             </div>
           </>
@@ -399,7 +399,7 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, on
                 padding: '7px 12px',
                 borderRadius: 999,
                 cursor: 'pointer',
-                fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
+                fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
               }}>
               <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
@@ -527,7 +527,7 @@ export default function Journal() {
             </div>
             <button onClick={() => setCustomizing(true)}
               aria-label="Customize the journal"
-              style={{ background: 'none', border: `1px solid ${theme.accent}66`, color: theme.accent, padding: '5px 10px', borderRadius: 999, fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8, cursor: 'pointer' }}>
+              style={{ background: 'none', border: `1px solid ${theme.accent}66`, color: theme.accent, padding: '5px 10px', borderRadius: 999, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, cursor: 'pointer' }}>
               DECORATE
             </button>
           </div>
@@ -572,7 +572,7 @@ export default function Journal() {
             <>
               <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0 14px', animationDelay: '110ms' }}>
                 <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: theme.text, opacity: 0.55 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: theme.text, opacity: 0.55 }}>
                   EARLIER PAGES · {entries.length}
                 </div>
                 <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />

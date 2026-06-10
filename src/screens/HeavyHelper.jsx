@@ -98,10 +98,10 @@ function PathCard({ eyebrow, title, blurb, onTap, category = 'reflect' }) {
         cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block',
       }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
           {eyebrow}
         </div>
-        <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>→</div>
+        <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>→</div>
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
         {title}
@@ -160,7 +160,7 @@ export default function HeavyHelper() {
         {/* Phase context — only in luteal, where it actually changes the read */}
         {isLuteal && (
           <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               On where you are in your cycle
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.text }}>

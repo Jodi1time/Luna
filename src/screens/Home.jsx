@@ -22,6 +22,7 @@ import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
+import { choreoOnce } from '../lib/choreo'
 
 const MS_PER_DAY = 86400000
 
@@ -234,7 +235,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
           if (iso <= todayISO) { setActiveLogDate(iso); go('log') } else { go('calendar') }
         }}
           style={{ background: 'transparent', border: 'none', padding: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, fontFamily: 'inherit', color: 'inherit' }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>{label}</div>
+          <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>{label}</div>
           <div style={{ position: 'relative', width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {isToday && (
               <div className="today-disc" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: T.accent, boxShadow: `0 6px 14px -6px ${T.accent}60` }} />
@@ -328,7 +329,7 @@ function MonthlyRecap({ recap }) {
   if (!recap) return null
   return (
     <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         The last 30 days
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, color: T.text, fontStyle: 'italic' }}>
@@ -437,14 +438,17 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('conditions') },
-    { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
+    // Insights moved to the tab bar (fourth slot) — this chip now
+    // carries the Library, which gave up that slot. Browse entry;
+    // "Look it up" above stays the search entry.
+    { key: 'library', category: 'read', label: 'The library', sub: 'Doctor-grounded reads',
       icon: (
         <svg className="icon-anim-insights" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle className="ring" cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/>
-          <circle className="dot" cx="10" cy="10" r="1.4" fill="currentColor" stroke="none"/>
+          <path d="M4 3.5h5a1.8 1.8 0 011.8 1.8V17a1.6 1.6 0 00-1.6-1.4H4z"/>
+          <path d="M16 3.5h-5a1.8 1.8 0 00-1.8 1.8V17a1.6 1.6 0 011.6-1.4H16z"/>
         </svg>
       ),
-      onTap: () => go('insights') },
+      onTap: () => go('library') },
     { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
       icon: (
         <svg className="icon-anim-cheatsheet" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -544,7 +548,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
             <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
               {it.label}
             </span>
-            <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+            <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
               {it.sub}
             </span>
           </button>
@@ -587,7 +591,7 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
         color: T.text, fontFamily: 'inherit', display: 'block',
         overflow: 'hidden',
       }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: colors.accent, marginBottom: 6 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: colors.accent, marginBottom: 6 }}>
         {eyebrow}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', lineHeight: 1.35, color: T.text, letterSpacing: -0.2 }}>
@@ -628,7 +632,7 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
           from your past self
         </div>
-        <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+        <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
           Open the day →
         </div>
       </div>
@@ -659,7 +663,7 @@ function WeeklyHealthCheckCard({ go }) {
         fontFamily: 'inherit',
         display: 'block',
       }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         Worth noticing this week
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.35, letterSpacing: -0.1, marginBottom: 6 }}>
@@ -915,7 +919,9 @@ export default function Home() {
   const preg = usePregnancy(store)
   const isPreg = preg.active
   const trimColor = isPreg ? trimesterColor(preg.trimester?.number) : null
-  const animatedDay = useCountUp(isPreg ? preg.week : cycleDay)
+  // Entrance choreography plays once per session; re-visits render settled.
+  const [animateIn] = useState(() => choreoOnce('home'))
+  const animatedDay = useCountUp(isPreg ? preg.week : cycleDay, animateIn ? 900 : 0)
   const [quickMood, setQuickMood] = useState(null)
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
@@ -1238,7 +1244,7 @@ export default function Home() {
   })()
 
   return (
-    <div className="home-stage">
+    <div className={`home-stage${animateIn ? '' : ' choreo-done'}`}>
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
       <BackgroundBlob color={blobColor} effect={effect} />
       {/* Content layer — scrolls past the stationary blob. */}
@@ -1381,7 +1387,7 @@ export default function Home() {
                   invitation, not an instruction. Uses the phase color
                   so it ties to the rest of the cover. */}
               {phase && (
-                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 10, marginTop: 12, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.4, fontWeight: 600, opacity: 0.7, textTransform: 'lowercase' }}>
+                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 11, marginTop: 12, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.4, fontWeight: 600, opacity: 0.7, textTransform: 'lowercase' }}>
                   tap to learn more
                 </div>
               )}
@@ -1570,7 +1576,7 @@ export default function Home() {
           {showEveningIntention && todayIntention && (
             <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
               style={{ marginTop: 14, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', display: 'block' }}>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
                 You set this morning
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1, marginBottom: 6 }}>

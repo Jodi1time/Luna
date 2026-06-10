@@ -50,10 +50,10 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
       }} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.3, fontWeight: 600, color: theme.accent, opacity: 0.9 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.3, fontWeight: 600, color: theme.accent, opacity: 0.9 }}>
             THE DIARY {entryCount > 0 && `· ${entryCount} PAGE${entryCount === 1 ? '' : 'S'}`}
           </div>
-          <div style={{ fontFamily: T.sans, fontSize: 10, color: theme.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+          <div style={{ fontFamily: T.sans, fontSize: 11, color: theme.accent, fontWeight: 600, letterSpacing: 0.3 }}>
             {latest ? 'Open the book →' : 'Start a page →'}
           </div>
         </div>

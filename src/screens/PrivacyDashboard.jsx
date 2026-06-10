@@ -40,7 +40,7 @@ function Stat({ label, value, sub, accent }) {
   const display = typeof value === 'number' ? animVal : value
   return (
     <div className="glass-card" style={{ padding: '14px 16px', borderRadius: T.r, display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 1.2, fontWeight: 600 }}>
         {label}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, color: accent || T.text, letterSpacing: -0.4, lineHeight: 1.1, fontStyle: 'italic' }}>

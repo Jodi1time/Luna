@@ -13,6 +13,8 @@ export function useCountUp(target, duration = 900) {
     const from = prevRef.current
     prevRef.current = target
     if (from === target) { setValue(target); return }
+    // duration 0 → land immediately (re-visit fast path; see lib/choreo.js)
+    if (duration <= 0) { setValue(target); return }
     let raf
     const start = performance.now()
     const tick = (now) => {

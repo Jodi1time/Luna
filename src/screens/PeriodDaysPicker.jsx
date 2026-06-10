@@ -34,7 +34,7 @@ function CalendarBlock({ year, month, selected, onToggle }) {
     <div className="frost-card" style={{ background: 'rgba(253,250,245,0.55)', padding: 18, border: '1px solid rgba(26,19,16,0.06)', borderRadius: 24, marginBottom: 14, boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)' }}>
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 16, marginBottom: 14, color: T.text, letterSpacing: -0.2 }}>{monthLabel.toLowerCase()}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
-        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
+        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}

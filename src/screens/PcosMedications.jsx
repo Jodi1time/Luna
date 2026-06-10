@@ -47,7 +47,7 @@ function MedPicker({ accent, alreadyTracked, onPick, onCancel, onCustom }) {
         if (list.length === 0) return null
         return (
           <div key={kind} style={{ marginBottom: 12 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
               {MEDICATION_KIND_LABEL[kind]}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -164,7 +164,7 @@ function MedCard({ med, accent, onCheck, onDelete }) {
             {med.name}
           </div>
           {med.dose && (
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
               {med.dose}
             </div>
           )}
@@ -250,7 +250,7 @@ function MedCard({ med, accent, onCheck, onDelete }) {
             <div className="insight-stagger" style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(26,19,16,0.06)', animation: 'fadeUp 0.3s ease-out both' }}>
               {ref.timeline && (
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>TIMELINE</div>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>TIMELINE</div>
                   <div style={{ fontFamily: T.serif, fontSize: 13, color: T.text, lineHeight: 1.5, fontStyle: 'italic' }}>
                     {ref.timeline}
                   </div>
@@ -258,7 +258,7 @@ function MedCard({ med, accent, onCheck, onDelete }) {
               )}
               {ref.evidence && (
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>EVIDENCE</div>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>EVIDENCE</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {ref.evidence.map((e, i) => (
                       <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -271,7 +271,7 @@ function MedCard({ med, accent, onCheck, onDelete }) {
               )}
               {ref.sideEffects && (
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>WHAT TO WATCH</div>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600, marginBottom: 4 }}>WHAT TO WATCH</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     {ref.sideEffects.map((e, i) => (
                       <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -287,7 +287,7 @@ function MedCard({ med, accent, onCheck, onDelete }) {
                   {ref.notes}
                 </div>
               )}
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
                 source · {ref.source}
               </div>
             </div>

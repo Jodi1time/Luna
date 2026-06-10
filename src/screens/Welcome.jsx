@@ -11,10 +11,10 @@ export default function Welcome() {
       </div>
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, color: T.muted }}>
+          <div style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, color: T.muted }}>
             LUNA
           </div>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 10.5, color: T.muted, marginTop: 2, letterSpacing: 0.3 }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 0.3 }}>
             by Gloria
           </div>
         </div>
@@ -24,7 +24,7 @@ export default function Welcome() {
           A companion for the body<br /><em>you live in.</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.6, color: T.muted, marginTop: 20 }}>
-          Luna learns your cycle and meets you where you are — in the energy of follicular, the quiet of menstrual, the heat of luteal. A companion, on the days you need one.
+          Luna learns your cycle and meets you where you are — in the quiet of menstrual, the energy of follicular, the heat of ovulation. A companion, on the days you need one.
         </div>
       </div>
 
@@ -35,9 +35,9 @@ export default function Welcome() {
           { n: '03', h: 'Quiet by design',  s: 'No notifications you didn\'t ask for. No optimisation talk.' },
         ].map((p) => (
           <div key={p.n}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.accent, marginBottom: 5 }}>{p.n}</div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, marginBottom: 5 }}>{p.n}</div>
             <div style={{ fontFamily: T.serif, fontSize: 13, fontWeight: 600, marginBottom: 3 }}>{p.h}</div>
-            <div style={{ fontSize: 10.5, color: T.muted, lineHeight: 1.4, fontFamily: T.sans }}>{p.s}</div>
+            <div style={{ fontSize: 11, color: T.muted, lineHeight: 1.4, fontFamily: T.sans }}>{p.s}</div>
           </div>
         ))}
       </div>

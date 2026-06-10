@@ -47,7 +47,7 @@ function CalendarBlock({ year, month, selectedISO, onPick, minISO, maxISO }) {
     <div style={{ background: T.card, padding: 16, border: `1px solid ${T.hair}`, borderRadius: T.r, marginBottom: 14 }}>
       <div style={{ fontWeight: 600, fontSize: 13, fontFamily: T.sans, marginBottom: 12, color: T.text }}>{monthLabel}</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
-        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 9, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
+        {days.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>)}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}
@@ -137,7 +137,7 @@ function NotPregnantState() {
 
         {selected && inRange && due && (
           <div className="glass-card" style={{ padding: '14px 16px', borderRadius: T.r, marginBottom: 14 }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               You're due around
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
@@ -221,7 +221,7 @@ function PregnantState() {
         </div>
 
         <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18 }}>
-          <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>You're due</div>
+          <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>You're due</div>
           <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
             {formatLongDate(preg.dueDate)}
           </div>
@@ -229,19 +229,19 @@ function PregnantState() {
 
         {content && (
           <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 18 }}>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
               This week
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, fontStyle: 'italic', lineHeight: 1.25, marginBottom: 14, letterSpacing: -0.3 }}>
               About the size of {content.size}.
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               Baby
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text, marginBottom: 14 }}>
               {content.baby}
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
               You
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.55, color: T.text }}>

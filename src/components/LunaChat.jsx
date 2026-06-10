@@ -152,7 +152,7 @@ export default function LunaChat({ open, onClose, opener, context }) {
             <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', color: T.text, letterSpacing: -0.2 }}>
               A moment with Luna
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 10.5, color: T.muted, marginTop: 2, letterSpacing: 0.2 }}>
+            <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 0.2 }}>
               Not medical advice — a small reflection
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function LunaChat({ open, onClose, opener, context }) {
             rest of the session so it can't scroll out of reach. */}
         {crisisSurfaced && (
           <div style={{ margin: '12px 14px 0', padding: 14, background: T.text, color: '#FAF4ED', borderRadius: T.r, animation: 'fadeUp 0.3s ease-out both' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: T.accent, fontWeight: 700, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, color: T.accent, fontWeight: 700, marginBottom: 6 }}>
               You don't have to be alone with this
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.5, marginBottom: 10 }}>

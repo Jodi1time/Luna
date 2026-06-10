@@ -618,9 +618,20 @@ export function detectSymptomPatterns(logs, periodStarts, cycleLength, periodLen
   return patterns.sort((a, b) => b.occurrences - a.occurrences).slice(0, 6)
 }
 
+// Parse a YYYY-MM-DD string as LOCAL midnight. `new Date('2026-06-01')`
+// parses as UTC midnight, which in any timezone west of UTC lands on
+// the previous local day — making every cycle day read one too high
+// ("period started today" → "Day 2"). Caught by the test suite.
+function parseLocalDay(iso) {
+  if (typeof iso === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+    return new Date(iso + 'T00:00:00')
+  }
+  return new Date(iso)
+}
+
 export function getCycleDay(lastPeriodStart, cycleLength) {
   if (!lastPeriodStart) return null
-  const start = new Date(lastPeriodStart)
+  const start = parseLocalDay(lastPeriodStart)
   const now   = new Date()
   now.setHours(0, 0, 0, 0)
   start.setHours(0, 0, 0, 0)
@@ -670,7 +681,7 @@ export function buildMonthGrid(year, month, lastPeriodStart, cycleLength, period
 // fertile window uses that day instead of the cycle-length midpoint.
 export function getPredictions(lastPeriodStart, cycleLength, periodLength, variance, ovulation) {
   if (!lastPeriodStart) return null
-  const start = new Date(lastPeriodStart)
+  const start = parseLocalDay(lastPeriodStart)
   start.setHours(0, 0, 0, 0)
 
   const now = new Date(); now.setHours(0,0,0,0)

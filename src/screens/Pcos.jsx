@@ -46,7 +46,7 @@ function StatCard({ label, value, hint, accent }) {
       borderRadius: 18,
       flex: 1, minWidth: 0,
     }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
         {label}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 500, fontStyle: 'italic', letterSpacing: -0.4, color: accent, lineHeight: 1, marginBottom: 4 }}>
@@ -187,7 +187,7 @@ export default function Pcos() {
               {cycleRead.summary}
             </div>
             {cycleRead.source && (
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
                 source · {cycleRead.source}
               </div>
             )}
@@ -287,7 +287,7 @@ export default function Pcos() {
             <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.6, color: T.text, letterSpacing: -0.1, marginBottom: 10 }}>
               {literacy.body}
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
               source · {literacy.source}
             </div>
           </div>

@@ -19,7 +19,7 @@ function BleedingSection({ entries, accent }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
       {entries.map((e, i) => (
         <div key={i} style={{ padding: '14px 16px', background: 'rgba(253,250,245,0.55)', border: `1px solid ${accent}22`, borderRadius: 16 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
             {e.when.toUpperCase()}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 14.5, color: T.text, lineHeight: 1.55 }}>

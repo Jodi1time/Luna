@@ -201,7 +201,7 @@ export default function HelperShell({
           borderRadius: T.r,
           marginBottom: 18,
         }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: c.accent, marginBottom: 10 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: c.accent, marginBottom: 10 }}>
             {eyebrow}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 16.5, lineHeight: 1.65, color: T.text, letterSpacing: -0.1 }}>
@@ -229,7 +229,7 @@ export default function HelperShell({
 
         {showEscalation && escalation && (
           <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               Worth a conversation
             </div>
             {escalation.lines.map((l, i) => (
@@ -269,7 +269,7 @@ export default function HelperShell({
                           transition: 'all 0.2s var(--ease-out)',
                         }}>
                         <span style={{ fontFamily: T.serif, fontStyle: on ? 'italic' : 'normal', fontSize: 13, fontWeight: 500, letterSpacing: -0.1 }}>{o.label}</span>
-                        {o.sub && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 10.5, color: T.muted, lineHeight: 1.3, textAlign: 'center' }}>{o.sub}</span>}
+                        {o.sub && <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.muted, lineHeight: 1.3, textAlign: 'center' }}>{o.sub}</span>}
                       </button>
                     )
                   })}
@@ -288,7 +288,7 @@ export default function HelperShell({
                 <div key={r.label} className="glass-card" style={{ padding: 14, borderRadius: T.r }}>
                   <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, color: T.text, lineHeight: 1.3 }}>{r.label}</div>
                   {r.sub && <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>{r.sub}</div>}
-                  {r.detail && <div style={{ fontFamily: T.mono, fontSize: 10.5, color: T.accent, marginTop: 5, letterSpacing: 0.2, fontWeight: 600 }}>{r.detail}</div>}
+                  {r.detail && <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, marginTop: 5, letterSpacing: 0.2, fontWeight: 600 }}>{r.detail}</div>}
                 </div>
               ))}
             </div>

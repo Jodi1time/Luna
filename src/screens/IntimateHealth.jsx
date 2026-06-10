@@ -84,7 +84,7 @@ function ScaleRow({ value, onChange, options, shades }) {
               transition: 'all 0.22s var(--ease-out)',
             }}>
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: -0.1, fontFamily: T.serif }}>{o.label}</span>
-            <span style={{ fontSize: 9.5, color: on ? 'rgba(255,255,255,0.85)' : T.muted, fontStyle: 'italic', fontFamily: T.serif, textAlign: 'center', lineHeight: 1.35 }}>{o.sub}</span>
+            <span style={{ fontSize: 11, color: on ? 'rgba(255,255,255,0.85)' : T.muted, fontStyle: 'italic', fontFamily: T.serif, textAlign: 'center', lineHeight: 1.35 }}>{o.sub}</span>
           </button>
         )
       })}
@@ -303,7 +303,7 @@ export default function IntimateHealth() {
                   }}>
                     <SymptomIcon id={id} size={18} />
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 500, fontFamily: T.serif, textAlign: 'center', lineHeight: 1.3, letterSpacing: -0.1 }}>{s.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 500, fontFamily: T.serif, textAlign: 'center', lineHeight: 1.3, letterSpacing: -0.1 }}>{s.label}</span>
                 </button>
               )
             })}

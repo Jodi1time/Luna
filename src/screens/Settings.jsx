@@ -216,7 +216,7 @@ export default function Settings() {
             </>
           )}
         </div>
-        <div style={{ padding: '8px 22px', fontSize: 10.5, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
+        <div style={{ padding: '8px 22px', fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
           {session ? 'Sign in on any device to come back to your cycle.' : 'Without an account, your cycle lives only on this device.'}
         </div>
       </div>

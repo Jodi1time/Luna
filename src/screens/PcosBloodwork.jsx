@@ -181,7 +181,7 @@ function PanelCard({ panel, readings, accent, onAdd, onDelete }) {
             {panel.name}
           </div>
           {panel.range && (
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500 }}>
               typical {panel.range.low}–{panel.range.high} {panel.range.unit}
             </div>
           )}
@@ -202,7 +202,7 @@ function PanelCard({ panel, readings, accent, onAdd, onDelete }) {
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.text, lineHeight: 1.55, padding: '10px 0 8px', borderTop: '1px solid rgba(26,19,16,0.06)', marginTop: 8 }}>
         {panel.pcosNote}
       </div>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginBottom: 4 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginBottom: 4 }}>
         source · {panel.source}
       </div>
 
@@ -278,7 +278,7 @@ function PanelPicker({ accent, alreadyTracked, onPick, onCancel }) {
         if (list.length === 0) return null
         return (
           <div key={cat} style={{ marginBottom: 12 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 6 }}>
               {CATEGORY_LABEL[cat]}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -394,7 +394,7 @@ export default function PcosBloodwork() {
             <div style={{ fontFamily: T.serif, fontSize: 13, color: T.text, lineHeight: 1.55, fontStyle: 'italic' }}>
               HOMA-IR is (fasting insulin × fasting glucose) / 405. In PCOS care, &lt; 1.9 is favorable; 1.9–2.5 is borderline; &gt; 2.5 typically points at insulin resistance worth treating.
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginTop: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginTop: 6 }}>
               source · Endocrine Society; JCEM PCOS reviews
             </div>
           </div>

@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component {
     if (!this.state.hasError) return this.props.children
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 28px', background: T.bg, color: T.text }}>
-        <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 14 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 2, color: T.accent, fontWeight: 700, marginBottom: 14 }}>
           LUNA · UNEXPECTED ERROR
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.6, lineHeight: 1.1, marginBottom: 14 }}>

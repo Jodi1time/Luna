@@ -110,7 +110,7 @@ ${points.map((p, i) => `
                 </div>
               </div>
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 4 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 4 }}>
                   Say
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic' }}>
@@ -118,14 +118,14 @@ ${points.map((p, i) => `
                 </div>
               </div>
               <div style={{ marginBottom: 10 }}>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 4 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 4 }}>
                   Why it matters
                 </div>
                 <div style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.55, color: T.text }}>
                   {p.why}
                 </div>
               </div>
-              <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
                 SOURCE — {p.source}
               </div>
             </div>

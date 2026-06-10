@@ -92,7 +92,7 @@ export default function PeriodHistory() {
                       </div>
                     </div>
                     {cycleLenForRow && (
-                      <div style={{ marginTop: 6, fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 1 }}>
+                      <div style={{ marginTop: 6, fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 1 }}>
                         {cycleLenForRow}-DAY CYCLE
                       </div>
                     )}

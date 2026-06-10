@@ -90,7 +90,7 @@ export default function Polaroid({
                 style={{
                   background: T.accent, color: '#fff', border: 'none',
                   borderRadius: 999, padding: '5px 10px',
-                  fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
+                  fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.18)',
                 }}>
@@ -102,7 +102,7 @@ export default function Polaroid({
                 style={{
                   background: '#fff', color: T.text, border: `1px solid ${T.hair}`,
                   borderRadius: 999, padding: '5px 10px',
-                  fontFamily: T.sans, fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
+                  fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
                   cursor: 'pointer',
                 }}>
                 KEEP

@@ -10,6 +10,24 @@ import {
 // Date helpers
 const toISO = (d) => d instanceof Date ? d.toISOString().slice(0, 10) : d
 const today = () => new Date().toISOString().slice(0, 10)
+
+// ── History-API sync ──────────────────────────────────────────
+// Every forward navigation pushes one browser-history entry, so the
+// Android hardware back button and iOS edge-swipe walk Luna's own
+// stack instead of exiting the app. `histDepth` counts entries WE
+// pushed this session — back() only delegates to history.back()
+// when there's a Luna-owned entry to consume (otherwise it pops the
+// store directly and never risks navigating out of the app).
+const NAV_STACK_CAP = 60
+let histDepth = 0
+const pushNav = (s, screen, extra = {}) => {
+  const stack = [...s.stack, screen].slice(-NAV_STACK_CAP)
+  try {
+    window.history.pushState({ luna: true }, '')
+    histDepth++
+  } catch { /* non-browser env */ }
+  return { screen, stack, ...extra }
+}
 const lmpToDueDate = (lmp) => {
   if (!lmp) return null
   const d = new Date(lmp + 'T00:00:00')
@@ -302,23 +320,33 @@ const useLuna = create(
       setCelebration: (kind) => set({ celebration: kind }),
 
       go: (screen, params = {}) =>
-        set((s) => ({
-          screen,
-          stack: [...s.stack, screen],
-          ...params,
-        })),
+        set((s) => pushNav(s, screen, params)),
 
-      back: () =>
+      // Pops the store stack WITHOUT touching browser history — the
+      // popstate listener calls this after the browser already moved.
+      _applyBack: () =>
         set((s) => {
           if (s.stack.length <= 1) return s
           const ns = s.stack.slice(0, -1)
           return { stack: ns, screen: ns[ns.length - 1] }
         }),
 
-      goPhase:   (id) => set((s) => ({ activePhaseId: id,   screen: 'phase',   stack: [...s.stack, 'phase'] })),
-      goArticle: (id) => set((s) => ({ activeArticleId: id, screen: 'article', stack: [...s.stack, 'article'] })),
-      goSymptom: (id) => set((s) => ({ activeSymptomId: id, screen: 'symptom', stack: [...s.stack, 'symptom'] })),
-      goSchool:  (id) => set((s) => ({ activeSchoolId: id,  screen: 'cycleSchool', stack: [...s.stack, 'cycleSchool'] })),
+      back: () => {
+        const s = useLuna.getState()
+        if (s.stack.length <= 1) return
+        // Prefer consuming a history entry we pushed, so the browser
+        // and store stay in step; fall back to a direct pop when the
+        // store stack outlives history (e.g. restored session state).
+        if (histDepth > 0) {
+          try { window.history.back(); return } catch { /* fall through */ }
+        }
+        s._applyBack()
+      },
+
+      goPhase:   (id) => set((s) => pushNav(s, 'phase',       { activePhaseId: id })),
+      goArticle: (id) => set((s) => pushNav(s, 'article',     { activeArticleId: id })),
+      goSymptom: (id) => set((s) => pushNav(s, 'symptom',     { activeSymptomId: id })),
+      goSchool:  (id) => set((s) => pushNav(s, 'cycleSchool', { activeSchoolId: id })),
 
       // ── Pro ──────────────────────────────────────────────────
       isPro: true,
@@ -434,5 +462,15 @@ const useLuna = create(
     }
   )
 )
+
+// Hardware back / edge-swipe → pop one screen. Registered once at
+// module scope. Forward-navigation popstates are rare in a standalone
+// PWA; treating every popstate as "back" keeps the model simple.
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    histDepth = Math.max(0, histDepth - 1)
+    useLuna.getState()._applyBack()
+  })
+}
 
 export default useLuna

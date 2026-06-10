@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
@@ -11,111 +12,121 @@ import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { getBcCycleModel } from '../lib/bcCycle'
+import { choreoOnce } from '../lib/choreo'
 
-// SVG arc path between two angles on a ring of given inner / outer radius.
-// Returns the d attribute for a <path>. Used for both the per-day cycle
-// segments and the fertile-window outer halo.
-function arcPath(cx, cy, innerR, outerR, startAngle, endAngle) {
-  const startRad = (startAngle * Math.PI) / 180
-  const endRad   = (endAngle   * Math.PI) / 180
-  const x1 = cx + outerR * Math.cos(startRad)
-  const y1 = cy + outerR * Math.sin(startRad)
-  const x2 = cx + outerR * Math.cos(endRad)
-  const y2 = cy + outerR * Math.sin(endRad)
-  const x3 = cx + innerR * Math.cos(endRad)
-  const y3 = cy + innerR * Math.sin(endRad)
-  const x4 = cx + innerR * Math.cos(startRad)
-  const y4 = cy + innerR * Math.sin(startRad)
-  const largeArc = (endAngle - startAngle) > 180 ? 1 : 0
-  return `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z`
+// Stroke-arc path between two angles at radius r — the building block
+// of the wheel's phase bands. Stroked arcs with round linecaps read
+// as drawn bands (premium, hand-set) where the old filled per-day
+// segments read as a pie chart.
+function ringArc(cx, cy, r, a0, a1) {
+  const rad = (a) => (a * Math.PI) / 180
+  const x0 = cx + r * Math.cos(rad(a0))
+  const y0 = cy + r * Math.sin(rad(a0))
+  const x1 = cx + r * Math.cos(rad(a1))
+  const y1 = cy + r * Math.sin(rad(a1))
+  const large = (a1 - a0) > 180 ? 1 : 0
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`
 }
 
-// Cycle wheel — a circular visualization of the cycle, divided into
-// segments per day, phase-colored. A small marker shows where the user
-// is today (with a slow pulsing ring so it reads as alive). When the
-// user is in or approaching the fertile window, a soft outer halo
-// surrounds the fertile days. Distinctly Luna: cycles are circles.
-// Each phase segment is now tappable — tap any phase to open its
-// teaching surface (PhaseDetail) so the wheel doubles as a textbook.
-function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase }) {
+// Cycle wheel — four phase bands around the day number. Quiet base
+// bands show the whole cycle's shape; a brighter overlay fills in the
+// days already lived, ending exactly at the "you are here" marker, so
+// the wheel reads as a journey in progress instead of a static chart.
+// Each band is one large tap target into that phase's teaching surface.
+function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase, animate = true }) {
   if (!cycleDay || !cycleLength) return null
-  const animatedCenter = useCountUp(cycleDay, 1100)
+  const animatedCenter = useCountUp(cycleDay, animate ? 1100 : 0)
   const size = 260
-  const r = 112
+  const r = 110
   const cx = size / 2
   const cy = size / 2
-  const segmentAngle = 360 / cycleLength
-  const innerR = r - 10
-  const segments = []
-  for (let d = 1; d <= cycleLength; d++) {
-    const phase = getPhaseForDay(d, cycleLength, periodLength)
-    const startAngle = (d - 1) * segmentAngle - 90
-    const endAngle   = d       * segmentAngle - 90
-    segments.push({
-      d,
-      path: arcPath(cx, cy, innerR, r, startAngle, endAngle),
-      color: phase.color,
-      isToday: d === cycleDay,
-    })
-  }
+  const BAND = 13          // stroke width of the phase bands
+  const GAP  = 3.2         // degrees of breathing room at each phase boundary
+  const angleFor = (day) => ((day - 1) / cycleLength) * 360 - 90
+  const todayAngle = angleFor(cycleDay + 0.5)
 
-  // Today marker — placed at the centroid of today's segment.
-  const todayMidAngle = (cycleDay - 0.5) * segmentAngle - 90
-  const markerRad = (todayMidAngle * Math.PI) / 180
-  const markerR = r - 5
-  const mx = cx + markerR * Math.cos(markerRad)
-  const my = cy + markerR * Math.sin(markerRad)
+  // Phase ranges in days — mirrors getPhaseForDay's boundaries.
+  const ovStart = Math.round(cycleLength / 2) - 1
+  const ovEnd   = Math.round(cycleLength / 2) + 1
+  const bands = [
+    { id: 'menstrual',  from: 1,           to: periodLength },
+    { id: 'follicular', from: periodLength + 1, to: ovStart - 1 },
+    { id: 'ovulation',  from: ovStart,     to: ovEnd },
+    { id: 'luteal',     from: ovEnd + 1,   to: cycleLength },
+  ].filter((b) => b.to >= b.from).map((b) => {
+    const a0 = angleFor(b.from) + GAP / 2
+    const a1 = angleFor(b.to + 1) - GAP / 2
+    // Lived overlay — the slice of this band already travelled,
+    // ending at the marker so "bright" always means "behind you".
+    const livedEnd = Math.min(a1, todayAngle)
+    return {
+      ...b,
+      color: PHASES[b.id].color,
+      path: ringArc(cx, cy, r, a0, Math.max(a1, a0 + 0.1)),
+      livedPath: livedEnd > a0 ? ringArc(cx, cy, r, a0, livedEnd) : null,
+    }
+  })
+
   const todayPhase = getPhaseForDay(cycleDay, cycleLength, periodLength)
 
-  // Fertile window — derived from the detected BBT shift when we have
-  // one (accurate), otherwise from the calendar midpoint. We show a
-  // soft outer halo over those days so the eye lands on the fertile
-  // arc when the user is in or near it.
+  // Today marker — sits on the band at today's angle.
+  const markerRad = (todayAngle * Math.PI) / 180
+  const mx = cx + r * Math.cos(markerRad)
+  const my = cy + r * Math.sin(markerRad)
+
+  // Fertile window — soft outer halo from the detected BBT shift when
+  // we have one, otherwise the calendar midpoint. Only when in or near.
   const ovDay = bbtShift?.shiftDayMedian ?? Math.round(cycleLength / 2)
   const fertileStart = Math.max(1, ovDay - 5)
   const fertileEnd   = Math.min(cycleLength, ovDay + 1)
   const inOrNearFertile = cycleDay >= fertileStart - 3 && cycleDay <= fertileEnd + 3
-  const fertileStartAngle = (fertileStart - 1) * segmentAngle - 90
-  const fertileEndAngle   = fertileEnd       * segmentAngle - 90
   const fertileHaloPath = inOrNearFertile
-    ? arcPath(cx, cy, r + 5, r + 11, fertileStartAngle, fertileEndAngle)
+    ? ringArc(cx, cy, r + 13, angleFor(fertileStart), angleFor(fertileEnd + 1))
     : null
 
-  // Simpler wheel: the segments now read as a soft ring around the
-  // number rather than a chart. Inactive days drop to opacity 0.18
-  // so the eye lands on the number first; today's segment glows at
-  // 0.85 so you can still find it on the ring. The center number is
-  // the protagonist — italic serif, big, in phase color.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
       <svg width={size} height={size} style={{ overflow: 'visible' }}>
         {/* Outer fertile-window halo — only when in or near fertile days */}
         {fertileHaloPath && (
-          <path d={fertileHaloPath} fill={PHASES.ovulation.color}
+          <path d={fertileHaloPath} fill="none" stroke={PHASES.ovulation.color}
+            strokeWidth={5} strokeLinecap="round"
             className="fertile-glow"
-            style={{ filter: 'blur(5px)' }} />
+            style={{ filter: 'blur(4px)' }} />
         )}
-        {/* Per-day arc segments — much quieter now, function as a ring.
-            Each segment is tappable and routes to that phase's teaching
-            surface so the wheel reads as a textbook, not just an indicator. */}
-        {segments.map((s, idx) => (
-          <path key={s.d} d={s.path} fill={s.color}
-            className="arc-draw"
-            onClick={onTapPhase ? () => onTapPhase(getPhaseForDay(s.d, cycleLength, periodLength).id) : undefined}
-            style={{
-              animationDelay: `${idx * 18}ms`,
-              '--final-opacity': s.isToday ? 0.85 : 0.18,
-              cursor: onTapPhase ? 'pointer' : undefined,
-            }} />
+        {bands.map((b, idx) => (
+          <g key={b.id}>
+            {/* Base band — the cycle's whole shape, quiet */}
+            <path d={b.path} fill="none" stroke={b.color}
+              strokeWidth={BAND} strokeLinecap="round"
+              className="arc-draw"
+              style={{ animationDelay: `${idx * 110}ms`, '--final-opacity': 0.22 }} />
+            {/* Lived overlay — days already travelled, bright */}
+            {b.livedPath && (
+              <path d={b.livedPath} fill="none" stroke={b.color}
+                strokeWidth={BAND} strokeLinecap="round"
+                className="arc-draw"
+                style={{ animationDelay: `${260 + idx * 110}ms`, '--final-opacity': 0.9 }} />
+            )}
+            {/* Hit area — generous invisible stroke so each phase is
+                one big tap target into its teaching surface */}
+            {onTapPhase && (
+              <path d={b.path} fill="none" stroke="#000" strokeOpacity={0}
+                strokeWidth={30} strokeLinecap="round"
+                role="button" aria-label={`Read about the ${b.id} phase`}
+                onClick={() => onTapPhase(b.id)}
+                style={{ cursor: 'pointer' }} />
+            )}
+          </g>
         ))}
         {/* Soft glow under the marker — quiet phase-color halo */}
-        <circle cx={mx} cy={my} r={10} fill={todayPhase.color} opacity={0.22}
-          style={{ filter: 'blur(2.5px)' }} />
+        <circle cx={mx} cy={my} r={11} fill={todayPhase.color} opacity={0.25}
+          style={{ filter: 'blur(3px)' }} />
         {/* Outer pulsing ring — the heartbeat of "you are here" */}
-        <circle cx={mx} cy={my} r={4.5} fill={todayPhase.color}
+        <circle cx={mx} cy={my} r={5} fill={todayPhase.color}
           className="wheel-today-pulse" />
-        {/* Today marker — solid disc on top of the ring */}
-        <circle cx={mx} cy={my} r={4.5} fill="#fff" stroke={todayPhase.color} strokeWidth={1.5} />
+        {/* Today marker — solid disc on top of the band */}
+        <circle cx={mx} cy={my} r={5} fill="#fff" stroke={todayPhase.color} strokeWidth={1.8} />
         {/* Center — huge italic day number + small serif "of X" */}
         <text x={cx} y={cy + 2} textAnchor="middle"
           style={{ fontFamily: T.serif, fontSize: 92, fontWeight: 300, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -3 }}>
@@ -156,51 +167,69 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase 
 //   - shot → 12 week segments filling as the weeks pass, center =
 //     weeks since the last injection; the whole ring turns rose
 //     when she's past the window
-function BcWheel({ model }) {
+function BcWheel({ model, animate = true }) {
   const isPack = model.kind === 'pillPack'
   const total = isPack ? 28 : 12
   const big = model.cover?.bigNumber ?? 0
   const current = isPack ? big : Math.min(big + 1, total)
   const urgent = !isPack && !!model.nextThing?.urgent
-  const animatedCenter = useCountUp(big, 1100)
+  const animatedCenter = useCountUp(big, animate ? 1100 : 0)
   const size = 260
-  const r = 112
+  const r = 110
   const cx = size / 2
   const cy = size / 2
-  const innerR = r - 10
-  const segmentAngle = 360 / total
-  const segments = []
-  for (let i = 1; i <= total; i++) {
-    const startAngle = (i - 1) * segmentAngle - 90
-    const endAngle   = i       * segmentAngle - 90
-    const color = isPack
-      ? (i > 21 ? PHASES.menstrual.color : T.accent)
-      : (urgent ? PHASES.menstrual.color : T.accent)
-    const opacity = i === current ? 0.85
-      : isPack ? 0.18
-      : (i < current || urgent) ? 0.45 : 0.14
-    segments.push({ i, path: arcPath(cx, cy, innerR, r, startAngle, endAngle), color, opacity })
-  }
-  // "You are here" marker at the current segment's centroid.
-  const midAngle = (current - 0.5) * segmentAngle - 90
-  const markerRad = (midAngle * Math.PI) / 180
-  const markerR = r - 5
-  const mx = cx + markerR * Math.cos(markerRad)
-  const my = cy + markerR * Math.sin(markerRad)
+  const BAND = 13
+  const GAP = 3.2
+  const angleFor = (unit) => ((unit - 1) / total) * 360 - 90
+  const hereAngle = angleFor(Math.min(current, total) + 0.5)
+  // Bands — same stroked-band + lived-overlay language as the natural
+  // wheel. Pack wheel splits active days / placebo week; the shot
+  // wheel is one continuous 12-week band (rose when she's past the
+  // window), filling as the weeks pass.
+  const rawBands = isPack
+    ? [
+        { id: 'active',  from: 1,  to: 21, color: T.accent },
+        { id: 'placebo', from: 22, to: 28, color: PHASES.menstrual.color },
+      ]
+    : [
+        { id: 'weeks', from: 1, to: 12, color: urgent ? PHASES.menstrual.color : T.accent },
+      ]
+  const bands = rawBands.map((b) => {
+    const a0 = angleFor(b.from) + (isPack ? GAP / 2 : 0)
+    const a1 = angleFor(b.to + 1) - (isPack ? GAP / 2 : 0)
+    const livedEnd = Math.min(a1, hereAngle)
+    return {
+      ...b,
+      path: ringArc(cx, cy, r, a0, Math.max(a1, a0 + 0.1)),
+      livedPath: livedEnd > a0 ? ringArc(cx, cy, r, a0, livedEnd) : null,
+    }
+  })
+  const markerRad = (hereAngle * Math.PI) / 180
+  const mx = cx + r * Math.cos(markerRad)
+  const my = cy + r * Math.sin(markerRad)
   const markerColor = urgent || (isPack && current > 21) ? PHASES.menstrual.color : T.accent
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
       <svg width={size} height={size} style={{ overflow: 'visible' }}>
-        {segments.map((s, idx) => (
-          <path key={s.i} d={s.path} fill={s.color}
-            className="arc-draw"
-            style={{ animationDelay: `${idx * (isPack ? 18 : 42)}ms`, '--final-opacity': s.opacity }} />
+        {bands.map((b, idx) => (
+          <g key={b.id}>
+            <path d={b.path} fill="none" stroke={b.color}
+              strokeWidth={BAND} strokeLinecap="round"
+              className="arc-draw"
+              style={{ animationDelay: `${idx * 110}ms`, '--final-opacity': urgent ? 0.3 : 0.22 }} />
+            {b.livedPath && (
+              <path d={b.livedPath} fill="none" stroke={b.color}
+                strokeWidth={BAND} strokeLinecap="round"
+                className="arc-draw"
+                style={{ animationDelay: `${260 + idx * 110}ms`, '--final-opacity': 0.9 }} />
+            )}
+          </g>
         ))}
-        <circle cx={mx} cy={my} r={10} fill={markerColor} opacity={0.22}
-          style={{ filter: 'blur(2.5px)' }} />
-        <circle cx={mx} cy={my} r={4.5} fill={markerColor}
+        <circle cx={mx} cy={my} r={11} fill={markerColor} opacity={0.25}
+          style={{ filter: 'blur(3px)' }} />
+        <circle cx={mx} cy={my} r={5} fill={markerColor}
           className="wheel-today-pulse" />
-        <circle cx={mx} cy={my} r={4.5} fill="#fff" stroke={markerColor} strokeWidth={1.5} />
+        <circle cx={mx} cy={my} r={5} fill="#fff" stroke={markerColor} strokeWidth={1.8} />
         <text x={cx} y={cy + 2} textAnchor="middle"
           style={{ fontFamily: T.serif, fontSize: 92, fontWeight: 300, fill: markerColor, fontStyle: 'italic', letterSpacing: -3 }}>
           {animatedCenter}
@@ -255,29 +284,29 @@ function varianceTag(conf) {
 // glass card the user can recognise themselves in. The cycle length,
 // period length, and cycles-logged numbers count up on mount so the
 // card reads as a small live dashboard, not a static fact sheet.
-function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged }) {
+function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged, animate = true }) {
   if (!cycleLength) return null
-  const animCL = useCountUp(cycleLength, 1200)
-  const animPL = useCountUp(periodLength || 0, 1200)
-  const animCY = useCountUp(cyclesLogged || 0, 1400)
+  const animCL = useCountUp(cycleLength, animate ? 1200 : 0)
+  const animPL = useCountUp(periodLength || 0, animate ? 1200 : 0)
+  const animCY = useCountUp(cyclesLogged || 0, animate ? 1400 : 0)
   const clTag = cycleLengthTag(cycleLength)
   const plTag = periodLengthTag(periodLength)
   const vTag  = varianceTag(variance?.conf)
   return (
     <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 14px 30px -20px ${sectionColors('body').accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '120ms' }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
         Your cycles
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 400, lineHeight: 1.45, color: T.text, letterSpacing: -0.2 }}>
         About <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animCL} days</em>, end to end — {clTag}. Your bleed runs about <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animPL} day{animPL === 1 ? '' : 's'}</em> — {plTag}.
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.hair}` }}>
-        <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>RHYTHM</span>
+        <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>RHYTHM</span>
         <span style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.text, fontWeight: 500 }}>
           {vTag}
         </span>
         {cyclesLogged > 0 && (
-          <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, marginLeft: 'auto' }}>
+          <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, marginLeft: 'auto' }}>
             {animCY} CYCLE{animCY === 1 ? '' : 'S'} LOGGED
           </span>
         )}
@@ -341,7 +370,7 @@ function BBTSparkline({ bbtShift, cycleLength }) {
         stroke={PHASES.ovulation.color} strokeWidth={1} strokeDasharray="2 2"
         className="spark-dot" style={{ animationDelay: '0.95s', opacity: 0.5, transformOrigin: `${shiftX}px ${(yLow + yHigh) / 2}px` }} />
       <text x={shiftX} y={padY - 2} textAnchor="middle"
-        className="spark-dot" style={{ animationDelay: '1.05s', fontFamily: T.mono, fontSize: 8, letterSpacing: 0.6, fill: PHASES.ovulation.color, fontWeight: 600, transformOrigin: `${shiftX}px ${padY}px` }}>
+        className="spark-dot" style={{ animationDelay: '1.05s', fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.6, fill: PHASES.ovulation.color, fontWeight: 600, transformOrigin: `${shiftX}px ${padY}px` }}>
         DAY {bbtShift.shiftDayMedian}
       </text>
       {/* Two reading dots — follicular avg + luteal avg */}
@@ -351,11 +380,11 @@ function BBTSparkline({ bbtShift, cycleLength }) {
         className="spark-dot" style={{ animationDelay: '1.15s' }} />
       {/* Tiny labels under the dots */}
       <text x={padX + innerW * 0.18} y={yLow + 14}
-        textAnchor="middle" style={{ fontFamily: T.mono, fontSize: 8, letterSpacing: 0.5, fill: T.muted, fontWeight: 600, opacity: 0.85 }}>
+        textAnchor="middle" style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, fill: T.muted, fontWeight: 600, opacity: 0.85 }}>
         {bbtShift.follicularAvg}°
       </text>
       <text x={padX + innerW * 0.82} y={yHigh - 6}
-        textAnchor="middle" style={{ fontFamily: T.mono, fontSize: 8, letterSpacing: 0.5, fill: T.muted, fontWeight: 600, opacity: 0.85 }}>
+        textAnchor="middle" style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, fill: T.muted, fontWeight: 600, opacity: 0.85 }}>
         {bbtShift.lutealAvg}°
       </text>
     </svg>
@@ -379,6 +408,8 @@ function resolvePattern(p) {
 export default function Insights() {
   const store = useLuna()
   const cycle = useCycle(store)
+  // Entrance choreography plays once per session; re-visits render settled.
+  const [animate] = useState(() => choreoOnce('insights'))
   const { phase, periodHistory } = cycle
   const logs = useLuna((s) => s.logs)
   const birthControl = useLuna((s) => s.birthControl)
@@ -404,7 +435,7 @@ export default function Insights() {
   const blobColor = (phase?.color) || T.accent
 
   return (
-    <div className="home-stage">
+    <div className={`home-stage${animate ? '' : ' choreo-done'}`}>
       {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
@@ -420,10 +451,10 @@ export default function Insights() {
             whether the user has logged anything yet. */}
         <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '80ms' }}>
           {showBcWheel ? (
-            <BcWheel model={bcModel} />
+            <BcWheel model={bcModel} animate={animate} />
           ) : cycleDay ? (
             <>
-              <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} bbtShift={bbtShift} onTapPhase={goPhase} />
+              <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} bbtShift={bbtShift} onTapPhase={goPhase} animate={animate} />
               {onHormonalBC && (
                 <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 280, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.55 }}>
                   Your method softens the natural phase pattern — this is the underlying cycle Luna still tracks for you.
@@ -432,7 +463,7 @@ export default function Insights() {
             </>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
-              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} bbtShift={null} onTapPhase={goPhase} />
+              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} bbtShift={null} onTapPhase={goPhase} animate={animate} />
               <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
                 Log your first period and Luna will mark where you are on the wheel.
               </div>
@@ -501,7 +532,7 @@ export default function Insights() {
                   Very-high / high cases use phase color; medium grey; low grey. */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                 <div style={{
-                  fontFamily: T.sans, fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase',
+                  fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase',
                   padding: '4px 10px', borderRadius: 999,
                   background: ovulation.confidence === 'very-high' || ovulation.confidence === 'high'
                     ? PHASES.ovulation.color
@@ -512,7 +543,7 @@ export default function Insights() {
                 }}>
                   {ovulation.confidence === 'very-high' ? 'High confidence' : ovulation.confidence === 'high' ? 'High confidence' : ovulation.confidence === 'medium' ? 'Medium confidence' : 'Low confidence'}
                 </div>
-                <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
                   {ovulation.signals.length === 1 ? '1 signal' : `${ovulation.signals.length} signals`}
                 </div>
               </div>
@@ -539,7 +570,7 @@ export default function Insights() {
                     <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.text, letterSpacing: -0.1, flex: 1 }}>
                       {s.detail}
                     </span>
-                    <span style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                    <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
                       day {s.day}
                     </span>
                   </div>
@@ -555,7 +586,7 @@ export default function Insights() {
 
               {/* When BBT is one of the signals, expose the underlying numbers */}
               {bbtShift && (
-                <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5, paddingTop: 10, marginTop: 10, borderTop: `1px solid ${T.hair}` }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5, paddingTop: 10, marginTop: 10, borderTop: `1px solid ${T.hair}` }}>
                   {bbtShift.follicularAvg}°{bbtShift.unit} → {bbtShift.lutealAvg}°{bbtShift.unit} · {bbtShift.samples} reading{bbtShift.samples === 1 ? '' : 's'}
                 </div>
               )}
@@ -592,7 +623,7 @@ export default function Insights() {
                 : "Keep logging and they'll arrive here as they emerge. Three connected dots make a constellation."}
             </div>
             {cyclesLogged > 0 && (
-              <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>
+              <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>
                 {cyclesLogged} CYCLE{cyclesLogged === 1 ? '' : 'S'} TRACKED · {Object.keys(logs || {}).length} DAY{Object.keys(logs || {}).length === 1 ? '' : 'S'} LOGGED
               </div>
             )}
@@ -619,7 +650,7 @@ export default function Insights() {
                       <SymptomIcon id={iconId} size={32} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, color: color, fontFamily: T.sans, marginBottom: 4 }}>
+                      <div style={{ fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: color, fontFamily: T.sans, marginBottom: 4 }}>
                         {p.type === 'symptom' ? 'Symptom' : 'Mood'} · days {min}{min === max ? '' : `–${max}`}
                       </div>
                       <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 4, lineHeight: 1.25 }}>
@@ -628,7 +659,7 @@ export default function Insights() {
                       <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5, fontFamily: T.sans }}>
                         {sentence}.
                       </div>
-                      <div style={{ marginTop: 8, fontSize: 10, fontFamily: T.mono, color: T.muted, letterSpacing: 0.3 }}>
+                      <div style={{ marginTop: 8, fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.3 }}>
                         {p.occurrences} occurrence{p.occurrences === 1 ? '' : 's'} across {p.cycles} cycle{p.cycles === 1 ? '' : 's'} · {concentration}% concentration
                       </div>
                     </div>
@@ -638,7 +669,7 @@ export default function Insights() {
                       body-literacy moment instead of just a stat. */}
                   {sym && (
                     <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${color}14` }}>
-                      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: color, marginBottom: 6 }}>
+                      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: color, marginBottom: 6 }}>
                         Why this happens
                       </div>
                       <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic', marginBottom: 10 }}>
@@ -646,7 +677,7 @@ export default function Insights() {
                       </div>
                       {Array.isArray(sym.evidence) && sym.evidence.length > 0 && (
                         <>
-                          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
+                          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
                             What helps
                           </div>
                           <ul style={{ margin: 0, paddingLeft: 18, fontFamily: T.serif, fontSize: 13, lineHeight: 1.55, color: T.text }}>
@@ -720,7 +751,7 @@ export default function Insights() {
           <button onClick={() => go('yourYear')}
             className="glass-card insight-stagger alive-card"
             style={{ marginTop: 22, padding: 20, borderRadius: 22, textAlign: 'left', width: '100%', cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', animationDelay: '420ms' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
               A longer look back
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>

@@ -199,7 +199,7 @@ export default function CrampsHelper() {
           boxShadow: `0 1px 0 ${sectionColors('urgent').accent}10, 0 12px 24px -18px ${sectionColors('urgent').accent}30`,
           borderRadius: T.r, marginBottom: 18,
         }}>
-          <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: sectionColors('urgent').accent, marginBottom: 10 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: sectionColors('urgent').accent, marginBottom: 10 }}>
             What helps right now
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.65, color: T.text, letterSpacing: -0.1 }}>
@@ -228,7 +228,7 @@ export default function CrampsHelper() {
 
         {severe && (
           <div className="glass-card" style={{ padding: 14, borderRadius: T.r, marginBottom: 18, background: T.accent + '10' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.accent, marginBottom: 6 }}>
               When it's this loud
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
@@ -270,7 +270,7 @@ export default function CrampsHelper() {
                 <button key={o.id} onClick={() => setIntensity(on ? null : o.id)}
                   style={{ border: `1px solid ${on ? T.accent : T.hair}`, background: on ? T.accent + '12' : T.card, color: on ? T.accent : T.text, padding: '10px 6px 8px', borderRadius: T.r, cursor: 'pointer', fontFamily: T.sans, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                   <span style={{ fontSize: 12, fontWeight: 600 }}>{o.label}</span>
-                  <span style={{ fontSize: 9.5, color: T.muted, lineHeight: 1.3, textAlign: 'center', fontWeight: 500 }}>{o.sub}</span>
+                  <span style={{ fontSize: 11, color: T.muted, lineHeight: 1.3, textAlign: 'center', fontWeight: 500 }}>{o.sub}</span>
                 </button>
               )
             })}

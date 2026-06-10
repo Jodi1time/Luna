@@ -379,11 +379,11 @@ export default function PcosDoctorScript() {
             <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, color: T.text, marginBottom: 4 }}>
               PCOS — for my appointment
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginBottom: 14 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 500, marginBottom: 14 }}>
               {(displayName ? `${displayName} · ` : '') + script.today}
             </div>
 
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
               WHY I’M HERE TODAY
             </div>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: T.text, lineHeight: 1.55, marginBottom: 14, paddingLeft: 10, borderLeft: `2px solid ${accent}55` }}>
@@ -392,7 +392,7 @@ export default function PcosDoctorScript() {
 
             {script.cycleRead && (
               <>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
                   MY CYCLE PATTERN
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.text, lineHeight: 1.55, marginBottom: 14 }}>
@@ -403,7 +403,7 @@ export default function PcosDoctorScript() {
 
             {script.symptoms.length > 0 && (
               <>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
                   SYMPTOMS I’VE BEEN TRACKING (LAST 90 DAYS)
                 </div>
                 <div style={{ marginBottom: 14 }}>
@@ -418,7 +418,7 @@ export default function PcosDoctorScript() {
 
             {script.orderedReadings.length > 0 && (
               <>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
                   MY MOST RECENT BLOODWORK
                 </div>
                 <div style={{ marginBottom: 14 }}>
@@ -441,7 +441,7 @@ export default function PcosDoctorScript() {
 
             {script.medList.length > 0 && (
               <>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
                   WHAT I’M CURRENTLY TAKING
                 </div>
                 <div style={{ marginBottom: 14 }}>
@@ -454,7 +454,7 @@ export default function PcosDoctorScript() {
               </>
             )}
 
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 6 }}>
               WHAT I’D LIKE TO DISCUSS / ASK FOR
             </div>
             <div style={{ marginBottom: 4 }}>

@@ -40,7 +40,7 @@ export default function Care() {
         <button onClick={findProvider}
           className="insight-stagger"
           style={{ width: '100%', padding: 18, background: T.text, color: '#FAF4ED', border: 'none', borderRadius: T.r, cursor: 'pointer', textAlign: 'left', marginBottom: 28, fontFamily: 'inherit', animationDelay: '120ms' }}>
-          <div style={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 600, fontFamily: T.sans, color: acc, marginBottom: 6 }}>Find someone nearby</div>
+          <div style={{ fontSize: 11, letterSpacing: 1.2, fontWeight: 600, fontFamily: T.sans, color: acc, marginBottom: 6 }}>Find someone nearby</div>
           <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 4 }}>An OB/GYN near you →</div>
           <div style={{ fontFamily: T.sans, fontSize: 12, color: 'rgba(250,244,237,0.7)', lineHeight: 1.5 }}>Opens a map with providers near your current location.</div>
         </button>
@@ -53,7 +53,7 @@ export default function Care() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <Eyebrow color={acc}>{cat}</Eyebrow>
                 {doneCount > 0 && (
-                  <span style={{ fontSize: 10, fontFamily: T.mono, color: acc, fontWeight: 600 }}>{doneCount}/{items.length} done</span>
+                  <span style={{ fontSize: 11, fontFamily: T.mono, color: acc, fontWeight: 600 }}>{doneCount}/{items.length} done</span>
                 )}
               </div>
               <div style={{ background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 10px 22px -18px ${sectionColors('care').accent}30`, borderRadius: T.r, overflow: 'hidden' }}>
@@ -86,7 +86,7 @@ export default function Care() {
                         }}>{item.label}</div>
                         <div style={{ fontFamily: T.sans, fontSize: 11, color: acc, fontWeight: 700, letterSpacing: 0.5, marginBottom: 4 }}>{item.frequency}</div>
                         <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, lineHeight: 1.45 }}>{item.why}</div>
-                        <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, marginTop: 5, letterSpacing: 0.5 }}>SOURCE — {item.source}</div>
+                        <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, marginTop: 5, letterSpacing: 0.5 }}>SOURCE — {item.source}</div>
                       </div>
                     </button>
                   )

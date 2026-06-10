@@ -89,7 +89,7 @@ export default function YourYear() {
           {narrative.subtitle}
         </div>
         {narrative.spanLabel && (
-          <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: 0.8, color: T.muted, marginTop: 8 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, color: T.muted, marginTop: 8 }}>
             {narrative.spanLabel}
           </div>
         )}
@@ -98,7 +98,7 @@ export default function YourYear() {
         <div>
           {narrative.sections.map((s, i) => (
             <section key={i} className="insight-stagger" style={{ marginBottom: 22, animationDelay: `${160 + i * 80}ms` }}>
-              <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: acc, marginBottom: 10 }}>
+              <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 700, color: acc, marginBottom: 10 }}>
                 {String(i + 1).padStart(2, '0')} · {s.heading.toUpperCase()}
               </div>
               {s.body.map((para, j) => (

@@ -145,7 +145,7 @@ export default function JournalCustomizer({
 
         {/* Color presets — plus a final "Custom" tile that opens the
             color picker below it. */}
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           THE PAPER
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: themeId === 'custom' ? 14 : 22 }}>
@@ -184,7 +184,7 @@ export default function JournalCustomizer({
                     background: 'rgba(26,19,16,0.18)',
                   }} />
                 </div>
-                <span style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
+                <span style={{ fontFamily: T.sans, fontSize: 11, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
                   {t.label}
                 </span>
               </button>
@@ -219,7 +219,7 @@ export default function JournalCustomizer({
                     +
                   </span>
                 </div>
-                <span style={{ fontFamily: T.sans, fontSize: 10, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
+                <span style={{ fontFamily: T.sans, fontSize: 11, fontWeight: 600, color: selected ? T.text : T.muted, letterSpacing: 0.3 }}>
                   Custom
                 </span>
               </button>
@@ -241,7 +241,7 @@ export default function JournalCustomizer({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
                   {custom?.gradient ? 'START COLOUR' : 'COLOUR'}
                 </span>
                 <input
@@ -256,7 +256,7 @@ export default function JournalCustomizer({
               </label>
               {custom?.gradient && (
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
-                  <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
                     END COLOUR
                   </span>
                   <input
@@ -300,10 +300,10 @@ export default function JournalCustomizer({
             {custom?.gradient && (
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted }}>
                     ANGLE
                   </span>
-                  <span style={{ fontFamily: T.mono, fontSize: 10, color: T.text, fontWeight: 500 }}>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, color: T.text, fontWeight: 500 }}>
                     {custom?.angle ?? 150}°
                   </span>
                 </div>
@@ -318,7 +318,7 @@ export default function JournalCustomizer({
         )}
 
         {/* Backdrop atmosphere — the animated thing behind every screen */}
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           THE ATMOSPHERE
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 22 }}>
@@ -340,7 +340,7 @@ export default function JournalCustomizer({
                 }}>
                   <BackdropPreview kind={b.id} accent={resolvedAccent} />
                 </div>
-                <span style={{ fontFamily: T.sans, fontSize: 9.5, fontWeight: 600, color: on ? T.text : T.muted, letterSpacing: 0.3 }}>
+                <span style={{ fontFamily: T.sans, fontSize: 11, fontWeight: 600, color: on ? T.text : T.muted, letterSpacing: 0.3 }}>
                   {b.label}
                 </span>
               </button>
@@ -353,7 +353,7 @@ export default function JournalCustomizer({
             The shade row offers six tones derived from the user's
             current paper colour — keeps the backdrop in the same
             visual family as the page, so nothing ever clashes. */}
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           BACKDROP COLOUR
         </div>
         {(() => {
@@ -399,7 +399,7 @@ export default function JournalCustomizer({
                   staying on "Follow your phase" leaves the row
                   unselected. */}
               <div style={{
-                fontFamily: T.mono, fontSize: 8.5, letterSpacing: 1.2, fontWeight: 600,
+                fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600,
                 color: T.muted, marginBottom: 6, opacity: 0.7,
               }}>
                 OR PICK A SHADE OF YOUR PAPER
@@ -428,7 +428,7 @@ export default function JournalCustomizer({
         })()}
 
         {/* Decorations */}
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           DECORATE
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 22 }}>
@@ -449,7 +449,7 @@ export default function JournalCustomizer({
                 <span style={{ fontFamily: T.serif, fontSize: 22, lineHeight: 1, color: resolvedAccent }}>
                   {d.emoji}
                 </span>
-                <span style={{ fontFamily: T.sans, fontSize: 10.5, fontWeight: 600, letterSpacing: 0.3 }}>
+                <span style={{ fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.3 }}>
                   {d.label}
                 </span>
               </button>
@@ -458,7 +458,7 @@ export default function JournalCustomizer({
         </div>
 
         {/* Whole-app toggle */}
-        <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: T.muted, marginBottom: 10 }}>
           BEYOND THE BOOK
         </div>
         <button onClick={onToggleApplyToApp}

@@ -84,7 +84,10 @@ export function TabBar({ active, onChange }) {
     { key: 'home',     label: 'Today',    icon: Icons.home },
     { key: 'calendar', label: 'Calendar', icon: Icons.calendar },
     { key: 'log',      label: '',         icon: null },
-    { key: 'library',  label: 'Library',  icon: Icons.library },
+    // Insights holds the fourth slot — the cycle wheel + pattern
+    // cards are the most distinctly-Luna surfaces and deserve one
+    // tap, not a chip. Library stays reachable from Home + articles.
+    { key: 'insights', label: 'Patterns', icon: Icons.library },
     { key: 'settings', label: 'You',      icon: Icons.settings },
   ]
   return (
@@ -136,7 +139,7 @@ export function TabBar({ active, onChange }) {
               style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {it.icon}
             </div>
-            <span style={{ fontSize: 10, fontWeight: 500 }}>{it.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 500 }}>{it.label}</span>
           </button>
         )
       })}
@@ -153,12 +156,12 @@ export function Masthead({ issue = 'No. 1', date, onBack }) {
       padding: '8px 0 14px', borderBottom: `1px solid ${T.hair}`, marginBottom: 18,
       fontFamily: T.sans,
     }}>
-      <div style={{ fontSize: 10, letterSpacing: 2.5, fontWeight: 700 }}>
+      <div style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700 }}>
         {onBack
-          ? <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.text, fontSize: 10, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, padding: 0 }}>← LUNA · {issue}</button>
+          ? <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.text, fontSize: 11, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, padding: 0 }}>← LUNA · {issue}</button>
           : <>LUNA · {issue}</>}
       </div>
-      <div style={{ fontSize: 10, color: T.muted, letterSpacing: 1 }}>{d}</div>
+      <div style={{ fontSize: 11, color: T.muted, letterSpacing: 1 }}>{d}</div>
     </div>
   )
 }
@@ -183,7 +186,7 @@ export function Rule() {
 // ── Source line ──────────────────────────────────────────────
 export function SourceLine({ children }) {
   return (
-    <div style={{ fontSize: 10, fontFamily: T.mono, color: T.muted, letterSpacing: 0.5, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
+    <div style={{ fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.5, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
       SOURCE — {children}
     </div>
   )
@@ -211,7 +214,7 @@ export function CTAButton({ children, onClick, outline, full, style: s = {} }) {
 export function BrickList({ title, items, positive = false }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: positive ? T.accent : T.muted, marginBottom: 8, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 11, letterSpacing: 1.5, fontWeight: 700, fontFamily: T.sans, color: positive ? T.accent : T.muted, marginBottom: 8, textTransform: 'uppercase' }}>
         {title}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

@@ -245,7 +245,7 @@ export default function KickCounter() {
           Babies have active and quiet cycles. Count during your baby's active window — usually after meals, in the evening, or after a sugary drink. A real reduction in movement compared to your baby's normal pattern is the signal that matters, not a single slow session. When unsure, call.
         </div>
         <div style={{
-          fontFamily: T.mono, fontSize: 10, letterSpacing: 0.6, color: T.muted,
+          fontFamily: T.mono, fontSize: 11, letterSpacing: 0.6, color: T.muted,
           textAlign: 'center', marginBottom: 8,
         }}>
           SOURCE · ACOG Antepartum Fetal Surveillance · NICE NG121

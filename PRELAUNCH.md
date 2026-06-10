@@ -477,3 +477,49 @@ the deep companion experience as a celebrated v1.1 feature drop.
 - WebCrypto worker offload (PBKDF2 to Web Worker so it doesn't block paint)
 - Postpartum mode (separate from pregnancy mode)
 - "Luna assistant" AI companion (already in its own section above)
+
+## Device walk — every route, on a real iPhone (added 2026-06-10)
+
+Surface area has outgrown ad-hoc QA: 65 routes, no systematic pass since they shipped.
+Do this walk on a physical iPhone (Safari + installed PWA — simulator lies about
+keyboards, haptics, and scroll). Check each screen for: renders without error,
+back navigation works (both the in-UI back button AND edge-swipe / hardware back),
+no input hidden behind the keyboard, no text clipped, tap targets reachable,
+and anything async shows its loading + error states.
+
+Mark with date + initials when walked clean.
+
+### Core loop
+- [ ] welcome · [ ] onbIntent · [ ] onbConditions · [ ] onb1 · [ ] onb2 · [ ] onbPriorities · [ ] onbPayoff · [ ] onb3
+- [ ] home · [ ] log (today + past date via calendar tap) · [ ] calendar · [ ] insights · [ ] library · [ ] settings
+- [ ] auth (sign in + sign up + error states) · [ ] resetPassword (from email deep-link)
+
+### Cycle depth
+- [ ] phase (all 4 phases) · [ ] symptom · [ ] article · [ ] watch (HealthWatch + PDF export)
+- [ ] periodHistory · [ ] editPeriodStart · [ ] periodDays · [ ] editCycleNumbers · [ ] editSetup
+- [ ] cycleSchools · [ ] cycleSchool (each of the 3 programs) · [ ] yourYear · [ ] cheatsheet
+
+### Conditions + BC
+- [ ] conditions (atlas + detail) · [ ] pcos · [ ] pcosBloodwork (+ panel picker + HOMA-IR with real values)
+- [ ] pcosMedications (+ custom med entry) · [ ] pcosDoctorScript (all 5 purposes + print + copy)
+- [ ] birthControl (each method + start-date capture) · [ ] bcMethod (deeper read)
+
+### Helpers (each: opens, completes, remembers)
+- [ ] cramps · [ ] anxiety · [ ] insomnia · [ ] utiHelper · [ ] latePeriod · [ ] missedPill
+- [ ] painfulSex · [ ] postpartumBleeding · [ ] heavy · [ ] migraine · [ ] lowLibido · [ ] bodyImage
+
+### Life stages
+- [ ] pregnancy · [ ] pregnancyLoss · [ ] ttc · [ ] kickCounter · [ ] contractions · [ ] intimate
+
+### Reflection + AI + sharing
+- [ ] reflect (each practice) · [ ] journal (write + photo + voice + customizer) · [ ] askLuna
+- [ ] paywall · [ ] shareWith (create invite) · [ ] acceptShare (via /share?code link, signed out AND in)
+- [ ] sharedWithYou · [ ] privacyDashboard · [ ] privacy · [ ] terms
+
+### Cross-cutting checks
+- [ ] Hardware back / edge-swipe never exits the app mid-flow (deep: pcos → bloodwork → picker)
+- [ ] Keyboard never covers an input (Log note, Journal, Auth, BBT entry, custom med)
+- [ ] Kill app + reopen → lands on Home, onboarded state intact, no Welcome flash
+- [ ] Airplane mode → app opens, logs save locally, no crash; reconnect → syncs
+- [ ] Sign out → sign back in → data intact (logs, settings, conditions, BC)
+- [ ] iOS text-size accessibility setting at largest → nothing unusable

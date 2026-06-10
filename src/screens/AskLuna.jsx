@@ -229,7 +229,7 @@ export default function AskLuna() {
 
         {!query && (
           <div className="insight-stagger" style={{ animationDelay: '200ms' }}>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 10 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: T.muted, fontWeight: 600, marginBottom: 10 }}>
               TRY SEARCHING
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -274,11 +274,11 @@ export default function AskLuna() {
                   width: '100%', display: 'block',
                 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: accent }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent }}>
                     {r.kind.toUpperCase()}
                   </div>
                   {r.route && (
-                    <div style={{ fontFamily: T.mono, fontSize: 9, color: T.muted, letterSpacing: 0.5 }}>
+                    <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
                       open →
                     </div>
                   )}

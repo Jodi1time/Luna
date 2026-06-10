@@ -72,7 +72,7 @@ export function WhyChip({ label = 'why?', children, source, color, defaultOpen =
           display: 'inline-block',
           transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
           transition: 'transform 0.2s var(--ease-out)',
-          fontSize: 9,
+          fontSize: 11,
           marginLeft: 1,
         }}>▾</span>
       </button>
@@ -121,7 +121,7 @@ export function LiteracyCard({ eyebrow, title, body, source, color, onReadMore, 
     }}>
       {eyebrow && (
         <div style={{
-          fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2,
+          fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2,
           fontWeight: 600, color: acc, marginBottom: 8,
         }}>
           {eyebrow}

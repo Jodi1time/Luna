@@ -29,7 +29,7 @@ export default function SymptomDetail() {
         {s.redFlag && <>
           <Rule />
           <div style={{ padding: 16, border: `1px solid ${T.accent}`, background: '#fff', borderRadius: T.r }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, fontWeight: 700, color: T.accent, fontFamily: T.sans, marginBottom: 8 }}>⚠ WHEN TO ESCALATE</div>
+            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 700, color: T.accent, fontFamily: T.sans, marginBottom: 8 }}>⚠ WHEN TO ESCALATE</div>
             <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.5 }}>{s.redFlag}</div>
           </div>
         </>}

@@ -153,7 +153,7 @@ export default function Article() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {a.sources.map((s, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: T.serif, fontSize: 13, lineHeight: 1.45, color: T.text }}>
-                  <span style={{ fontFamily: T.mono, fontSize: 9.5, color: accent, fontWeight: 600, letterSpacing: 0.5, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ fontFamily: T.mono, fontSize: 11, color: accent, fontWeight: 600, letterSpacing: 0.5, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
                   <span>{s}</span>
                 </div>
               ))}

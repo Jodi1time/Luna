@@ -156,7 +156,7 @@ export default function Paywall() {
                 </div>
                 <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500 }}>{p.price}</div>
                 {p.badge && (
-                  <div style={{ position: 'absolute', top: -1, right: -1, background: T.accent, color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', fontFamily: T.sans }}>
+                  <div style={{ position: 'absolute', top: -1, right: -1, background: T.accent, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: 1, padding: '3px 8px', fontFamily: T.sans }}>
                     {p.badge}
                   </div>
                 )}
@@ -180,7 +180,7 @@ export default function Paywall() {
           </button>
         )}
 
-        <div style={{ fontSize: 10, color: T.muted, textAlign: 'center', marginTop: 10, fontFamily: T.sans }}>
+        <div style={{ fontSize: 11, color: T.muted, textAlign: 'center', marginTop: 10, fontFamily: T.sans }}>
           Cancel any time in Settings. Free trial then {selectedPlan?.price || '$49.99/yr'}.
         </div>
       </div>

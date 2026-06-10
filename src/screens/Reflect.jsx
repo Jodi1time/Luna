@@ -1059,7 +1059,7 @@ function SheetShell({ onClose, title, sub, children }) {
         <div style={{ padding: '14px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}` }}>
           <div>
             <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', color: T.text, letterSpacing: -0.2 }}>{title}</div>
-            {sub && <div style={{ fontFamily: T.sans, fontSize: 10.5, color: T.muted, marginTop: 3, letterSpacing: 0.2 }}>{sub}</div>}
+            {sub && <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 3, letterSpacing: 0.2 }}>{sub}</div>}
           </div>
           <button onClick={onClose} aria-label="Close"
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, padding: 8, fontSize: 16, fontFamily: T.sans }}>
@@ -1206,7 +1206,7 @@ export default function Reflect() {
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: phase.color }}>
                 {recommendation.eyebrow}
               </div>
-              <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
+              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
                 Start the practice →
               </div>
             </div>
@@ -1251,7 +1251,7 @@ export default function Reflect() {
                     {p.title}
                   </div>
                   {counts[p.kind] > 0 && (
-                    <div style={{ fontFamily: T.mono, fontSize: 9.5, color: c.accent, letterSpacing: 0.6, fontWeight: 600 }}>
+                    <div style={{ fontFamily: T.mono, fontSize: 11, color: c.accent, letterSpacing: 0.6, fontWeight: 600 }}>
                       ×{counts[p.kind]}
                     </div>
                   )}

@@ -69,7 +69,7 @@ export default function StickyNote({
 
           {eyebrow && (
             <div style={{
-              fontFamily: T.mono, fontSize: 8.5,
+              fontFamily: T.mono, fontSize: 9.5,
               letterSpacing: 1.1, fontWeight: 600,
               color: 'rgba(26,19,16,0.55)', marginBottom: 6,
             }}>
@@ -88,7 +88,7 @@ export default function StickyNote({
           </div>
           {signature && (
             <div style={{
-              fontFamily: T.serif, fontSize: 10.5,
+              fontFamily: T.serif, fontSize: 11,
               fontStyle: 'italic',
               color: 'rgba(26,19,16,0.5)',
               marginTop: 8, textAlign: 'right',

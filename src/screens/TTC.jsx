@@ -235,7 +235,7 @@ export default function TTC() {
                 how luna is reading your ovulation
               </div>
               <div style={{
-                fontFamily: T.sans, fontSize: 9, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase',
+                fontFamily: T.sans, fontSize: 11, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase',
                 padding: '4px 10px', borderRadius: 999,
                 background: cycle.ovulation.confidence === 'very-high' || cycle.ovulation.confidence === 'high' ? planAccent : T.muted,
                 color: '#fff',

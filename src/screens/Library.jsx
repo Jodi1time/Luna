@@ -109,7 +109,7 @@ export default function Library() {
           <div style={{ flex: 1, fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
             Search the library — cramps, PCOS, why am I tired…
           </div>
-          <span aria-hidden="true" style={{ fontFamily: T.mono, fontSize: 9.5, color: sectionColors('read').accent, letterSpacing: 1, fontWeight: 600 }}>
+          <span aria-hidden="true" style={{ fontFamily: T.mono, fontSize: 11, color: sectionColors('read').accent, letterSpacing: 1, fontWeight: 600 }}>
             SEARCH
           </span>
         </button>
@@ -131,10 +131,10 @@ export default function Library() {
             animationDelay: '180ms',
           }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, color: conditionsAccent, fontWeight: 600 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, color: conditionsAccent, fontWeight: 600 }}>
               The Conditions Atlas
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 0.5 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
               {CONDITIONS.length} CONDITIONS
             </div>
           </div>
@@ -175,10 +175,10 @@ export default function Library() {
             <PhaseFlourish phaseId={heroPhaseId} size={34} />
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 14, paddingRight: 50 }}>
-            <span style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.4, fontWeight: 600, color: heroAccent }}>
+            <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: heroAccent }}>
               {phaseId ? `For your ${phaseId} phase` : 'Start here'}
             </span>
-            <span style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 0.5 }}>
+            <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
               {heroArticle.read.toUpperCase()}
             </span>
           </div>
@@ -189,7 +189,7 @@ export default function Library() {
             {heroArticle.summary}
           </div>
           {heroArticle.sources?.length > 0 && (
-            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`, fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: 0.5 }}>
+            <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}`, fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.5 }}>
               {heroArticle.sources.length} reference{heroArticle.sources.length === 1 ? '' : 's'} · open piece →
             </div>
           )}
@@ -211,7 +211,7 @@ export default function Library() {
                     {section.cat}.
                   </div>
                 </div>
-                <div style={{ fontFamily: T.mono, fontSize: 9.5, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>
+                <div style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 1, fontWeight: 600 }}>
                   {section.items.length} PIECE{section.items.length === 1 ? '' : 'S'}
                 </div>
               </div>
@@ -237,11 +237,11 @@ export default function Library() {
                       }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                         {a.tag ? (
-                          <span style={{ fontSize: 9.5, fontFamily: T.mono, color: ac, letterSpacing: 0.8, fontWeight: 600 }}>
+                          <span style={{ fontSize: 11, fontFamily: T.mono, color: ac, letterSpacing: 0.8, fontWeight: 600 }}>
                             {a.tag.toLowerCase()}
                           </span>
                         ) : <span />}
-                        <span style={{ fontSize: 10, color: T.muted, fontFamily: T.mono, letterSpacing: 0.4 }}>{a.read}</span>
+                        <span style={{ fontSize: 11, color: T.muted, fontFamily: T.mono, letterSpacing: 0.4 }}>{a.read}</span>
                       </div>
                       <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.25, marginBottom: 6, letterSpacing: -0.3 }}>
                         {a.title}
@@ -250,7 +250,7 @@ export default function Library() {
                         {a.summary}
                       </div>
                       {a.sources?.length > 0 && (
-                        <div style={{ marginTop: 8, fontSize: 9.5, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4 }}>
+                        <div style={{ marginTop: 8, fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4 }}>
                           {a.sources.length} reference{a.sources.length === 1 ? '' : 's'}
                         </div>
                       )}
