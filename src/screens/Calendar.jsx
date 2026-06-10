@@ -6,7 +6,8 @@ import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
-import { sectionPaper } from '../data/sectionPalette'
+import { sectionPaper, sectionColors } from '../data/sectionPalette'
+import { getBcCycleModel, packDayForDate, addDaysToISO } from '../lib/bcCycle'
 import { WhyChip, SourceTag } from '../components/Sourced'
 import ContextualTip from '../components/ContextualTip'
 
@@ -22,6 +23,16 @@ function buildLoggedPeriodSet(logs) {
   return s
 }
 
+// Spotting days get their own set — on hormonal BC, spotting IS the
+// pattern worth seeing, so the method-aware calendar marks it.
+function buildSpottingSet(logs) {
+  const s = new Set()
+  for (const [iso, log] of Object.entries(logs || {})) {
+    if (log?.flow === 'Spotting') s.add(iso)
+  }
+  return s
+}
+
 export default function Calendar() {
   const store = useLuna()
   const cycle = useCycle(store)
@@ -31,6 +42,13 @@ export default function Calendar() {
     setActiveLogDate(iso)
     go('log')
   }
+  // Method-aware mode — when hormonal BC suppresses the natural phase
+  // arc, the calendar stops painting phase math (which would be wrong
+  // for her body) and paints the method's rhythm instead.
+  const bcModel = getBcCycleModel(store.birthControl)
+  const bcMode = onHormonalBC && !bcModel.showNaturalPhases
+  const bcStart = store.birthControl?.startDate || null
+  const shotDueISO = bcMode && bcModel.kind === 'injection' && bcStart ? addDaysToISO(bcStart, 84) : null
   const filteredPredictions = cycle.predictions
     ? (onHormonalBC ? cycle.predictions.filter((p) => p.label !== 'Fertile window') : cycle.predictions)
     : null
@@ -49,6 +67,7 @@ export default function Calendar() {
   const daysInMonth = new Date(viewed.getFullYear(), viewed.getMonth() + 1, 0).getDate()
 
   const loggedPeriods = useMemo(() => buildLoggedPeriodSet(store.logs), [store.logs])
+  const loggedSpotting = useMemo(() => buildSpottingSet(store.logs), [store.logs])
   const nextPeriodStart = useMemo(() => {
     if (!cycle.lastPeriodStart) return null
     const start = new Date(cycle.lastPeriodStart + 'T00:00:00')
@@ -69,7 +88,7 @@ export default function Calendar() {
       const isFuture = iso > todayISO
       let phase = null
       let dayInCycle = null
-      if (cycle.lastPeriodStart) {
+      if (!bcMode && cycle.lastPeriodStart) {
         const anchor = new Date(cycle.lastPeriodStart + 'T00:00:00')
         const cur = new Date(iso + 'T00:00:00')
         const diff = Math.floor((cur - anchor) / MS_PER_DAY)
@@ -78,11 +97,23 @@ export default function Calendar() {
           phase = getPhaseForDay(dayInCycle, cycle.cycleLength, cycle.periodLength)
         }
       }
-      const isPeriodDay = loggedPeriods.has(iso) || (isFuture && isPredictedPeriod(iso))
-      cells.push({ date: iso, day: d, phase, future: isFuture, isPeriodDay, isLoggedPeriod: loggedPeriods.has(iso), dayInCycle })
+      // BC rhythm — placebo-week tint for pill/patch/ring, shot
+      // markers for Depo. Other methods stay unpainted: logged
+      // bleeding + spotting are the only honest marks.
+      let isPlacebo = false
+      let isPackStart = false
+      if (bcMode && bcModel.kind === 'pillPack' && bcStart) {
+        const pd = packDayForDate(bcStart, iso)
+        isPlacebo = pd > 21
+        isPackStart = pd === 1
+      }
+      const isShotDay = bcMode && bcModel.kind === 'injection' && iso === bcStart
+      const isShotDue = bcMode && shotDueISO != null && iso === shotDueISO
+      const isPeriodDay = loggedPeriods.has(iso) || (!bcMode && isFuture && isPredictedPeriod(iso))
+      cells.push({ date: iso, day: d, phase, future: isFuture, isPeriodDay, isLoggedPeriod: loggedPeriods.has(iso), isSpotting: loggedSpotting.has(iso), isPlacebo, isPackStart, isShotDay, isShotDue, dayInCycle })
     }
     return cells
-  }, [viewed, daysInMonth, todayISO, loggedPeriods, cycle.lastPeriodStart, cycle.cycleLength, cycle.periodLength])
+  }, [viewed, daysInMonth, todayISO, loggedPeriods, loggedSpotting, cycle.lastPeriodStart, cycle.cycleLength, cycle.periodLength, bcMode, bcModel.kind, bcStart, shotDueISO])
 
   // Mark phase boundaries — the first day of a new phase gets a small
   // visual cue (left edge accent) so the eye can see "this is where
@@ -114,7 +145,13 @@ export default function Calendar() {
           Your cycle, mapped.
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic', animationDelay: '60ms' }}>
-          Logged days are filled; predicted days are outlined.
+          {bcMode
+            ? (bcModel.kind === 'pillPack' && bcStart
+                ? 'Bleeding you log is filled. The tinted week is where a withdrawal bleed is expected.'
+                : bcModel.kind === 'injection' && bcStart
+                  ? 'Bleeding you log is filled. Your last shot and the next due date are marked.'
+                  : 'Bleeding you log is filled. No predictions here — your pattern is yours to map.')
+            : 'Logged days are filled; predicted days are outlined.'}
         </div>
 
         <ContextualTip tipId="calendar-tap">
@@ -130,7 +167,7 @@ export default function Calendar() {
           <div style={{ textAlign: 'center', flex: 1 }}>
             <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
               {monthLabel}.
-              {isCurrentMonth && (
+              {isCurrentMonth && !bcMode && (
                 <span style={{ color: flourishColor, opacity: 0.7, display: 'inline-flex', transform: 'translateY(-2px)' }} aria-hidden="true">
                   <PhaseFlourish phaseId={flourishPhase} size={20} />
                 </span>
@@ -152,19 +189,53 @@ export default function Calendar() {
           </button>
         )}
 
-        {/* Phase + period legend */}
+        {/* Legend — phases for natural cycles; the method's own marks
+            for hormonal BC users (phase math isn't true for them). */}
         <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 10, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
-          {Object.values(PHASES).map((p) => (
-            <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
-            </div>
-          ))}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Period day
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />Predicted period
-          </div>
+          {bcMode ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 8, height: 8, background: T.accent + '30', borderRadius: 1 }} />Bleeding logged
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />Spotting
+              </div>
+              {bcModel.kind === 'pillPack' && bcStart && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 8, height: 8, background: PHASES.menstrual.color + '40', borderRadius: 1 }} />Expected withdrawal bleed
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 3, height: 9, background: T.accent, borderRadius: 1 }} />Pack starts
+                  </div>
+                </>
+              )}
+              {bcModel.kind === 'injection' && bcStart && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 8, height: 8, border: `1.5px solid ${T.accent}`, borderRadius: 2 }} />Last shot
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 8, height: 8, border: `1.5px dashed ${T.accent}`, borderRadius: 2 }} />Next shot due
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              {Object.values(PHASES).map((p) => (
+                <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Period day
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />Predicted period
+              </div>
+            </>
+          )}
         </div>
 
         {/* Day headers */}
@@ -180,9 +251,9 @@ export default function Calendar() {
             position keeps total reveal under ~750ms. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
           {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
-          {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, startsPhase }, cellIdx) => {
+          {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue, startsPhase }, cellIdx) => {
             const isToday = date === todayISO
-            const showLoggedDot = isLoggedPeriod
+            const showLoggedDot = isLoggedPeriod && !bcMode
             const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
             const tappable = !future
             // Diagonal-sweep delay — based on grid row + col so the
@@ -191,6 +262,21 @@ export default function Calendar() {
             const row = Math.floor(gridIdx / 7)
             const col = gridIdx % 7
             const cellDelay = 200 + (row + col) * 18
+            // BC-mode paint: logged bleeding fills the cell; placebo
+            // week gets a soft tint (filled past, dashed future);
+            // shot day + shot-due day get rings. Natural mode keeps
+            // the phase paint untouched.
+            const cellBg = bcMode
+              ? (isLoggedPeriod ? T.accent + '30'
+                : isPlacebo && !future ? PHASES.menstrual.color + '22'
+                : 'transparent')
+              : (phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent')
+            const cellBorder = bcMode
+              ? (isShotDay ? `1.5px solid ${T.accent}`
+                : isShotDue ? `1.5px dashed ${T.accent}`
+                : isPlacebo && future ? `1px dashed ${PHASES.menstrual.color}88`
+                : 'none')
+              : (future && phase ? `1px dashed ${phase.color}88` : 'none')
             return (
               <button key={date}
                 onClick={tappable ? () => openLogFor(date) : undefined}
@@ -201,23 +287,26 @@ export default function Calendar() {
                   position: 'relative',
                   aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
-                  background: phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent',
-                  color: isToday && phase ? '#fff' : T.text,
-                  border: future && phase ? `1px dashed ${phase.color}88` : 'none',
+                  background: cellBg,
+                  color: isToday && phase && !bcMode ? '#fff' : T.text,
+                  border: cellBorder,
                   borderRadius: T.r,
                   cursor: tappable ? 'pointer' : 'default',
                   padding: 0,
                   animationDelay: `${cellDelay}ms`,
-                  // Phase-start cells get a thin accent line on the left
-                  // edge — visual cue for "phase begins here" without copy.
-                  boxShadow: startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none',
+                  // Phase-start cells (natural) / pack-start cells (BC)
+                  // get a thin accent line on the left edge — "something
+                  // begins here" without copy.
+                  boxShadow: bcMode
+                    ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
+                    : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
                 }}>
                 {/* Today cell pulse ring — quiet "you are here" anchor */}
-                {isToday && phase && (
+                {isToday && (phase || bcMode) && (
                   <div className="pulse-ring" aria-hidden="true"
                     style={{
                       position: 'absolute', inset: -3,
-                      border: `1.5px solid ${phase.color}`,
+                      border: `1.5px solid ${bcMode ? T.accent : phase.color}`,
                       borderRadius: T.r,
                       pointerEvents: 'none',
                     }} />
@@ -228,6 +317,9 @@ export default function Calendar() {
                 )}
                 {showPredictedDot && (
                   <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
+                )}
+                {bcMode && isSpotting && (
+                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />
                 )}
               </button>
             )
@@ -241,9 +333,66 @@ export default function Calendar() {
           Looking ahead.
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '640ms' }}>
-          What's likely coming up, with how steady the call is.
+          {bcMode ? 'What your method has coming up.' : "What's likely coming up, with how steady the call is."}
         </div>
-        {filteredPredictions ? (
+        {bcMode ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {bcModel.missingStartDate ? (
+              <button onClick={() => go('birthControl')}
+                className="insight-stagger alive-card"
+                style={{ padding: 18, background: T.accent + '10', border: `1px solid ${T.accent}38`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', animationDelay: '680ms' }}>
+                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 6 }}>
+                  a small thing to set
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.35, marginBottom: 6 }}>
+                  {bcModel.startDateLabel}
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+                  Once Luna knows, this calendar starts working for your method — the rhythm, the next thing, all of it.
+                </div>
+              </button>
+            ) : bcModel.nextThing && (() => {
+              const nt = bcModel.nextThing
+              const ntCategory = nt.urgent ? 'urgent' : nt.kind === 'next-shot' ? 'care' : nt.kind === 'pattern-discovery' ? 'reflect' : 'urgent'
+              const ntAccent = sectionColors(ntCategory).accent
+              const todayPackDay = bcModel.kind === 'pillPack' && bcStart ? packDayForDate(bcStart, todayISO) : null
+              return (
+                <div className="insight-stagger alive-card" style={{
+                  padding: 16,
+                  background: sectionPaper(ntCategory),
+                  border: `1px solid ${ntAccent}22`,
+                  boxShadow: `0 1px 0 ${ntAccent}10, 0 10px 22px -18px ${ntAccent}30`,
+                  borderRadius: T.r,
+                  animationDelay: '680ms',
+                }}>
+                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: ntAccent, fontWeight: 600, marginBottom: 6 }}>
+                    {nt.eyebrow}
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
+                    {nt.title}
+                  </div>
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+                    {nt.body}
+                  </div>
+                  {bcModel.kind === 'pillPack' && todayPackDay != null && (
+                    <WhyChip label="learn more" color={ntAccent} source="ACOG Practice Bulletin 110">
+                      A 28-day pack runs 21 active days, then 7 placebo days. You're on pack day <strong>{todayPackDay}</strong>. The bleed during placebo week is a withdrawal bleed — your body responding to the hormone drop — not a true period.
+                    </WhyChip>
+                  )}
+                  {bcModel.kind === 'injection' && (
+                    <WhyChip label="learn more" color={ntAccent} source="Depo-Provera prescribing information">
+                      The shot is re-dosed every <strong>12 weeks</strong>. Protection holds to about 13 weeks; most providers allow up to 15 before asking for a pregnancy test first. Luna counts from the injection date you gave her.
+                    </WhyChip>
+                  )}
+                </div>
+              )
+            })()}
+            <button onClick={() => go('bcMethod')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, padding: '4px 0', textAlign: 'left', letterSpacing: -0.1 }}>
+              A deeper read on your method →
+            </button>
+          </div>
+        ) : filteredPredictions ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {filteredPredictions.map((p, i) => {
               const title =

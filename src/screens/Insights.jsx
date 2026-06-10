@@ -10,6 +10,7 @@ import { WhyChip, SourceTag } from '../components/Sourced'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { getBcCycleModel } from '../lib/bcCycle'
 
 // SVG arc path between two angles on a ring of given inner / outer radius.
 // Returns the d attribute for a <path>. Used for both the per-day cycle
@@ -143,6 +144,79 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase 
           tap any phase to read about it
         </div>
       )}
+    </div>
+  )
+}
+
+// Method-true wheel — the cycle wheel is load-bearing ("cycles are
+// circles"), so hormonal-BC users keep the circle, but the ring shows
+// THEIR timeline instead of natural phases that aren't happening:
+//   - pill / patch / ring → 28 pack-day segments (active accent,
+//     placebo week in menstrual rose), center = pack day
+//   - shot → 12 week segments filling as the weeks pass, center =
+//     weeks since the last injection; the whole ring turns rose
+//     when she's past the window
+function BcWheel({ model }) {
+  const isPack = model.kind === 'pillPack'
+  const total = isPack ? 28 : 12
+  const big = model.cover?.bigNumber ?? 0
+  const current = isPack ? big : Math.min(big + 1, total)
+  const urgent = !isPack && !!model.nextThing?.urgent
+  const animatedCenter = useCountUp(big, 1100)
+  const size = 260
+  const r = 112
+  const cx = size / 2
+  const cy = size / 2
+  const innerR = r - 10
+  const segmentAngle = 360 / total
+  const segments = []
+  for (let i = 1; i <= total; i++) {
+    const startAngle = (i - 1) * segmentAngle - 90
+    const endAngle   = i       * segmentAngle - 90
+    const color = isPack
+      ? (i > 21 ? PHASES.menstrual.color : T.accent)
+      : (urgent ? PHASES.menstrual.color : T.accent)
+    const opacity = i === current ? 0.85
+      : isPack ? 0.18
+      : (i < current || urgent) ? 0.45 : 0.14
+    segments.push({ i, path: arcPath(cx, cy, innerR, r, startAngle, endAngle), color, opacity })
+  }
+  // "You are here" marker at the current segment's centroid.
+  const midAngle = (current - 0.5) * segmentAngle - 90
+  const markerRad = (midAngle * Math.PI) / 180
+  const markerR = r - 5
+  const mx = cx + markerR * Math.cos(markerRad)
+  const my = cy + markerR * Math.sin(markerRad)
+  const markerColor = urgent || (isPack && current > 21) ? PHASES.menstrual.color : T.accent
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
+      <svg width={size} height={size} style={{ overflow: 'visible' }}>
+        {segments.map((s, idx) => (
+          <path key={s.i} d={s.path} fill={s.color}
+            className="arc-draw"
+            style={{ animationDelay: `${idx * (isPack ? 18 : 42)}ms`, '--final-opacity': s.opacity }} />
+        ))}
+        <circle cx={mx} cy={my} r={10} fill={markerColor} opacity={0.22}
+          style={{ filter: 'blur(2.5px)' }} />
+        <circle cx={mx} cy={my} r={4.5} fill={markerColor}
+          className="wheel-today-pulse" />
+        <circle cx={mx} cy={my} r={4.5} fill="#fff" stroke={markerColor} strokeWidth={1.5} />
+        <text x={cx} y={cy + 2} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 92, fontWeight: 300, fill: markerColor, fontStyle: 'italic', letterSpacing: -3 }}>
+          {animatedCenter}
+        </text>
+        <text x={cx} y={cy + 26} textAnchor="middle"
+          style={{ fontFamily: T.serif, fontSize: 12, fill: T.muted, fontStyle: 'italic', letterSpacing: 0.3 }}>
+          {isPack ? 'of 28 · pack day' : 'of 12 weeks'}
+        </text>
+      </svg>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 18, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
+          {isPack
+            ? <>You're in your <em style={{ color: markerColor, fontStyle: 'normal', fontWeight: 500 }}>{model.cover.headline.toLowerCase()}</em>.</>
+            : <><em style={{ color: markerColor, fontStyle: 'normal', fontWeight: 500 }}>{big} week{big === 1 ? '' : 's'}</em> since your last shot.</>}
+        </div>
+      </div>
     </div>
   )
 }
@@ -310,6 +384,12 @@ export default function Insights() {
   const birthControl = useLuna((s) => s.birthControl)
   const go = useLuna((s) => s.go)
   const onHormonalBC = isOnHormonalBC(birthControl)
+  // Method-aware model — pill/patch/ring and the shot get a wheel
+  // that shows their real timeline; the natural-cycle summary card
+  // is hidden for all hormonal methods (its math isn't true for them).
+  const bcModel = getBcCycleModel(birthControl)
+  const bcMode = onHormonalBC && !bcModel.showNaturalPhases
+  const showBcWheel = bcMode && (bcModel.kind === 'pillPack' || bcModel.kind === 'injection') && !bcModel.missingStartDate
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
   const cyclesLogged = periodHistory ? periodHistory.length : 0
   const bbtShift = !onHormonalBC ? cycle.bbtShift : null
@@ -339,7 +419,9 @@ export default function Insights() {
             always renders so it's visible regardless of BC method or
             whether the user has logged anything yet. */}
         <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '80ms' }}>
-          {cycleDay ? (
+          {showBcWheel ? (
+            <BcWheel model={bcModel} />
+          ) : cycleDay ? (
             <>
               <CycleWheel cycleDay={cycleDay} cycleLength={cycle.cycleLength} periodLength={cycle.periodLength} bbtShift={bbtShift} onTapPhase={goPhase} />
               {onHormonalBC && (
@@ -358,13 +440,17 @@ export default function Insights() {
           )}
         </div>
 
-        {/* Cycle summary — the "you are normal" surface most apps don't do. */}
-        <CycleSummaryCard
-          cycleLength={cycle.cycleLength}
-          periodLength={cycle.periodLength}
-          variance={cycle.variance}
-          cyclesLogged={cyclesLogged}
-        />
+        {/* Cycle summary — the "you are normal" surface most apps don't
+            do. Hidden on hormonal BC: "about 28 days, within typical
+            range" is pack math or stale data there, not her body. */}
+        {!bcMode && (
+          <CycleSummaryCard
+            cycleLength={cycle.cycleLength}
+            periodLength={cycle.periodLength}
+            variance={cycle.variance}
+            cyclesLogged={cyclesLogged}
+          />
+        )}
 
         <div className="insight-stagger" style={{ animationDelay: '180ms' }}>
         <Eyebrow>Where you are now</Eyebrow>
@@ -374,8 +460,15 @@ export default function Insights() {
               Your cycle is shaped by your method, <em style={{ color: T.accent }}>but symptoms still tell a story.</em>
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, marginBottom: 12 }}>
-              Hormonal contraception softens the natural phase pattern. Moods, headaches, and other symptoms can still cluster — sometimes around your method's hormone schedule, sometimes around your own rhythms. Keep logging and Luna will surface what repeats.
+              {bcModel.cover?.presence && !bcModel.missingStartDate
+                ? bcModel.cover.presence
+                : 'Hormonal contraception softens the natural phase pattern.'}
+              {' '}Moods, headaches, and other symptoms can still cluster — keep logging and Luna will surface what repeats.
             </div>
+            <button onClick={() => go('bcMethod')}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, padding: '0 0 10px', textAlign: 'left', letterSpacing: -0.1, display: 'block' }}>
+              A deeper read on your method →
+            </button>
             <SourceLine>Pattern detection from your logs</SourceLine>
           </>
         ) : (

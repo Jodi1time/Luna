@@ -153,7 +153,7 @@ export function getBcCycleModel(birthControl, opts = {}) {
         : {
             kind: 'next-placebo-week',
             eyebrow: 'next withdrawal bleed',
-            title: `Around ${fmtDays(daysToPlacebo)}`,
+            title: daysToPlacebo === 0 ? 'Starting around today' : `Around ${daysToPlacebo} day${daysToPlacebo === 1 ? '' : 's'} from now`,
             body: 'Placebo week begins on pack day 22. The bleed during it is a withdrawal bleed, not a true period.',
             urgent: false,
           },
@@ -359,6 +359,28 @@ export function getBcCycleModel(birthControl, opts = {}) {
     cover: null,
     nextThing: null,
   }
+}
+
+// ─── Calendar helpers ────────────────────────────────────────
+
+// Pack-day (1..28) for an arbitrary ISO date — lets the calendar
+// paint the pill/patch/ring rhythm onto any month, past or future.
+// Projects backwards too (packs repeat), so months before the
+// recorded start date still show the rhythm.
+export function packDayForDate(startDate, iso) {
+  const diff = daysBetween(startDate, iso)
+  if (diff == null) return null
+  return ((diff % 28) + 28) % 28 + 1
+}
+
+// ISO date + n days → ISO date, computed in local time so it never
+// drifts a day across timezones.
+export function addDaysToISO(iso, n) {
+  if (!iso) return null
+  const d = new Date(iso + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  const pad = (x) => String(x).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 // Short labels for cover eyebrows — keeps "Combined pill" short.
