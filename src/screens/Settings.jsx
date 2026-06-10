@@ -297,19 +297,10 @@ export default function Settings() {
       </div>
       </div>
 
-      <div className="insight-stagger" style={{ animationDelay: '540ms' }}>
-      <SectionLabel color={acc}>Coming as part of Luna Pro</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
-        <Row label="Talk to Luna" value="Soon" />
-        <Row label="Pregnancy companion" value="v1.1" />
-        <Row label="Postpartum mode" value="v1.1" />
-        <Row label="Long-form journal" value="Soon" />
-        <Row label="Personalised monthly reflection" value="Soon" />
-      </div>
-      <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
-        Pro is for the depth — the AI companion, the deep life-stage modes, the long-form reflective tools. Everything you need to take care of yourself stays free.
-      </div>
-      </div>
+      {/* "Coming as part of Luna Pro" section removed 2026-06-10:
+          a settings page should only contain things that work, and
+          half the rows were stale ("Long-form journal — Soon" after
+          the Journal shipped). The Paywall owns the Pro pitch. */}
 
       <div className="insight-stagger" style={{ animationDelay: '590ms' }}>
       <SectionLabel color={acc}>When something is happening</SectionLabel>

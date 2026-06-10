@@ -43,63 +43,18 @@ import Portal from '../lib/Portal'
 // pulses a confirmation. All evidence-based but written as Luna,
 // never as a workbook.
 
+// Picker cards carry title + sub only — the doula's one-line "this is
+// for you when…". The science behind each practice lives INSIDE it
+// (the completion views cite the studies); announcing research on the
+// picker was the classroom tell. HAVEN.
 const PRACTICES = [
-  {
-    id: 'intention',
-    title: 'A morning intention',
-    sub: 'For the day that hasn\'t happened yet.',
-    blurb: 'One sentence about what today is really about — chosen by you before the day chooses for you. Thirty seconds, the most efficient practice in this list.',
-    cta: 'Set today\'s one thing',
-    kind: 'intention',
-  },
-  {
-    id: 'gratitude',
-    title: 'Three small things',
-    sub: 'For the days that felt heavier than they were.',
-    blurb: 'A 2005 study followed people who wrote three things that went well each evening — six months later they were measurably happier than the control group. The brain notices what we point it at.',
-    cta: 'Start the three',
-    kind: 'gratitude',
-  },
-  {
-    id: 'feeling',
-    title: 'Name what you\'re feeling',
-    sub: 'When "fine" or "off" is all you can reach.',
-    blurb: 'Specific emotion words reduce their intensity — neuroscience calls it "affect labelling". Saying "I feel disappointed" is gentler on the body than "I feel bad".',
-    cta: 'Find the word',
-    kind: 'feeling',
-  },
-  {
-    id: 'bodyscan',
-    title: 'A quick body scan',
-    sub: 'For the tension you didn\'t notice you were holding.',
-    blurb: 'Three minutes of guided attention from the top of your head to the soles of your feet. Mindfulness research calls this "interoception" — the practice of returning to the body before the mind has had its way.',
-    cta: 'Begin the scan',
-    kind: 'bodyscan',
-  },
-  {
-    id: 'compassion',
-    title: 'A self-compassion pause',
-    sub: 'For the moments you\'re hardest on yourself.',
-    blurb: 'Kristin Neff\'s three-part practice: notice the difficulty, remember others have felt this too, offer yourself a moment of warmth. Two minutes, no posture required.',
-    cta: 'Take the pause',
-    kind: 'compassion',
-  },
-  {
-    id: 'reframe',
-    title: 'Sit with a worry',
-    sub: 'For the thought that won\'t let go.',
-    blurb: 'Cognitive reframing — writing the worry, asking whether it\'s the whole picture, and offering the kindness you\'d give a friend. The strongest single tool in CBT.',
-    cta: 'Write the worry',
-    kind: 'reframe',
-  },
-  {
-    id: 'bedtime',
-    title: 'A bedtime release',
-    sub: 'For the night that still has thoughts in it.',
-    blurb: 'A short ritual to close the day — write the loop that\'s still spinning, then sit with a paced breath that signals "rest now" to the nervous system.',
-    cta: 'Begin the release',
-    kind: 'bedtime',
-  },
+  { id: 'intention',  title: 'A morning intention',     sub: 'For the day that hasn\'t happened yet.',            kind: 'intention' },
+  { id: 'gratitude',  title: 'Three small things',      sub: 'For the days that felt heavier than they were.',    kind: 'gratitude' },
+  { id: 'feeling',    title: 'Name what you\'re feeling', sub: 'When "fine" or "off" is all you can reach.',      kind: 'feeling' },
+  { id: 'bodyscan',   title: 'A quick body scan',       sub: 'For the tension you didn\'t notice you were holding.', kind: 'bodyscan' },
+  { id: 'compassion', title: 'A self-compassion pause', sub: 'For the moments you\'re hardest on yourself.',      kind: 'compassion' },
+  { id: 'reframe',    title: 'Sit with a worry',        sub: 'For the thought that won\'t let go.',               kind: 'reframe' },
+  { id: 'bedtime',    title: 'A bedtime release',       sub: 'For the night that still has thoughts in it.',      kind: 'bedtime' },
 ]
 
 // Phase-aware opening line. Doesn't change the practice — sets the
@@ -1097,6 +1052,32 @@ function SheetFooter({ onSave, disabled, saved, label, savedLabel, helper }) {
   )
 }
 
+// ── Look-back helpers ───────────────────────────────────────────
+// Render a kept reflection as one readable line. Entries without
+// readable content (body scans, breath-only bedtimes) return null
+// and stay out of the look-back list.
+function entryText(e) {
+  if (e.kind === 'gratitude' && Array.isArray(e.content)) return e.content.join(' · ')
+  if (e.kind === 'feeling' && e.content?.word) return e.content.word
+  if (e.kind === 'reframe' && e.content) return e.content.friend || e.content.worry
+  if (typeof e.content === 'string' && e.content.trim()) return e.content
+  return null
+}
+
+const ENTRY_LABEL = {
+  intention:  'an intention',
+  gratitude:  'three small things',
+  feeling:    'a feeling, named',
+  compassion: 'a pause',
+  reframe:    'a reframe',
+  bedtime:    'a bedtime release',
+}
+
+function fmtEntryDate(iso) {
+  if (!iso) return ''
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
 // ── Reflect screen ──────────────────────────────────────────────
 export default function Reflect() {
   const store = useLuna()
@@ -1108,6 +1089,14 @@ export default function Reflect() {
   const [openPractice, setOpenPractice] = useState(null)
   const [quickNoteOpen, setQuickNoteOpen] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
+  const [lookBack, setLookBack] = useState(false)
+
+  // The most recent reflections she can actually read back — newest
+  // first, capped at 7 so the list stays a shelf, not an archive.
+  const readableEntries = useMemo(
+    () => [...history].reverse().filter((e) => entryText(e)).slice(0, 7),
+    [history]
+  )
 
   // Auto-open a deep-linked practice (e.g. when HeavyHelper sends the
   // user here pointed at compassion or reframe), then clear the
@@ -1216,20 +1205,29 @@ export default function Reflect() {
           </button>
         )}
 
-        {/* Write freely */}
-        <Eyebrow>Write</Eyebrow>
-        <button onClick={() => setQuickNoteOpen(true)} className="glass-card"
-          style={{
-            width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit',
-            display: 'block', marginBottom: 22,
-          }}>
-          <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
-            A note to your future self →
-          </div>
-          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
-            One line, a sentence, a paragraph. Saved to today.
-          </div>
-        </button>
+        {/* Write + Talk — the two always-available doors, side by
+            side above the practices so neither is buried. No eyebrows;
+            the cards say what they are. */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 22 }}>
+          <button onClick={() => setQuickNoteOpen(true)} className="glass-card alive-card"
+            style={{ textAlign: 'left', padding: 14, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit' }}>
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 5 }}>
+              Write →
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.45 }}>
+              A note to your future self.
+            </div>
+          </button>
+          <button onClick={() => setChatOpen(true)} className="glass-card alive-card"
+            style={{ textAlign: 'left', padding: 14, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit' }}>
+            <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 5 }}>
+              Talk →
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.45 }}>
+              A few minutes with Luna.
+            </div>
+          </button>
+        </div>
 
         {/* Guided practices */}
         <Eyebrow>Or sit with one of these</Eyebrow>
@@ -1256,46 +1254,58 @@ export default function Reflect() {
                     </div>
                   )}
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.5 }}>
                   {p.sub}
-                </div>
-                <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.text, lineHeight: 1.55, opacity: 0.85, marginBottom: 8 }}>
-                  {p.blurb}
-                </div>
-                <div style={{ fontFamily: T.sans, fontSize: 11, color: c.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-                  {p.cta} →
                 </div>
               </button>
             )
           })}
         </div>
 
-        {/* Talk to Luna */}
-        <Eyebrow>Or just talk it through</Eyebrow>
-        <button onClick={() => setChatOpen(true)} className="glass-card"
-          style={{
-            width: '100%', textAlign: 'left', padding: 16, borderRadius: T.r,
-            cursor: 'pointer', color: T.text, fontFamily: 'inherit', display: 'block', marginBottom: 22,
-          }}>
-          <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 6 }}>
-            A few minutes with Luna →
-          </div>
-          <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, lineHeight: 1.5 }}>
-            A small reflective conversation. Hard-capped so it stays a check-in, not a chat trap.
-          </div>
-        </button>
-
-        {/* Recap of past reflections */}
+        {/* What she's kept — and, finally, a way to actually read it
+            back. The screen promised "a small library to come back
+            to" but only ever showed counts; the library was write-
+            only. Collapsed by default, one tap deep. */}
         {history.length > 0 && (
           <>
             <Rule />
-            <Eyebrow>Your practice so far</Eyebrow>
+            <Eyebrow>What you've kept</Eyebrow>
             <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.65, color: T.text, fontStyle: 'italic' }}>
-              {history.length} reflection{history.length === 1 ? '' : 's'} kept{counts.gratitude ? ` — including ${counts.gratitude} round${counts.gratitude === 1 ? '' : 's'} of three good things` : ''}{counts.feeling ? `, ${counts.feeling} time${counts.feeling === 1 ? '' : 's'} naming a feeling` : ''}{counts.compassion ? `, ${counts.compassion} self-compassion pause${counts.compassion === 1 ? '' : 's'}` : ''}{counts.reframe ? `, ${counts.reframe} reframe${counts.reframe === 1 ? '' : 's'}` : ''}.
+              {history.length} reflection{history.length === 1 ? '' : 's'}, kept quietly in your space.
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginTop: 10 }}>
-              Saved on this device. Use it as a small library to come back to.
-            </div>
+            {readableEntries.length > 0 && (
+              <button onClick={() => setLookBack((v) => !v)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, padding: '8px 0 0', textAlign: 'left', letterSpacing: -0.1, display: 'block' }}>
+                {lookBack ? 'Fold them away' : 'Read them back →'}
+              </button>
+            )}
+            {lookBack && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+                {readableEntries.map((e, i) => (
+                  <div key={`${e.recordedAt || e.dateISO}-${i}`} className="frost-card"
+                    style={{
+                      padding: '12px 14px',
+                      background: 'rgba(253,250,245,0.55)',
+                      border: `1px solid ${sectionColors(PRACTICE_SECTION[e.kind] || 'reflect').accent}1f`,
+                      borderRadius: 14,
+                      animation: 'fadeUp 0.3s ease-out both',
+                      animationDelay: `${i * 40}ms`,
+                    }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+                      <span style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: sectionColors(PRACTICE_SECTION[e.kind] || 'reflect').accent, letterSpacing: -0.1 }}>
+                        {ENTRY_LABEL[e.kind] || e.kind}
+                      </span>
+                      <span style={{ fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: 0.4 }}>
+                        {fmtEntryDate(e.dateISO)}
+                      </span>
+                    </div>
+                    <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.5, color: T.text }}>
+                      {entryText(e)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </>
         )}
 

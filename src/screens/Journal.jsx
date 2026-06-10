@@ -427,6 +427,46 @@ export default function Journal() {
   const todayISO = new Date().toISOString().slice(0, 10)
   const [customizing, setCustomizing] = useState(false)
 
+  // The book grows — render it like one. Pages mount 6 at a time
+  // (each page can carry base64 photos; mounting all of them at once
+  // made the screen heavier with every month of use), a quiet search
+  // finds an old page by its words, and an anniversary page
+  // resurfaces as a small memory above the stack.
+  const [visibleCount, setVisibleCount] = useState(6)
+  const [query, setQuery] = useState('')
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return entries
+    return entries.filter((e) => (e.body || '').toLowerCase().includes(q))
+  }, [entries, query])
+  const searching = query.trim().length > 0
+  const visibleEntries = searching ? filtered : filtered.slice(0, visibleCount)
+
+  // "From this day" — an entry from this exact date a year+ ago, or
+  // failing that one from about a month ago. One memory, not a feed.
+  const memory = useMemo(() => {
+    const now = new Date()
+    const mmdd = (d) => `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const todayMmdd = mmdd(now)
+    for (const e of entries) {
+      if (!(e.body || '').trim()) continue
+      const d = new Date(e.createdAt)
+      if (Number.isNaN(d.getTime())) continue
+      const yearsAgo = now.getFullYear() - d.getFullYear()
+      if (yearsAgo >= 1 && mmdd(d) === todayMmdd) {
+        return { entry: e, label: yearsAgo === 1 ? 'a year ago today' : `${yearsAgo} years ago today` }
+      }
+    }
+    const monthAgo = entries.find((e) => {
+      if (!(e.body || '').trim()) return false
+      const d = new Date(e.createdAt)
+      if (Number.isNaN(d.getTime())) return false
+      const days = Math.round((now - d) / 86400000)
+      return days >= 28 && days <= 31
+    })
+    return monthAgo ? { entry: monthAgo, label: 'a month ago' } : null
+  }, [entries])
+
   // Photo picker — shared between the new-page composer and any
   // editing past page. We keep one hidden <input type="file"> for
   // the whole screen and stash the requesting callback so the
@@ -567,6 +607,28 @@ export default function Journal() {
             </div>
           )}
 
+          {/* "From this day" — one old page resurfacing as a memory.
+              Hidden while she's searching; the search owns the screen. */}
+          {memory && !searching && (
+            <div className="insight-stagger" style={{
+              marginBottom: 16, padding: '14px 16px',
+              background: theme.accent + '0e',
+              border: `1px solid ${theme.accent}30`,
+              borderRadius: 14,
+              animationDelay: '90ms',
+            }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: theme.accent, letterSpacing: -0.1, marginBottom: 6 }}>
+                from your pages, {memory.label}
+              </div>
+              <div style={{
+                fontFamily: T.serif, fontSize: 14.5, fontStyle: 'italic', lineHeight: 1.55, color: theme.text,
+                display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {memory.entry.body}
+              </div>
+            </div>
+          )}
+
           {/* Earlier entries */}
           {entries.length > 0 && (
             <>
@@ -577,7 +639,31 @@ export default function Journal() {
                 </div>
                 <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
               </div>
-              {entries.map((entry, i) => (
+
+              {/* Quiet search — only once the book is thick enough to
+                  need it. Filters pages by their words. */}
+              {entries.length >= 6 && (
+                <div className="insight-stagger" style={{ marginBottom: 14, animationDelay: '130ms' }}>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Find a page — a word you remember writing…"
+                    style={{
+                      width: '100%', background: 'rgba(255,255,255,0.45)',
+                      border: `1px solid ${theme.accent}30`, borderRadius: 12,
+                      padding: '11px 14px',
+                      fontFamily: T.serif, fontStyle: 'italic', fontSize: 16,
+                      color: theme.text, outline: 'none',
+                    }} />
+                  {searching && (
+                    <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: theme.text, opacity: 0.6, marginTop: 6 }}>
+                      {filtered.length === 0 ? 'No page holds that word.' : `${filtered.length} page${filtered.length === 1 ? '' : 's'} found.`}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {visibleEntries.map((entry, i) => (
                 <div key={entry.id} className="insight-stagger" style={{ animationDelay: `${160 + i * 50}ms` }}>
                   <EntryPage
                     entry={entry}
@@ -590,6 +676,21 @@ export default function Journal() {
                   />
                 </div>
               ))}
+
+              {/* Turn more pages — the book reveals itself in handfuls
+                  instead of mounting every photo-laden page at once. */}
+              {!searching && filtered.length > visibleCount && (
+                <button onClick={() => setVisibleCount((c) => c + 10)}
+                  style={{
+                    width: '100%', background: 'transparent',
+                    border: `1px dashed ${theme.accent}55`, borderRadius: 12,
+                    padding: '12px 14px', cursor: 'pointer',
+                    fontFamily: T.serif, fontStyle: 'italic', fontSize: 14,
+                    color: theme.accent, marginBottom: 8,
+                  }}>
+                  Turn earlier pages — {filtered.length - visibleCount} more
+                </button>
+              )}
             </>
           )}
 
