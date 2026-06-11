@@ -483,6 +483,39 @@ export default function Insights() {
           />
         )}
 
+        {/* The accuracy receipt — Luna grades its own predictions
+            against her actual periods (backtested per cycle, see
+            predictionAccuracy). Honest in both directions: it shows
+            the misses too. The per-user claim competitors don't make. */}
+        {!bcMode && cycle.accuracy && (() => {
+          const a = cycle.accuracy
+          const strong = a.avgError <= 1.5
+          const mid = !strong && a.avgError <= 3
+          const c = sectionColors('care')
+          return (
+            <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${c.accent}22`, boxShadow: `0 1px 0 ${c.accent}10, 0 14px 30px -20px ${c.accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '150ms' }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: c.accent, letterSpacing: -0.1, marginBottom: 8 }}>
+                how the predictions have landed
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.3, marginBottom: 8 }}>
+                {strong
+                  ? <>Within a day, <em style={{ color: c.accent }}>{a.within1} of {a.cycles}</em> times.</>
+                  : mid
+                    ? <>Within two days, <em style={{ color: c.accent }}>{a.within2} of {a.cycles}</em> times.</>
+                    : <>Your cycles keep their own counsel.</>}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 4 }}>
+                {strong || mid
+                  ? `Measured against your last ${a.cycles} periods — each prediction re-run with only what Luna knew at the time, then scored against the day your period actually came. A scorecard, not a promise.`
+                  : `Right now predictions are averaging about ±${a.avgError} days for you. Bodies aren't metronomes — every cycle you log tightens the call.`}
+              </div>
+              <WhyChip label="how this is measured" color={c.accent} source="Backtested against your own logged periods">
+                For each of your last {a.cycles} periods, Luna went back in time: it re-computed the prediction using only the cycles that came before, then compared it to when that period actually arrived. {a.within1} landed within ±1 day, {a.within2} within ±2{a.avgError > 0 ? `, averaging ±${a.avgError} days overall` : ''}. No app can promise the future — this shows you the track record instead.
+              </WhyChip>
+            </div>
+          )
+        })()}
+
         <div className="insight-stagger" style={{ animationDelay: '180ms' }}>
         <Eyebrow>Where you are now</Eyebrow>
         {onHormonalBC ? (

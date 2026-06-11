@@ -99,6 +99,35 @@ export function weightedCycleLength(starts, fallback) {
   return { length: Math.round(weightedSum / totalWeight), samples: recent.length }
 }
 
+// Honest backtest of Luna's own predictions — the "accuracy receipt".
+// For each past period (from the 3rd start onward), re-run the
+// prediction using ONLY the cycles that came before it, then score
+// it against when the period actually arrived. Measured, not
+// promised: this is the per-user accuracy claim competitors don't
+// make because their incentive is engagement, not correctness.
+//
+// Returns null with fewer than 2 scoreable cycles (one data point is
+// an anecdote, not a receipt), otherwise:
+//   { cycles, within1, within2, avgError }
+export function predictionAccuracy(starts) {
+  if (!starts || starts.length < 3) return null
+  const errors = []
+  for (let i = 2; i < starts.length; i++) {
+    const { length: predicted } = weightedCycleLength(starts.slice(0, i), null)
+    if (!predicted) continue
+    const actualGap = daysBetween(starts[i - 1], starts[i])
+    // Skip medically-implausible gaps, same rule the engine itself uses.
+    if (actualGap < 18 || actualGap > 60) continue
+    errors.push(Math.abs(actualGap - predicted))
+  }
+  if (errors.length < 2) return null
+  const cycles = errors.length
+  const within1 = errors.filter((e) => e <= 1).length
+  const within2 = errors.filter((e) => e <= 2).length
+  const avgError = +(errors.reduce((a, b) => a + b, 0) / cycles).toFixed(1)
+  return { cycles, within1, within2, avgError }
+}
+
 // Variance + confidence in the prediction. Returns:
 //   stdDev:  std deviation of recent gaps (days)
 //   range:   ± days to surface around any predicted date
@@ -800,6 +829,7 @@ export function useCycle(store) {
     variance,              // { stdDev, range, conf: 'high'|'medium'|'low', why }
     bbtShift,              // null OR detected biphasic shift (kept for legacy callers)
     ovulation,             // null OR fused ovulation { day, confidence, signals, why }
+    accuracy: predictionAccuracy(starts),  // null OR the backtested receipt
     cyclesLogged: starts.length,
   }
 }

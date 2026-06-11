@@ -12,6 +12,7 @@ import {
   detectBBTShift,
   detectOvulation,
   isOnHormonalBC,
+  predictionAccuracy,
 } from './useCycle'
 import { PHASES } from '../data/lunaData'
 
@@ -211,6 +212,40 @@ describe('detectBBTShift / detectOvulation', () => {
 
   it('returns null with no signals at all', () => {
     expect(detectOvulation({}, ['2026-01-01', '2026-01-29'], 28)).toBeNull()
+  })
+})
+
+describe('predictionAccuracy — the receipt is honest', () => {
+  it('returns null below 2 scoreable cycles (anecdotes are not receipts)', () => {
+    expect(predictionAccuracy(null)).toBeNull()
+    expect(predictionAccuracy(['2026-01-01', '2026-01-29'])).toBeNull()
+    expect(predictionAccuracy(['2026-01-01', '2026-01-29', '2026-02-26'])).toBeNull()  // only 1 scoreable
+  })
+
+  it('scores perfectly regular cycles as all within ±1', () => {
+    // 28-day gaps throughout → every backtested prediction is exact.
+    const starts = ['2026-01-01', '2026-01-29', '2026-02-26', '2026-03-26', '2026-04-23']
+    const a = predictionAccuracy(starts)
+    expect(a.cycles).toBe(3)
+    expect(a.within1).toBe(3)
+    expect(a.avgError).toBe(0)
+  })
+
+  it('reports real error for an irregular cycle, no grade inflation', () => {
+    // Two 28s, then a 35: the backtest predicted 28 for the third
+    // gap and the body said otherwise. The receipt must show it.
+    const starts = ['2026-01-01', '2026-01-29', '2026-02-26', '2026-04-02']
+    const a = predictionAccuracy(starts)
+    expect(a.cycles).toBe(2)
+    expect(a.within1).toBe(1)
+    expect(a.avgError).toBeGreaterThan(3)
+  })
+
+  it('skips medically-implausible gaps, same as the engine', () => {
+    // A 10-day "gap" (breakthrough bleeding) neither scores nor counts.
+    const starts = ['2026-01-01', '2026-01-29', '2026-02-08', '2026-02-26', '2026-03-26']
+    const a = predictionAccuracy(starts)
+    expect(a.cycles).toBe(2)
   })
 })
 
