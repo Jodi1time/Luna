@@ -936,6 +936,11 @@ export default function Onboarding({ step, slug: slugProp }) {
         }
       }
 
+      // Stamp the join date — anchors the first-week arc on Home
+      // (lib/firstWeek.js). Existing users never get one, so the arc
+      // only ever fires for accounts created from today forward.
+      updateSetting('joinedAt', new Date().toISOString().slice(0, 10))
+
       // Save profile to cloud and flip onboarded=true. The store's
       // setOnboarding action handles the cloud write.
       setOnboarding({

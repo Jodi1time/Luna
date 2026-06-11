@@ -23,6 +23,7 @@ import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
+import { getFirstWeekMoment } from '../lib/firstWeek'
 
 const MS_PER_DAY = 86400000
 
@@ -1177,6 +1178,21 @@ export default function Home() {
   }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
   // Use the AI thought if we have one, otherwise the local static prompt.
   const thoughtText = aiThought || (phase ? getReflectionPrompt(phase.id) : null)
+
+  // First-week arc — for brand-new users, three quiet moments take
+  // over this slot on days 2-3 / 4-5 / 7-9 (see lib/firstWeek.js).
+  // Each shows for one full day; the seen-map write below pins the
+  // date so reopening the app the same day keeps the moment.
+  const fwSeen = settings?.firstWeekSeen || {}
+  const fwMoment = !isPreg
+    ? getFirstWeekMoment({ joinedAt: settings?.joinedAt, todayISO, logs, cycleDay, cycleLength, seen: fwSeen })
+    : null
+  useEffect(() => {
+    if (fwMoment && fwSeen[fwMoment.id] !== todayISO) {
+      updateSetting('firstWeekSeen', { ...fwSeen, [fwMoment.id]: todayISO })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fwMoment?.id])
   const logPeriodStart = () => {
     // Explicit user confirmation that today is day 1 — log the flow
     // AND directly anchor lastPeriodStart so detection is immediate
@@ -1628,8 +1644,12 @@ export default function Home() {
               "talk it through" affordance. Tap opens the LunaChat
               overlay IMMEDIATELY, seeded with this thought, so the
               gesture-to-conversation is one tap. */}
-          {!isPreg && phase && thoughtText && (
-            <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
+          {!isPreg && phase && (fwMoment || thoughtText) && (
+            <button onClick={() => {
+                if (fwMoment?.cta === 'wheel') { go('insights'); return }
+                setChatOpener(fwMoment ? fwMoment.text : thoughtText)
+                setChatOpen(true)
+              }}
               className="alive-card frost-card sheen-once"
               style={{
                 position: 'relative',
@@ -1650,17 +1670,29 @@ export default function Home() {
               }}>"</div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
-                  a thought, today
+                  {fwMoment ? fwMoment.eyebrow : 'a thought, today'}
                 </div>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-                  </svg>
-                  talk it through
+                  {fwMoment?.cta === 'wheel' ? (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                        <circle cx="10" cy="10" r="6.5" strokeDasharray="3 2.4" />
+                        <circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none" />
+                      </svg>
+                      see your wheel
+                    </>
+                  ) : (
+                    <>
+                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+                      </svg>
+                      talk it through
+                    </>
+                  )}
                 </div>
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
-                {thoughtText}
+                {fwMoment ? fwMoment.text : thoughtText}
               </div>
             </button>
           )}

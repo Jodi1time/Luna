@@ -88,6 +88,11 @@ const DEFAULT_SETTINGS = {
   // is the school id (e.g. 'understanding-luteal'). Persisted in
   // settings so it survives across devices via the same cloud sync.
   schools: {},
+  // First-week arc anchors — joinedAt is stamped once at onboarding
+  // completion; firstWeekSeen maps moment id → the date it was shown
+  // (each moment lives for one full day). See lib/firstWeek.js.
+  joinedAt: null,
+  firstWeekSeen: {},
   // NOTE: journalEntries used to live here. Migrated 2026-06-10 to a
   // top-level store slice + its own `journal_entries` Supabase table —
   // keeping the diary (with base64 photos) inside settings meant every
