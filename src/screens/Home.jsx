@@ -1614,7 +1614,7 @@ export default function Home() {
               writing is what she came here for. */}
           {!isPreg && reflectFirst && (
             <JournalCard
-              entries={settings?.journalEntries}
+              entries={store.journalEntries}
               journalTheme={settings?.journalTheme}
               phaseColor={phase?.color}
               onTap={() => go('journal')}
@@ -1686,7 +1686,7 @@ export default function Home() {
               (it already led the tier above). */}
           {!isPreg && !reflectFirst && (
             <JournalCard
-              entries={settings?.journalEntries}
+              entries={store.journalEntries}
               journalTheme={settings?.journalTheme}
               phaseColor={phase?.color}
               onTap={() => go('journal')}

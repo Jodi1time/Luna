@@ -4,6 +4,7 @@ import { getPhaseForDay } from '../hooks/useCycle'
 import {
   loadProfile, saveProfile,
   loadLogs, upsertLog, deleteLog,
+  loadJournalEntries, upsertJournalEntry, deleteJournalEntryCloud,
   fireAndForget,
 } from '../lib/cloud'
 
@@ -87,14 +88,11 @@ const DEFAULT_SETTINGS = {
   // is the school id (e.g. 'understanding-luteal'). Persisted in
   // settings so it survives across devices via the same cloud sync.
   schools: {},
-  // Diary entries — the user's freeform writing, separate from
-  // log.note (which is the per-day sticky-note style memo). Each
-  // entry is its own page:
-  //   { id, body, photos: [{ id, dataUrl, w, h, rot, offset }],
-  //     createdAt, updatedAt }
-  // Multiple per day are fine. Photos are stored inline as
-  // compressed JPEG data URLs (see lib/imageCompress.js).
-  journalEntries: [],
+  // NOTE: journalEntries used to live here. Migrated 2026-06-10 to a
+  // top-level store slice + its own `journal_entries` Supabase table —
+  // keeping the diary (with base64 photos) inside settings meant every
+  // settings write re-uploaded the whole journal. Legacy values are
+  // migrated out on rehydrate (local) and on hydrateFromCloud (cloud).
   // Diary customisation — themeId picks the palette, decorations is
   // a list of decoration keys ('hearts' | 'stars' | etc.), and
   // applyToApp = true skins the rest of the app to match.
@@ -242,10 +240,12 @@ const useLuna = create(
 
       // ── Journal — diary entries with their own data + theme ──
       //
-      // Each entry: { id, body, createdAt, updatedAt }. Append a new
-      // entry (saveJournalEntry), update an existing one in place
-      // (updateJournalEntry), or remove it (deleteJournalEntry).
+      // Each entry: { id, body, photos, createdAt, updatedAt }. Top-
+      // level slice with per-entry cloud sync (journal_entries table)
+      // — NOT part of settings, so saving a page uploads one page,
+      // and flipping a toggle uploads zero pages.
       // Theme + decorations live under settings.journalTheme.
+      journalEntries: [],
       saveJournalEntry: (body, photos = []) => {
         const trimmed = String(body || '').trim()
         // Allow photo-only entries (no body text) — sometimes a picture
@@ -259,27 +259,21 @@ const useLuna = create(
           createdAt: now,
           updatedAt: now,
         }
-        const cur = get().settings || {}
-        const next = { ...cur, journalEntries: [entry, ...(cur.journalEntries || [])] }
-        set({ settings: next })
-        fireAndForget(saveProfile({ settings: next }), 'saveJournalEntry')
+        set((s) => ({ journalEntries: [entry, ...(s.journalEntries || [])] }))
+        fireAndForget(upsertJournalEntry(entry), 'saveJournalEntry')
         return entry
       },
       updateJournalEntry: (id, partial) => {
-        const cur = get().settings || {}
-        const list = (cur.journalEntries || []).map((e) =>
+        const list = (get().journalEntries || []).map((e) =>
           e.id === id ? { ...e, ...partial, updatedAt: new Date().toISOString() } : e
         )
-        const next = { ...cur, journalEntries: list }
-        set({ settings: next })
-        fireAndForget(saveProfile({ settings: next }), 'updateJournalEntry')
+        set({ journalEntries: list })
+        const updated = list.find((e) => e.id === id)
+        if (updated) fireAndForget(upsertJournalEntry(updated), 'updateJournalEntry')
       },
       deleteJournalEntry: (id) => {
-        const cur = get().settings || {}
-        const list = (cur.journalEntries || []).filter((e) => e.id !== id)
-        const next = { ...cur, journalEntries: list }
-        set({ settings: next })
-        fireAndForget(saveProfile({ settings: next }), 'deleteJournalEntry')
+        set((s) => ({ journalEntries: (s.journalEntries || []).filter((e) => e.id !== id) }))
+        fireAndForget(deleteJournalEntryCloud(id), 'deleteJournalEntry')
       },
       updateJournalTheme: (partial) => {
         const cur = get().settings || {}
@@ -370,7 +364,14 @@ const useLuna = create(
       // server yet, and stale cloud rows don't overwrite fresher
       // local ones.
       hydrateFromCloud: async () => {
-        const [profile, logs] = await Promise.all([loadProfile(), loadLogs()])
+        const [profile, logs, cloudEntriesRaw] = await Promise.all([
+          loadProfile(),
+          loadLogs(),
+          // Defensive: if the journal_entries migration hasn't run on
+          // this Supabase instance yet, fall back to an empty list so
+          // hydrate still completes for profile + logs.
+          loadJournalEntries().catch(() => []),
+        ])
         if (!profile) return
         const localLogs = get().logs || {}
         const cloudLogs = logs || {}
@@ -394,6 +395,43 @@ const useLuna = create(
         // App.jsx would route them back to Welcome. Cloud can only
         // ever upgrade onboarded; once local is true, it stays true.
         const localOnboarded = get().onboarded
+
+        // ── Journal merge + one-time legacy migration ───────────
+        // Entries may exist in three places during the transition:
+        // the new journal_entries table (cloud), the local slice, and
+        // — for pre-migration users — inside settings.journalEntries
+        // (cloud profile or local cache). Merge all three by id,
+        // newest updatedAt wins, then push anything the table doesn't
+        // have yet and strip the legacy key from settings for good.
+        const mergedSettings = { ...DEFAULT_SETTINGS, ...(profile.settings || {}) }
+        const legacyEntries = [
+          ...(Array.isArray(mergedSettings.journalEntries) ? mergedSettings.journalEntries : []),
+          ...(Array.isArray(get().settings?.journalEntries) ? get().settings.journalEntries : []),
+        ]
+        const hadLegacy = legacyEntries.length > 0
+        delete mergedSettings.journalEntries
+        const byId = new Map()
+        for (const e of [...legacyEntries, ...(get().journalEntries || []), ...cloudEntriesRaw]) {
+          if (!e?.id) continue
+          const prev = byId.get(e.id)
+          if (!prev || (e.updatedAt || '') > (prev.updatedAt || '')) byId.set(e.id, e)
+        }
+        const mergedEntries = [...byId.values()].sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        // Push entries the cloud table is missing (or has stale): the
+        // legacy blob's pages + anything written while signed out.
+        const cloudById = new Map(cloudEntriesRaw.map((e) => [e.id, e]))
+        for (const e of mergedEntries) {
+          const inCloud = cloudById.get(e.id)
+          if (!inCloud || (e.updatedAt || '') > (inCloud.updatedAt || '')) {
+            fireAndForget(upsertJournalEntry(e), 'hydrate.migrateJournalEntry')
+          }
+        }
+        // Slim the profile's settings blob permanently once legacy
+        // pages have been queued for the new table.
+        if (hadLegacy) {
+          fireAndForget(saveProfile({ settings: mergedSettings }), 'hydrate.stripLegacyJournal')
+        }
+
         set({
           onboarded:       localOnboarded || Boolean(profile.onboarded),
           displayName:     profile.display_name || '',
@@ -404,7 +442,8 @@ const useLuna = create(
           pregnancy:       profile.pregnancy || { active: false, lmp: null, dueDate: null, startedAt: null },
           pregnancyHistory: profile.pregnancy_history || [],
           completedChecks: profile.completed_checks || [],
-          settings:        { ...DEFAULT_SETTINGS, ...(profile.settings || {}) },
+          settings:        mergedSettings,
+          journalEntries:  mergedEntries,
           isPro:           profile.is_pro !== false,
           trialDaysLeft:   profile.trial_days_left ?? 7,
           account:         profile.email ? { email: profile.email } : null,
@@ -428,6 +467,7 @@ const useLuna = create(
         pregnancyHistory: [],
         logs:            {},
         settings:        DEFAULT_SETTINGS,
+        journalEntries:  [],
         isPro:           true,
         trialDaysLeft:   7,
         session:         null,
@@ -443,6 +483,22 @@ const useLuna = create(
       // cache lets the app render the user's last-known state before
       // the network round-trip lands.
       storage: createJSONStorage(() => localStorage),
+      // One-time local migration: pre-2026-06-10 caches carry the
+      // diary inside settings.journalEntries. Move those pages into
+      // the top-level slice the moment the cache rehydrates, so
+      // signed-out users keep their journal too. (Signed-in users get
+      // the same migration server-side via hydrateFromCloud.)
+      onRehydrateStorage: () => (state) => {
+        const legacy = state?.settings?.journalEntries
+        if (!Array.isArray(legacy) || legacy.length === 0) return
+        const cur = state.journalEntries || []
+        const ids = new Set(cur.map((e) => e.id))
+        const merged = [...cur, ...legacy.filter((e) => e?.id && !ids.has(e.id))]
+          .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        const settings = { ...state.settings }
+        delete settings.journalEntries
+        useLuna.setState({ journalEntries: merged, settings })
+      },
       partialize: (s) => ({
         onboarded:       s.onboarded,
         lastPeriodStart: s.lastPeriodStart,
@@ -456,6 +512,7 @@ const useLuna = create(
         pregnancyHistory: s.pregnancyHistory,
         logs:            s.logs,
         settings:        s.settings,
+        journalEntries:  s.journalEntries,
         isPro:           s.isPro,
         trialDaysLeft:   s.trialDaysLeft,
       }),

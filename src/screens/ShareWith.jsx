@@ -135,6 +135,8 @@ export default function ShareWith() {
     try {
       const invite = await createInvite(scope)
       setNewInvite(invite)
+      // Analytics: scope only — never the code or recipient.
+      import('../lib/posthog').then(({ capture }) => capture('share_invite_created', { scope }))
       await refresh()
     } catch (e) {
       setError(e?.message || 'Could not create invite')

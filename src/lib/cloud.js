@@ -156,6 +156,63 @@ export async function deleteLog(date) {
   if (error) throw error
 }
 
+// ── Journal entries — their own table (migrated 2026-06-10) ──
+// Diary pages used to live inside profiles.settings.journalEntries,
+// which meant every settings write re-uploaded the entire journal
+// (base64 photos included). Each entry is now its own row, synced
+// individually. Photo payloads stay inside the row's `photos` jsonb
+// for now (each photo object can later grow a `path` field when we
+// offload binaries to Supabase Storage).
+//
+// All three are defensive about a missing table: if the migration
+// in supabase-schema.sql hasn't run yet, the throw lands in Sentry
+// via fireAndForget and local state keeps working untouched.
+
+export async function loadJournalEntries() {
+  const user = await currentUser()
+  if (!user) return []
+  const { data, error } = await supabase
+    .from('journal_entries')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map((r) => ({
+    id: r.id,
+    body: r.body || '',
+    photos: Array.isArray(r.photos) ? r.photos : [],
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }))
+}
+
+export async function upsertJournalEntry(entry) {
+  const user = await currentUser()
+  if (!user) return
+  const { error } = await supabase
+    .from('journal_entries')
+    .upsert({
+      id: entry.id,
+      user_id: user.id,
+      body: entry.body || '',
+      photos: entry.photos || [],
+      created_at: entry.createdAt,
+      updated_at: entry.updatedAt,
+    }, { onConflict: 'id' })
+  if (error) throw error
+}
+
+export async function deleteJournalEntryCloud(id) {
+  const user = await currentUser()
+  if (!user) return
+  const { error } = await supabase
+    .from('journal_entries')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('id', id)
+  if (error) throw error
+}
+
 // Fire-and-forget wrapper for mutations called from the store. We
 // don't want UI to wait on cloud round-trips, but we DO want failures
 // to land in Sentry so we know about silent drift.

@@ -78,6 +78,8 @@ export default function LunaChat({ open, onClose, opener, context }) {
     const nextMessages = [...messages, { role: 'user', content: text }]
     setMessages(nextMessages)
     setSending(true)
+    // Analytics: turn count only — never message contents.
+    import('../lib/posthog').then(({ capture }) => capture('luna_chat_message_sent', { turn: userTurns + 1 }))
     try {
       const reply = await chat({
         messages: nextMessages.map(({ role, content }) => ({ role, content })),

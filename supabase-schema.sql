@@ -327,3 +327,38 @@ $$;
 
 revoke all on function public.preview_share_invite(text) from public;
 grant execute on function public.preview_share_invite(text) to authenticated;
+
+-- ─────────────────────────────────────────────────────────────
+-- Journal entries — own table (migration 2026-06-10)
+--
+-- Diary pages used to live inside profiles.settings.journalEntries.
+-- With base64 photos inline, every settings write re-uploaded the
+-- entire journal; one corrupted blob write risked all of it. Each
+-- page is now its own row, synced individually by the client.
+-- NEVER exposed through the share RPCs — RLS restricts every row to
+-- its owner, full stop.
+--
+-- The client migrates legacy blob entries automatically on the next
+-- signed-in hydrate (pushes pages here, then strips the key from
+-- settings). Idempotent — safe to re-run.
+
+create table if not exists public.journal_entries (
+  id          text primary key,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  body        text not null default '',
+  photos      jsonb not null default '[]'::jsonb,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.journal_entries enable row level security;
+
+drop policy if exists "journal entries are owner-only" on public.journal_entries;
+create policy "journal entries are owner-only"
+  on public.journal_entries
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+create index if not exists journal_entries_user_created
+  on public.journal_entries (user_id, created_at desc);

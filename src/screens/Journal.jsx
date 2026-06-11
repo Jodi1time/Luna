@@ -418,7 +418,7 @@ export default function Journal() {
   const settings = useLuna((s) => s.settings)
   const cycle = useCycle(store)
   const phase = cycle?.phase
-  const entries = settings?.journalEntries || []
+  const entries = useLuna((s) => s.journalEntries) || []
   const journalTheme = settings?.journalTheme || DEFAULT_JOURNAL_THEME
   const theme = useMemo(
     () => resolveTheme(journalTheme.themeId, phase?.color, journalTheme.custom),
@@ -533,7 +533,14 @@ export default function Journal() {
     }
   }
 
-  const handleSaveEntry = (body, photos = []) => { saveJournalEntry(body, photos) }
+  const handleSaveEntry = (body, photos = []) => {
+    saveJournalEntry(body, photos)
+    // Analytics: shape only — never the writing or the photos.
+    import('../lib/posthog').then(({ capture }) => capture('journal_entry_saved', {
+      has_text: Boolean(String(body || '').trim()),
+      photo_count: (photos || []).length,
+    }))
+  }
   const handleChangeTheme = (themeId) => { updateJournalTheme({ themeId }) }
   const handleToggleDecoration = (id) => {
     const cur = journalTheme.decorations || []

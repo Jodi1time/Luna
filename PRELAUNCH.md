@@ -523,3 +523,40 @@ Mark with date + initials when walked clean.
 - [ ] Airplane mode → app opens, logs save locally, no crash; reconnect → syncs
 - [ ] Sign out → sign back in → data intact (logs, settings, conditions, BC)
 - [ ] iOS text-size accessibility setting at largest → nothing unusable
+
+## Infrastructure honesty pass (added 2026-06-10)
+
+### Run the updated supabase-schema.sql (REQUIRED for journal sync)
+The diary moved out of `profiles.settings` into its own `journal_entries`
+table (every settings write used to re-upload the whole journal, photos
+included). The schema file now creates the table + RLS. Until it's run,
+journal cloud sync fails quietly (Sentry will show `cloud.saveJournalEntry`)
+— local journals keep working, and the client migrates legacy pages
+automatically on the first signed-in hydrate after the table exists.
+
+### Move hosting: GitHub Pages → Vercel (~30 min, free tier)
+Pages is a static file server: no real SPA routing (the /share 404 needed
+a 404.html hack that still returns HTTP 404), no security headers, no CSP.
+`vercel.json` is already in the repo (SPA rewrite + HSTS/nosniff/frame-deny/
+referrer/permissions headers + immutable asset caching). Steps:
+1. vercel.com → sign in with GitHub → Import `Jodi1time/Luna` (framework: Vite, auto-detected)
+2. Add the 5 env vars from .github/workflows/deploy.yml (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_SENTRY_DSN, VITE_POSTHOG_KEY, VITE_POSTHOG_HOST)
+3. Project → Domains → add lunadiary.app, update DNS as instructed
+4. Verify /share?code=TEST returns HTTP 200 (not 404) and the app loads
+5. Then disable the Pages workflow (.github/workflows/deploy.yml) so there's one deploy path
+6. Follow-up (separate session): add a tested Content-Security-Policy header
+
+### Stranger test — monthly ritual, not one-time
+The share-link 404 lived for weeks because we always arrive as ourselves
+(cached, signed in, onboarded). Once a month: incognito window, brand-new
+email, full flow — landing → onboarding → first log → share link from a
+text message → password reset email. The bugs that embarrass us at launch
+live exclusively on this path.
+
+### Exercise the money path BEFORE launch
+`isPro` is hardcoded `true` for beta — the Paywall, RevenueCat wiring, and
+every Pro-gated fallback have never executed for a real user. Before launch
+week: flip `isPro` default to false in a local build, walk every Pro gate
+(Talk to Luna, Share with someone, deep modes, long-form journal,
+personalised reflection), confirm each shows the Paywall and recovers
+gracefully after subscribe/restore.
