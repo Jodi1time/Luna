@@ -560,3 +560,19 @@ week: flip `isPro` default to false in a local build, walk every Pro gate
 (Talk to Luna, Share with someone, deep modes, long-form journal,
 personalised reflection), confirm each shows the Paywall and recovers
 gracefully after subscribe/restore.
+
+## Mobile-first reminders (2026-06-10 — Luna is a native app; the website is plumbing)
+
+- **Universal links / App Links**: when the Capacitor build ships,
+  `lunadiary.app/share?code=…` must deep-link into the INSTALLED app
+  (iOS: apple-app-site-association + Associated Domains entitlement;
+  Android: assetlinks.json + intent filter). Without this, a share
+  recipient who has Luna installed still gets dumped into Safari.
+- **Local notifications**: the removed "Gentle reminders" section
+  returns only via @capacitor/local-notifications — scheduled
+  on-device, no server, fits the privacy posture.
+- **Store identity**: artifacts and copy say "the Luna app"; the
+  domain is a pointer. App Store listing: "Luna by Gloria".
+- Real-iPhone verification is the bar for every UI change —
+  simulator and desktop browser both lie (keyboards, haptics,
+  safe areas, scroll inertia).
