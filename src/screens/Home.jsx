@@ -25,6 +25,7 @@ import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
 import { MoonMark } from '../components/Illustrations'
+import { CardArt, CARD_ART_KINDS } from '../components/CardArt'
 
 const MS_PER_DAY = 86400000
 
@@ -521,37 +522,45 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
+        const artKind = CARD_ART_KINDS.includes(it.key) ? it.key : null
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 36%',
-              maxWidth: 152,
+              flex: '0 0 46%',
+              maxWidth: 176,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: 22,
-              padding: '14px 14px 14px',
+              borderRadius: T.radius.lg,
+              padding: 0,
+              overflow: 'hidden',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: 8,
+              alignItems: 'stretch',
               background: sectionPaper(it.category),
               border: `1px solid ${colors.accent}22`,
-              boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -22px ${colors.accent}50`,
+              boxShadow: T.shadow.md,
               animationDelay: `${idx * 50}ms`,
             }}>
-            <span style={{
-              width: 30, height: 30, borderRadius: 999, display: 'inline-flex',
-              alignItems: 'center', justifyContent: 'center',
-              background: colors.tint, color: colors.accent,
-            }}>{it.icon}</span>
-            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
-              {it.label}
-            </span>
-            <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
-              {it.sub}
+            {/* Distinct illustrated banner per card — the thing that
+                makes each tile feel made for its purpose, not a
+                template. Sits on a slightly deeper tint ground. */}
+            {artKind ? (
+              <span style={{ display: 'block', background: `${colors.tint}cc`, padding: '8px 0 2px', color: colors.accent, borderBottom: `1px solid ${colors.accent}14` }}>
+                <CardArt kind={artKind} accent={colors.accent} height={52} />
+              </span>
+            ) : (
+              <span style={{ display: 'flex', justifyContent: 'center', background: `${colors.tint}cc`, padding: 14, color: colors.accent }}>{it.icon}</span>
+            )}
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '11px 14px 14px' }}>
+              <span style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
+                {it.label}
+              </span>
+              <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+                {it.sub}
+              </span>
             </span>
           </button>
         )
