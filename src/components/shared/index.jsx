@@ -73,6 +73,10 @@ export function AppShell({ children }) {
         <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {children}
         </div>
+        {/* Paper grain — the whole app sits on textured stock, not a
+            flat digital fill. Above content but pointer-transparent and
+            blended so it only catches the light, never obscures. */}
+        <div className="paper-grain" aria-hidden="true" style={{ position: 'absolute', zIndex: 3 }} />
       </div>
     </div>
   )

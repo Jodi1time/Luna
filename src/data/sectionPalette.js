@@ -42,12 +42,20 @@ export function sectionColors(category) {
   return SECTION_PALETTE[category] || SECTION_PALETTE.default
 }
 
-// Build a soft tinted background — the tint color washed 14% over the
-// cream paper, with a subtle ~8° gradient direction so each card reads
-// as alive paper instead of a flat block. Used as the glass-card
-// background when a category is set.
+// Build a soft tinted background — the tint color washed over the cream
+// paper as a gentle gradient so each card reads as alive paper, not a
+// flat block. Used as the glass-card background when a category is set.
+//
+// WASH is the single knob for how loud the section color is. The old
+// value (cc/88 ≈ 80%/53%) read as saturated "candy" cards when seven
+// of them stacked down a feed — the #1 tell that made the app feel
+// generic. Softened so the cream paper + grain show through and color
+// PUNCTUATES rather than floods; the category's real identity now comes
+// from the accent border + accent details, not a colored box. Dial
+// these two hex-alpha values together to taste (higher = louder).
+const WASH = { top: 'a6', bottom: '5c' }  // ≈ 65% → 36%
+
 export function sectionPaper(category) {
   const c = sectionColors(category)
-  // gentle vertical gradient so a flat card still has subtle life
-  return `linear-gradient(165deg, ${c.tint}cc, ${c.tint}88)`
+  return `linear-gradient(165deg, ${c.tint}${WASH.top}, ${c.tint}${WASH.bottom})`
 }
