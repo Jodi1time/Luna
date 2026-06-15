@@ -126,41 +126,30 @@ const INTENT_REPLIES = {
 // CLASSROOM rule (the voice should be felt, never named). The conditions
 // sub-step doesn't count toward the total — it reads as one moment of
 // "tell me a bit more about it."
+// Progress — one calm, confident bar instead of five competing chips.
+// Functional label (mono count + sans step name) reads instantly; the
+// track fills smoothly as she advances. Replaces the busy numbered
+// row the redesign spec flagged as slow to parse.
 function ProgressBar({ step, total = 5 }) {
-  const labels = ['why you’re here', 'your last period', 'your cycle', 'what matters', 'your name']
+  const labels = ['Why you’re here', 'Your last period', 'Your cycle', 'What matters', 'Your name']
+  const pct = Math.round((step / total) * 100)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 30 }}>
-      {Array.from({ length: total }).map((_, i) => {
-        const n = i + 1
-        const active = n === step
-        const done = n < step
-        return (
-          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-            <div style={{
-              width: 24, height: 24, borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500,
-              background: active ? T.accent : (done ? T.accent + '22' : 'rgba(253,250,245,0.55)'),
-              color: active ? '#fff' : (done ? T.accent : T.muted),
-              border: active ? 'none' : `1px solid ${done ? T.accent + '40' : 'rgba(26,19,16,0.08)'}`,
-              boxShadow: active ? `0 6px 14px -6px ${T.accent}80` : 'none',
-              transition: 'all 0.3s var(--ease-out)',
-            }}>
-              {n}
-            </div>
-            <div style={{
-              fontFamily: T.serif, fontStyle: 'italic',
-              fontSize: 11, fontWeight: 500,
-              color: active ? T.accent : T.muted,
-              opacity: active ? 1 : 0.6,
-              letterSpacing: -0.1,
-              transition: 'all 0.3s var(--ease-out)',
-            }}>
-              {labels[i]}
-            </div>
-          </div>
-        )
-      })}
+    <div style={{ marginBottom: 28 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 9 }}>
+        <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 500, color: T.accent }}>
+          STEP {step} / {total}
+        </span>
+        <span style={{ fontFamily: T.sans, fontSize: 12, fontWeight: 600, letterSpacing: 0.1, color: T.muted }}>
+          {labels[step - 1]}
+        </span>
+      </div>
+      <div style={{ height: 4, borderRadius: 999, background: 'rgba(26,19,16,0.08)', overflow: 'hidden' }}>
+        <div style={{
+          height: '100%', width: `${pct}%`, borderRadius: 999,
+          background: T.accent,
+          transition: 'width 0.45s var(--ease-out)',
+        }} />
+      </div>
     </div>
   )
 }
@@ -174,33 +163,39 @@ function ProgressBar({ step, total = 5 }) {
 // intent / conditions / priorities distinct rhythm even though they
 // all use the same card shell — fixes the "every list looks the same"
 // problem flagged in the design pass.
+// Selectable option row. The selected state is deliberately
+// unmistakable (spec rule: never tint-alone) — a real filled check
+// control on the right, a stronger surface + border, and added weight.
+// Hint copy is calm functional sans, not decorative italic, so it
+// reads instantly. Used across intent / priorities / conditions.
 function OptionCard({ label, hint, selected, accent, dot, icon, onTap }) {
   const hasLeading = Boolean(dot || icon)
   return (
     <button onClick={onTap}
-      className={`alive-card frost-card${selected ? ' tap-bloom' : ''}`}
+      className={`alive-card${selected ? ' tap-bloom' : ''}`}
       style={{
         textAlign: 'left', cursor: 'pointer', width: '100%',
-        padding: '14px 16px',
-        background: selected ? `${accent}14` : 'rgba(253,250,245,0.55)',
-        border: `1px solid ${selected ? accent + '55' : 'rgba(26,19,16,0.06)'}`,
-        borderRadius: 18,
+        padding: '15px 16px',
+        background: selected ? `${accent}16` : '#FFFCF8',
+        border: `1.5px solid ${selected ? accent : 'rgba(26,19,16,0.08)'}`,
+        borderRadius: T.radius.lg,
         color: T.text, fontFamily: 'inherit',
-        boxShadow: selected ? `0 12px 22px -16px ${accent}60` : '0 10px 22px -22px rgba(26,19,16,0.18)',
-        transition: 'all 0.2s var(--ease-out)',
-        display: 'flex', alignItems: 'flex-start', gap: 12,
+        boxShadow: selected
+          ? `inset 0 1px 0 0 rgba(255,255,255,0.4), 0 2px 4px rgba(26,19,16,0.04), 0 14px 28px -18px ${accent}66`
+          : 'inset 0 1px 0 0 rgba(255,255,255,0.5), 0 1px 2px rgba(26,19,16,0.04)',
+        transition: 'background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)',
+        display: 'flex', alignItems: 'center', gap: 13,
       }}>
       {hasLeading && (
         <div style={{
           flexShrink: 0,
-          width: icon ? 36 : 12, height: icon ? 36 : 12,
-          marginTop: icon ? 0 : 6,
+          width: icon ? 38 : 10, height: icon ? 38 : 10,
           borderRadius: 999,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: icon ? (selected ? `${accent}22` : 'rgba(253,250,245,0.55)') : (dot || T.muted),
+          background: icon ? (selected ? `${accent}1f` : '#FBF6EF') : (dot || T.muted),
           border: icon ? `1px solid ${selected ? accent + '40' : 'rgba(26,19,16,0.08)'}` : 'none',
           color: icon ? (selected ? accent : T.muted) : 'transparent',
-          opacity: dot ? (selected ? 1 : 0.75) : 1,
+          opacity: dot ? (selected ? 1 : 0.65) : 1,
           transition: 'all 0.2s var(--ease-out)',
         }}>
           {icon}
@@ -208,18 +203,31 @@ function OptionCard({ label, hint, selected, accent, dot, icon, onTap }) {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontFamily: T.serif, fontStyle: selected ? 'italic' : 'normal',
-          fontSize: 16, fontWeight: 500, letterSpacing: -0.2,
-          color: selected ? accent : T.text,
-          marginBottom: hint ? 4 : 0,
+          fontFamily: T.serif, fontStyle: 'normal',
+          fontSize: 16.5, fontWeight: selected ? 600 : 500, letterSpacing: -0.2,
+          color: selected ? `color-mix(in srgb, ${accent}, ${T.ink} 25%)` : T.text,
+          marginBottom: hint ? 3 : 0,
+          transition: 'color 0.2s var(--ease-out)',
         }}>
           {label}
         </div>
         {hint && (
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.5 }}>
+          <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.45, letterSpacing: 0.1 }}>
             {hint}
           </div>
         )}
+      </div>
+      {/* The unmistakable control — empty ring → filled check. */}
+      <div aria-hidden="true" style={{
+        flexShrink: 0, width: 24, height: 24, borderRadius: 999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: selected ? accent : 'transparent',
+        border: selected ? `1.5px solid ${accent}` : '1.5px solid rgba(26,19,16,0.18)',
+        color: '#fff',
+        transition: 'all 0.2s var(--ease-spring)',
+        transform: selected ? 'scale(1)' : 'scale(0.92)',
+      }}>
+        {selected && <span style={{ display: 'flex', animation: 'checkPop 0.3s var(--ease-spring) both' }}>{Icons.check}</span>}
       </div>
     </button>
   )
@@ -1052,10 +1060,6 @@ export default function Onboarding({ step, slug: slugProp }) {
       <Backdrop accent={T.accent} subtle />
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .3s ease-out both', overflowY: 'auto', minHeight: 0 }}>
       <ProgressBar step={stepNum} />
-
-      {slug !== 'payoff' && (
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, color: T.muted, marginBottom: 6, fontWeight: 500, animationDelay: '0ms' }}>step {stepNum} of 5</div>
-      )}
 
       {slug === 'intent' && <>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, marginBottom: 10, animationDelay: '50ms' }}>
