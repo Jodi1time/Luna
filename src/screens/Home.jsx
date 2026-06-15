@@ -1413,6 +1413,44 @@ export default function Home() {
           </div>
           )}
 
+          {/* The one dominant action — the screen's answer to "what
+              now?". Filled accent when today isn't logged (clearly THE
+              thing to do), a quiet "noted" state once she has. Sits
+              above the secondary quick-action row. Suppressed when a
+              stronger nudge (period CTA / catch-up) owns the day. */}
+          {!isPreg && !showCatchUp && !showPeriodCTA && (
+            <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
+              className="alive-card"
+              style={{
+                marginTop: 18, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+                padding: '17px 18px 17px 20px', borderRadius: T.radius.lg,
+                background: todayLog ? '#FFFCF8' : `linear-gradient(135deg, ${T.accent}, color-mix(in srgb, ${T.accent}, #5e1c0c 32%))`,
+                border: todayLog ? `1.5px solid ${T.accent}2e` : 'none',
+                color: todayLog ? T.text : '#fff',
+                boxShadow: todayLog
+                  ? T.shadow.sm
+                  : `inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 6px rgba(26,19,16,0.06), 0 18px 32px -16px ${T.accent}85`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
+              }}>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3 }}>
+                  {todayLog ? 'Today’s noted.' : 'How are you feeling today?'}
+                </span>
+                <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayLog ? T.muted : 'rgba(255,250,245,0.88)' }}>
+                  {todayLog ? 'Add more anytime — a symptom, a mood, a note.' : 'A few taps. It teaches Luna your body, and takes a moment.'}
+                </span>
+              </span>
+              <span aria-hidden="true" style={{
+                flexShrink: 0, width: 38, height: 38, borderRadius: 999,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: todayLog ? `${T.accent}14` : 'rgba(255,255,255,0.22)',
+                color: todayLog ? T.accent : '#fff',
+              }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h9M8 3l5 5-5 5"/></svg>
+              </span>
+            </button>
+          )}
+
           {/* BC missing-date prompt — when she's on a method that
               needs a start date (shot, IUD, implant, pill/patch/ring)
               and we don't have it yet. Single tap into BirthControl
