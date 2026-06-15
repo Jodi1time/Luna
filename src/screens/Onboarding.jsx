@@ -10,6 +10,7 @@ import { sectionColors } from '../data/sectionPalette'
 import { getCycleDay, getPhaseForDay } from '../hooks/useCycle'
 import { getReflectionPrompt } from '../data/lunaData'
 import { dailyThought } from '../lib/lunaChat'
+import { CrescentCradle } from '../components/Illustrations'
 
 // Intent — what brings her to Luna. Drives every downstream surface:
 // which home cards lead, which features she sees first, which copy
@@ -449,6 +450,12 @@ function StepPayoff({ settings, displayName, lastPeriodISO, cycleDays }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+      {/* The reward, drawn — a crescent cradling a seed. The first
+          moment onboarding stops asking and starts giving. */}
+      <div className="insight-stagger" style={{ display: 'flex', justifyContent: 'center', marginTop: 4, marginBottom: -4, color: accent, animationDelay: '0ms' }}>
+        <CrescentCradle size={128} accent={accent} />
+      </div>
+
       {/* Personalized summary card — soft accent gradient, italic serif.
           Reads as a single sentence written for her. */}
       <div className="frost-card insight-stagger" style={{

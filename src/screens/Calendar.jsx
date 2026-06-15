@@ -11,6 +11,7 @@ import { getBcCycleModel, packDayForDate, addDaysToISO } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
 import { WhyChip, SourceTag } from '../components/Sourced'
 import ContextualTip from '../components/ContextualTip'
+import { MoonJourney } from '../components/Illustrations'
 
 const MS_PER_DAY = 86400000
 
@@ -490,14 +491,10 @@ export default function Calendar() {
             borderRadius: 22,
             boxShadow: `0 14px 30px -22px ${T.accent}38`,
           }}>
-            {/* Three soft phase-dots forming a small arc — visualises
-                "your rhythm" without literal cycle data yet. */}
-            <svg width="56" height="20" viewBox="0 0 56 20" style={{ marginBottom: 12, opacity: 0.85 }} aria-hidden="true">
-              <path d="M4 14 Q 28 -2 52 14" stroke={T.accent} strokeWidth="1" fill="none" opacity="0.4" strokeLinecap="round"/>
-              <circle cx="4" cy="14" r="2.5" fill={PHASES.menstrual.color}/>
-              <circle cx="28" cy="3" r="2.5" fill={PHASES.ovulation.color}/>
-              <circle cx="52" cy="14" r="2.5" fill={PHASES.luteal.color}/>
-            </svg>
+            {/* The moon's own journey — a cycle drawn as phases. */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: T.accent }}>
+              <MoonJourney size={188} accent={T.accent} />
+            </div>
             <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.25, marginBottom: 8 }}>
               Your rhythm starts here.
             </div>

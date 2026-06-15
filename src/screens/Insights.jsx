@@ -13,6 +13,7 @@ import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { getBcCycleModel } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
+import { Constellation } from '../components/Illustrations'
 
 // Stroke-arc path between two angles at radius r — the building block
 // of the wheel's phase bands. Stroked arcs with round linecaps read
@@ -637,16 +638,11 @@ export default function Insights() {
             borderRadius: 22,
             boxShadow: `0 14px 30px -22px ${(phase?.color || T.accent)}38`,
           }}>
-            {/* Tiny constellation forming — three dots connected by
-                soft lines, suggesting "patterns become visible
-                with more points." Phase-tinted, subtle. */}
-            <svg width="40" height="40" viewBox="0 0 40 40" style={{ marginBottom: 10, opacity: 0.85 }} aria-hidden="true">
-              <line x1="8" y1="14" x2="20" y2="26" stroke={phase?.color || T.accent} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
-              <line x1="20" y1="26" x2="32" y2="10" stroke={phase?.color || T.accent} strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
-              <circle cx="8" cy="14" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
-              <circle cx="20" cy="26" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
-              <circle cx="32" cy="10" r="2.2" fill={phase?.color || T.accent} opacity="0.85"/>
-            </svg>
+            {/* Constellation forming — points connecting into a shape,
+                "patterns become visible with more of them." */}
+            <div style={{ marginBottom: 8 }}>
+              <Constellation size={150} accent={phase?.color || T.accent} />
+            </div>
             <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 6 }}>
               {cyclesLogged < 2 ? 'Your patterns are still forming.' : 'No strong patterns yet.'}
             </div>

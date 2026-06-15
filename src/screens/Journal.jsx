@@ -9,6 +9,7 @@ import JournalCustomizer from '../components/JournalCustomizer'
 import Polaroid, { makePhotoMeta } from '../components/Polaroid'
 import PhotoPermissionSheet from '../components/PhotoPermissionSheet'
 import ContextualTip from '../components/ContextualTip'
+import { OpenDiary } from '../components/Illustrations'
 import { compressImage } from '../lib/imageCompress'
 import { createRecognizer, isVoiceSupported } from '../lib/voiceRecognition'
 import useLuna from '../store/useLuna'
@@ -702,8 +703,13 @@ export default function Journal() {
           )}
 
           {entries.length === 0 && (
-            <div className="insight-stagger" style={{ textAlign: 'center', padding: '8px 22px 32px', fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: theme.text, opacity: 0.55, lineHeight: 1.6, animationDelay: '180ms' }}>
-              The book is empty. Whatever you save here becomes a page.
+            <div className="insight-stagger" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '4px 22px 32px', animationDelay: '180ms' }}>
+              <div style={{ color: theme.accent, opacity: 0.85, marginBottom: 6 }}>
+                <OpenDiary size={156} accent={theme.accent} />
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: theme.text, opacity: 0.55, lineHeight: 1.6 }}>
+                The book is empty. Whatever you save here becomes a page.
+              </div>
             </div>
           )}
 

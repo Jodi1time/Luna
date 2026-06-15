@@ -1167,3 +1167,51 @@ textarea {
   resize: none;
   outline: none;
 }
+
+/* ── Illustration system (components/Illustrations.jsx) ───────────
+   Gentle, decorative motion for the editorial illustration scenes.
+   All transform-origin work is done inline per-element (fill-box) so
+   these stay safe in iOS WKWebView. The global prefers-reduced-motion
+   block above already neutralises every one of these. */
+
+/* Whole-scene drift — a slow vertical float so a static illustration
+   feels like it's breathing in the room rather than pasted on. */
+@keyframes illusFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.illus-float { animation: illusFloat 7s var(--ease-in-out) infinite; }
+
+/* Soft breathe — scale in place. For seeds, blooms, anything that
+   should feel alive at its center. */
+@keyframes illusBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50%      { transform: scale(1.08); opacity: 1; }
+}
+.illus-breathe { animation: illusBreathe 5.5s var(--ease-in-out) infinite; }
+
+/* Twinkle — stars fading + lifting in sequence (stagger via inline
+   animation-delay). */
+@keyframes illusTwinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.82); }
+  50%      { opacity: 1;    transform: scale(1.08); }
+}
+.illus-twinkle { animation: illusTwinkle 3.4s var(--ease-in-out) infinite; }
+
+/* Sway — a stem leaning, anchored at its base. */
+@keyframes illusSway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50%      { transform: rotate(2.5deg); }
+}
+.illus-sway { animation: illusSway 6s var(--ease-in-out) infinite; }
+
+/* Trace — a line that draws itself in once, then rests. The
+   constellation's connecting lines. */
+@keyframes illusTrace {
+  from { stroke-dashoffset: var(--trace-len, 320); }
+  to   { stroke-dashoffset: 0; }
+}
+.illus-trace {
+  stroke-dasharray: var(--trace-len, 320);
+  animation: illusTrace 2s var(--ease-out) 0.2s both;
+}
