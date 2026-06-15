@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { getPhaseForDay } from '../hooks/useCycle'
+import { DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
 import {
   loadProfile, saveProfile,
   loadLogs, upsertLog, deleteLog,
@@ -101,11 +102,10 @@ const DEFAULT_SETTINGS = {
   // Diary customisation — themeId picks the palette, decorations is
   // a list of decoration keys ('hearts' | 'stars' | etc.), and
   // applyToApp = true skins the rest of the app to match.
-  journalTheme: {
-    themeId: 'cream',
-    decorations: [],
-    applyToApp: false,
-  },
+  // Use the canonical default so backdropKind / custom / backdrop.accent
+  // exist on first install — a partial copy here left them undefined
+  // until the theme picker was opened (flagged in the roadmap doc).
+  journalTheme: { ...DEFAULT_JOURNAL_THEME },
 }
 
 const useLuna = create(

@@ -201,6 +201,14 @@ export const CYCLE_SCHOOLS = [
     title: 'Postpartum recovery, week by week',
     subtitle: 'A gentler map of the first six weeks',
     phase: 'menstrual',
+    // Postpartum shares the menstrual phase tag, but it must NEVER be
+    // auto-surfaced on Home for an ordinary menstrual-phase user —
+    // only postpartum users should land here. `hidden` keeps it out of
+    // schoolForPhase()'s phase match while staying browsable in the
+    // full Cycle Schools list. (Without this, it's one array reorder
+    // away from serving postpartum content to everyone — flagged in
+    // the roadmap doc.)
+    hidden: true,
     category: 'care',
     duration: 5,
     intro:
@@ -315,5 +323,5 @@ export function getSchool(id) {
 // matches the current phase, so Home can surface "the school that
 // matches the week you're in." If multiple match, return the first.
 export function schoolForPhase(phaseId) {
-  return CYCLE_SCHOOLS.find((s) => s.phase === phaseId) || null
+  return CYCLE_SCHOOLS.find((s) => s.phase === phaseId && !s.hidden) || null
 }
