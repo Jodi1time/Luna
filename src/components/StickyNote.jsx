@@ -23,14 +23,15 @@ export default function StickyNote({
   onTap,
   isEmpty = false,
 }) {
-  const baseTilt = tiltFromSeed(seed)
-  const tilt = baseTilt > 0 ? baseTilt + 4 : baseTilt - 4
-  const tapeTilt = -tilt * 0.4
+  // A whisper of a tilt — hand-placed, not jaunty. The old ±6° plus a
+  // yellow sticky + washi tape read clip-arty against the editorial
+  // register; this is a cream paper marginalia note instead.
+  const tilt = tiltFromSeed(seed) * 0.7
 
   return (
     <div style={{
       display: 'flex', justifyContent: 'flex-end',
-      marginTop: 4, marginBottom: 8, marginRight: -10,
+      marginTop: 4, marginBottom: 8, marginRight: -6,
     }}>
       <button onClick={onTap}
         style={{
@@ -43,44 +44,36 @@ export default function StickyNote({
         }}>
         <div style={{
           position: 'relative',
-          background: 'linear-gradient(135deg, #FBEFC2 0%, #F5DE7E 100%)',
-          padding: '22px 18px 16px',
+          // Warm cream paper, in-palette — not a yellow sticky.
+          background: 'linear-gradient(135deg, #FCF8EE 0%, #F4EBD9 100%)',
+          padding: '14px 16px 14px 17px',
           transform: `rotate(${tilt}deg)`,
-          boxShadow: '0 16px 32px -14px rgba(26,19,16,0.38), 0 4px 10px -2px rgba(26,19,16,0.16), inset 0 1px 0 rgba(255,255,255,0.4)',
-          width: 200,
-          minHeight: 96,
-          borderRadius: 2,
+          // Softer, warmer, layered elevation + a top light-catch.
+          boxShadow: '0 2px 4px rgba(26,19,16,0.05), 0 16px 30px -18px rgba(26,19,16,0.20), inset 0 1px 0 rgba(255,255,255,0.6)',
+          border: '1px solid rgba(26,19,16,0.06)',
+          // Accent margin rule — the editorial "annotation" detail that
+          // replaces the washi tape, echoing Luna's blockquote rules.
+          borderLeft: `2.5px solid ${tapeColor}`,
+          width: 196,
+          minHeight: 78,
+          borderRadius: 10,
           textAlign: 'left',
           color: '#2A1A14',
         }}>
-          {/* Washi tape strip across the top — small, centered, contained
-              within the paper. Semi-translucent so the paper shows
-              through, tilted slightly opposite the paper for hand-placed
-              feel. */}
-          <div aria-hidden="true" style={{
-            position: 'absolute',
-            top: -9, left: '50%',
-            transform: `translateX(-50%) rotate(${tapeTilt}deg)`,
-            width: 78, height: 18,
-            background: `linear-gradient(180deg, ${tapeColor}55 0%, ${tapeColor}28 100%)`,
-            borderRadius: 1,
-            boxShadow: '0 2px 4px rgba(26,19,16,0.08)',
-          }} />
-
           {eyebrow && (
             <div style={{
-              fontFamily: T.mono, fontSize: 9.5,
-              letterSpacing: 1.1, fontWeight: 600,
-              color: 'rgba(26,19,16,0.55)', marginBottom: 6,
+              fontFamily: T.mono, fontSize: 11,
+              letterSpacing: 1, fontWeight: 600,
+              color: 'rgba(26,19,16,0.5)', marginBottom: 6,
             }}>
               {eyebrow}
             </div>
           )}
           <div style={{
-            fontFamily: T.serif, fontSize: 13.5,
+            fontFamily: T.serif, fontSize: 14,
             fontStyle: isEmpty ? 'normal' : 'italic',
-            lineHeight: 1.45,
-            color: isEmpty ? 'rgba(26,19,16,0.65)' : '#2A1A14',
+            lineHeight: 1.5,
+            color: isEmpty ? 'rgba(26,19,16,0.6)' : '#2A1A14',
             letterSpacing: -0.1,
             wordBreak: 'break-word',
           }}>
@@ -88,7 +81,7 @@ export default function StickyNote({
           </div>
           {signature && (
             <div style={{
-              fontFamily: T.serif, fontSize: 11,
+              fontFamily: T.serif, fontSize: 11.5,
               fontStyle: 'italic',
               color: 'rgba(26,19,16,0.5)',
               marginTop: 8, textAlign: 'right',

@@ -25,6 +25,7 @@ import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
 import { MoonMark } from '../components/Illustrations'
+import { CardArt, CARD_ART_KINDS } from '../components/CardArt'
 
 const MS_PER_DAY = 86400000
 
@@ -521,37 +522,43 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
+        const hasArt = CARD_ART_KINDS.includes(it.key)
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 38%',
-              maxWidth: 150,
+              flex: '0 0 45%',
+              maxWidth: 172,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: T.radius.md,
-              padding: '13px 14px 14px',
+              borderRadius: T.radius.lg,
+              padding: 0,
+              overflow: 'hidden',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: 9,
+              alignItems: 'stretch',
               background: sectionPaper(it.category),
               border: `1px solid ${colors.accent}22`,
               boxShadow: T.shadow.md,
               animationDelay: `${idx * 50}ms`,
             }}>
-            <span style={{
-              width: 30, height: 30, borderRadius: 999, display: 'inline-flex',
-              alignItems: 'center', justifyContent: 'center',
-              background: colors.tint, color: colors.accent,
-            }}>{it.icon}</span>
-            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
-              {it.label}
+            {/* The distinct illustrated banner — soft glowing fills in
+                the section color, a different motif per card. This is
+                what makes each tile feel made for its purpose. */}
+            <span style={{ display: 'block', height: 72, background: `${colors.tint}cc`, borderBottom: `1px solid ${colors.accent}14` }}>
+              {hasArt ? <CardArt kind={it.key} accent={colors.accent} /> : (
+                <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>{it.icon}</span>
+              )}
             </span>
-            <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
-              {it.sub}
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '11px 14px 14px' }}>
+              <span style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
+                {it.label}
+              </span>
+              <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+                {it.sub}
+              </span>
             </span>
           </button>
         )
@@ -1356,8 +1363,8 @@ export default function Home() {
                   : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
               </div>
               {phase && !bcUsesCover && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 2, color: phase.color, opacity: 0.7 }} aria-hidden="true">
-                  <PhaseFlourish phaseId={phase.id} size={22} />
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4, marginBottom: 10, color: phase.color, opacity: 0.7 }} aria-hidden="true">
+                  <PhaseFlourish phaseId={phase.id} size={20} />
                 </div>
               )}
               <div key={bcUsesCover ? `bc-${bcModel.cover.bigNumber ?? 'x'}` : cycleDay}
@@ -1377,12 +1384,14 @@ export default function Home() {
               overflow: 'hidden',
             }}>
               {contextLine && !bcUsesCover && (
-                <div style={{ marginTop: 10, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  <div style={{ fontFamily: T.serif, fontSize: 14.5, color: T.muted, letterSpacing: -0.1 }}>
+                <div style={{ marginTop: 12, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
+                  {/* Countdown is data, not poetry — functional sans,
+                      stronger contrast, so it reads instantly. */}
+                  <div style={{ fontFamily: T.sans, fontSize: 13, fontWeight: 600, letterSpacing: 0.2, color: `color-mix(in srgb, ${phase ? phase.color : T.accent}, ${T.ink} 35%)` }}>
                     {contextLine.text}
                   </div>
                   {contextLine.sub && (
-                    <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', marginTop: 4, lineHeight: 1.5, opacity: 0.85 }}>
+                    <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>
                       {contextLine.sub}
                     </div>
                   )}
