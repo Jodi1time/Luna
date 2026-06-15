@@ -8,6 +8,7 @@ import { ARTICLE_PHASE, articleAccent as accentFor } from '../lib/articlePhase'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { MoonMark } from '../components/Illustrations'
 
 // Map an article's subject category to a section palette category so
 // each article card / section header can wear a soft chromatic tint
@@ -88,8 +89,13 @@ export default function Library() {
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
 
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6, animationDelay: '0ms' }}>
-          What to read.
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6, animationDelay: '0ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, flex: 1 }}>
+            What to read.
+          </div>
+          <div aria-hidden="true" style={{ color: sectionColors('read').accent, opacity: 0.6, paddingTop: 4 }}>
+            <MoonMark size={28} />
+          </div>
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 16, fontStyle: 'italic', animationDelay: '50ms' }}>
           Doctor-sourced, plain-English pieces on what your body is doing — and why.

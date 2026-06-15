@@ -4,6 +4,7 @@ import { Masthead, Screen, Eyebrow } from '../components/shared'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { previewInvite, acceptInvite, scopeLabel, scopeBlurb } from '../lib/shares'
 import useLuna from '../store/useLuna'
+import { MoonsMeeting } from '../components/Illustrations'
 
 // AcceptShare — entered via a deep-link lunadiary.app/share?code=ABC.
 // App.jsx detects the code on cold start and routes here. Shows the
@@ -145,7 +146,10 @@ export default function AcceptShare() {
 
         {!loading && preview && (
           <>
-            <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.1, marginTop: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '18px 0 8px', color: accent }}>
+              <MoonsMeeting size={140} accent={accent} />
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.1, marginTop: 4, marginBottom: 16 }}>
               <em style={{ color: accent }}>{preview.from_name || 'Someone'}</em> wants you in their corner.
             </div>
 

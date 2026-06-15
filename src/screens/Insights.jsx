@@ -13,7 +13,7 @@ import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { getBcCycleModel } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
-import { Constellation } from '../components/Illustrations'
+import { Constellation, MoonMark } from '../components/Illustrations'
 
 // Stroke-arc path between two angles at radius r — the building block
 // of the wheel's phase bands. Stroked arcs with round linecaps read
@@ -440,8 +440,13 @@ export default function Insights() {
       {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginTop: 6, marginBottom: 10, animationDelay: '0ms' }}>
-          What we've noticed.
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: 6, marginBottom: 10, animationDelay: '0ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, flex: 1 }}>
+            What we've noticed.
+          </div>
+          <div aria-hidden="true" style={{ color: (phase?.color || T.accent), opacity: 0.6, paddingTop: 4 }}>
+            <MoonMark size={28} />
+          </div>
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginBottom: 18, fontStyle: 'italic', animationDelay: '60ms' }}>
           Patterns Luna sees across your cycles, gathered gently.

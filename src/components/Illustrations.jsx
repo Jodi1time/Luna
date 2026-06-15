@@ -156,6 +156,49 @@ export function OpenDiary({ size = 150, accent }) {
   )
 }
 
+// ── Moon mark ───────────────────────────────────────────────────
+// The Luna signature — a small crescent + star. A quiet brand
+// ornament for populated section headers (where the moon is never
+// arbitrary: it's the app's name). Sits beside a big serif title the
+// way the phase flourishes sit on Reflect/Care.
+export function MoonMark({ size = 30, accent }) {
+  const c = accent || 'currentColor'
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true"
+      stroke={c} {...STROKE} strokeWidth={1.5}>
+      <path d="M21 6 A 11 11 0 1 0 21 26 A 8.5 8.5 0 1 1 21 6 Z"
+        fill={c} fillOpacity={0.14} />
+      <Sparkle cx={25} cy={9} r={3} c={c} delay={300} />
+    </svg>
+  )
+}
+
+// ── Two moons meeting ───────────────────────────────────────────
+// Two crescents curving toward each other with a shared star in the
+// space between — "someone is letting you in." For the share-accept
+// screen, a recipient's first impression of Luna.
+export function MoonsMeeting({ size = 132, accent }) {
+  const c = accent || 'currentColor'
+  const R = 17, cy = 36
+  // concave-right crescent (opens toward center) at left; mirror at right
+  const right = (cx) => `M ${cx} ${cy - R} A ${R} ${R} 0 1 0 ${cx} ${cy + R} A 10 ${R} 0 1 1 ${cx} ${cy - R} Z`
+  const left = (cx) => `M ${cx} ${cy - R} A ${R} ${R} 0 1 1 ${cx} ${cy + R} A 10 ${R} 0 1 0 ${cx} ${cy - R} Z`
+  return (
+    <svg width={size} height={size * 0.6} viewBox="0 0 132 78" aria-hidden="true"
+      className="illus-float" stroke={c} {...STROKE} strokeWidth={1.5}>
+      <ellipse cx="66" cy={cy} rx="52" ry="22" opacity={0.14} strokeDasharray="1 5" />
+      <path d={right(40)} fill={c} fillOpacity={0.12} />
+      <path d={left(92)} fill={c} fillOpacity={0.12} />
+      {/* the shared light between them */}
+      <g className="illus-breathe" style={{ transformOrigin: '66px 36px', transformBox: 'fill-box' }}>
+        <Sparkle cx={66} cy={36} r={6} c={c} twinkle={false} />
+      </g>
+      <Sparkle cx={22} cy={16} r={3} c={c} delay={500} />
+      <Sparkle cx={110} cy={20} r={3.5} c={c} delay={1100} />
+    </svg>
+  )
+}
+
 // ── Bloom ───────────────────────────────────────────────────────
 // Concentric opening petals — calm, meditative. A small companion for
 // the Reflect header.

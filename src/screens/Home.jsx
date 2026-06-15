@@ -24,6 +24,7 @@ import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
+import { MoonMark } from '../components/Illustrations'
 
 const MS_PER_DAY = 86400000
 
@@ -1668,6 +1669,14 @@ export default function Home() {
                 color: phase.color, opacity: 0.2, fontWeight: 400,
                 userSelect: 'none', pointerEvents: 'none',
               }}>"</div>
+              {/* Faint celestial watermark, bottom-right — the day's
+                  thought sits under a quiet moon. Decorative, behind text. */}
+              <div aria-hidden="true" style={{
+                position: 'absolute', right: 12, bottom: 8,
+                color: phase.color, opacity: 0.16, pointerEvents: 'none',
+              }}>
+                <MoonMark size={64} />
+              </div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
                   {fwMoment ? fwMoment.eyebrow : 'a thought, today'}
