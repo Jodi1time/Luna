@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { T } from '../data/theme'
-import { Masthead, Eyebrow, Toggle, Screen } from '../components/shared'
+import { Toggle, Screen } from '../components/shared'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
@@ -38,11 +38,27 @@ function setupSummary(settings) {
 // section color is associated with the group below.
 function SectionLabel({ children, color }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '24px 22px 10px' }}>
-      <div style={{ width: 6, height: 6, borderRadius: '50%', background: color || T.muted, opacity: 0.85, boxShadow: `0 0 0 3px ${(color || T.muted) + '18'}` }} />
-      <div style={{ fontSize: 15, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, color: T.text, letterSpacing: -0.1, textTransform: 'lowercase' }}>
-        {String(children).toLowerCase()}.
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '22px 22px 8px' }}>
+      <div style={{ width: 5, height: 5, borderRadius: '50%', background: color || T.muted, opacity: 0.75 }} />
+      <div style={{ fontSize: 13.5, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, color: T.muted, letterSpacing: -0.05, textTransform: 'lowercase' }}>
+        {String(children).toLowerCase()}
       </div>
+    </div>
+  )
+}
+
+function Panel({ children, style }) {
+  return (
+    <div style={{
+      margin: '0 16px',
+      borderRadius: 20,
+      overflow: 'hidden',
+      background: 'rgba(253,250,245,0.62)',
+      border: '1px solid rgba(26,19,16,0.07)',
+      boxShadow: '0 12px 24px -24px rgba(26,19,16,0.32)',
+      ...style,
+    }}>
+      {children}
     </div>
   )
 }
@@ -55,15 +71,16 @@ function Row({ label, value, right, onTap, danger }) {
     <div onClick={onTap}
       className={onTap ? 'settings-row' : undefined}
       style={{
-        padding: '15px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: `1px solid rgba(26,19,16,0.05)`,
+        padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(26,19,16,0.06)',
         cursor: onTap ? 'pointer' : 'default',
         transition: 'background .2s ease',
+        gap: 12,
       }}>
-      <div style={{ fontSize: 14.5, color: danger ? T.accent : T.text, fontFamily: T.serif, letterSpacing: -0.1 }}>{label}</div>
-      <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.sans, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, minWidth: 0, fontSize: 14.5, color: danger ? T.accent : T.text, fontFamily: T.serif, letterSpacing: -0.1 }}>{label}</div>
+      <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.sans, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'right' }}>
         {value && <span style={{ fontStyle: 'italic' }}>{value}</span>}
-        {right ?? (onTap ? <span style={{ opacity: 0.5, fontSize: 18, fontFamily: T.serif }}>›</span> : null)}
+        {right ?? (onTap ? <span style={{ opacity: 0.42, fontSize: 17, fontFamily: T.serif }}>›</span> : null)}
       </div>
     </div>
   )
@@ -101,7 +118,7 @@ function LunaStats({ logs, cyclesLogged, savedArticles, accent }) {
 
   return (
     <div className="insight-stagger" style={{ padding: '0 16px 4px', animationDelay: '180ms' }}>
-      <div className="glass-card frost-card alive-card" style={{ padding: '18px 8px', borderRadius: 22, boxShadow: `0 14px 30px -22px ${accent}40`, display: 'flex', alignItems: 'stretch', gap: 4 }}>
+      <div style={{ padding: '8px 2px 4px', display: 'flex', alignItems: 'stretch', gap: 4 }}>
         <Stat n={animDays}   label="days shown up" />
         <div style={{ width: 1, background: 'rgba(26,19,16,0.06)', alignSelf: 'stretch' }} />
         <Stat n={animCycles} label="cycles" />
@@ -165,8 +182,8 @@ export default function Settings() {
 
       {/* Pro card — avatar now tinted to current phase color */}
       <div className="insight-stagger" style={{ padding: '20px 16px 8px', animationDelay: '90ms' }}>
-        <div className="glass-card frost-card alive-card" style={{ padding: 18, display: 'flex', alignItems: 'center', gap: 14, borderRadius: 22, boxShadow: `0 14px 30px -22px ${acc}50` }}>
-          <div style={{ width: 52, height: 52, background: acc, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 24, fontWeight: 400, fontStyle: 'italic', borderRadius: 999, boxShadow: `0 6px 14px -8px ${acc}90` }}>{initial}</div>
+        <Panel style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 44, height: 44, background: acc, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.serif, fontSize: 21, fontWeight: 400, fontStyle: 'italic', borderRadius: 999, boxShadow: `0 6px 14px -10px ${acc}90` }}>{initial}</div>
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: T.serif, fontWeight: 500, fontSize: 16, color: T.text, letterSpacing: -0.1 }}>{isPro ? 'Luna Pro' : 'Luna Free'}</div>
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, marginTop: 2 }}>
@@ -174,9 +191,11 @@ export default function Settings() {
             </div>
           </div>
           {!isPro && (
-            <button onClick={() => go('paywall')} style={{ background: acc, color: '#fff', border: 'none', padding: '9px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, borderRadius: 999, boxShadow: `0 10px 20px -10px ${acc}70` }}>Upgrade</button>
+            <button onClick={() => go('paywall')} style={{ background: 'transparent', color: acc, border: `1px solid ${acc}34`, padding: '8px 13px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, borderRadius: 999 }}>
+              Upgrade
+            </button>
           )}
-        </div>
+        </Panel>
       </div>
 
       {/* Live stats — days logged, cycles tracked, saved reads */}
@@ -188,7 +207,7 @@ export default function Settings() {
           Signed out: sign-in row that routes to Auth. */}
       <div className="insight-stagger" style={{ animationDelay: '240ms' }}>
         <SectionLabel color={acc}>Your account</SectionLabel>
-        <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+        <Panel>
           {session ? (
             <>
               <Row label="Signed in as" value={session.user.email} />
@@ -215,7 +234,7 @@ export default function Settings() {
               <Row label="Sign in or create an account" onTap={() => go('auth')} />
             </>
           )}
-        </div>
+        </Panel>
         <div style={{ padding: '8px 22px', fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
           {session ? 'Sign in on any device to come back to your cycle.' : 'Without an account, your cycle lives only on this device.'}
         </div>
@@ -227,32 +246,32 @@ export default function Settings() {
           she said so she can see what's pinned at a glance. */}
       <div className="insight-stagger" style={{ animationDelay: '270ms' }}>
       <SectionLabel color={acc}>Your Luna</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="Your setup" value={setupSummary(settings)} onTap={() => go('editSetup')} />
-      </div>
+      </Panel>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '290ms' }}>
       <SectionLabel color={acc}>Your cycle</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="Cycle & period length" value={`${cycleLength} / ${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
         <Row label="Pregnancy" value={pregLabel} onTap={() => go('pregnancy')} />
-      </div>
+      </Panel>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
       <SectionLabel color={acc}>Privacy</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="Your data, in the open" onTap={() => go('privacyDashboard')} />
         <Row label="Anonymous analytics" right={<Toggle on={settings.analytics} onChange={(v) => { updateSetting('analytics', v); setAnalyticsEnabled(v); if (v) capture('analytics_opted_in') }} />} />
         <Row label="Export everything" onTap={exportCSV} />
         <Row label="Doctor-ready PDF" onTap={() => go('watch')} />
         <Row label="Privacy Policy" onTap={() => go('privacy')} />
         <Row label="Terms" onTap={() => go('terms')} />
-      </div>
+      </Panel>
       </div>
 
       {/* "Gentle reminders" section removed 2026-06-10: the three
@@ -263,10 +282,10 @@ export default function Settings() {
 
       <div className="insight-stagger" style={{ animationDelay: '440ms' }}>
       <SectionLabel color={acc}>Little touches</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="Sticky note in the corner" right={<Toggle on={settings.stickyNoteEnabled !== false} onChange={(v) => updateSetting('stickyNoteEnabled', v)} />} />
         <Row label="Soft sounds" right={<Toggle on={Boolean(settings.sounds)} onChange={(v) => updateSetting('sounds', v)} />} />
-      </div>
+      </Panel>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
         The hand-drawn paper on Home that holds whatever you want to remember, and the quiet chimes when you save. Off if you'd rather less.
       </div>
@@ -274,7 +293,7 @@ export default function Settings() {
 
       <div className="insight-stagger" style={{ animationDelay: '490ms' }}>
       <SectionLabel color={acc}>Your life stage</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="Cycle tracking"
              value={settings?.lifecycle === 'ttc' ? 'Underlying' : 'Active'} />
         <Row label="Pregnancy"
@@ -291,7 +310,7 @@ export default function Settings() {
                }
              }} />
         <Row label="Perimenopause / menopause" value="Coming soon" />
-      </div>
+      </Panel>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
         Luna grows with you. Each stage gets its own thoughtful mode — built for the body you're in, not optimised against it.
       </div>
@@ -304,7 +323,7 @@ export default function Settings() {
 
       <div className="insight-stagger" style={{ animationDelay: '590ms' }}>
       <SectionLabel color={acc}>When something is happening</SectionLabel>
-      <div className="glass-card frost-card" style={{ margin: '0 16px', borderRadius: 22, overflow: 'hidden', boxShadow: `0 14px 30px -22px rgba(26,19,16,0.25)` }}>
+      <Panel>
         <Row label="When it feels heavy" onTap={() => go('heavy')} />
         <Row label="Cramps right now" onTap={() => go('cramps')} />
         <Row label="Anxiety tonight" onTap={() => go('anxiety')} />
@@ -314,7 +333,7 @@ export default function Settings() {
         <Row label="Missed a pill" onTap={() => go('missedPill')} />
         <Row label="Sex has been hurting" onTap={() => go('painfulSex')} />
         <Row label="Postpartum bleeding" onTap={() => go('postpartumBleeding')} />
-      </div>
+      </Panel>
       </div>
 
       {/* Former "More from Luna" — split into four labeled groups so
@@ -327,12 +346,7 @@ export default function Settings() {
           Cards stop reading as identical glass slabs. */}
       <div className="insight-stagger" style={{ animationDelay: '640ms' }}>
       <SectionLabel color={sectionColors('reflect').accent}>Reflective</SectionLabel>
-      <div style={{
-        margin: '0 16px', borderRadius: 22, overflow: 'hidden',
-        boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)',
-        background: sectionPaper('reflect'),
-        border: `1px solid ${sectionColors('reflect').accent}22`,
-      }}>
+      <Panel>
         <Row label="Cycle schools" value="5-day programs" onTap={() => go('cycleSchools')} />
         <Row label="For your mind and heart" onTap={() => go('reflect')} />
         <Row label="What we've noticed" onTap={() => go('insights')} />
@@ -340,46 +354,31 @@ export default function Settings() {
         <Row label="Your sexual life, your way" onTap={() => go('intimate')} />
         <Row label="Share with someone" value="Pro" onTap={() => go('shareWith')} />
         <Row label="Shared with you" onTap={() => go('sharedWithYou')} />
-      </div>
+      </Panel>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '680ms' }}>
       <SectionLabel color={sectionColors('urgent').accent}>When something's wrong</SectionLabel>
-      <div style={{
-        margin: '0 16px', borderRadius: 22, overflow: 'hidden',
-        boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)',
-        background: sectionPaper('urgent'),
-        border: `1px solid ${sectionColors('urgent').accent}22`,
-      }}>
+      <Panel>
         <Row label="When something feels off" onTap={() => go('watch')} />
         <Row label="Pregnancy loss support" onTap={() => go('pregnancyLoss')} />
-      </div>
+      </Panel>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '720ms' }}>
       <SectionLabel color={sectionColors('care').accent}>Manage</SectionLabel>
-      <div style={{
-        margin: '0 16px', borderRadius: 22, overflow: 'hidden',
-        boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)',
-        background: sectionPaper('care'),
-        border: `1px solid ${sectionColors('care').accent}22`,
-      }}>
+      <Panel>
         <Row label="For your next visit" onTap={() => go('cheatsheet')} />
         <Row label="Care checklist"     onTap={() => go('care')} />
-      </div>
+      </Panel>
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '760ms' }}>
       <SectionLabel color={sectionColors('plan').accent}>Account</SectionLabel>
-      <div style={{
-        margin: '0 16px', borderRadius: 22, overflow: 'hidden',
-        boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)',
-        background: sectionPaper('plan'),
-        border: `1px solid ${sectionColors('plan').accent}22`,
-      }}>
+      <Panel>
         <Row label="View Pro features"  onTap={() => go('paywall')} />
         <Row label="Delete my account"  onTap={deleteAccount} danger />
-      </div>
+      </Panel>
       </div>
 
       <div style={{ padding: '24px 22px 12px', textAlign: 'center', fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, lineHeight: 1.6 }}>
