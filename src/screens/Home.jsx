@@ -24,7 +24,6 @@ import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
-import { MoonMark } from '../components/Illustrations'
 
 const MS_PER_DAY = 86400000
 
@@ -533,24 +532,17 @@ function QuickActions({ go, onOpenChat }) {
               flexDirection: 'column',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
-              background: `linear-gradient(150deg, rgba(253,250,245,0.72), ${colors.tint}66)`,
-              border: `1px solid ${colors.accent}1f`,
-              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.55), 0 16px 34px -28px ${colors.accent}70`,
+              background: 'rgba(253,250,245,0.54)',
+              border: '1px solid rgba(26,19,16,0.065)',
+              boxShadow: '0 10px 22px -28px rgba(26,19,16,0.18)',
               animationDelay: `${idx * 50}ms`,
             }}>
-            <span aria-hidden="true" style={{
-              position: 'absolute', right: -22, top: -22, width: 88, height: 88,
-              borderRadius: '50%',
-              background: `radial-gradient(circle, ${colors.accent}1c 0%, ${colors.accent}08 54%, transparent 72%)`,
-              pointerEvents: 'none',
-            }} />
             <span style={{
               width: 38, height: 38, borderRadius: 16,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               color: colors.accent,
-              background: `linear-gradient(145deg, rgba(255,255,255,0.72), ${colors.accent}14)`,
-              border: `1px solid ${colors.accent}20`,
-              boxShadow: `0 10px 20px -16px ${colors.accent}80`,
+              background: `${colors.accent}12`,
+              border: `1px solid ${colors.accent}1f`,
             }}>
               {it.icon}
             </span>
@@ -573,8 +565,8 @@ function QuickActions({ go, onOpenChat }) {
         marginTop: 10,
         background: 'rgba(253,250,245,0.42)',
         border: '1px solid rgba(26,19,16,0.055)',
-        borderRadius: 22,
-        boxShadow: '0 14px 30px -28px rgba(26,19,16,0.22)',
+        borderRadius: 18,
+        boxShadow: 'none',
       }}>
         {secondaryItems.map((it, idx) => {
           const colors = sectionColors(it.category)
@@ -1099,6 +1091,10 @@ export default function Home() {
   // "just tracking, simply" — they didn't sign up for a haven, they
   // signed up for utility. Quiet by default for that intent.
   const hideCircleCard = userIntent === 'just-tracking'
+  // Share already lives in the primary invitation row. Keep the larger
+  // Share surface only for the first-cycle milestone so it feels like
+  // an occasion, not a repeated menu item.
+  const showCircleMilestoneCard = !hideCircleCard && !settings?.circleSeenFirstCycle && (cycle?.cyclesLogged ?? 0) >= 1
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
   // Smart cramps surface: if today's log has cramps as a mood OR as a
   // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
@@ -1484,13 +1480,13 @@ export default function Home() {
               className="alive-card"
               style={{
                 marginTop: 18, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
-                padding: '17px 18px 17px 20px', borderRadius: T.radius.lg,
-                background: todayLog ? '#FFFCF8' : `linear-gradient(135deg, ${T.accent}, color-mix(in srgb, ${T.accent}, #5e1c0c 32%))`,
-                border: todayLog ? `1.5px solid ${T.accent}2e` : 'none',
+                padding: '17px 18px 17px 20px', borderRadius: 18,
+                background: todayLog ? 'rgba(253,250,245,0.58)' : T.accent,
+                border: todayLog ? `1px solid ${T.accent}2e` : `1px solid ${T.accent}`,
                 color: todayLog ? T.text : '#fff',
                 boxShadow: todayLog
-                  ? T.shadow.sm
-                  : `inset 0 1px 0 rgba(255,255,255,0.22), 0 2px 6px rgba(26,19,16,0.06), 0 18px 32px -16px ${T.accent}85`,
+                  ? 'none'
+                  : `0 12px 22px -18px ${T.accent}85`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
               }}>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -1736,50 +1732,35 @@ export default function Home() {
             />
           )}
 
-          {/* Morning thought — promoted to lead the differentiators
-              tier (step 2 of the AI promotion pass). Large italic
-              serif quote, soft phase-tinted glass, opening serif
-              quotation mark as the visual signature, with a clear
-              "talk it through" affordance. Tap opens the LunaChat
-              overlay IMMEDIATELY, seeded with this thought, so the
-              gesture-to-conversation is one tap. */}
+          {/* Morning thought — now a flat editorial strip instead of
+              another decorated card. Tap opens LunaChat immediately,
+              seeded with this thought, so the gesture-to-conversation
+              stays one tap without adding more visual weight. */}
           {!isPreg && phase && (fwMoment || thoughtText) && (
             <button onClick={() => {
                 if (fwMoment?.cta === 'wheel') { go('insights'); return }
                 setChatOpener(fwMoment ? fwMoment.text : thoughtText)
                 setChatOpen(true)
               }}
-              className="alive-card frost-card sheen-once"
+              className="alive-card"
               style={{
                 position: 'relative',
-                marginTop: 22, padding: '26px 24px 22px',
-                background: `linear-gradient(160deg, ${phase.color}18, ${phase.color}08 60%, rgba(253,250,245,0.5))`,
-                border: `1px solid ${phase.color}30`,
-                borderRadius: 26,
-                boxShadow: `0 20px 44px -20px ${phase.color}70`,
+                marginTop: 26, padding: '18px 0 20px',
+                background: 'transparent',
+                border: 'none',
+                borderTop: '1px solid rgba(26,19,16,0.07)',
+                borderBottom: '1px solid rgba(26,19,16,0.07)',
+                borderRadius: 0,
+                boxShadow: 'none',
                 textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
                 fontFamily: 'inherit', color: 'inherit',
                 overflow: 'hidden',
               }}>
-              <div aria-hidden="true" style={{
-                position: 'absolute', top: -10, left: 14,
-                fontFamily: T.serif, fontSize: 96, lineHeight: 1, fontStyle: 'italic',
-                color: phase.color, opacity: 0.2, fontWeight: 400,
-                userSelect: 'none', pointerEvents: 'none',
-              }}>"</div>
-              {/* Faint celestial watermark, bottom-right — the day's
-                  thought sits under a quiet moon. Decorative, behind text. */}
-              <div aria-hidden="true" style={{
-                position: 'absolute', right: 12, bottom: 8,
-                color: phase.color, opacity: 0.16, pointerEvents: 'none',
-              }}>
-                <MoonMark size={64} />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10, position: 'relative' }}>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
                   {fwMoment ? fwMoment.eyebrow : 'a thought, today'}
                 </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
+                <div style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
                   {fwMoment?.cta === 'wheel' ? (
                     <>
                       <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -1798,19 +1779,17 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
+              <div style={{ fontFamily: T.serif, fontSize: 18.5, fontStyle: 'italic', lineHeight: 1.48, color: T.text, letterSpacing: -0.25, position: 'relative' }}>
                 {fwMoment ? fwMoment.text : thoughtText}
               </div>
             </button>
           )}
 
-          {/* Circle card — phase-resonant "let someone in" surface
-              for the Share with someone Pro feature. Doula voice,
-              phase-tuned, conditional + dismissable. Sits in the
-              differentiator tier alongside the AI thought, never
-              tab-bar real estate. Suppressed for just-tracking intent
-              — they didn't sign up for a haven, they signed up for utility. */}
-          {!isPreg && !hideCircleCard && (
+          {/* Circle card — only for the first-cycle milestone now.
+              The daily Share entry lives in the primary invitation
+              row, so this larger surface appears only when there is
+              an actual moment worth marking. */}
+          {!isPreg && showCircleMilestoneCard && (
             <CircleCard
               phase={phase}
               settings={settings}
