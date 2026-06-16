@@ -192,54 +192,6 @@ function Greeting({ name, phaseId }) {
   )
 }
 
-function HomeMasthead({ go }) {
-  const date = new Date()
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'long' })
-  const monthDay = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-  const year = date.getFullYear()
-  return (
-    <header style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 16 }}>
-      <div>
-        <div style={{ fontFamily: T.serif, fontSize: 43, lineHeight: 0.92, letterSpacing: -1.4, fontWeight: 500, color: T.text }}>
-          Luna.
-        </div>
-        <div style={{ fontFamily: T.serif, fontSize: 13, lineHeight: 1.25, color: T.muted, marginTop: 5 }}>
-          by Gloria
-        </div>
-        <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.25, color: T.text, marginTop: 20, letterSpacing: -0.2 }}>
-          {weekday}, {monthDay}
-        </div>
-        <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.1, fontStyle: 'italic', color: T.muted }}>
-          {year}
-        </div>
-      </div>
-      <button onClick={() => go('privacyDashboard')} className="alive-card"
-        style={{
-          marginTop: 4,
-          flexShrink: 0,
-          border: '1px solid rgba(26,19,16,0.075)',
-          background: 'rgba(253,250,245,0.78)',
-          color: T.text,
-          borderRadius: 999,
-          padding: '10px 13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          boxShadow: T.shadow.sm,
-          cursor: 'pointer',
-          fontFamily: T.sans,
-          fontSize: 12,
-          fontWeight: 650,
-          lineHeight: 1.12,
-          textAlign: 'left',
-        }}>
-        <span aria-hidden="true" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1 }}>⌕</span>
-        <span>Private on<br />this device</span>
-      </button>
-    </header>
-  )
-}
-
 // Compact 7-day strip — Mon–Sun of the current week. Today is shown
 // with a soft pulsing accent ring and a filled disc; period days
 // (logged or predicted) get a small dot below the number.
@@ -566,7 +518,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
     <div ref={scrollerRef} className="h-scroller" style={{
       display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
       marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      marginTop: 14,
+      marginTop: 16,
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
@@ -574,8 +526,8 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 42%',
-              maxWidth: 164,
+              flex: '0 0 45%',
+              maxWidth: 172,
               scrollSnapAlign: 'start',
               textAlign: 'left',
               borderRadius: T.radius.lg,
@@ -595,12 +547,12 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
             {/* The distinct illustrated banner — soft glowing fills in
                 the section color, a different motif per card. This is
                 what makes each tile feel made for its purpose. */}
-            <span style={{ display: 'block', height: 58, background: `${colors.tint}cc`, borderBottom: `1px solid ${colors.accent}14` }}>
+            <span style={{ display: 'block', height: 72, background: `${colors.tint}cc`, borderBottom: `1px solid ${colors.accent}14` }}>
               {hasArt ? <CardArt kind={it.key} accent={colors.accent} /> : (
                 <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>{it.icon}</span>
               )}
             </span>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '10px 13px 13px' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '11px 14px 14px' }}>
               <span style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
                 {it.label}
               </span>
@@ -1321,8 +1273,7 @@ export default function Home() {
       <BackgroundBlob color={blobColor} effect={effect} />
       {/* Content layer — scrolls past the stationary blob. */}
       <Screen ref={screenRef}>
-        <div onClick={handleContentTap} style={{ position: 'relative', padding: '24px 22px 0', color: T.text, zIndex: 1 }}>
-          <HomeMasthead go={go} />
+        <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} phaseId={phase?.id} />
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
@@ -1418,12 +1369,12 @@ export default function Home() {
               )}
               <div key={bcUsesCover ? `bc-${bcModel.cover.bigNumber ?? 'x'}` : cycleDay}
                 className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength && !bcUsesCover ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 102, fontWeight: 300, fontStyle: 'italic', color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -4.4, transition: 'color 0.6s ease-out' }}>
+                style={{ fontFamily: T.serif, fontSize: 116, fontWeight: 300, fontStyle: 'italic', color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -5.5, transition: 'color 0.6s ease-out' }}>
                 {bcUsesCover
                   ? (bcModel.cover.bigNumber != null ? bcModel.cover.bigNumber : '—')
                   : (cycleDay ? animatedDay : '—')}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.45, lineHeight: 1.1, marginTop: 2, color: T.text }}>
+              <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, lineHeight: 1.1, marginTop: 4, color: T.text }}>
                 {bcUsesCover ? bcModel.cover.headline : (phase?.name || 'Just getting started')}.
               </div>
             </div>
@@ -1462,7 +1413,7 @@ export default function Home() {
                   invitation, not an instruction. Uses the phase color
                   so it ties to the rest of the cover. */}
               {phase && (
-                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 10.5, marginTop: 10, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.2, fontWeight: 600, opacity: 0.58, textTransform: 'lowercase' }}>
+                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 11, marginTop: 12, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.4, fontWeight: 600, opacity: 0.7, textTransform: 'lowercase' }}>
                   tap to learn more
                 </div>
               )}
