@@ -1839,28 +1839,26 @@ export default function Home() {
             return (
               <button onClick={() => lesson.readId ? goArticle(lesson.readId) : null}
                 disabled={!lesson.readId}
-                className="alive-card frost-card"
+                className="alive-card"
+                title={lesson.source}
                 style={{
                   position: 'relative',
-                  marginTop: 22, padding: '18px 20px 16px',
-                  background: `linear-gradient(160deg, ${phase.color}0d, rgba(253,250,245,0.45))`,
-                  border: `1px solid ${phase.color}1f`,
-                  borderRadius: 22,
-                  boxShadow: `0 14px 30px -22px ${phase.color}38`,
+                  marginTop: 26, padding: '16px 0 18px',
+                  background: 'transparent',
+                  border: 'none',
+                  borderTop: '1px solid rgba(26,19,16,0.07)',
+                  borderBottom: '1px solid rgba(26,19,16,0.07)',
+                  borderRadius: 0,
+                  boxShadow: 'none',
                   textAlign: 'left', cursor: lesson.readId ? 'pointer' : 'default',
                   width: '100%', display: 'block',
                   color: T.text, fontFamily: 'inherit',
                   overflow: 'hidden',
                 }}>
-                <div aria-hidden="true" title={lesson.source} style={{
-                  position: 'absolute', top: 14, right: 16,
-                  width: 6, height: 6, borderRadius: 999,
-                  background: phase.color, opacity: 0.4,
-                }} />
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1, marginBottom: 8 }}>
                   a small thing to know
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', lineHeight: 1.4, color: T.text, letterSpacing: -0.3 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 17.5, fontStyle: 'italic', lineHeight: 1.44, color: T.text, letterSpacing: -0.25 }}>
                   {lesson.title}
                 </div>
               </button>
@@ -1880,8 +1878,9 @@ export default function Home() {
               period app has. Kept right under the differentiators
               so it stays accessible without scrolling far. */}
 
-          {/* How are you, today? — Five frosted mood pills. */}
-          <div style={{ padding: '4px 0', marginTop: 22, marginBottom: 8 }}>
+          {/* How are you, today? — one-tap mood log, kept quiet so it
+              reads like a check-in instead of another card section. */}
+          <div style={{ padding: '4px 0', marginTop: 24, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
               <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
                 How are you, today?
@@ -1902,45 +1901,49 @@ export default function Home() {
                 const isSelected = quickMood === l
                 return (
                   <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
-                    className={`alive-card frost-card${isSelected ? ' tap-bloom' : ''}`}
+                    className={`alive-card${isSelected ? ' tap-bloom' : ''}`}
                     style={{
                       flex: 1,
-                      border: `1px solid ${isSelected ? color + '55' : 'rgba(26,19,16,0.06)'}`,
+                      minHeight: 76,
+                      border: `1px solid ${isSelected ? color + '42' : 'transparent'}`,
                       cursor: 'pointer',
-                      background: isSelected ? `${color}1f` : 'rgba(253,250,245,0.55)',
-                      padding: '14px 6px 12px',
+                      background: isSelected ? `${color}12` : 'transparent',
+                      padding: '10px 4px 9px',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                      borderRadius: 20,
+                      borderRadius: 16,
                       color: isSelected ? color : T.text, fontFamily: T.sans,
-                      boxShadow: isSelected
-                        ? `0 14px 28px -18px ${color}60`
-                        : '0 14px 26px -22px rgba(26,19,16,0.18)',
-                      transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease',
+                      boxShadow: 'none',
+                      transition: 'background .25s ease, border-color .25s ease, color .25s ease',
                     }}>
                     <span style={{
-                      width: 36, height: 36, borderRadius: 999,
+                      width: 31, height: 31, borderRadius: 13,
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSelected ? `${color}28` : `${color}14`,
-                      color: color,
-                      transition: 'background .25s ease',
+                      background: isSelected ? `${color}18` : 'rgba(26,19,16,0.035)',
+                      color: isSelected ? color : T.muted,
+                      transition: 'background .25s ease, color .25s ease',
                     }}>
-                      <SymptomIcon id={id} size={22} />
+                      <SymptomIcon id={id} size={19} />
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{l}</span>
+                    <span style={{ fontSize: 11, fontWeight: isSelected ? 650 : 500, letterSpacing: 0.15 }}>{l}</span>
                   </button>
                 )
               })}
             </div>
             {moodInsight && (
               <div key={`${phase?.id}-${quickMood}`}
-                className="frost-card"
-                style={{ marginTop: 14, padding: 18, background: `rgba(200,78,46,0.08)`, border: `1px solid ${T.accent}25`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
-                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
+                style={{
+                  marginTop: 16,
+                  padding: '2px 0 2px 14px',
+                  background: 'transparent',
+                  borderLeft: `2px solid ${T.accent}70`,
+                  animation: 'fadeUp 0.35s ease-out both',
+                }}>
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.58, color: T.text, fontStyle: 'italic', letterSpacing: -0.05 }}>
                   {moodInsight.text}
                 </div>
                 {moodInsight.read && (
                   <button onClick={() => goArticle(moodInsight.read)}
-                    style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                    style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.25, fontFamily: T.sans, padding: 0 }}>
                     Read more →
                   </button>
                 )}
