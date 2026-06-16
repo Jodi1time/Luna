@@ -6,7 +6,7 @@ import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, SEX_LESSONS, BBT_LESSONS } from '../data/bodyLiteracy'
 import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { sectionColors } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
@@ -44,15 +44,14 @@ const SEX_OPTIONS = [
 function QuietLesson({ lesson, color, keyId }) {
   if (!lesson) return null
   return (
-    <div key={keyId} className="frost-card" title={lesson.source ? `Source · ${lesson.source}` : undefined}
+    <div key={keyId} title={lesson.source ? `Source · ${lesson.source}` : undefined}
       style={{
-        padding: '12px 14px',
-        background: `linear-gradient(160deg, ${color}0d, rgba(253,250,245,0.45))`,
-        border: `1px solid ${color}1f`,
-        borderRadius: 16,
+        padding: '2px 0 2px 14px',
+        background: 'transparent',
+        borderLeft: `2px solid ${color}70`,
         animation: 'fadeUp 0.32s ease-out both',
       }}>
-      <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.55, color: T.text, letterSpacing: -0.1 }}>
+      <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.58, color: T.text, letterSpacing: -0.08 }}>
         {lesson.body || lesson.title}
       </div>
     </div>
@@ -299,7 +298,7 @@ export default function Log() {
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
         </div>
 
-        {/* Mood — frosted soft pills with each mood's own color tint */}
+        {/* Mood — flat one-tap choices with each mood's own color tint */}
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
         <Eyebrow color={acc}>How you're feeling</Eyebrow>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, gap: 6 }}>
@@ -309,35 +308,36 @@ export default function Log() {
             const on = moods.includes(id)
             return (
               <button key={id} onClick={() => setMoods((m) => m.includes(id) ? m.filter((x) => x !== id) : [...m, id])}
-                className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
+                className={`alive-card${on ? ' tap-bloom' : ''}`}
                 style={{
                   flex: 1,
-                  border: `1px solid ${on ? moodAccent + '55' : 'rgba(26,19,16,0.06)'}`,
+                  minHeight: 74,
+                  border: `1px solid ${on ? moodAccent + '42' : 'transparent'}`,
                   cursor: 'pointer',
-                  padding: '12px 4px 10px',
+                  padding: '10px 4px 9px',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-                  background: on ? moodTint : 'rgba(253,250,245,0.55)',
+                  background: on ? moodTint : 'transparent',
                   color: on ? moodAccent : T.text,
-                  borderRadius: 18, fontFamily: 'inherit',
-                  boxShadow: on ? `0 12px 22px -16px ${moodAccent}80` : '0 10px 22px -22px rgba(26,19,16,0.18)',
-                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out)',
+                  borderRadius: 16, fontFamily: 'inherit',
+                  boxShadow: 'none',
+                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)',
                 }}>
                 <span style={{
-                  width: 30, height: 30, borderRadius: 999,
+                  width: 30, height: 30, borderRadius: 13,
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  background: on ? `${moodAccent}24` : `${moodAccent}12`,
-                  color: moodAccent,
+                  background: on ? `${moodAccent}20` : 'rgba(26,19,16,0.035)',
+                  color: on ? moodAccent : T.muted,
                 }}>
                   <SymptomIcon id={id} size={18} />
                 </span>
-                <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{MOOD_LABELS[id]}</span>
+                <span style={{ fontSize: 11, fontWeight: on ? 650 : 500, letterSpacing: 0.15 }}>{MOOD_LABELS[id]}</span>
               </button>
             )
           })}
         </div>
         </div>
 
-        {/* Symptoms — frosted body-tinted cards */}
+        {/* Symptoms — compact body signals without card-heavy chrome */}
         <div className="insight-stagger" style={{ animationDelay: '180ms' }}>
         <Eyebrow color={acc}>What your body's telling you</Eyebrow>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 24 }}>
@@ -346,32 +346,32 @@ export default function Log() {
             const bodyColors = sectionColors('body')
             return (
               <div key={`${id}-${on ? 'on' : 'off'}`}
-                className={`alive-card frost-card${on && activeSym === id ? ' tap-bloom' : ''}`}
+                className={`alive-card${on && activeSym === id ? ' tap-bloom' : ''}`}
                 style={{
-                  border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
-                  background: on ? acc + '15' : sectionPaper('body'),
-                  padding: '14px 4px 10px',
+                  border: `1px solid ${on ? acc + '42' : 'transparent'}`,
+                  background: on ? acc + '10' : 'transparent',
+                  padding: '12px 4px 9px',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                   position: 'relative',
-                  borderRadius: 18,
-                  boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${bodyColors.accent}40`,
-                  transition: 'all 0.2s var(--ease-out)',
+                  borderRadius: 16,
+                  boxShadow: 'none',
+                  transition: 'background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), color 0.2s var(--ease-out)',
                 }}>
                 <button onClick={() => toggleSym(id)}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: 'inherit', color: on ? acc : T.text, padding: 0, width: '100%' }}>
                   <span style={{
-                    width: 30, height: 30, borderRadius: 999,
+                    width: 30, height: 30, borderRadius: 13,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    background: on ? `${acc}24` : `${bodyColors.accent}14`,
-                    color: on ? acc : bodyColors.accent,
+                    background: on ? `${acc}18` : `${bodyColors.accent}10`,
+                    color: on ? acc : T.muted,
                   }}>
                     <SymptomIcon id={id} size={18} />
                   </span>
-                  <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.2 }}>{s.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: on ? 650 : 500, lineHeight: 1.2 }}>{s.label}</span>
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); goSymptom(id) }}
                   aria-label={`Learn about ${s.label}`}
-                  style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, padding: 0, background: 'rgba(253,250,245,0.6)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, cursor: 'pointer', color: T.muted, fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ position: 'absolute', top: 4, right: 4, width: 18, height: 18, padding: 0, background: 'transparent', border: 'none', borderRadius: 999, cursor: 'pointer', color: T.muted, fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.72 }}>
                   ?
                 </button>
               </div>
@@ -397,28 +397,28 @@ export default function Log() {
                 const planColors = sectionColors('plan')
                 return (
                   <div key={`${id}-${on ? 'on' : 'off'}`}
-                    className={`alive-card frost-card${on && activeSym === id ? ' tap-bloom' : ''}`}
+                    className={`alive-card${on && activeSym === id ? ' tap-bloom' : ''}`}
                     style={{
-                      border: `1px solid ${on ? planColors.accent + '55' : 'rgba(26,19,16,0.06)'}`,
-                      background: on ? planColors.accent + '15' : sectionPaper('plan'),
-                      padding: '12px 4px 8px',
+                      border: `1px solid ${on ? planColors.accent + '42' : 'transparent'}`,
+                      background: on ? planColors.accent + '10' : 'transparent',
+                      padding: '10px 4px 8px',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                       position: 'relative',
-                      borderRadius: 16,
-                      boxShadow: on ? `0 12px 22px -16px ${planColors.accent}70` : `0 10px 22px -22px ${planColors.accent}40`,
-                      transition: 'all 0.2s var(--ease-out)',
+                      borderRadius: 14,
+                      boxShadow: 'none',
+                      transition: 'background 0.2s var(--ease-out), border-color 0.2s var(--ease-out), color 0.2s var(--ease-out)',
                     }}>
                     <button onClick={() => toggleSym(id)}
                       style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, fontFamily: 'inherit', color: on ? planColors.accent : T.text, padding: 0, width: '100%' }}>
                       <span style={{
-                        width: 26, height: 26, borderRadius: 999,
+                        width: 26, height: 26, borderRadius: 11,
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        background: on ? `${planColors.accent}24` : `${planColors.accent}14`,
-                        color: on ? planColors.accent : planColors.accent,
+                        background: on ? `${planColors.accent}18` : `${planColors.accent}10`,
+                        color: on ? planColors.accent : T.muted,
                       }}>
                         <SymptomIcon id={id} size={16} />
                       </span>
-                      <span style={{ fontSize: 11, fontWeight: 500, lineHeight: 1.15, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
+                      <span style={{ fontSize: 11, fontWeight: on ? 650 : 500, lineHeight: 1.15, textAlign: 'center', padding: '0 2px' }}>{s.label}</span>
                     </button>
                   </div>
                 )
@@ -431,14 +431,20 @@ export default function Log() {
             as the mood-tap insights on Home. */}
         {symInsight && (
           <div key={`${phase?.id}-${activeSym}`}
-            className="frost-card"
-            style={{ marginTop: -10, marginBottom: 24, padding: 16, background: acc + '12', border: `1px solid ${acc}28`, borderRadius: 18, boxShadow: `0 14px 30px -22px ${acc}50`, animation: 'fadeUp 0.35s ease-out both' }}>
-            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text, fontStyle: 'italic' }}>
+            style={{
+              marginTop: -8,
+              marginBottom: 24,
+              padding: '2px 0 2px 14px',
+              background: 'transparent',
+              borderLeft: `2px solid ${acc}70`,
+              animation: 'fadeUp 0.35s ease-out both',
+            }}>
+            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.58, color: T.text, fontStyle: 'italic', letterSpacing: -0.05 }}>
               {symInsight.text}
             </div>
             {symInsight.read && (
               <button onClick={() => goArticle(symInsight.read)}
-                style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: acc, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
+                style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: acc, fontSize: 12, fontWeight: 600, letterSpacing: 0.25, fontFamily: T.sans, padding: 0 }}>
                 Read more →
               </button>
             )}
@@ -459,18 +465,18 @@ export default function Log() {
                 setFlow(on ? null : f)
                 setTeachField(on ? null : 'flow')
               }}
-                className="alive-card frost-card"
+                className="alive-card"
                 style={{
                   flex: 1,
-                  border: `1px solid ${on ? fc : 'rgba(26,19,16,0.06)'}`,
-                  background: on ? fc : `linear-gradient(160deg, ${fc}10, rgba(253,250,245,0.5))`,
+                  border: `1px solid ${on ? fc : `${fc}28`}`,
+                  background: on ? fc : `${fc}09`,
                   color: on ? '#fff' : T.text,
                   padding: '14px 4px',
                   cursor: 'pointer',
                   fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: 500,
-                  borderRadius: 18,
-                  boxShadow: on ? `0 12px 24px -16px ${fc}90` : `0 10px 22px -22px ${fc}40`,
-                  transition: 'all 0.2s var(--ease-out)',
+                  borderRadius: 14,
+                  boxShadow: 'none',
+                  transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)',
                 }}>
                 {f}
               </button>
@@ -489,21 +495,23 @@ export default function Log() {
             type="button"
             onClick={toggleCycleDetails}
             aria-expanded={showCycleDetails}
-            className="alive-card frost-card"
+            className="alive-card"
             style={{
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 12,
-              padding: '14px 16px',
-              background: hasCycleDetails ? `${acc}10` : 'rgba(253,250,245,0.5)',
-              border: `1px solid ${hasCycleDetails ? `${acc}30` : 'rgba(26,19,16,0.06)'}`,
-              borderRadius: 18,
+              padding: '15px 0',
+              background: 'transparent',
+              border: 'none',
+              borderTop: '1px solid rgba(26,19,16,0.07)',
+              borderBottom: '1px solid rgba(26,19,16,0.07)',
+              borderRadius: 0,
               cursor: 'pointer',
               color: T.text,
               fontFamily: T.sans,
-              boxShadow: hasCycleDetails ? `0 12px 24px -20px ${acc}60` : '0 10px 22px -24px rgba(26,19,16,0.18)',
+              boxShadow: 'none',
             }}>
             <span style={{ minWidth: 0, textAlign: 'left' }}>
               <span style={{ display: 'block', fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', color: T.text, lineHeight: 1.2 }}>
@@ -517,7 +525,7 @@ export default function Log() {
                     : 'Add temperature and discharge only if useful.'}
               </span>
             </span>
-            <span aria-hidden="true" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: showCycleDetails ? acc : 'rgba(26,19,16,0.06)', color: showCycleDetails ? '#fff' : T.text, fontSize: 18, lineHeight: 1 }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: showCycleDetails ? `${acc}14` : 'rgba(26,19,16,0.04)', color: showCycleDetails ? acc : T.text, fontSize: 18, lineHeight: 1 }}>
               {showCycleDetails ? '−' : '+'}
             </span>
           </button>
@@ -570,23 +578,22 @@ export default function Log() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 24 }}>
               {MUCUS_OPTIONS.map((m) => {
                 const on = mucus === m.id
-                const careColors = sectionColors('care')
                 return (
                   <button key={m.id} onClick={() => {
                     setMucus(on ? null : m.id)
                     setTeachField(on ? null : 'mucus')
                   }}
-                    className="alive-card frost-card"
+                    className="alive-card"
                     style={{
-                      border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
-                      background: on ? acc + '14' : sectionPaper('care'),
+                      border: `1px solid ${on ? acc + '42' : 'transparent'}`,
+                      background: on ? acc + '10' : 'transparent',
                       color: on ? acc : T.text,
                       padding: '12px 4px',
                       cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600,
-                      borderRadius: 16,
-                      boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${careColors.accent}40`,
+                      borderRadius: 14,
+                      boxShadow: 'none',
                       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                      transition: 'all 0.2s var(--ease-out)',
+                      transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)',
                     }}>
                     <span style={{ fontSize: 11.5, fontWeight: 600, fontFamily: T.serif, letterSpacing: -0.1 }}>{m.label}</span>
                     <span style={{ fontSize: 11, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
@@ -614,8 +621,8 @@ export default function Log() {
                 setSleep(on ? null : s)
                 setTeachField(on ? null : 'sleep')
               }}
-                className="alive-card frost-card"
-                style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
+                className="alive-card"
+                style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
                 {s}
               </button>
             )
@@ -639,8 +646,8 @@ export default function Log() {
                 setSex(on ? null : s.id)
                 setTeachField(on ? null : 'sex')
               }}
-                className="alive-card frost-card"
-                style={{ flex: 1, border: `1px solid ${on ? acc : 'rgba(26,19,16,0.06)'}`, background: on ? acc : 'rgba(253,250,245,0.55)', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: 500, borderRadius: 18, boxShadow: on ? `0 12px 24px -16px ${acc}80` : '0 10px 22px -22px rgba(26,19,16,0.18)', transition: 'all 0.2s var(--ease-out)' }}>
+                className="alive-card"
+                style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
                 {s.label}
               </button>
             )
@@ -676,12 +683,12 @@ export default function Log() {
         {/* Quiet undo path — if the user logged something on the wrong
             day, or wants to start fresh, let them empty this day's
             entry entirely. Confirmation prompt so it's not accidental. */}
-        <div style={{ marginTop: 22, paddingTop: 18 }}>
+        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
           <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 12 }}>
             Tapped the wrong thing? Take it back — your future self won't mind.
           </div>
           <button
-            className="alive-card frost-card"
+            className="alive-card"
             onClick={() => {
               const friendly = isToday ? 'today' : dateLabel
               if (!window.confirm(`Clear everything you have logged for ${friendly}? This removes the whole entry.`)) return
@@ -689,7 +696,7 @@ export default function Log() {
               setActiveLogDate(null)
               back()
             }}
-            style={{ width: '100%', background: 'rgba(253,250,245,0.55)', border: `1px solid ${T.accent}40`, color: T.accent, padding: '13px 16px', borderRadius: 18, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.3, boxShadow: `0 10px 22px -22px ${T.accent}60` }}>
+            style={{ width: '100%', background: 'transparent', border: `1px solid ${T.accent}30`, color: T.accent, padding: '13px 16px', borderRadius: 14, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.25, boxShadow: 'none' }}>
             Clear this day's entry
           </button>
         </div>
