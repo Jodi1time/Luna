@@ -30,7 +30,7 @@ export default function StickyNote({
   return (
     <div style={{
       display: 'flex', justifyContent: 'flex-end',
-      marginTop: 4, marginBottom: 8, marginRight: -10,
+      marginTop: 2, marginBottom: 10, marginRight: -2,
     }}>
       <button onClick={onTap}
         style={{
@@ -46,9 +46,9 @@ export default function StickyNote({
           background: 'linear-gradient(135deg, #FBEFC2 0%, #F5DE7E 100%)',
           padding: '22px 18px 16px',
           transform: `rotate(${tilt}deg)`,
-          boxShadow: '0 16px 32px -14px rgba(26,19,16,0.38), 0 4px 10px -2px rgba(26,19,16,0.16), inset 0 1px 0 rgba(255,255,255,0.4)',
-          width: 200,
-          minHeight: 96,
+          boxShadow: '0 14px 26px -18px rgba(26,19,16,0.34), 0 2px 8px -3px rgba(26,19,16,0.14), inset 0 1px 0 rgba(255,255,255,0.45)',
+          width: 176,
+          minHeight: 90,
           borderRadius: 2,
           textAlign: 'left',
           color: '#2A1A14',
@@ -61,7 +61,7 @@ export default function StickyNote({
             position: 'absolute',
             top: -9, left: '50%',
             transform: `translateX(-50%) rotate(${tapeTilt}deg)`,
-            width: 78, height: 18,
+            width: 68, height: 16,
             background: `linear-gradient(180deg, ${tapeColor}55 0%, ${tapeColor}28 100%)`,
             borderRadius: 1,
             boxShadow: '0 2px 4px rgba(26,19,16,0.08)',
@@ -93,7 +93,7 @@ export default function StickyNote({
               color: 'rgba(26,19,16,0.5)',
               marginTop: 8, textAlign: 'right',
             }}>
-              — {signature}
+              {signature}
             </div>
           )}
         </div>

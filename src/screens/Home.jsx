@@ -25,7 +25,6 @@ import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
 import { MoonMark } from '../components/Illustrations'
-import { CardArt, CARD_ART_KINDS } from '../components/CardArt'
 
 const MS_PER_DAY = 86400000
 
@@ -33,7 +32,7 @@ const MS_PER_DAY = 86400000
 const phasePresence = {
   menstrual:  'Rest is the work this week.',
   follicular: 'A gentle re-opening. Move when it feels right.',
-  ovulation:  'Notice what feels easier today — words, wanting, warmth.',
+  ovulation:  'Notice what feels easier today: words, wanting, warmth.',
   luteal:     'Be a little softer with yourself. Cravings are signal, not weakness.',
 }
 
@@ -145,50 +144,6 @@ function BackgroundBlob({ color, effect }) {
         <div key={effect.id} className="blob-bloom" style={{ '--phase-color': effectColor }} />
       )}
     </Backdrop>
-  )
-}
-
-// Phase-aware tonal opener — the same time of day reads slightly
-// different depending on where the user is in her cycle.
-const PHASE_GREETING = {
-  menstrual:  'Quiet',
-  follicular: 'Bright',
-  ovulation:  'Warm',
-  luteal:     'Soft',
-}
-
-function Greeting({ name, phaseId }) {
-  const hour = new Date().getHours()
-  const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
-  const first = (name || '').split(' ')[0]
-  const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
-  // Build the greeting as discrete segments so each can fade in with
-  // its own delay. We use a non-breaking space ( ) for trailing
-  // gaps — `display: inline-block` collapses trailing whitespace from
-  // text content, which made the greeting render as e.g. "Quietevening"
-  // instead of "Quiet evening". NBSP is non-collapsible.
-  const NBSP = ' '
-  const segments = first
-    ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
-    : [`${opener}${NBSP}`, timeOfDay, '.']
-  return (
-    <div style={{ paddingTop: 2, marginBottom: 10 }}>
-      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
-        {segments.map((seg, i) => {
-          const text = typeof seg === 'string' ? seg : seg.text
-          const italic = typeof seg === 'string' ? true : seg.italic !== false
-          return (
-            <span key={i} className="word-in"
-              style={{
-                animationDelay: `${i * 110}ms`,
-                fontStyle: italic ? 'italic' : 'normal',
-              }}>
-              {text}
-            </span>
-          )
-        })}
-      </div>
-    </div>
   )
 }
 
@@ -466,7 +421,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('shareWith') },
-    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library — sourced',
+    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library, sourced',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* The whole glass-and-handle tilts around the end of the
@@ -565,42 +520,44 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
   return (
     <div ref={scrollerRef} className="h-scroller" style={{
       display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-      marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      marginTop: 14,
+      marginLeft: -22, marginRight: -22, padding: '4px 22px 10px',
+      marginTop: 16,
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
-        const hasArt = CARD_ART_KINDS.includes(it.key)
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 42%',
-              maxWidth: 164,
+              flex: '0 0 72%',
+              maxWidth: 276,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: T.radius.lg,
-              padding: 0,
+              borderRadius: 24,
+              padding: 14,
               overflow: 'hidden',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              background: sectionPaper(it.category),
+              alignItems: 'center',
+              gap: 13,
+              background: `linear-gradient(135deg, rgba(253,250,245,0.86), ${colors.tint}6f)`,
               border: `1px solid ${colors.accent}22`,
-              boxShadow: T.shadow.md,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.56), 0 12px 28px -23px ${colors.accent}70`,
               animationDelay: `${idx * 50}ms`,
             }}>
-            {/* The distinct illustrated banner — soft glowing fills in
-                the section color, a different motif per card. This is
-                what makes each tile feel made for its purpose. */}
-            <span style={{ display: 'block', height: 58, background: `${colors.tint}cc`, borderBottom: `1px solid ${colors.accent}14` }}>
-              {hasArt ? <CardArt kind={it.key} accent={colors.accent} /> : (
-                <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>{it.icon}</span>
-              )}
+            <span style={{
+              width: 48, height: 48, flexShrink: 0, borderRadius: 18,
+              background: `linear-gradient(145deg, ${colors.tint}ee, rgba(253,250,245,0.72))`,
+              border: `1px solid ${colors.accent}1f`,
+              display: 'grid',
+              placeItems: 'center',
+              color: colors.accent,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.55), 0 10px 20px -18px ${colors.accent}`,
+            }}>
+              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>{it.icon}</span>
             </span>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '10px 13px 13px' }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
               <span style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
                 {it.label}
               </span>
@@ -697,7 +654,7 @@ function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
         "{text}"
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 12, color: T.muted, fontStyle: 'italic' }}>
-        — {surfaced.label}
+        {surfaced.label}
       </div>
     </button>
   )
@@ -953,7 +910,7 @@ function CircleCard({ phase, settings, updateSetting, cycle, go }) {
         {copy.title}
       </div>
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, lineHeight: 1.55, marginBottom: 6 }}>
-        A partner, your mother, a doula, a friend. You pick what they see — diary stays yours.
+        A partner, your mother, a doula, a friend. You pick what they see. Diary stays yours.
       </div>
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: colors.accent, fontWeight: 500, marginTop: 6 }}>
         invite someone in →
@@ -969,7 +926,7 @@ function CircleCard({ phase, settings, updateSetting, cycle, go }) {
 
 export default function Home() {
   const store = useLuna()
-  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, displayName, settings, updateSetting, setActiveReflectPractice } = store
+  const { go, goPhase, goArticle, saveLog, setLastPeriodStart, setActiveLogDate, markWellness, logs, birthControl, settings, updateSetting, setActiveReflectPractice } = store
   const wellness = settings?.wellness || {}
   const cycle = useCycle(store)
   const { cycleDay, phase, cycleLength, periodLength } = cycle
@@ -1323,7 +1280,6 @@ export default function Home() {
       <Screen ref={screenRef}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '24px 22px 0', color: T.text, zIndex: 1 }}>
           <HomeMasthead go={go} />
-          <Greeting name={displayName} phaseId={phase?.id} />
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
 
@@ -1352,7 +1308,7 @@ export default function Home() {
                 week {preg.week} · {preg.trimester?.name?.toLowerCase()}
               </div>
               <div className="ambient-breath" style={{ fontFamily: T.serif, fontSize: 150, fontWeight: 300, fontStyle: 'italic', color: trimColor ? `color-mix(in srgb, ${trimColor}, ${T.ink} 15%)` : T.accent, lineHeight: 0.92, letterSpacing: -7, transition: 'color 0.6s ease-out' }}>
-                {animatedDay || '—'}
+                {animatedDay || '•'}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, marginTop: 14, lineHeight: 1.1, color: T.text }}>
                 {preg.daysToDue > 0
@@ -1367,10 +1323,10 @@ export default function Home() {
                     About the size of {preg.content.size}.
                   </div>
                   <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.text, marginBottom: 10 }}>
-                    <strong style={{ fontWeight: 600 }}>Baby — </strong>{preg.content.baby}
+                    <strong style={{ fontWeight: 600 }}>Baby: </strong>{preg.content.baby}
                   </div>
                   <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.text }}>
-                    <strong style={{ fontWeight: 600 }}>You — </strong>{preg.content.body}
+                    <strong style={{ fontWeight: 600 }}>You: </strong>{preg.content.body}
                   </div>
                   <SourceLine>{preg.content.source}</SourceLine>
                 </div>
@@ -1409,7 +1365,7 @@ export default function Home() {
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 4, opacity: 0.9 }}>
                 {bcUsesCover
                   ? bcModel.cover.eyebrow
-                  : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
+                  : (phase ? `day ${cycleDay || '•'} · your ${phase.name.toLowerCase()} phase` : 'day •')}
               </div>
               {phase && !bcUsesCover && (
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4, marginBottom: 10, color: phase.color, opacity: 0.7 }} aria-hidden="true">
@@ -1420,8 +1376,8 @@ export default function Home() {
                 className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength && !bcUsesCover ? ' countdown' : ''}`}
                 style={{ fontFamily: T.serif, fontSize: 102, fontWeight: 300, fontStyle: 'italic', color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -4.4, transition: 'color 0.6s ease-out' }}>
                 {bcUsesCover
-                  ? (bcModel.cover.bigNumber != null ? bcModel.cover.bigNumber : '—')
-                  : (cycleDay ? animatedDay : '—')}
+                  ? (bcModel.cover.bigNumber != null ? bcModel.cover.bigNumber : '•')
+                  : (cycleDay ? animatedDay : '•')}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.45, lineHeight: 1.1, marginTop: 2, color: T.text }}>
                 {bcUsesCover ? bcModel.cover.headline : (phase?.name || 'Just getting started')}.
@@ -1495,7 +1451,7 @@ export default function Home() {
                   {todayLog ? 'Today’s noted.' : 'How are you feeling today?'}
                 </span>
                 <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayLog ? T.muted : 'rgba(255,250,245,0.88)' }}>
-                  {todayLog ? 'Add more anytime — a symptom, a mood, a note.' : 'A few taps. It teaches Luna your body, and takes a moment.'}
+                  {todayLog ? 'Add more anytime: a symptom, a mood, a note.' : 'A few taps. It teaches Luna your body, and takes a moment.'}
                 </span>
               </span>
               <span aria-hidden="true" style={{
@@ -1524,7 +1480,7 @@ export default function Home() {
                 {bcModel.startDateLabel}
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
-                Once Luna knows, the cover starts working — countdown, pack-week, the right next thing. Takes one tap.
+                Once Luna knows, the cover starts working: countdown, pack-week, the right next thing. Takes one tap.
               </div>
             </button>
           )}
@@ -1573,7 +1529,7 @@ export default function Home() {
               <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
                 {showCatchUp.kind === 'stalePeriod'
                   ? `Luna's been working off a guess for the last ${showCatchUp.daysOver} days. A quick update sharpens every prediction from here.`
-                  : `It's been ${showCatchUp.daysSince} days since you last logged. Predictions drift without fresh data — a few taps catches Luna up.`}
+                  : `It's been ${showCatchUp.daysSince} days since you last logged. Predictions drift without fresh data. A few taps catches Luna up.`}
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => go('periodDays')}
@@ -1597,12 +1553,12 @@ export default function Home() {
                   : 'Your period might be on its way.'}
               </div>
               <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
-                Tap once if today is day one — it helps Luna learn your rhythm.
+                Tap once if today is day one. It helps Luna learn your rhythm.
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={logPeriodStart}
                   style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
-                  Yes — today is day one
+                  Yes, today is day one
                 </button>
                 <button onClick={() => go('log')}
                   style={{ background: 'transparent', color: T.text, border: `1px solid ${T.hair}`, padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
@@ -1641,7 +1597,7 @@ export default function Home() {
                 category="urgent"
                 onTap={() => go('cramps')}
                 eyebrow="Cramping today"
-                line="Sit with it — Luna has a few small things that help."
+                line="Sit with it. Luna has a few small things that help."
               />
             )
             if (hasUTIToday) return (
@@ -1649,7 +1605,7 @@ export default function Home() {
                 category="urgent"
                 onTap={() => go('utiHelper')}
                 eyebrow="UTI signs"
-                line="Catch it early — here's the playbook for tonight."
+                line="Catch it early. Here's the playbook for tonight."
               />
             )
             if (hasAnxietyToday) return (
@@ -1657,7 +1613,7 @@ export default function Home() {
                 category="reflect"
                 onTap={() => go('anxiety')}
                 eyebrow="A heavy day"
-                line="A few ways in — body, words, breath, or someone to talk to."
+                line="A few ways in: body, words, breath, or someone to talk to."
               />
             )
             if (hasInsomniaToday) return (
