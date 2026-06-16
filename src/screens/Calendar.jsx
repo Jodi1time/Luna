@@ -140,16 +140,27 @@ export default function Calendar() {
   const blobColor = (cycle.phase?.color) || T.accent
   const flourishPhase = cycle.phase?.id || 'follicular'
   const flourishColor = (cycle.phase?.color) || T.accent
+  const leadPrediction = filteredPredictions?.[0] || null
+  const summaryTitle = bcMode
+    ? (bcModel.nextThing?.title || bcModel.cover?.headline || 'Your method sets the rhythm here.')
+    : cycle.phase
+      ? `Day ${cycle.cycleDay} in your ${cycle.phase.name.toLowerCase()} phase.`
+      : 'Your rhythm starts taking shape here.'
+  const summaryBody = bcMode
+    ? (bcModel.nextThing?.body || 'Logged bleeding and spotting are what Luna maps here. The rest stays honest and minimal.')
+    : leadPrediction
+      ? `${leadPrediction.label} is currently pointing to ${leadPrediction.date}${leadPrediction.range ? ` (${leadPrediction.range})` : ''}.`
+      : 'Logged days fill in first. A few cycles make the rest of the month easier to read.'
 
   return (
     <div className={`home-stage${animate ? '' : ' choreo-done'}`}>
       {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, marginBottom: 6, animationDelay: '0ms' }}>
-          Your cycle, mapped.
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.9, lineHeight: 1.02, marginBottom: 6, animationDelay: '0ms' }}>
+          Your calendar.
         </div>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 22, fontStyle: 'italic', animationDelay: '60ms' }}>
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, color: T.muted, marginBottom: 18, fontStyle: 'italic', lineHeight: 1.58, animationDelay: '60ms', maxWidth: 320 }}>
           {bcMode
             ? (bcModel.kind === 'pillPack' && bcStart
                 ? 'Bleeding you log is filled. The tinted week is where a withdrawal bleed is expected.'
@@ -159,183 +170,212 @@ export default function Calendar() {
             : 'Logged days are filled; predicted days are outlined.'}
         </div>
 
+        <div className="insight-stagger alive-card" style={{
+          marginBottom: 18,
+          padding: 16,
+          background: sectionPaper(bcMode ? 'care' : 'reflect'),
+          border: `1px solid ${(bcMode ? sectionColors('care').accent : flourishColor)}22`,
+          borderRadius: 20,
+          boxShadow: `0 1px 0 ${(bcMode ? sectionColors('care').accent : flourishColor)}10, 0 14px 28px -22px ${(bcMode ? sectionColors('care').accent : flourishColor)}30`,
+          animationDelay: '90ms',
+        }}>
+          <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: bcMode ? sectionColors('care').accent : flourishColor, marginBottom: 8 }}>
+            Where you are now
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 21, fontWeight: 500, lineHeight: 1.28, letterSpacing: -0.25, marginBottom: 8 }}>
+            {summaryTitle}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic' }}>
+            {summaryBody}
+          </div>
+        </div>
+
         <ContextualTip tipId="calendar-tap">
-          Tap any past day to log what happened, or change what you wrote. Future days are predictions you can soften by logging.
+          Tap any past day to log what happened, or change what you wrote. The future gets clearer as your own month fills in.
         </ContextualTip>
 
-        {/* Month header with arrow nav + flourish next to month name */}
-        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, animationDelay: '100ms' }}>
-          <button onClick={() => stepMonth(-1)} aria-label="Previous month"
-            style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
-            ‹
-          </button>
-          <div style={{ textAlign: 'center', flex: 1 }}>
-            <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-              {monthLabel}.
-              {isCurrentMonth && !bcMode && (
-                <span style={{ color: flourishColor, opacity: 0.7, display: 'inline-flex', transform: 'translateY(-2px)' }} aria-hidden="true">
-                  <PhaseFlourish phaseId={flourishPhase} size={20} />
-                </span>
-              )}
+        <div className="insight-stagger alive-card" style={{
+          background: 'rgba(253,250,245,0.56)',
+          border: `1px solid ${flourishColor}18`,
+          borderRadius: 22,
+          padding: '16px 14px 14px',
+          boxShadow: `0 1px 0 ${flourishColor}08, 0 12px 26px -24px ${flourishColor}28`,
+          animationDelay: '100ms',
+        }}>
+          {/* Month header with arrow nav + flourish next to month name */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <button onClick={() => stepMonth(-1)} aria-label="Previous month"
+              style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
+              ‹
+            </button>
+            <div style={{ textAlign: 'center', flex: 1 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 30, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                {monthLabel}.
+                {isCurrentMonth && !bcMode && (
+                  <span style={{ color: flourishColor, opacity: 0.7, display: 'inline-flex', transform: 'translateY(-2px)' }} aria-hidden="true">
+                    <PhaseFlourish phaseId={flourishPhase} size={20} />
+                  </span>
+                )}
+              </div>
+              <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 1 }}>
+                {yearLabel}
+              </div>
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 1 }}>
-              {yearLabel}
-            </div>
+            <button onClick={() => stepMonth(1)} aria-label="Next month"
+              style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
+              ›
+            </button>
           </div>
-          <button onClick={() => stepMonth(1)} aria-label="Next month"
-            style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
-            ›
-          </button>
-        </div>
-        {!isCurrentMonth && (
-          <button onClick={goToday}
-            style={{ background: 'transparent', border: 'none', color: T.accent, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 1.2, cursor: 'pointer', padding: '4px 0', marginBottom: 10 }}>
-            ← back to this month
-          </button>
-        )}
-
-        {/* Legend — phases for natural cycles; the method's own marks
-            for hormonal BC users (phase math isn't true for them). */}
-        <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 11, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
-          {bcMode ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 8, height: 8, background: T.accent + '30', borderRadius: 1 }} />Bleeding logged
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />Spotting
-              </div>
-              {bcModel.kind === 'pillPack' && bcStart && (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, background: PHASES.menstrual.color + '40', borderRadius: 1 }} />Expected withdrawal bleed
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 3, height: 9, background: T.accent, borderRadius: 1 }} />Pack starts
-                  </div>
-                </>
-              )}
-              {bcModel.kind === 'injection' && bcStart && (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, border: `1.5px solid ${T.accent}`, borderRadius: 2 }} />Last shot
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, border: `1.5px dashed ${T.accent}`, borderRadius: 2 }} />Next shot due
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              {Object.values(PHASES).map((p) => (
-                <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
-                </div>
-              ))}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Period day
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />Predicted period
-              </div>
-            </>
+          {!isCurrentMonth && (
+            <button onClick={goToday}
+              style={{ background: 'transparent', border: 'none', color: T.accent, fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', cursor: 'pointer', padding: '0 0 10px', marginBottom: 2 }}>
+              Back to this month
+            </button>
           )}
-        </div>
 
-        {/* Day headers */}
-        <div className="insight-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6, animationDelay: '160ms' }}>
-          {dayLetters.map((d, i) => (
-            <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
-          ))}
-        </div>
+          {/* Legend — phases for natural cycles; the method's own marks
+              for hormonal BC users (phase math isn't true for them). */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16, fontSize: 11.5, fontFamily: T.serif, fontStyle: 'italic', color: T.muted }}>
+            {bcMode ? (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 8, height: 8, background: T.accent + '30', borderRadius: 1 }} />Bleeding logged
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />Spotting
+                </div>
+                {bcModel.kind === 'pillPack' && bcStart && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 8, height: 8, background: PHASES.menstrual.color + '40', borderRadius: 1 }} />Expected withdrawal bleed
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 3, height: 9, background: T.accent, borderRadius: 1 }} />Pack starts
+                    </div>
+                  </>
+                )}
+                {bcModel.kind === 'injection' && bcStart && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 8, height: 8, border: `1.5px solid ${T.accent}`, borderRadius: 2 }} />Last shot
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div style={{ width: 8, height: 8, border: `1.5px dashed ${T.accent}`, borderRadius: 2 }} />Next shot due
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                {Object.values(PHASES).map((p) => (
+                  <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
+                  </div>
+                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Logged period
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <div style={{ width: 6, height: 6, border: `1.2px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />Predicted period
+                </div>
+              </>
+            )}
+          </div>
 
-        {/* Days grid — each cell fades in with a diagonal sweep delay
-            so the month assembles itself top-left → bottom-right
-            instead of arriving as one slab. Stagger of 18ms per
-            position keeps total reveal under ~750ms. */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-          {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
-          {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue, startsPhase }, cellIdx) => {
-            const isToday = date === todayISO
-            const showLoggedDot = isLoggedPeriod && !bcMode
-            const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
-            const tappable = !future
-            // Diagonal-sweep delay — based on grid row + col so the
-            // reveal feels like a wave across the month, not a slab.
-            const gridIdx = offset + cellIdx
-            const row = Math.floor(gridIdx / 7)
-            const col = gridIdx % 7
-            const cellDelay = 200 + (row + col) * 18
-            // BC-mode paint: logged bleeding fills the cell; placebo
-            // week gets a soft tint (filled past, dashed future);
-            // shot day + shot-due day get rings. Natural mode keeps
-            // the phase paint untouched.
-            const cellBg = bcMode
-              ? (isLoggedPeriod ? T.accent + '30'
-                : isPlacebo && !future ? PHASES.menstrual.color + '22'
-                : 'transparent')
-              : (phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent')
-            const cellBorder = bcMode
-              ? (isShotDay ? `1.5px solid ${T.accent}`
-                : isShotDue ? `1.5px dashed ${T.accent}`
-                : isPlacebo && future ? `1px dashed ${PHASES.menstrual.color}88`
-                : 'none')
-              : (future && phase ? `1px dashed ${phase.color}88` : 'none')
-            return (
-              <button key={date}
-                onClick={tappable ? () => openLogFor(date) : undefined}
-                disabled={!tappable}
-                aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
-                className="insight-stagger"
-                style={{
-                  position: 'relative',
-                  aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
-                  background: cellBg,
-                  color: isToday && phase && !bcMode ? '#fff' : T.text,
-                  border: cellBorder,
-                  borderRadius: T.r,
-                  cursor: tappable ? 'pointer' : 'default',
-                  padding: 0,
-                  animationDelay: `${cellDelay}ms`,
-                  // Phase-start cells (natural) / pack-start cells (BC)
-                  // get a thin accent line on the left edge — "something
-                  // begins here" without copy.
-                  boxShadow: bcMode
-                    ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
-                    : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
-                }}>
-                {/* Today cell pulse ring — quiet "you are here" anchor */}
-                {isToday && (phase || bcMode) && (
-                  <div className="pulse-ring" aria-hidden="true"
-                    style={{
-                      position: 'absolute', inset: -3,
-                      border: `1.5px solid ${bcMode ? T.accent : phase.color}`,
-                      borderRadius: T.r,
-                      pointerEvents: 'none',
-                    }} />
-                )}
-                {day}
-                {showLoggedDot && (
-                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: T.accent, borderRadius: '50%' }} />
-                )}
-                {showPredictedDot && (
-                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
-                )}
-                {bcMode && isSpotting && (
-                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />
-                )}
-              </button>
-            )
-          })}
+          {/* Day headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+            {dayLetters.map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
+            ))}
+          </div>
+
+          {/* Days grid — each cell fades in with a diagonal sweep delay
+              so the month assembles itself top-left → bottom-right
+              instead of arriving as one slab. Stagger of 18ms per
+              position keeps total reveal under ~750ms. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+            {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
+            {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue, startsPhase }, cellIdx) => {
+              const isToday = date === todayISO
+              const showLoggedDot = isLoggedPeriod && !bcMode
+              const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
+              const tappable = !future
+              // Diagonal-sweep delay — based on grid row + col so the
+              // reveal feels like a wave across the month, not a slab.
+              const gridIdx = offset + cellIdx
+              const row = Math.floor(gridIdx / 7)
+              const col = gridIdx % 7
+              const cellDelay = 200 + (row + col) * 18
+              // BC-mode paint: logged bleeding fills the cell; placebo
+              // week gets a soft tint (filled past, dashed future);
+              // shot day + shot-due day get rings. Natural mode keeps
+              // the phase paint untouched.
+              const cellBg = bcMode
+                ? (isLoggedPeriod ? T.accent + '30'
+                  : isPlacebo && !future ? PHASES.menstrual.color + '22'
+                  : 'transparent')
+                : (phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent')
+              const cellBorder = bcMode
+                ? (isShotDay ? `1.5px solid ${T.accent}`
+                  : isShotDue ? `1.5px dashed ${T.accent}`
+                  : isPlacebo && future ? `1px dashed ${PHASES.menstrual.color}88`
+                  : 'none')
+                : (future && phase ? `1px dashed ${phase.color}88` : 'none')
+              return (
+                <button key={date}
+                  onClick={tappable ? () => openLogFor(date) : undefined}
+                  disabled={!tappable}
+                  aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
+                  className="insight-stagger"
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
+                    background: cellBg,
+                    color: isToday && phase && !bcMode ? '#fff' : T.text,
+                    border: cellBorder,
+                    borderRadius: T.r,
+                    cursor: tappable ? 'pointer' : 'default',
+                    padding: 0,
+                    animationDelay: `${cellDelay}ms`,
+                    // Phase-start cells (natural) / pack-start cells (BC)
+                    // get a thin accent line on the left edge — "something
+                    // begins here" without copy.
+                    boxShadow: bcMode
+                      ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
+                      : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
+                  }}>
+                  {/* Today cell pulse ring — quiet "you are here" anchor */}
+                  {isToday && (phase || bcMode) && (
+                    <div className="pulse-ring" aria-hidden="true"
+                      style={{
+                        position: 'absolute', inset: -3,
+                        border: `1.5px solid ${bcMode ? T.accent : phase.color}`,
+                        borderRadius: T.r,
+                        pointerEvents: 'none',
+                      }} />
+                  )}
+                  {day}
+                  {showLoggedDot && (
+                    <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: T.accent, borderRadius: '50%' }} />
+                  )}
+                  {showPredictedDot && (
+                    <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}`, borderRadius: '50%', background: 'transparent' }} />
+                  )}
+                  {bcMode && isSpotting && (
+                    <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, border: `1px solid ${T.accent}88`, borderRadius: '50%', background: 'transparent' }} />
+                  )}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <Rule />
 
         {/* Predictions — written like a friend, not a dashboard */}
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4, animationDelay: '600ms' }}>
-          Looking ahead.
+          Later this cycle.
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '640ms' }}>
           {bcMode ? 'What your method has coming up.' : "What's likely coming up, with how steady the call is."}
