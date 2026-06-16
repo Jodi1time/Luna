@@ -919,8 +919,18 @@ function CircleCard({ phase, settings, updateSetting, cycle, go }) {
     updateSetting('circleDismissedISO', todayISO)
     if (isFirstCycleMoment) updateSetting('circleSeenFirstCycle', true)
   }
+  const onCardKeyDown = (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return
+    e.preventDefault()
+    onOpen()
+  }
   return (
-    <button onClick={onOpen} className="alive-card frost-card sheen-once"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={onCardKeyDown}
+      className="alive-card frost-card sheen-once"
       style={{
         position: 'relative',
         marginTop: 22, padding: 20,
@@ -954,7 +964,7 @@ function CircleCard({ phase, settings, updateSetting, cycle, go }) {
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: colors.accent, fontWeight: 500, marginTop: 6 }}>
         invite someone in →
       </div>
-    </button>
+    </div>
   )
 }
 

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './lib/sentry'
 import { initPostHog } from './lib/posthog'
+import { importCapacitorModule } from './lib/capacitorImport'
 import App from './App.jsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -20,17 +21,17 @@ initPostHog()
 // version should never break the launch sequence.
 ;(async () => {
   let core
-  try { core = await import('@capacitor/core') } catch { return }
+  try { core = await importCapacitorModule('@capacitor/core') } catch { return }
   if (!core?.Capacitor?.isNativePlatform?.()) return
   try {
-    const { StatusBar, Style } = await import('@capacitor/status-bar')
+    const { StatusBar, Style } = await importCapacitorModule('@capacitor/status-bar')
     // "Light" content style = dark glyphs over the cream background.
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
     StatusBar.setBackgroundColor({ color: '#F4EFE5' }).catch(() => {})
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
   } catch {}
   try {
-    const { SplashScreen } = await import('@capacitor/splash-screen')
+    const { SplashScreen } = await importCapacitorModule('@capacitor/splash-screen')
     // launchAutoHide is false in capacitor.config.json so we control
     // exactly when the splash leaves — once React has painted, fade
     // it out to match the in-app splash timing on web.

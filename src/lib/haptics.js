@@ -18,14 +18,16 @@
 // either statically would break web builds that don't have the
 // packages installed yet. Each call awaits the resolve, returns null
 // silently if anything is missing.
+import { importCapacitorModule } from './capacitorImport'
+
 let _hapticsModulePromise = null
 function getHapticsModule() {
   if (!_hapticsModulePromise) {
     _hapticsModulePromise = (async () => {
       try {
-        const core = await import('@capacitor/core')
+        const core = await importCapacitorModule('@capacitor/core')
         if (!core?.Capacitor?.isNativePlatform?.()) return null
-        return await import('@capacitor/haptics')
+        return await importCapacitorModule('@capacitor/haptics')
       } catch { return null }
     })()
   }
