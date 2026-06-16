@@ -1002,9 +1002,10 @@ function SheetShell({ onClose, title, sub, children }) {
         onWheel={(e) => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 430,
-          background: T.bg,
-          borderRadius: 18,
-          boxShadow: '0 24px 60px -12px rgba(0,0,0,0.45)',
+          background: 'rgba(252,248,242,0.98)',
+          border: `1px solid rgba(26,19,16,0.08)`,
+          borderRadius: 20,
+          boxShadow: '0 26px 60px -24px rgba(26,19,16,0.38)',
           maxHeight: '88dvh',
           minHeight: 'min(440px, 70dvh)',
           display: 'flex', flexDirection: 'column',
@@ -1013,15 +1014,15 @@ function SheetShell({ onClose, title, sub, children }) {
         }}>
         <div style={{ padding: '14px 20px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${T.hair}` }}>
           <div>
-            <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', color: T.text, letterSpacing: -0.2 }}>{title}</div>
-            {sub && <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 3, letterSpacing: 0.2 }}>{sub}</div>}
+            <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', color: T.text, letterSpacing: -0.22 }}>{title}</div>
+            {sub && <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, marginTop: 3, lineHeight: 1.45 }}>{sub}</div>}
           </div>
           <button onClick={onClose} aria-label="Close"
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, padding: 8, fontSize: 16, fontFamily: T.sans }}>
+            style={{ background: 'rgba(26,19,16,0.04)', border: 'none', cursor: 'pointer', color: T.muted, padding: 8, fontSize: 16, fontFamily: T.sans, borderRadius: 999, width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             ✕
           </button>
         </div>
-        <div style={{ padding: '16px 18px', overflowY: 'auto', flex: 1 }}>{children}</div>
+        <div style={{ padding: '18px 18px 20px', overflowY: 'auto', flex: 1 }}>{children}</div>
       </div>
     </div>
     </Portal>
@@ -1159,7 +1160,7 @@ export default function Reflect() {
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="reflect" onBack={back} />
         <div className="insight-stagger" style={{ animationDelay: '0ms' }}>
-          <Eyebrow color={phase?.color}>For your mind and heart</Eyebrow>
+          <Eyebrow color={phase?.color}>A private pause</Eyebrow>
         </div>
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '40ms' }}>
           <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05, flex: 1 }}>
@@ -1171,12 +1172,12 @@ export default function Reflect() {
             </div>
           )}
         </div>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.muted, marginTop: 12, fontStyle: 'italic', animationDelay: '90ms' }}>
-          {opening || 'Write what wants to be written. Or pick a practice — short, gentle, evidence-grown.'}
+        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.65, color: T.muted, marginTop: 12, fontStyle: 'italic', animationDelay: '90ms', maxWidth: 320 }}>
+          {opening || 'Write what wants to be written. Or borrow a little structure for a minute or two.'}
         </div>
 
         <ContextualTip tipId="reflect-intro" accent={phase?.color}>
-          Practices are short — two minutes, sometimes less. Pick the one that fits the day; nothing here is required.
+          Nothing here needs to be finished. Stay for one breath, one note, or one small practice.
         </ContextualTip>
 
         <Rule />
@@ -1193,14 +1194,17 @@ export default function Reflect() {
             }}>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, letterSpacing: -0.1, fontWeight: 500, color: phase.color }}>
-                {recommendation.eyebrow}
+                A gentle place to start
               </div>
               <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-                Start the practice →
+                Open it →
               </div>
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.1 }}>
               {recommendation.line}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.55, color: T.muted, marginTop: 8 }}>
+              {recommendation.eyebrow}
             </div>
           </button>
         )}
@@ -1212,25 +1216,25 @@ export default function Reflect() {
           <button onClick={() => setQuickNoteOpen(true)} className="glass-card alive-card"
             style={{ textAlign: 'left', padding: 14, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit' }}>
             <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 5 }}>
-              Write →
+              Write to yourself
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.45 }}>
-              A note to your future self.
+              A private note that stays with the day.
             </div>
           </button>
           <button onClick={() => setChatOpen(true)} className="glass-card alive-card"
             style={{ textAlign: 'left', padding: 14, borderRadius: T.r, cursor: 'pointer', color: T.text, fontFamily: 'inherit' }}>
             <div style={{ fontFamily: T.serif, fontSize: 16, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 5 }}>
-              Talk →
+              Talk with Luna
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.45 }}>
-              A few minutes with Luna.
+              Stay in conversation for a minute.
             </div>
           </button>
         </div>
 
         {/* Guided practices */}
-        <Eyebrow>Or sit with one of these</Eyebrow>
+        <Eyebrow>If you want a little structure</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
           {PRACTICES.map((p) => {
             const c = sectionColors(PRACTICE_SECTION[p.id] || 'reflect')
@@ -1269,14 +1273,14 @@ export default function Reflect() {
         {history.length > 0 && (
           <>
             <Rule />
-            <Eyebrow>What you've kept</Eyebrow>
+            <Eyebrow>Things you've kept</Eyebrow>
             <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.65, color: T.text, fontStyle: 'italic' }}>
               {history.length} reflection{history.length === 1 ? '' : 's'}, kept quietly in your space.
             </div>
             {readableEntries.length > 0 && (
               <button onClick={() => setLookBack((v) => !v)}
                 style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, padding: '8px 0 0', textAlign: 'left', letterSpacing: -0.1, display: 'block' }}>
-                {lookBack ? 'Fold them away' : 'Read them back →'}
+                {lookBack ? 'Fold them away' : 'Read a few back →'}
               </button>
             )}
             {lookBack && (

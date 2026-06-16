@@ -142,7 +142,8 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
       background: paperBackground(theme),
       borderRadius: T.r,
       padding: '20px 22px 22px 44px',
-      boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 12px 28px -18px rgba(26,19,16,0.18)',
+      border: `1px solid ${theme.accent}18`,
+      boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 10px 24px -20px rgba(26,19,16,0.18)',
       marginBottom: 22,
       position: 'relative',
       color: theme.text,
@@ -150,8 +151,8 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
       <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.18} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: theme.accent, opacity: 0.85 }}>
-            A NEW PAGE
+          <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', fontWeight: 500, color: theme.accent, opacity: 0.88 }}>
+            A blank page.
           </div>
           {phaseId && (
             <span aria-hidden="true" style={{ color: theme.accent, opacity: 0.55, display: 'inline-flex' }}>
@@ -163,7 +164,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
           ref={taRef}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder={recording ? 'Listening — speak whenever.' : "Whatever's on your mind — start writing."}
+          placeholder={recording ? 'Listening. Speak whenever you are ready.' : 'Start anywhere. A sentence is enough.'}
           maxLength={6000}
           style={{
             width: '100%', background: 'transparent', border: 'none', outline: 'none', resize: 'none',
@@ -223,11 +224,11 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                 borderRadius: 999,
                 cursor: recording ? 'default' : 'pointer',
                 opacity: recording ? 0.4 : 1,
-                fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
+                fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
               }}>
               <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
-              PHOTO
+              Add photo
             </button>
             {voiceSupported && (
               recording ? (
@@ -239,7 +240,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                     padding: '8px 12px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
+                    fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2,
                     display: 'inline-flex', alignItems: 'center', gap: 8,
                     boxShadow: `0 0 0 0 ${T.accent}66`,
                   }}>
@@ -259,11 +260,11 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
                     padding: '8px 12px',
                     borderRadius: 999,
                     cursor: 'pointer',
-                    fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
+                    fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2,
                     display: 'inline-flex', alignItems: 'center', gap: 6,
                   }}>
                   <span style={{ fontSize: 12, lineHeight: 0 }}>🎤</span>
-                  VOICE
+                  Use voice
                 </button>
               )
             )}
@@ -276,10 +277,10 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
               padding: '9px 16px',
               borderRadius: T.r,
               cursor: canSave && !recording ? 'pointer' : 'default',
-              fontFamily: T.sans, fontSize: 11.5, fontWeight: 700, letterSpacing: 1,
+              fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2,
               transition: 'background 0.25s var(--ease-out), color 0.25s var(--ease-out)',
             }}>
-            SAVE PAGE
+            Keep this page
           </button>
         </div>
       </div>
@@ -364,7 +365,7 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, on
               }}
             />
             <div style={{ fontFamily: T.mono, fontSize: 11, color: theme.accent, opacity: 0.7, letterSpacing: 1, marginTop: 8 }}>
-              TAP OUTSIDE TO SAVE
+              Tap outside to keep it.
             </div>
           </>
         ) : (
@@ -400,11 +401,11 @@ function EntryPage({ entry, theme, decorations, todayISO, onUpdate, onDelete, on
                 padding: '7px 12px',
                 borderRadius: 999,
                 cursor: 'pointer',
-                fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
+                fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
               }}>
               <span style={{ fontSize: 13, lineHeight: 0 }}>＋</span>
-              ADD A PHOTO
+              Add photo
             </button>
           </div>
         )}
@@ -566,25 +567,29 @@ export default function Journal() {
       <Screen>
         <div style={{ padding: '12px 18px 0' }}>
           {/* Header */}
-          <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0 14px', animationDelay: '0ms' }}>
+          <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0 8px', animationDelay: '0ms' }}>
             <button onClick={back} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', color: theme.text, opacity: 0.55, padding: 6 }}>
               {Icons.close}
             </button>
-            <div style={{ fontFamily: T.serif, fontSize: 18, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.2, color: theme.text }}>
-              The diary.
+            <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', fontWeight: 500, letterSpacing: -0.25, color: theme.text }}>
+              Your diary.
             </div>
             <button onClick={() => setCustomizing(true)}
               aria-label="Customize the journal"
-              style={{ background: 'none', border: `1px solid ${theme.accent}66`, color: theme.accent, padding: '5px 10px', borderRadius: 999, fontFamily: T.sans, fontSize: 11, fontWeight: 700, letterSpacing: 0.8, cursor: 'pointer' }}>
-              DECORATE
+              style={{ background: 'none', border: `1px solid ${theme.accent}55`, color: theme.accent, padding: '6px 10px', borderRadius: 999, fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.2, cursor: 'pointer' }}>
+              Make it yours
             </button>
+          </div>
+
+          <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: theme.text, opacity: 0.66, fontStyle: 'italic', marginBottom: 16, padding: '0 4px', animationDelay: '30ms' }}>
+            The longer version of the day lives here.
           </div>
 
           {/* Contextual tip — explains the diary's relationship to the
               sticky note on Home. Fires once per user, persisted in
               settings.tipsSeen. */}
           <ContextualTip tipId="diary-intro" accent={theme.accent}>
-            The sticky note is a line to your future self. The diary is for everything else — write, photograph, decorate.
+            The sticky note is a line to your future self. The diary is where the fuller version stays.
           </ContextualTip>
 
           {/* New-page composer */}
@@ -625,8 +630,8 @@ export default function Journal() {
               borderRadius: 14,
               animationDelay: '90ms',
             }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: theme.accent, letterSpacing: -0.1, marginBottom: 6 }}>
-                from your pages, {memory.label}
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: theme.accent, letterSpacing: -0.1, marginBottom: 6 }}>
+                From {memory.label}
               </div>
               <div style={{
                 fontFamily: T.serif, fontSize: 14.5, fontStyle: 'italic', lineHeight: 1.55, color: theme.text,
@@ -642,8 +647,8 @@ export default function Journal() {
             <>
               <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0 14px', animationDelay: '110ms' }}>
                 <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
-                <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.4, fontWeight: 600, color: theme.text, opacity: 0.55 }}>
-                  EARLIER PAGES · {entries.length}
+                <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', fontWeight: 500, color: theme.text, opacity: 0.62 }}>
+                  Earlier pages · {entries.length}
                 </div>
                 <div style={{ flex: 1, height: 1, background: theme.accent + '33' }} />
               </div>
@@ -655,7 +660,7 @@ export default function Journal() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Find a page — a word you remember writing…"
+                    placeholder="Find a page by a word you remember."
                     style={{
                       width: '100%', background: 'rgba(255,255,255,0.45)',
                       border: `1px solid ${theme.accent}30`, borderRadius: 12,
@@ -665,7 +670,7 @@ export default function Journal() {
                     }} />
                   {searching && (
                     <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: theme.text, opacity: 0.6, marginTop: 6 }}>
-                      {filtered.length === 0 ? 'No page holds that word.' : `${filtered.length} page${filtered.length === 1 ? '' : 's'} found.`}
+                      {filtered.length === 0 ? 'Nothing is coming back for that word.' : `${filtered.length} page${filtered.length === 1 ? '' : 's'} found.`}
                     </div>
                   )}
                 </div>
@@ -696,7 +701,7 @@ export default function Journal() {
                     fontFamily: T.serif, fontStyle: 'italic', fontSize: 14,
                     color: theme.accent, marginBottom: 8,
                   }}>
-                  Turn earlier pages — {filtered.length - visibleCount} more
+                  Open {Math.min(10, filtered.length - visibleCount)} more pages
                 </button>
               )}
             </>
@@ -707,8 +712,8 @@ export default function Journal() {
               <div style={{ color: theme.accent, opacity: 0.85, marginBottom: 6 }}>
                 <OpenDiary size={156} accent={theme.accent} />
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: theme.text, opacity: 0.55, lineHeight: 1.6 }}>
-                The book is empty. Whatever you save here becomes a page.
+              <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: theme.text, opacity: 0.58, lineHeight: 1.65, maxWidth: 240 }}>
+                Nothing has been kept here yet. The first thing you save becomes the first page.
               </div>
             </div>
           )}
