@@ -10,7 +10,6 @@ import { sectionPaper, sectionColors } from '../data/sectionPalette'
 import { getBcCycleModel, packDayForDate, addDaysToISO } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
 import { WhyChip, SourceTag } from '../components/Sourced'
-import ContextualTip from '../components/ContextualTip'
 import { MoonJourney } from '../components/Illustrations'
 
 const MS_PER_DAY = 86400000
@@ -141,69 +140,38 @@ export default function Calendar() {
   const flourishPhase = cycle.phase?.id || 'follicular'
   const flourishColor = (cycle.phase?.color) || T.accent
   const leadPrediction = filteredPredictions?.[0] || null
-  const summaryTitle = bcMode
+  const statusLine = bcMode
     ? (bcModel.nextThing?.title || bcModel.cover?.headline || 'Your method sets the rhythm here.')
     : cycle.phase
-      ? `Day ${cycle.cycleDay} in your ${cycle.phase.name.toLowerCase()} phase.`
-      : 'Your rhythm starts taking shape here.'
-  const summaryBody = bcMode
-    ? (bcModel.nextThing?.body || 'Logged bleeding and spotting are what Luna maps here. The rest stays honest and minimal.')
+      ? `Day ${cycle.cycleDay} · ${cycle.phase.name.toLowerCase()} phase`
+      : 'Your rhythm is still taking shape.'
+  const helperLine = bcMode
+    ? (bcModel.kind === 'pillPack' && bcStart
+        ? 'Logged bleeding is filled. The placebo week is lightly marked.'
+        : bcModel.kind === 'injection' && bcStart
+          ? 'Logged bleeding is filled. Shot dates stay marked.'
+          : 'Logged bleeding is filled. Luna only marks what is yours.')
     : leadPrediction
-      ? `${leadPrediction.label} is currently pointing to ${leadPrediction.date}${leadPrediction.range ? ` (${leadPrediction.range})` : ''}.`
-      : 'Logged days fill in first. A few cycles make the rest of the month easier to read.'
+      ? `${leadPrediction.label} points to ${leadPrediction.date}${leadPrediction.range ? ` (${leadPrediction.range})` : ''}.`
+      : 'Logged days are filled. Predicted days are outlined.'
 
   return (
     <div className={`home-stage${animate ? '' : ' choreo-done'}`}>
       {!onHormonalBC && <Backdrop accent={blobColor} subtle />}
       <Screen>
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.9, lineHeight: 1.02, marginBottom: 6, animationDelay: '0ms' }}>
-          Your calendar.
-        </div>
-        <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, color: T.muted, marginBottom: 18, fontStyle: 'italic', lineHeight: 1.58, animationDelay: '60ms', maxWidth: 320 }}>
-          {bcMode
-            ? (bcModel.kind === 'pillPack' && bcStart
-                ? 'Bleeding you log is filled. The tinted week is where a withdrawal bleed is expected.'
-                : bcModel.kind === 'injection' && bcStart
-                  ? 'Bleeding you log is filled. Your last shot and the next due date are marked.'
-                  : 'Bleeding you log is filled. No predictions here — your pattern is yours to map.')
-            : 'Logged days are filled; predicted days are outlined.'}
-        </div>
-
-        <div className="insight-stagger alive-card" style={{
-          marginBottom: 18,
-          padding: 16,
-          background: sectionPaper(bcMode ? 'care' : 'reflect'),
-          border: `1px solid ${(bcMode ? sectionColors('care').accent : flourishColor)}22`,
-          borderRadius: 20,
-          boxShadow: `0 1px 0 ${(bcMode ? sectionColors('care').accent : flourishColor)}10, 0 14px 28px -22px ${(bcMode ? sectionColors('care').accent : flourishColor)}30`,
-          animationDelay: '90ms',
-        }}>
-          <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: bcMode ? sectionColors('care').accent : flourishColor, marginBottom: 8 }}>
-            Where you are now
+          <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.02, marginBottom: 6, animationDelay: '0ms' }}>
+            Calendar.
           </div>
-          <div style={{ fontFamily: T.serif, fontSize: 21, fontWeight: 500, lineHeight: 1.28, letterSpacing: -0.25, marginBottom: 8 }}>
-            {summaryTitle}
+          <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 15, color: T.text, marginBottom: 4, fontStyle: 'italic', lineHeight: 1.45, animationDelay: '60ms' }}>
+            {statusLine}
           </div>
-          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic' }}>
-            {summaryBody}
+          <div className="insight-stagger" style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, marginBottom: 18, lineHeight: 1.5, animationDelay: '90ms', maxWidth: 340 }}>
+            {helperLine}
           </div>
-        </div>
 
-        <ContextualTip tipId="calendar-tap">
-          Tap any past day to log what happened, or change what you wrote. The future gets clearer as your own month fills in.
-        </ContextualTip>
-
-        <div className="insight-stagger alive-card" style={{
-          background: 'rgba(253,250,245,0.56)',
-          border: `1px solid ${flourishColor}18`,
-          borderRadius: 22,
-          padding: '16px 14px 14px',
-          boxShadow: `0 1px 0 ${flourishColor}08, 0 12px 26px -24px ${flourishColor}28`,
-          animationDelay: '100ms',
-        }}>
           {/* Month header with arrow nav + flourish next to month name */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <div className="insight-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14, animationDelay: '100ms' }}>
             <button onClick={() => stepMonth(-1)} aria-label="Previous month"
               style={{ background: 'transparent', border: `1px solid ${T.hair}`, color: T.text, fontFamily: T.sans, fontSize: 14, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', borderRadius: T.r }}>
               ‹
@@ -235,7 +203,7 @@ export default function Calendar() {
 
           {/* Legend — phases for natural cycles; the method's own marks
               for hormonal BC users (phase math isn't true for them). */}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16, fontSize: 11.5, fontFamily: T.serif, fontStyle: 'italic', color: T.muted }}>
+          <div className="insight-stagger" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 16, fontSize: 11, fontFamily: T.sans, color: T.muted, animationDelay: '140ms' }}>
             {bcMode ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -283,7 +251,7 @@ export default function Calendar() {
           </div>
 
           {/* Day headers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6 }}>
+          <div className="insight-stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 6, animationDelay: '160ms' }}>
             {dayLetters.map((d, i) => (
               <div key={i} style={{ textAlign: 'center', fontSize: 11, color: T.muted, fontFamily: T.mono, fontWeight: 600, letterSpacing: 1 }}>{d}</div>
             ))}
@@ -369,13 +337,16 @@ export default function Calendar() {
               )
             })}
           </div>
-        </div>
+
+          <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, marginTop: 10, animationDelay: '520ms' }}>
+            Tap any past day to add or update a log.
+          </div>
 
         <Rule />
 
         {/* Predictions — written like a friend, not a dashboard */}
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4, animationDelay: '600ms' }}>
-          Later this cycle.
+          Coming up.
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '640ms' }}>
           {bcMode ? 'What your method has coming up.' : "What's likely coming up, with how steady the call is."}
