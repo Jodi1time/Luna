@@ -45,36 +45,53 @@ const WATCH_SIGNALS = {
 const monthLabel = (iso) =>
   new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
 
+function recentMonthLabels(count = 5) {
+  const now = new Date()
+  return Array.from({ length: count }, (_, idx) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - idx), 1)
+    return d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+  })
+}
+
 function buildWatchSnapshot(logs, periodStarts) {
-  if (!periodStarts || periodStarts.length < 3) return null
-  const starts = [...periodStarts].sort()
-  const historyByStart = new Map(getPeriodHistory(logs, periodStarts).map((p) => [p.start, p]))
+  const starts = periodStarts ? [...periodStarts].sort() : []
+  const historyByStart = new Map(getPeriodHistory(logs, periodStarts || []).map((p) => [p.start, p]))
   const windows = []
 
-  for (let i = 0; i < starts.length - 1; i++) {
-    const start = starts[i]
-    const nextStart = starts[i + 1]
-    const period = historyByStart.get(start) || null
-    const cycleLogs = Object.entries(logs || {})
-      .filter(([date]) => date >= start && date < nextStart)
-      .map(([, log]) => log)
+  if (starts.length >= 2) {
+    for (let i = 0; i < starts.length - 1; i++) {
+      const start = starts[i]
+      const nextStart = starts[i + 1]
+      const period = historyByStart.get(start) || null
+      const cycleLogs = Object.entries(logs || {})
+        .filter(([date]) => date >= start && date < nextStart)
+        .map(([, log]) => log)
 
-    const signals = {}
-    for (const [id, meta] of Object.entries(WATCH_SIGNALS)) {
-      const hitInLogs = meta.matches ? cycleLogs.some((log) => meta.matches(log)) : false
-      const hitInPeriod = meta.matchesPeriod ? meta.matchesPeriod(period) : false
-      signals[id] = hitInLogs || hitInPeriod
+      const signals = {}
+      for (const [id, meta] of Object.entries(WATCH_SIGNALS)) {
+        const hitInLogs = meta.matches ? cycleLogs.some((log) => meta.matches(log)) : false
+        const hitInPeriod = meta.matchesPeriod ? meta.matchesPeriod(period) : false
+        signals[id] = hitInLogs || hitInPeriod
+      }
+
+      windows.push({
+        start,
+        label: monthLabel(start),
+        signals,
+        hasData: cycleLogs.length > 0 || Boolean(period),
+      })
     }
-
-    windows.push({
-      start,
-      label: monthLabel(start),
-      signals,
-    })
   }
 
-  const recentCycles = windows.slice(-5)
-  if (recentCycles.length < 2) return null
+  let recentCycles = windows.slice(-5)
+  if (recentCycles.length < 3) {
+    recentCycles = recentMonthLabels(5).map((label, idx) => ({
+      start: `placeholder-${idx}`,
+      label,
+      signals: Object.fromEntries(Object.keys(WATCH_SIGNALS).map((id) => [id, false])),
+      hasData: false,
+    }))
+  }
 
   const signalStats = Object.entries(WATCH_SIGNALS)
     .map(([id, meta]) => ({
@@ -83,23 +100,33 @@ function buildWatchSnapshot(logs, periodStarts) {
       question: meta.question,
       occurrences: recentCycles.filter((cycle) => cycle.signals[id]).length,
     }))
-    .filter((item) => item.occurrences >= 2)
     .sort((a, b) => b.occurrences - a.occurrences)
 
-  if (signalStats.length === 0) return null
+  const topSignals = signalStats.filter((item) => item.occurrences >= 2).slice(0, 2)
+  const fallbackSignals = ['headache', 'heavyFlow'].map((id) => ({
+    id,
+    label: WATCH_SIGNALS[id].label,
+    question: WATCH_SIGNALS[id].question,
+    occurrences: recentCycles.filter((cycle) => cycle.signals[id]).length,
+  }))
+  const hasPattern = topSignals.length > 0
+  const signals = hasPattern ? topSignals : fallbackSignals
 
-  const topSignals = signalStats.slice(0, 2)
   return {
     cycles: recentCycles,
-    signals: topSignals,
+    signals,
+    hasPattern,
+    hasAnyData: windows.some((cycle) => cycle.hasData),
   }
 }
 
 function PatternGraphCard({ snapshot, accent }) {
   const [primary, secondary] = snapshot.signals
-  const lead = secondary
-    ? `${primary.label.toLowerCase()} + ${secondary.label.toLowerCase()} across recent cycles.`
-    : `${primary.label.toLowerCase()} across recent cycles.`
+  const lead = snapshot.hasPattern
+    ? (secondary
+        ? `${primary.label.toLowerCase()} + ${secondary.label.toLowerCase()} across recent cycles.`
+        : `${primary.label.toLowerCase()} across recent cycles.`)
+    : 'Luna is watching for patterns in your recent cycles.'
 
   return (
     <div className="alive-card"
@@ -115,13 +142,17 @@ function PatternGraphCard({ snapshot, accent }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
         <div>
           <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
-            Pattern detected
+            {snapshot.hasPattern ? 'Pattern detected' : 'Still learning'}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.34, letterSpacing: -0.25, color: T.text, maxWidth: 240 }}>
-            We noticed: {lead}
+            {snapshot.hasPattern ? `We noticed: ${lead}` : lead}
           </div>
           <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.55, color: T.muted, fontStyle: 'italic', marginTop: 8, maxWidth: 250 }}>
-            This may be worth a conversation with a clinician.
+            {snapshot.hasPattern
+              ? 'This may be worth a conversation with a clinician.'
+              : snapshot.hasAnyData
+                ? 'A little more logging will make the repeating signals easier to read here.'
+                : 'As you log symptoms and periods, this card will start mapping what repeats.'}
           </div>
         </div>
         <div aria-hidden="true" style={{
@@ -175,7 +206,9 @@ function PatternGraphCard({ snapshot, accent }) {
           })}
         </div>
         <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 10.5, color: T.muted, letterSpacing: 0.6 }}>
-          Based on logs from your last {snapshot.cycles.length} cycles
+          {snapshot.hasAnyData
+            ? `Based on logs from your last ${snapshot.cycles.length} cycles`
+            : 'This graph fills as Luna gathers more of your cycle history'}
         </div>
       </div>
     </div>
@@ -196,10 +229,10 @@ function QuestionsCard({ snapshot, accent, triggeredCount, onExport, onJumpToFla
         boxShadow: `0 1px 0 ${accent}10, 0 16px 30px -24px ${accent}36`,
       }}>
       <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 10 }}>
-        What to mention at your visit
+        {snapshot.hasPattern ? 'What to mention at your visit' : 'When something feels off'}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.34, letterSpacing: -0.25, color: T.text, marginBottom: 12 }}>
-        Questions to ask
+        {snapshot.hasPattern ? 'Questions to ask' : 'Questions worth keeping in mind'}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {questions.map((question) => (
