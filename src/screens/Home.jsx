@@ -25,7 +25,6 @@ import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
 import { MoonMark } from '../components/Illustrations'
-import { CardArt, CARD_ART_KINDS } from '../components/CardArt'
 
 const MS_PER_DAY = 86400000
 
@@ -370,28 +369,19 @@ function dueWellnessNudges(wellness) {
   return nudges
 }
 
-// Horizontal scroll wheel of quick entries under the phase cover.
-// Two "log/edit" actions first, then the navigation cards that used
-// to live in AlwaysHere. "A note" used to be here too — removed,
-// because the sticky note in the corner of Home now covers that
-// gimmick and a dedicated card became redundant.
-function QuickActions({ go, setActiveLogDate, onOpenChat }) {
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
-  // Each card carries its functional category. Category drives the
-  // card's soft tint + icon accent via SECTION_PALETTE — so the row
-  // reads as chromatic variety instead of seven cream cards in a line.
-  // Five essential cards — each with its own animated icon motif so
-  // the row reads as alive surfaces instead of static glyphs. Motion
-  // is unique per card (write-erase, orbiting probe, scan-trace,
-  // slow rotation + pulse, line writing) so no two cards share the
-  // same beat. Off-tempo durations (3.2 → 7s) avoid synchronized
-  // mechanical feel. Animations respect prefers-reduced-motion.
+// Quiet invitations under the phase cover. The first row is the
+// emotional layer: talk, share, look something up. The compact shelf
+// below keeps the deeper tools present without making every feature
+// fight for the same visual weight.
+function QuickActions({ go, onOpenChat }) {
+  // Each action still carries its route and category. Category gives
+  // the icon a quiet accent, but the card backgrounds now stay close
+  // to Luna's paper so the row feels like invitations, not a menu.
   const items = [
     // "Log today" QuickAction was a direct duplicate of the center
     // [+] button in the TabBar. Cut to enforce the "one canonical
     // home per job" rule — the [+] button is the canonical entry.
-    { key: 'talk', category: 'reflect', label: 'Talk to Luna', sub: 'A real conversation, on her phase',
+    { key: 'talk', category: 'reflect', tier: 'primary', label: 'Talk to Luna', sub: 'A real conversation for today',
       icon: (
         <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* Chat bubble with three pulsing dots — typing-indicator
@@ -404,7 +394,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => onOpenChat?.() },
-    { key: 'share', category: 'plan', label: 'Share with someone', sub: 'A partner, your mother, a friend',
+    { key: 'share', category: 'plan', tier: 'primary', label: 'Share with someone', sub: 'A partner, your mother, a friend',
       icon: (
         <svg className="icon-anim-share" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* Two soft rings — a Venn meeting. The right ring drifts
@@ -418,7 +408,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('shareWith') },
-    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library — sourced',
+    { key: 'lookup', category: 'read', tier: 'primary', label: 'Look it up', sub: 'Search the library, sourced',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* The whole glass-and-handle tilts around the end of the
@@ -432,7 +422,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('askLuna') },
-    { key: 'conditions', category: 'urgent', label: 'Conditions Atlas', sub: 'PCOS, endo, PMDD, more',
+    { key: 'conditions', category: 'urgent', tier: 'secondary', label: 'Conditions', sub: 'PCOS, endo, PMDD',
       icon: (
         <svg className="icon-anim-conditions" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <circle className="ring" cx="10" cy="10" r="7" pathLength="100"/>
@@ -444,7 +434,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
     // Insights moved to the tab bar (fourth slot) — this chip now
     // carries the Library, which gave up that slot. Browse entry;
     // "Look it up" above stays the search entry.
-    { key: 'library', category: 'read', label: 'The library', sub: 'Doctor-grounded reads',
+    { key: 'library', category: 'read', tier: 'secondary', label: 'Library', sub: 'Doctor-grounded reads',
       icon: (
         <svg className="icon-anim-insights" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 3.5h5a1.8 1.8 0 011.8 1.8V17a1.6 1.6 0 00-1.6-1.4H4z"/>
@@ -452,7 +442,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('library') },
-    { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
+    { key: 'cheatsheet', category: 'care', tier: 'secondary', label: 'Visit notes', sub: 'Talking points',
       icon: (
         <svg className="icon-anim-cheatsheet" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="3" width="12" height="14" rx="1.5"/>
@@ -463,6 +453,8 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
       ),
       onTap: () => go('cheatsheet') },
   ]
+  const primaryItems = items.filter((it) => it.tier === 'primary')
+  const secondaryItems = items.filter((it) => it.tier === 'secondary')
   // One-shot scroll teaser — runs once on mount unless the user
   // touches the row first, in which case it cancels immediately so
   // the user's finger always wins over the animation. Spring tail
@@ -515,54 +507,114 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
     }
   }, [])
   return (
-    <div ref={scrollerRef} className="h-scroller" style={{
-      display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-      marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      marginTop: 16,
-    }}>
-      {items.map((it, idx) => {
+    <div style={{ marginTop: 16 }}>
+      <div ref={scrollerRef} className="h-scroller" style={{
+        display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
+        marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
+      }}>
+      {primaryItems.map((it, idx) => {
         const colors = sectionColors(it.category)
-        const hasArt = CARD_ART_KINDS.includes(it.key)
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 45%',
-              maxWidth: 172,
+              position: 'relative',
+              flex: '0 0 58%',
+              maxWidth: 222,
+              minHeight: 130,
               scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: T.radius.lg,
-              padding: 0,
+              borderRadius: 24,
+              padding: 16,
               overflow: 'hidden',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'stretch',
-              background: sectionPaper(it.category),
-              border: `1px solid ${colors.accent}22`,
-              boxShadow: T.shadow.md,
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              background: `linear-gradient(150deg, rgba(253,250,245,0.72), ${colors.tint}66)`,
+              border: `1px solid ${colors.accent}1f`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.55), 0 16px 34px -28px ${colors.accent}70`,
               animationDelay: `${idx * 50}ms`,
             }}>
-            {/* The distinct illustrated banner — soft glowing fills in
-                the section color, a different motif per card. This is
-                what makes each tile feel made for its purpose. */}
-            <span style={{ display: 'block', height: 72, background: `${colors.tint}cc`, borderBottom: `1px solid ${colors.accent}14` }}>
-              {hasArt ? <CardArt kind={it.key} accent={colors.accent} /> : (
-                <span style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.accent }}>{it.icon}</span>
-              )}
+            <span aria-hidden="true" style={{
+              position: 'absolute', right: -22, top: -22, width: 88, height: 88,
+              borderRadius: '50%',
+              background: `radial-gradient(circle, ${colors.accent}1c 0%, ${colors.accent}08 54%, transparent 72%)`,
+              pointerEvents: 'none',
+            }} />
+            <span style={{
+              width: 38, height: 38, borderRadius: 16,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              color: colors.accent,
+              background: `linear-gradient(145deg, rgba(255,255,255,0.72), ${colors.accent}14)`,
+              border: `1px solid ${colors.accent}20`,
+              boxShadow: `0 10px 20px -16px ${colors.accent}80`,
+            }}>
+              {it.icon}
             </span>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '11px 14px 14px' }}>
-              <span style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 5, position: 'relative', zIndex: 1 }}>
+              <span style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.16, letterSpacing: -0.25, color: T.text }}>
                 {it.label}
               </span>
-              <span style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+              <span style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.42, letterSpacing: 0.05 }}>
                 {it.sub}
               </span>
             </span>
           </button>
         )
       })}
+      </div>
+      <div className="frost-card" style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+        overflow: 'hidden',
+        marginTop: 10,
+        background: 'rgba(253,250,245,0.42)',
+        border: '1px solid rgba(26,19,16,0.055)',
+        borderRadius: 22,
+        boxShadow: '0 14px 30px -28px rgba(26,19,16,0.22)',
+      }}>
+        {secondaryItems.map((it, idx) => {
+          const colors = sectionColors(it.category)
+          return (
+            <button key={it.key} onClick={it.onTap} className="alive-card"
+              style={{
+                minWidth: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                gap: 7,
+                border: 'none',
+                borderRight: idx < secondaryItems.length - 1 ? '1px solid rgba(26,19,16,0.055)' : 'none',
+                background: 'transparent',
+                padding: '13px 10px 12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                color: T.text,
+                fontFamily: 'inherit',
+              }}>
+              <span style={{
+                width: 28, height: 28, borderRadius: 12,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                color: colors.accent,
+                background: `${colors.accent}12`,
+              }}>
+                {it.icon}
+              </span>
+              <span style={{ minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, lineHeight: 1.1, letterSpacing: -0.12, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {it.label}
+                </span>
+                <span style={{ display: 'block', marginTop: 3, fontFamily: T.sans, fontSize: 10.5, lineHeight: 1.25, color: T.muted }}>
+                  {it.sub}
+                </span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -1572,7 +1624,6 @@ export default function Home() {
           {!isPreg && (
             <QuickActions
               go={go}
-              setActiveLogDate={setActiveLogDate}
               onOpenChat={() => { setChatOpener(null); setChatOpen(true) }}
             />
           )}
