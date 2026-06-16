@@ -241,7 +241,7 @@ export function BrickList({ title, items, positive = false }) {
 // of content isn't trapped behind a translucent blur. Toggling a
 // body class lets TabBar respond via CSS transition (smooth) without
 // either component needing knowledge of the other.
-export const Screen = forwardRef(function Screen({ children, padBottom = 120, style: s = {}, onScroll }, ref) {
+export const Screen = forwardRef(function Screen({ children, padBottom = 136, style: s = {}, onScroll }, ref) {
   const innerRef = useRef(null)
   const setRef = (el) => {
     innerRef.current = el

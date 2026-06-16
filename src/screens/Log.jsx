@@ -84,6 +84,7 @@ export default function Log() {
   const [sleep,    setSleep]    = useState(existing.sleep || null)
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
+  const [showCycleDetails, setShowCycleDetails] = useState(() => Boolean(existing.bbt?.value || existing.mucus))
   const [savedJustNow, setSavedJustNow] = useState(false)
   // Last-tapped symptom (for the inline insight). Cleared when the
   // user untaps the same symptom or taps a different one.
@@ -152,6 +153,7 @@ export default function Log() {
     setSleep(log.sleep || null)
     setNote(log.note || '')
     setBbtError('')
+    setShowCycleDetails(Boolean(log.bbt?.value || log.mucus))
     setActiveSym(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingISO])
@@ -165,6 +167,11 @@ export default function Log() {
     setEditingISO(next)
   }
   const canGoNext = editingISO < todayISO
+  const hasCycleDetails = Boolean(bbt || mucus)
+  const toggleCycleDetails = () => {
+    if (showCycleDetails && (teachField === 'bbt' || teachField === 'mucus')) setTeachField(null)
+    setShowCycleDetails((open) => !open)
+  }
 
   // Clear the explicit-date intent when leaving Log so the next visit
   // defaults to today (unless the user picks a date again).
@@ -175,7 +182,11 @@ export default function Log() {
 
   const save = () => {
     const bbtErr = validateBBT(bbt, bbtUnit)
-    if (bbtErr) { setBbtError(bbtErr); return }
+    if (bbtErr) {
+      setBbtError(bbtErr)
+      setShowCycleDetails(true)
+      return
+    }
     setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
@@ -473,81 +484,124 @@ export default function Log() {
         )}
         </div>
 
-        {/* Temperature (BBT) — frosted input + segmented unit toggle */}
-        <div className="insight-stagger" style={{ animationDelay: '260ms' }}>
-        <Eyebrow color={acc}>Your morning temperature</Eyebrow>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-          <input
-            type="number"
-            inputMode="decimal"
-            step="0.01"
-            value={bbt}
-            onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError(''); setTeachField(e.target.value ? 'bbt' : null) }}
-            placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
-            style={{ flex: 1, background: 'rgba(253,250,245,0.55)', border: `1px solid ${bbtError ? T.accent : 'rgba(26,19,16,0.08)'}`, borderRadius: 16, padding: '14px 16px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
-            onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
-            onBlur={(e)  => { e.target.style.borderColor = bbtError ? T.accent : 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }}
-          />
-          <div className="frost-card" style={{ display: 'flex', background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, padding: 3 }}>
-            {['F','C'].map((u) => (
-              <button key={u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
-                style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999, transition: 'all 0.2s var(--ease-out)' }}>
-                °{u}
-              </button>
-            ))}
-          </div>
-        </div>
-        {bbtError && (
-          <div className="frost-card" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.accent, lineHeight: 1.5, padding: '12px 14px', background: T.accent + '14', border: `1px solid ${T.accent}40`, borderRadius: 14, marginTop: 8, marginBottom: 8 }}>
-            {bbtError}
-          </div>
-        )}
-        <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>
-          Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
-        </div>
-        {teachField === 'bbt' && teachLesson && (
-          <div style={{ marginBottom: 24 }}>
-            <QuietLesson lesson={teachLesson} color={acc} keyId={`bbt-${bbt}-${phaseId}`} />
-          </div>
-        )}
+        <div className="insight-stagger" style={{ animationDelay: '260ms', marginBottom: showCycleDetails ? 22 : 24 }}>
+          <button
+            type="button"
+            onClick={toggleCycleDetails}
+            aria-expanded={showCycleDetails}
+            className="alive-card frost-card"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              padding: '14px 16px',
+              background: hasCycleDetails ? `${acc}10` : 'rgba(253,250,245,0.5)',
+              border: `1px solid ${hasCycleDetails ? `${acc}30` : 'rgba(26,19,16,0.06)'}`,
+              borderRadius: 18,
+              cursor: 'pointer',
+              color: T.text,
+              fontFamily: T.sans,
+              boxShadow: hasCycleDetails ? `0 12px 24px -20px ${acc}60` : '0 10px 22px -24px rgba(26,19,16,0.18)',
+            }}>
+            <span style={{ minWidth: 0, textAlign: 'left' }}>
+              <span style={{ display: 'block', fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', color: T.text, lineHeight: 1.2 }}>
+                Cycle details
+              </span>
+              <span style={{ display: 'block', marginTop: 3, color: T.muted, fontSize: 12.5, lineHeight: 1.35 }}>
+                {showCycleDetails
+                  ? 'Temperature and discharge are open.'
+                  : hasCycleDetails
+                    ? 'Review temperature and discharge.'
+                    : 'Add temperature and discharge only if useful.'}
+              </span>
+            </span>
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: showCycleDetails ? acc : 'rgba(26,19,16,0.06)', color: showCycleDetails ? '#fff' : T.text, fontSize: 18, lineHeight: 1 }}>
+              {showCycleDetails ? '−' : '+'}
+            </span>
+          </button>
         </div>
 
-        {/* Discharge — frosted soft cards with care tint */}
-        <div className="insight-stagger" style={{ animationDelay: '300ms' }}>
-        <Eyebrow color={acc}>Discharge</Eyebrow>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 24 }}>
-          {MUCUS_OPTIONS.map((m) => {
-            const on = mucus === m.id
-            const careColors = sectionColors('care')
-            return (
-              <button key={m.id} onClick={() => {
-                setMucus(on ? null : m.id)
-                setTeachField(on ? null : 'mucus')
-              }}
-                className="alive-card frost-card"
-                style={{
-                  border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
-                  background: on ? acc + '14' : sectionPaper('care'),
-                  color: on ? acc : T.text,
-                  padding: '12px 4px',
-                  cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600,
-                  borderRadius: 16,
-                  boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${careColors.accent}40`,
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  transition: 'all 0.2s var(--ease-out)',
-                }}>
-                <span style={{ fontSize: 11.5, fontWeight: 600, fontFamily: T.serif, letterSpacing: -0.1 }}>{m.label}</span>
-                <span style={{ fontSize: 11, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
-              </button>
-            )
-          })}
-        </div>
-        {teachField === 'mucus' && teachLesson && (
-          <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <QuietLesson lesson={teachLesson} color={acc} keyId={`mucus-${mucus}`} />
-          </div>
+        {showCycleDetails && (
+          <>
+            {/* Temperature (BBT) — frosted input + segmented unit toggle */}
+            <div className="insight-stagger" style={{ animationDelay: '285ms' }}>
+            <Eyebrow color={acc}>Your morning temperature</Eyebrow>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                value={bbt}
+                onChange={(e) => { setBbt(e.target.value); if (bbtError) setBbtError(''); setTeachField(e.target.value ? 'bbt' : null) }}
+                placeholder={bbtUnit === 'F' ? '97.8' : '36.5'}
+                style={{ flex: 1, background: 'rgba(253,250,245,0.55)', border: `1px solid ${bbtError ? T.accent : 'rgba(26,19,16,0.08)'}`, borderRadius: 16, padding: '14px 16px', fontSize: 16, fontFamily: T.sans, color: T.text, outline: 'none', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)' }}
+                onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
+                onBlur={(e)  => { e.target.style.borderColor = bbtError ? T.accent : 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }}
+              />
+              <div className="frost-card" style={{ display: 'flex', background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, padding: 3 }}>
+                {['F','C'].map((u) => (
+                  <button key={u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
+                    style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999, transition: 'all 0.2s var(--ease-out)' }}>
+                    °{u}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {bbtError && (
+              <div className="frost-card" style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.accent, lineHeight: 1.5, padding: '12px 14px', background: T.accent + '14', border: `1px solid ${T.accent}40`, borderRadius: 14, marginTop: 8, marginBottom: 8 }}>
+                {bbtError}
+              </div>
+            )}
+            <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>
+              Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation. That's how Luna learns your pattern.
+            </div>
+            {teachField === 'bbt' && teachLesson && (
+              <div style={{ marginBottom: 24 }}>
+                <QuietLesson lesson={teachLesson} color={acc} keyId={`bbt-${bbt}-${phaseId}`} />
+              </div>
+            )}
+            </div>
+
+            {/* Discharge — frosted soft cards with care tint */}
+            <div className="insight-stagger" style={{ animationDelay: '310ms' }}>
+            <Eyebrow color={acc}>Discharge</Eyebrow>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, marginBottom: 24 }}>
+              {MUCUS_OPTIONS.map((m) => {
+                const on = mucus === m.id
+                const careColors = sectionColors('care')
+                return (
+                  <button key={m.id} onClick={() => {
+                    setMucus(on ? null : m.id)
+                    setTeachField(on ? null : 'mucus')
+                  }}
+                    className="alive-card frost-card"
+                    style={{
+                      border: `1px solid ${on ? acc + '55' : 'rgba(26,19,16,0.06)'}`,
+                      background: on ? acc + '14' : sectionPaper('care'),
+                      color: on ? acc : T.text,
+                      padding: '12px 4px',
+                      cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600,
+                      borderRadius: 16,
+                      boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${careColors.accent}40`,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                      transition: 'all 0.2s var(--ease-out)',
+                    }}>
+                    <span style={{ fontSize: 11.5, fontWeight: 600, fontFamily: T.serif, letterSpacing: -0.1 }}>{m.label}</span>
+                    <span style={{ fontSize: 11, color: T.muted, fontStyle: 'italic', fontFamily: T.serif, lineHeight: 1.2 }}>{m.sub}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {teachField === 'mucus' && teachLesson && (
+              <div style={{ marginTop: -10, marginBottom: 24 }}>
+                <QuietLesson lesson={teachLesson} color={acc} keyId={`mucus-${mucus}`} />
+              </div>
+            )}
+            </div>
+          </>
         )}
-        </div>
 
         {/* Sleep — frosted pill cards */}
         <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
