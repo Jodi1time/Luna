@@ -67,22 +67,32 @@ function Panel({ children, style }) {
 // state when onTap is set. Label uses serif for warmer reading; the
 // trailing value stays sans so it reads as data, not narrative.
 function Row({ label, value, right, onTap, danger }) {
+  const Comp = onTap ? 'button' : 'div'
   return (
-    <div onClick={onTap}
-      className={onTap ? 'settings-row' : undefined}
+    <Comp
+      {...(onTap ? { type: 'button', onClick: onTap, className: 'settings-row' } : {})}
       style={{
-        padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 18px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         borderBottom: '1px solid rgba(26,19,16,0.06)',
         cursor: onTap ? 'pointer' : 'default',
         transition: 'background .2s ease',
         gap: 12,
+        width: '100%',
+        borderLeft: 'none',
+        borderRight: 'none',
+        borderTop: 'none',
+        background: 'transparent',
+        textAlign: 'left',
       }}>
       <div style={{ flex: 1, minWidth: 0, fontSize: 14.5, color: danger ? T.accent : T.text, fontFamily: T.serif, letterSpacing: -0.1 }}>{label}</div>
       <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.sans, display: 'flex', alignItems: 'center', gap: 8, textAlign: 'right' }}>
         {value && <span style={{ fontStyle: 'italic' }}>{value}</span>}
         {right ?? (onTap ? <span style={{ opacity: 0.42, fontSize: 17, fontFamily: T.serif }}>›</span> : null)}
       </div>
-    </div>
+    </Comp>
   )
 }
 
