@@ -406,6 +406,102 @@ function resolvePattern(p) {
   return { iconId: p.label, display: dict?.label || p.label }
 }
 
+const PHASE_PATTERN_COPY = {
+  menstrual:  'your period days',
+  follicular: 'your follicular days',
+  ovulation:  'your ovulation window',
+  luteal:     'your luteal days',
+}
+
+function dayWindowLabel(days = []) {
+  const [min, max] = days
+  if (min == null || max == null) return ''
+  return min === max ? `day ${min}` : `days ${min}–${max}`
+}
+
+function patternLeadSentence(pattern, display) {
+  const phaseLabel = PHASE_PATTERN_COPY[pattern.phase] || `${pattern.phase} phase`
+  if (pattern.type === 'symptom') return `${display} shows up most in ${phaseLabel}.`
+  return `${display} moods keep gathering in ${phaseLabel}.`
+}
+
+function PatternLeadCard({ patterns, cyclesLogged, loggedDays, accent }) {
+  const primary = patterns[0]
+  if (!primary) return null
+  const secondary = patterns[1] || null
+  const { iconId, display } = resolvePattern(primary)
+  const primaryColor = PHASE_COLOR[primary.phase] || accent
+  const concentration = Math.round((primary.concentration || 0) * 100)
+  const secondaryResolved = secondary ? resolvePattern(secondary) : null
+
+  return (
+    <div className="insight-stagger alive-card"
+      style={{
+        marginBottom: 22,
+        padding: 18,
+        background: 'rgba(253,250,245,0.62)',
+        border: `1px solid ${primaryColor}22`,
+        borderRadius: 20,
+        boxShadow: `0 1px 0 ${primaryColor}10, 0 14px 28px -24px ${primaryColor}38`,
+        animationDelay: '110ms',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{
+          flexShrink: 0,
+          width: 42,
+          height: 42,
+          borderRadius: 14,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: `${primaryColor}10`,
+          color: primaryColor,
+        }}>
+          <SymptomIcon id={iconId} size={24} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: primaryColor, marginBottom: 8 }}>
+            Pattern detected
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 500, letterSpacing: -0.45, lineHeight: 1.18, color: T.text, marginBottom: 8 }}>
+            {patternLeadSentence(primary, display)}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic' }}>
+            {primary.occurrences} time{primary.occurrences === 1 ? '' : 's'} across {primary.cycles} cycle{primary.cycles === 1 ? '' : 's'}, most often around {dayWindowLabel(primary.days)}.
+          </div>
+        </div>
+      </div>
+
+      {secondary && secondaryResolved && (
+        <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${primaryColor}14` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: PHASE_COLOR[secondary.phase] || accent, opacity: 0.8, display: 'inline-flex' }}>
+              <SymptomIcon id={secondaryResolved.iconId} size={16} />
+            </span>
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.5, color: T.text, fontStyle: 'italic' }}>
+              Also: {secondary.type === 'symptom'
+                ? `${secondaryResolved.display.toLowerCase()} shows up around ${dayWindowLabel(secondary.days)}.`
+                : `${secondaryResolved.display.toLowerCase()} moods keep showing up around ${dayWindowLabel(secondary.days)}.`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${T.hair}` }}>
+        <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, fontWeight: 600, color: T.muted }}>
+          {concentration}% concentration
+        </span>
+        <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, fontWeight: 600, color: T.muted }}>
+          {cyclesLogged} cycle{cyclesLogged === 1 ? '' : 's'} tracked
+        </span>
+        <span style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, fontWeight: 600, color: T.muted }}>
+          {loggedDays} day{loggedDays === 1 ? '' : 's'} logged
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export default function Insights() {
   const store = useLuna()
   const cycle = useCycle(store)
@@ -427,6 +523,7 @@ export default function Insights() {
   const bbtShift = !onHormonalBC ? cycle.bbtShift : null
   const ovulation = !onHormonalBC ? cycle.ovulation : null
   const cycleDay = cycle.cycleDay
+  const loggedDays = Object.keys(logs || {}).length
   const goPhase = useLuna((s) => s.goPhase)
   // Gentle condition matching — surfaces conditions worth knowing about
   // based on log patterns. Never diagnostic. Hidden when no matches
@@ -476,6 +573,15 @@ export default function Insights() {
             </div>
           )}
         </div>
+
+        {patterns.length > 0 && (
+          <PatternLeadCard
+            patterns={patterns}
+            cyclesLogged={cyclesLogged}
+            loggedDays={loggedDays}
+            accent={phase?.color || T.accent}
+          />
+        )}
 
         {/* Cycle summary — the "you are normal" surface most apps don't
             do. Hidden on hormonal BC: "about 28 days, within typical
@@ -634,21 +740,22 @@ export default function Insights() {
         )}
 
         <div className="insight-stagger" style={{ animationDelay: '280ms' }}>
-        <Eyebrow>What's repeating in your cycle</Eyebrow>
+        <Eyebrow>{patterns.length > 0 ? 'A closer look' : 'What keeps coming back'}</Eyebrow>
         {patterns.length === 0 ? (
-          <div className="alive-card frost-card" style={{
-            marginTop: 6, padding: 20,
-            background: `linear-gradient(160deg, ${(phase?.color || T.accent)}0c, rgba(253,250,245,0.55))`,
-            border: `1px solid ${(phase?.color || T.accent)}1f`,
-            borderRadius: 22,
-            boxShadow: `0 14px 30px -22px ${(phase?.color || T.accent)}38`,
+          <div className="alive-card" style={{
+            marginTop: 6,
+            padding: 20,
+            background: 'rgba(253,250,245,0.58)',
+            border: `1px solid ${(phase?.color || T.accent)}18`,
+            borderRadius: 20,
+            boxShadow: `0 1px 0 ${(phase?.color || T.accent)}10, 0 12px 26px -24px ${(phase?.color || T.accent)}34`,
           }}>
             {/* Constellation forming — points connecting into a shape,
                 "patterns become visible with more of them." */}
             <div style={{ marginBottom: 8 }}>
               <Constellation size={150} accent={phase?.color || T.accent} />
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2, lineHeight: 1.3, marginBottom: 6 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.28, lineHeight: 1.24, marginBottom: 6 }}>
               {cyclesLogged < 2 ? 'Your patterns are still forming.' : 'No strong patterns yet.'}
             </div>
             <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
@@ -677,24 +784,35 @@ export default function Insights() {
               // The dict has why + evidence + source — surface these so each
               // pattern card teaches instead of just stating the pattern.
               const sym = p.type === 'symptom' ? SYMPTOMS[p.label] : null
+              const title = p.type === 'symptom'
+                ? `${display} shows up here.`
+                : `${display} moods keep showing up here.`
               return (
-                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('read'), border: `1px solid ${sectionColors('read').accent}22`, boxShadow: `0 1px 0 ${color}10, 0 14px 30px -20px ${color}40`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
+                <div key={p.id} className="insight-stagger alive-card" style={{ padding: 18, background: 'rgba(253,250,245,0.6)', border: `1px solid ${color}20`, boxShadow: `0 1px 0 ${color}10, 0 14px 28px -24px ${color}32`, borderRadius: 20, animationDelay: `${320 + idx * 70}ms` }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <div style={{ flexShrink: 0, color: color, marginTop: 2, opacity: 0.85 }}>
                       <SymptomIcon id={iconId} size={32} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: color, fontFamily: T.sans, marginBottom: 4 }}>
-                        {p.type === 'symptom' ? 'Symptom' : 'Mood'} · days {min}{min === max ? '' : `–${max}`}
+                      <div style={{ fontSize: 11, letterSpacing: 1.1, fontWeight: 600, color: color, fontFamily: T.mono, marginBottom: 6 }}>
+                        {p.phase} phase · {dayLabel}
                       </div>
-                      <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 4, lineHeight: 1.25 }}>
-                        {p.type === 'symptom' ? `Your ${display.toLowerCase()}` : `Your '${display}' moods`}
+                      <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 6, lineHeight: 1.24, letterSpacing: -0.25 }}>
+                        {title}
                       </div>
-                      <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5, fontFamily: T.sans }}>
+                      <div style={{ fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontFamily: T.serif, fontStyle: 'italic' }}>
                         {sentence}.
                       </div>
-                      <div style={{ marginTop: 8, fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.3 }}>
-                        {p.occurrences} occurrence{p.occurrences === 1 ? '' : 's'} across {p.cycles} cycle{p.cycles === 1 ? '' : 's'} · {concentration}% concentration
+                      <div style={{ marginTop: 10, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        <span style={{ fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                          {p.occurrences} occurrence{p.occurrences === 1 ? '' : 's'}
+                        </span>
+                        <span style={{ fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                          {p.cycles} cycle{p.cycles === 1 ? '' : 's'}
+                        </span>
+                        <span style={{ fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.4, fontWeight: 600 }}>
+                          {concentration}% concentration
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -754,14 +872,15 @@ export default function Insights() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {conditionMatches.slice(0, 2).map((m) => (
                 <button key={m.id} onClick={() => go('conditions', { activeConditionId: m.id })}
-                  className="alive-card frost-card"
+                  className="alive-card"
                   style={{
                     padding: 16,
-                    background: 'rgba(253,250,245,0.55)',
+                    background: 'rgba(253,250,245,0.58)',
                     border: `1px solid ${sectionColors('urgent').accent}22`,
-                    borderRadius: 18,
+                    borderRadius: 16,
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                     color: T.text, fontFamily: 'inherit',
+                    boxShadow: 'none',
                   }}>
                   <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2, marginBottom: 4 }}>
                     Reading on {m.condition.name}
