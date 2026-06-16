@@ -100,11 +100,11 @@ export function TabBar({ active, onChange }) {
       // sides. Scale lives in a CSS var so Screen.jsx can shrink the
       // pill smoothly as the user scrolls away from the top.
       position: 'fixed',
-      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+      bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
       left: '50%',
       transform: 'translateX(-50%) scale(var(--tabbar-scale, 1))',
-      width: 'calc(100% - 28px)',
-      maxWidth: 392,
+      width: 'calc(100% - 32px)',
+      maxWidth: 382,
       display: 'flex', justifyContent: 'space-around', alignItems: 'center',
       zIndex: 50,
     }}>
@@ -116,10 +116,10 @@ export function TabBar({ active, onChange }) {
       {items.map((it) => {
         if (it.key === 'log') {
           return (
-            <button key="log" onClick={() => onChange('log')} className="alive-card"
+            <button key="log" onClick={() => onChange('log')} className="alive-card" aria-label="Log today"
               style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
               <div className="plus-pulse" style={{
-                width: 50, height: 50,
+                width: 48, height: 48,
                 background: T.accent, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: 999, marginBottom: 2,
@@ -133,7 +133,7 @@ export function TabBar({ active, onChange }) {
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-              padding: '4px 12px',
+              padding: '4px 10px',
               color: on ? T.accent : 'rgba(26,19,16,0.42)',
               fontFamily: T.sans,
               transition: 'color 0.25s ease-out',
@@ -241,7 +241,7 @@ export function BrickList({ title, items, positive = false }) {
 // of content isn't trapped behind a translucent blur. Toggling a
 // body class lets TabBar respond via CSS transition (smooth) without
 // either component needing knowledge of the other.
-export const Screen = forwardRef(function Screen({ children, padBottom = 120, style: s = {}, onScroll }, ref) {
+export const Screen = forwardRef(function Screen({ children, padBottom = 152, style: s = {}, onScroll }, ref) {
   const innerRef = useRef(null)
   const setRef = (el) => {
     innerRef.current = el
