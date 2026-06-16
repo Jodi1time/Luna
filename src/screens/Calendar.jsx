@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
-import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
+import { Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
-import { sectionPaper, sectionColors } from '../data/sectionPalette'
+import { sectionColors } from '../data/sectionPalette'
 import { getBcCycleModel, packDayForDate, addDaysToISO } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
-import { WhyChip, SourceTag } from '../components/Sourced'
+import { WhyChip } from '../components/Sourced'
 import { MoonJourney } from '../components/Illustrations'
 
 const MS_PER_DAY = 86400000
@@ -352,18 +352,18 @@ export default function Calendar() {
           {bcMode ? 'What your method has coming up.' : "What's likely coming up, with how steady the call is."}
         </div>
         {bcMode ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {bcModel.missingStartDate ? (
               <button onClick={() => go('birthControl')}
-                className="insight-stagger alive-card"
-                style={{ padding: 18, background: T.accent + '10', border: `1px solid ${T.accent}38`, borderRadius: T.r, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', animationDelay: '680ms' }}>
+                className="insight-stagger"
+                style={{ padding: '14px 0 16px', background: 'transparent', border: 'none', borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', animationDelay: '680ms' }}>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 6 }}>
                   a small thing to set
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.35, marginBottom: 6 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.35, marginBottom: 6 }}>
                   {bcModel.startDateLabel}
                 </div>
-                <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55, maxWidth: 330 }}>
                   Once Luna knows, this calendar starts working for your method — the rhythm, the next thing, all of it.
                 </div>
               </button>
@@ -373,21 +373,19 @@ export default function Calendar() {
               const ntAccent = sectionColors(ntCategory).accent
               const todayPackDay = bcModel.kind === 'pillPack' && bcStart ? packDayForDate(bcStart, todayISO) : null
               return (
-                <div className="insight-stagger alive-card" style={{
-                  padding: 16,
-                  background: sectionPaper(ntCategory),
-                  border: `1px solid ${ntAccent}22`,
-                  boxShadow: `0 1px 0 ${ntAccent}10, 0 10px 22px -18px ${ntAccent}30`,
-                  borderRadius: T.r,
+                <div className="insight-stagger" style={{
+                  padding: '14px 0 16px',
+                  borderTop: `1px solid ${T.hair}`,
+                  borderBottom: `1px solid ${T.hair}`,
                   animationDelay: '680ms',
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: ntAccent, fontWeight: 600, marginBottom: 6 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: ntAccent, marginBottom: 6 }}>
                     {nt.eyebrow}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
                     {nt.title}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic', maxWidth: 340 }}>
                     {nt.body}
                   </div>
                   {bcModel.kind === 'pillPack' && todayPackDay != null && (
@@ -404,12 +402,12 @@ export default function Calendar() {
               )
             })()}
             <button onClick={() => go('bcMethod')}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, padding: '4px 0', textAlign: 'left', letterSpacing: -0.1 }}>
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, padding: '12px 0 4px', textAlign: 'left', letterSpacing: -0.1 }}>
               A deeper read on your method →
             </button>
           </div>
         ) : filteredPredictions ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {filteredPredictions.map((p, i) => {
               const title =
                 p.label === 'Next period'    ? 'Your next period' :
@@ -428,34 +426,23 @@ export default function Calendar() {
               const rangeLabel = p.range
                 ? p.range.replace('±', 'give or take').replace(/(\d+) days?/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
                 : null
-              // Map each prediction kind to a section category for the
-              // soft background tint. Period predictions → urgent (rose),
-              // fertile window → care (gold — preciousness), PMS → plan
-              // (moonlight, the "luteal anticipating" feel).
-              const category =
-                p.label === 'Next period'    ? 'urgent' :
-                p.label === 'Fertile window' ? 'care' :
-                p.label === 'PMS window'     ? 'plan' :
-                'default'
               return (
-                <div key={i} className="insight-stagger alive-card" style={{
-                  padding: 16,
-                  background: sectionPaper(category),
-                  border: `1px solid ${accentColor}22`,
-                  boxShadow: `0 1px 0 ${accentColor}10, 0 10px 22px -18px ${accentColor}30`,
-                  borderRadius: T.r,
+                <div key={i} className="insight-stagger" style={{
+                  padding: '14px 0 16px',
+                  borderTop: i === 0 ? `1px solid ${T.hair}` : 'none',
+                  borderBottom: `1px solid ${T.hair}`,
                   animationDelay: `${680 + i * 80}ms`,
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
-                    {certaintyLabel}
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+                    <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3 }}>
+                      {title}
+                    </div>
+                    <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: accentColor }}>
+                      {p.date}
+                    </div>
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
-                    {title} — <em style={{ color: accentColor }}>{p.date}</em>
-                    {rangeLabel && (
-                      <span style={{ fontFamily: T.sans, fontSize: 13, fontStyle: 'normal', color: T.muted, fontWeight: 400 }}>
-                        {' '}({rangeLabel})
-                      </span>
-                    )}
+                  <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, marginBottom: 6 }}>
+                    {certaintyLabel}{rangeLabel ? ` · ${rangeLabel}` : ''}
                   </div>
                   <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
                     {p.why}
@@ -495,21 +482,18 @@ export default function Calendar() {
             })}
           </div>
         ) : (
-          <div className="alive-card frost-card" style={{
-            padding: 22,
-            background: `linear-gradient(160deg, ${T.accent}0c, rgba(253,250,245,0.55))`,
-            border: `1px solid ${T.accent}1f`,
-            borderRadius: 22,
-            boxShadow: `0 14px 30px -22px ${T.accent}38`,
+          <div style={{
+            padding: '18px 0 2px',
+            borderTop: `1px solid ${T.hair}`,
           }}>
             {/* The moon's own journey — a cycle drawn as phases. */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: T.accent }}>
-              <MoonJourney size={188} accent={T.accent} />
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, color: T.accent, opacity: 0.82 }}>
+              <MoonJourney size={172} accent={T.accent} />
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.25, marginBottom: 8 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.25, marginBottom: 8, textAlign: 'center' }}>
               Your rhythm starts here.
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.muted, lineHeight: 1.55, textAlign: 'center', maxWidth: 310, margin: '0 auto' }}>
               Log your first period and Luna begins learning. Three or four cycles in, predictions sharpen — you'll feel the difference.
             </div>
           </div>
