@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen, Icons } from '../components/shared'
 import { RED_FLAGS, ARTICLES } from '../data/lunaData'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import { useCycle } from '../hooks/useCycle'
+import { useCycle, getPeriodHistory } from '../hooks/useCycle'
 import useLuna from '../store/useLuna'
 
 // Defensive escape for anything interpolated into the PDF HTML template.
@@ -19,15 +19,252 @@ function htmlEscape(s) {
     .replace(/'/g, '&#039;')
 }
 
+const WATCH_SIGNALS = {
+  headache: {
+    label: 'Headache',
+    matches: (log) => (log?.symptoms || []).includes('headache'),
+    question: 'Could these headaches be menstrual migraines or tied to a hormone shift?',
+  },
+  heavyFlow: {
+    label: 'Heavy flow',
+    matches: (log) => log?.flow === 'Heavy',
+    question: 'Could this bleeding pattern point to low iron, fibroids, or adenomyosis?',
+  },
+  cramps: {
+    label: 'Cramps',
+    matches: (log) => (log?.symptoms || []).includes('cramps'),
+    question: 'Do these cramps warrant a conversation about endometriosis or pelvic pain?',
+  },
+  longPeriod: {
+    label: 'Long periods',
+    matchesPeriod: (period) => (period?.length || 0) > 7,
+    question: 'Should we check why bleeding is lasting this long, and whether iron is being affected?',
+  },
+}
+
+const monthLabel = (iso) =>
+  new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+
+function buildWatchSnapshot(logs, periodStarts) {
+  if (!periodStarts || periodStarts.length < 3) return null
+  const starts = [...periodStarts].sort()
+  const historyByStart = new Map(getPeriodHistory(logs, periodStarts).map((p) => [p.start, p]))
+  const windows = []
+
+  for (let i = 0; i < starts.length - 1; i++) {
+    const start = starts[i]
+    const nextStart = starts[i + 1]
+    const period = historyByStart.get(start) || null
+    const cycleLogs = Object.entries(logs || {})
+      .filter(([date]) => date >= start && date < nextStart)
+      .map(([, log]) => log)
+
+    const signals = {}
+    for (const [id, meta] of Object.entries(WATCH_SIGNALS)) {
+      const hitInLogs = meta.matches ? cycleLogs.some((log) => meta.matches(log)) : false
+      const hitInPeriod = meta.matchesPeriod ? meta.matchesPeriod(period) : false
+      signals[id] = hitInLogs || hitInPeriod
+    }
+
+    windows.push({
+      start,
+      label: monthLabel(start),
+      signals,
+    })
+  }
+
+  const recentCycles = windows.slice(-5)
+  if (recentCycles.length < 2) return null
+
+  const signalStats = Object.entries(WATCH_SIGNALS)
+    .map(([id, meta]) => ({
+      id,
+      label: meta.label,
+      question: meta.question,
+      occurrences: recentCycles.filter((cycle) => cycle.signals[id]).length,
+    }))
+    .filter((item) => item.occurrences >= 2)
+    .sort((a, b) => b.occurrences - a.occurrences)
+
+  if (signalStats.length === 0) return null
+
+  const topSignals = signalStats.slice(0, 2)
+  return {
+    cycles: recentCycles,
+    signals: topSignals,
+  }
+}
+
+function PatternGraphCard({ snapshot, accent }) {
+  const [primary, secondary] = snapshot.signals
+  const lead = secondary
+    ? `${primary.label.toLowerCase()} + ${secondary.label.toLowerCase()} across recent cycles.`
+    : `${primary.label.toLowerCase()} across recent cycles.`
+
+  return (
+    <div className="alive-card"
+      style={{
+        minWidth: '100%',
+        scrollSnapAlign: 'start',
+        padding: 18,
+        background: 'rgba(253,250,245,0.68)',
+        border: `1px solid ${accent}18`,
+        borderRadius: 22,
+        boxShadow: `0 1px 0 ${accent}10, 0 16px 30px -24px ${accent}36`,
+      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+        <div>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
+            Pattern detected
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.34, letterSpacing: -0.25, color: T.text, maxWidth: 240 }}>
+            We noticed: {lead}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.55, color: T.muted, fontStyle: 'italic', marginTop: 8, maxWidth: 250 }}>
+            This may be worth a conversation with a clinician.
+          </div>
+        </div>
+        <div aria-hidden="true" style={{
+          width: 54,
+          height: 54,
+          borderRadius: 18,
+          background: `radial-gradient(circle at 35% 35%, ${accent}18, rgba(253,250,245,0.35))`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: accent,
+          flexShrink: 0,
+        }}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M5 19c3-4 6-6 9-6s6 2 9 6" />
+            <path d="M7 10l3 3 4-5 3 3 4-5" />
+          </svg>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 14, padding: '14px 14px 12px', background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `96px repeat(${snapshot.cycles.length}, minmax(0, 1fr))`, gap: 8, alignItems: 'center' }}>
+          <div />
+          {snapshot.cycles.map((cycle) => (
+            <div key={cycle.start} style={{ textAlign: 'center', fontFamily: T.mono, fontSize: 10.5, color: T.muted, letterSpacing: 0.9, fontWeight: 600 }}>
+              {cycle.label}
+            </div>
+          ))}
+
+          {snapshot.signals.flatMap((signal) => {
+            const cells = [
+              <div key={`${signal.id}-label`} style={{ fontFamily: T.serif, fontSize: 13.5, color: T.text, lineHeight: 1.2 }}>
+                {signal.label}
+              </div>,
+            ]
+            snapshot.cycles.forEach((cycle) => {
+              const on = cycle.signals[signal.id]
+              cells.push(
+                <div key={`${signal.id}-${cycle.start}`} style={{ display: 'flex', justifyContent: 'center' }}>
+                  <div style={{
+                    width: on ? 22 : 5,
+                    height: 6,
+                    borderRadius: 999,
+                    background: on ? accent : 'rgba(26,19,16,0.12)',
+                    transition: 'width .22s ease, background .22s ease',
+                  }} />
+                </div>
+              )
+            })
+            return cells
+          })}
+        </div>
+        <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 10.5, color: T.muted, letterSpacing: 0.6 }}>
+          Based on logs from your last {snapshot.cycles.length} cycles
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuestionsCard({ snapshot, accent, triggeredCount, onExport, onJumpToFlags }) {
+  const questions = snapshot.signals.map((signal) => signal.question).slice(0, 3)
+  return (
+    <div className="alive-card"
+      style={{
+        minWidth: '100%',
+        scrollSnapAlign: 'start',
+        padding: 18,
+        background: 'rgba(253,250,245,0.68)',
+        border: `1px solid ${accent}18`,
+        borderRadius: 22,
+        boxShadow: `0 1px 0 ${accent}10, 0 16px 30px -24px ${accent}36`,
+      }}>
+      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 10 }}>
+        What to mention at your visit
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.34, letterSpacing: -0.25, color: T.text, marginBottom: 12 }}>
+        Questions to ask
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {questions.map((question) => (
+          <div key={question} style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            padding: '10px 0',
+            borderTop: '1px solid rgba(26,19,16,0.06)',
+          }}>
+            <span style={{
+              width: 22,
+              height: 22,
+              borderRadius: 11,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: `${accent}10`,
+              color: accent,
+              flexShrink: 0,
+              marginTop: 1,
+            }}>
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h8M8 3l4 4-4 4" /></svg>
+            </span>
+            <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.45, color: T.text }}>
+              {question}
+            </div>
+          </div>
+        ))}
+      </div>
+      <button onClick={triggeredCount > 0 ? onExport : onJumpToFlags}
+        className="alive-card"
+        style={{
+          marginTop: 16,
+          width: '100%',
+          background: accent,
+          color: '#fff',
+          border: 'none',
+          padding: '12px 16px',
+          cursor: 'pointer',
+          fontFamily: T.sans,
+          fontSize: 11.5,
+          fontWeight: 600,
+          letterSpacing: 0.35,
+          borderRadius: 14,
+          boxShadow: 'none',
+        }}>
+        {triggeredCount > 0 ? 'Export doctor summary' : 'Mark flags below to build a summary'}
+      </button>
+    </div>
+  )
+}
+
 export default function HealthWatch() {
   const store = useLuna()
-  const { back, goArticle } = store
+  const { back, goArticle, logs } = store
   const cycle = useCycle(store)
   const phase = cycle?.phase
   const acc = phase?.color || T.accent
   const [answers, setAnswers] = useState({})
+  const [deckIndex, setDeckIndex] = useState(0)
+  const flagsRef = useRef(null)
   const toggle = (id) => setAnswers((a) => ({ ...a, [id]: !a[id] }))
   const triggered = RED_FLAGS.filter((f) => answers[f.id])
+  const snapshot = useMemo(() => buildWatchSnapshot(logs, cycle?.periodHistory), [logs, cycle?.periodHistory])
 
   const exportPDF = () => {
     const flagged = RED_FLAGS.filter((f) => answers[f.id])
@@ -91,9 +328,46 @@ ${RED_FLAGS.map((f) => `<div class="item" style="opacity:${answers[f.id]?1:.45}"
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.6, color: T.muted, marginTop: 10, fontStyle: 'italic', animationDelay: '90ms' }}>
           Tap anything that's been showing up for you lately. Luna will gather the language so the next conversation with your provider is easier.
         </div>
+        {snapshot && (
+          <div className="insight-stagger" style={{ marginTop: 18, marginBottom: 18, animationDelay: '120ms' }}>
+            <div onScroll={(e) => {
+                const el = e.currentTarget
+                const idx = Math.round(el.scrollLeft / Math.max(1, el.clientWidth))
+                setDeckIndex(idx)
+              }}
+              style={{
+                display: 'flex',
+                gap: 12,
+                overflowX: 'auto',
+                scrollSnapType: 'x mandatory',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+              }}>
+              <PatternGraphCard snapshot={snapshot} accent={acc} />
+              <QuestionsCard
+                snapshot={snapshot}
+                accent={acc}
+                triggeredCount={triggered.length}
+                onExport={exportPDF}
+                onJumpToFlags={() => flagsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 10 }}>
+              {[0, 1].map((idx) => (
+                <div key={idx} style={{
+                  width: deckIndex === idx ? 18 : 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: deckIndex === idx ? acc : 'rgba(26,19,16,0.16)',
+                  transition: 'width .22s ease, background .22s ease',
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
         <Rule />
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div ref={flagsRef} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {RED_FLAGS.map((f, i) => {
             const on = !!answers[f.id]
             return (
