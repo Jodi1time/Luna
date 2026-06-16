@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
@@ -14,6 +14,7 @@ import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { getBcCycleModel } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
 import { Constellation, MoonMark } from '../components/Illustrations'
+import { moodIdsOf } from '../lib/moods'
 
 // Stroke-arc path between two angles at radius r — the building block
 // of the wheel's phase bands. Stroked arcs with round linecaps read
@@ -256,6 +257,108 @@ const PHASE_COLOR = {
   follicular: PHASES.follicular.color,
   ovulation:  PHASES.ovulation.color,
   luteal:     PHASES.luteal.color,
+}
+
+const PHASE_ORDER = ['menstrual', 'follicular', 'ovulation', 'luteal']
+
+const PHASE_LABEL = {
+  menstrual: 'Period',
+  follicular: 'Follicular',
+  ovulation: 'Ovulation',
+  luteal: 'Luteal',
+}
+
+function shortMonth(iso) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+}
+
+function daysBetweenLocal(aISO, bISO) {
+  const a = new Date(aISO + 'T00:00:00')
+  const b = new Date(bISO + 'T00:00:00')
+  return Math.round((b - a) / 86400000)
+}
+
+function recentMonthLabels(count = 5) {
+  const now = new Date()
+  return Array.from({ length: count }, (_, idx) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (count - 1 - idx), 1)
+    return d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+  })
+}
+
+function patternMatchesLog(pattern, log) {
+  if (pattern.type === 'mood') return moodIdsOf(log).includes(pattern.label)
+  return Array.isArray(log?.symptoms) && log.symptoms.includes(pattern.label)
+}
+
+function buildPatternDeckData(logs, periodHistory, patterns) {
+  const starts = Array.isArray(periodHistory)
+    ? [...periodHistory].reverse().map((p) => p.start)
+    : []
+  const windows = []
+
+  if (starts.length >= 2) {
+    for (let i = 0; i < starts.length - 1; i++) {
+      const start = starts[i]
+      const nextStart = starts[i + 1]
+      const cycleLogs = Object.entries(logs || {})
+        .filter(([date]) => date >= start && date < nextStart)
+        .map(([date, log]) => ({
+          date,
+          log,
+          day: daysBetweenLocal(start, date) + 1,
+        }))
+
+      windows.push({
+        start,
+        label: shortMonth(start),
+        logs: cycleLogs,
+      })
+    }
+  }
+
+  let cycles = windows.slice(-5)
+  if (cycles.length < 4) {
+    cycles = recentMonthLabels(5).map((label, idx) => ({
+      start: `placeholder-${idx}`,
+      label,
+      logs: [],
+    }))
+  }
+
+  const rows = (patterns || []).slice(0, 2).map((pattern) => {
+    const { display } = resolvePattern(pattern)
+    return {
+      id: pattern.id,
+      label: display,
+      phase: pattern.phase,
+      days: pattern.days,
+      color: PHASE_COLOR[pattern.phase] || T.accent,
+      hits: cycles.map((cycle) => {
+        const matches = cycle.logs.filter(({ day, log }) => {
+          if (!patternMatchesLog(pattern, log)) return false
+          return day >= pattern.days[0] - 1 && day <= pattern.days[1] + 1
+        }).length
+        return Math.min(matches, 3)
+      }),
+    }
+  })
+
+  const phaseTotals = PHASE_ORDER.map((phaseId) => ({
+    id: phaseId,
+    label: PHASE_LABEL[phaseId],
+    color: PHASE_COLOR[phaseId] || T.accent,
+    value: (patterns || [])
+      .filter((pattern) => pattern.phase === phaseId)
+      .reduce((sum, pattern) => sum + pattern.occurrences, 0),
+  }))
+
+  return {
+    cycles,
+    rows,
+    phaseTotals,
+    hasRows: rows.length > 0,
+  }
 }
 
 // Plain-language tags for cycle/period length + variance. The numbers
@@ -502,6 +605,163 @@ function PatternLeadCard({ patterns, cyclesLogged, loggedDays, accent }) {
   )
 }
 
+function PatternVisualDeck({ deck, accent, cyclesLogged }) {
+  const strongestPhase = [...deck.phaseTotals].sort((a, b) => b.value - a.value)[0]
+  const maxPhaseValue = Math.max(...deck.phaseTotals.map((item) => item.value), 1)
+  const primary = deck.rows[0]
+  const secondary = deck.rows[1] || null
+  const primarySummary = primary
+    ? `${primary.label.toLowerCase()}${secondary ? ` + ${secondary.label.toLowerCase()}` : ''} keep coming back.`
+    : 'Luna is still collecting enough repeated signals to call a pattern.'
+
+  return (
+    <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '95ms' }}>
+      <div style={{
+        display: 'flex',
+        gap: 12,
+        overflowX: 'auto',
+        scrollSnapType: 'x mandatory',
+        paddingBottom: 4,
+        paddingRight: 2,
+        scrollbarWidth: 'none',
+      }}>
+        <div className="alive-card" style={{
+          flex: '0 0 calc(100% - 10px)',
+          scrollSnapAlign: 'start',
+          padding: 18,
+          background: 'rgba(253,250,245,0.66)',
+          border: `1px solid ${accent}20`,
+          borderRadius: 22,
+          boxShadow: `0 1px 0 ${accent}10, 0 16px 30px -24px ${accent}34`,
+        }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: accent, marginBottom: 8 }}>
+            {deck.hasRows ? 'Seen across recent cycles' : 'Still learning your rhythm'}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 21, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.28, color: T.text, marginBottom: 8, maxWidth: 250 }}>
+            {primarySummary}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic', marginBottom: 14, maxWidth: 270 }}>
+            {deck.hasRows
+              ? 'This view tracks whether the same signals keep landing near their usual window in each cycle.'
+              : 'As Luna gathers more cycles, the repeating signals will light up here instead of staying abstract.'}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(86px, 1fr) repeat(5, minmax(28px, 1fr))', gap: 8, alignItems: 'center' }}>
+            <div />
+            {deck.cycles.map((cycle) => (
+              <div key={cycle.start} style={{ textAlign: 'center', fontFamily: T.mono, fontSize: 10.5, letterSpacing: 0.8, fontWeight: 600, color: T.muted }}>
+                {cycle.label}
+              </div>
+            ))}
+
+            {(deck.hasRows ? deck.rows : [
+              { id: 'placeholder-a', label: 'Signal one', color: accent, hits: [0, 0, 0, 0, 0] },
+              { id: 'placeholder-b', label: 'Signal two', color: accent, hits: [0, 0, 0, 0, 0] },
+            ]).map((row) => (
+              <div key={row.id} style={{ display: 'contents' }}>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.text, lineHeight: 1.3, paddingRight: 4 }}>
+                  {row.label}
+                </div>
+                {row.hits.map((hit, idx) => (
+                  <div key={`${row.id}-${idx}`} style={{
+                    height: 30,
+                    borderRadius: 11,
+                    border: `1px solid ${row.color}${hit > 0 ? '2a' : '12'}`,
+                    background: hit > 0 ? `${row.color}${hit > 1 ? '26' : '14'}` : 'rgba(255,255,255,0.52)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <div style={{
+                      width: hit > 1 ? 10 : 8,
+                      height: hit > 1 ? 10 : 8,
+                      borderRadius: 999,
+                      background: hit > 0 ? row.color : `${row.color}20`,
+                      opacity: hit > 0 ? Math.min(1, 0.45 + hit * 0.2) : 0.28,
+                    }} />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 14, fontFamily: T.mono, fontSize: 10.5, color: T.muted, letterSpacing: 0.7 }}>
+            {cyclesLogged > 0
+              ? `${cyclesLogged} cycle${cyclesLogged === 1 ? '' : 's'} tracked`
+              : 'Log a full cycle to start revealing repeats here'}
+          </div>
+        </div>
+
+        <div className="alive-card" style={{
+          flex: '0 0 calc(100% - 10px)',
+          scrollSnapAlign: 'start',
+          padding: 18,
+          background: 'rgba(253,250,245,0.66)',
+          border: `1px solid ${accent}18`,
+          borderRadius: 22,
+          boxShadow: `0 1px 0 ${accent}10, 0 16px 30px -24px ${accent}30`,
+        }}>
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: strongestPhase?.color || accent, marginBottom: 8 }}>
+            Where the signals gather
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 21, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.28, color: T.text, marginBottom: 8, maxWidth: 250 }}>
+            {strongestPhase?.value
+              ? `${strongestPhase.label} carries the most signal right now.`
+              : 'Your phase balance will take shape here.'}
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic', marginBottom: 18, maxWidth: 270 }}>
+            {strongestPhase?.value
+              ? 'This makes the screen easier to read: instead of scanning every card, you can see where your body tends to speak up first.'
+              : 'Once repeated symptoms or mood shifts appear, Luna will map which phase is carrying them most often.'}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12, alignItems: 'end', minHeight: 160 }}>
+            {deck.phaseTotals.map((item) => {
+              const height = item.value ? Math.max(24, (item.value / maxPhaseValue) * 112) : 18
+              return (
+                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: '100%',
+                    maxWidth: 52,
+                    height,
+                    borderRadius: 16,
+                    background: item.value ? `${item.color}22` : 'rgba(255,255,255,0.5)',
+                    border: `1px solid ${item.color}${item.value ? '22' : '12'}`,
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'center',
+                    paddingBottom: 10,
+                  }}>
+                    <div style={{
+                      width: 12,
+                      height: 12,
+                      borderRadius: 999,
+                      background: item.color,
+                      opacity: item.value ? 0.95 : 0.25,
+                    }} />
+                  </div>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: 0.75, fontWeight: 600, color: T.muted, marginBottom: 2 }}>
+                      {item.value || 0}
+                    </div>
+                    <div style={{ fontFamily: T.serif, fontSize: 12.5, color: T.text, lineHeight: 1.2 }}>
+                      {item.label}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: 10, fontFamily: T.mono, fontSize: 10.5, letterSpacing: 1, color: T.muted }}>
+        swipe for more
+      </div>
+    </div>
+  )
+}
+
 export default function Insights() {
   const store = useLuna()
   const cycle = useCycle(store)
@@ -531,6 +791,10 @@ export default function Insights() {
   const conditionMatches = matchConditions(logs, cycle)
 
   const blobColor = (phase?.color) || T.accent
+  const patternDeck = useMemo(
+    () => buildPatternDeckData(logs, periodHistory, patterns),
+    [logs, periodHistory, patterns]
+  )
 
   return (
     <div className={`home-stage${animate ? '' : ' choreo-done'}`}>
@@ -573,6 +837,12 @@ export default function Insights() {
             </div>
           )}
         </div>
+
+        <PatternVisualDeck
+          deck={patternDeck}
+          accent={phase?.color || T.accent}
+          cyclesLogged={cyclesLogged}
+        />
 
         {patterns.length > 0 && (
           <PatternLeadCard
