@@ -58,6 +58,13 @@ function QuietLesson({ lesson, color, keyId }) {
   )
 }
 
+function naturalList(items = []) {
+  if (items.length === 0) return ''
+  if (items.length === 1) return items[0]
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
+}
+
 export default function Log() {
   const store = useLuna()
   const { back, goArticle, goSymptom, saveLog, removeLog, getLog, activeLogDate, setActiveLogDate } = store
@@ -83,7 +90,7 @@ export default function Log() {
   const [sleep,    setSleep]    = useState(existing.sleep || null)
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
-  const [showCycleDetails, setShowCycleDetails] = useState(() => Boolean(existing.bbt?.value || existing.mucus))
+  const [showOptionalDetails, setShowOptionalDetails] = useState(() => Boolean(existing.bbt?.value || existing.mucus || existing.sleep || existing.sex))
   const [savedJustNow, setSavedJustNow] = useState(false)
   // Last-tapped symptom (for the inline insight). Cleared when the
   // user untaps the same symptom or taps a different one.
@@ -152,7 +159,7 @@ export default function Log() {
     setSleep(log.sleep || null)
     setNote(log.note || '')
     setBbtError('')
-    setShowCycleDetails(Boolean(log.bbt?.value || log.mucus))
+    setShowOptionalDetails(Boolean(log.bbt?.value || log.mucus || log.sleep || log.sex))
     setActiveSym(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingISO])
@@ -166,10 +173,15 @@ export default function Log() {
     setEditingISO(next)
   }
   const canGoNext = editingISO < todayISO
-  const hasCycleDetails = Boolean(bbt || mucus)
-  const toggleCycleDetails = () => {
-    if (showCycleDetails && (teachField === 'bbt' || teachField === 'mucus')) setTeachField(null)
-    setShowCycleDetails((open) => !open)
+  const optionalDetailsChosen = [
+    sleep ? 'sleep' : null,
+    sex ? 'sex' : null,
+    bbt ? 'temperature' : null,
+    mucus ? 'discharge' : null,
+  ].filter(Boolean)
+  const toggleOptionalDetails = () => {
+    if (showOptionalDetails && ['bbt', 'mucus', 'sleep', 'sex'].includes(teachField)) setTeachField(null)
+    setShowOptionalDetails((open) => !open)
   }
 
   // Clear the explicit-date intent when leaving Log so the next visit
@@ -183,7 +195,7 @@ export default function Log() {
     const bbtErr = validateBBT(bbt, bbtUnit)
     if (bbtErr) {
       setBbtError(bbtErr)
-      setShowCycleDetails(true)
+      setShowOptionalDetails(true)
       return
     }
     setBbtError('')
@@ -247,6 +259,17 @@ export default function Log() {
   // visual key (selection borders, save button, dividers, flourishes).
   // Falls back to the brand accent when no phase is known yet.
   const acc = phase?.color || T.accent
+  const topSummary = (() => {
+    const parts = [
+      moods.length ? 'mood' : null,
+      symptoms.length ? 'symptoms' : null,
+      flow ? 'bleeding' : null,
+      note.trim() ? 'a note' : null,
+      optionalDetailsChosen.length ? 'more detail' : null,
+    ].filter(Boolean)
+    if (parts.length === 0) return 'Start with what felt obvious. Leave the rest alone.'
+    return `So far: ${naturalList(parts)}.`
+  })()
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
@@ -282,9 +305,9 @@ export default function Log() {
 
         {/* Title row + phase flourish so the page opens with a sign
             of life, matched to the day's phase color. */}
-        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, margin: '16px 0 6px', animationDelay: '40ms' }}>
-          <div style={{ fontFamily: T.serif, fontSize: 34, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.05, flex: 1, minWidth: 0 }}>
-            {isToday ? <>Tell me about<br /><em>your day.</em></> : <>How was<br /><em>that day?</em></>}
+        <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, margin: '18px 0 6px', animationDelay: '40ms' }}>
+          <div style={{ fontFamily: T.serif, fontSize: 31, fontWeight: 500, letterSpacing: -0.65, lineHeight: 1.08, flex: 1, minWidth: 0, textWrap: 'balance' }}>
+            {isToday ? <>What stood out <em>today?</em></> : <>What stood out <em>that day?</em></>}
           </div>
           {phase && (
             <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 4 }}>
@@ -294,8 +317,11 @@ export default function Log() {
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
           {isToday
-            ? <>Whatever you noticed. None of these are required.</>
+            ? <>Whatever you noticed. None of this needs to be complete.</>
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
+          <div style={{ marginTop: 8, color: T.muted, fontSize: 13.5 }}>
+            {topSummary}
+          </div>
         </div>
 
         {/* Mood — flat one-tap choices with each mood's own color tint */}
@@ -490,11 +516,26 @@ export default function Log() {
         )}
         </div>
 
-        <div className="insight-stagger" style={{ animationDelay: '260ms', marginBottom: showCycleDetails ? 22 : 24 }}>
+        <div className="insight-stagger" style={{ animationDelay: '250ms' }}>
+        <Eyebrow color={acc}>Anything else on your mind</Eyebrow>
+        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line, a sentence — whatever you want to remember."
+          maxLength={2000}
+          className="frost-card"
+          style={{ width: '100%', background: 'rgba(253,250,245,0.55)', border: `1px solid rgba(26,19,16,0.08)`, padding: 16, fontSize: 14.5, lineHeight: 1.6, color: T.text, minHeight: 96, borderRadius: 18, fontFamily: T.serif, fontStyle: 'italic', outline: 'none', resize: 'vertical' }}
+          onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
+          onBlur={(e)  => { e.target.style.borderColor = 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }} />
+        {note.length > 1900 && (
+          <div style={{ fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', color: T.muted, textAlign: 'right', marginTop: 6 }}>
+            {note.length} / 2000
+          </div>
+        )}
+        </div>
+
+        <div className="insight-stagger" style={{ animationDelay: '260ms', marginBottom: showOptionalDetails ? 22 : 24, marginTop: 24 }}>
           <button
             type="button"
-            onClick={toggleCycleDetails}
-            aria-expanded={showCycleDetails}
+            onClick={toggleOptionalDetails}
+            aria-expanded={showOptionalDetails}
             className="alive-card"
             style={{
               width: '100%',
@@ -515,26 +556,74 @@ export default function Log() {
             }}>
             <span style={{ minWidth: 0, textAlign: 'left' }}>
               <span style={{ display: 'block', fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', color: T.text, lineHeight: 1.2 }}>
-                Cycle details
+                More detail, if you want it
               </span>
               <span style={{ display: 'block', marginTop: 3, color: T.muted, fontSize: 12.5, lineHeight: 1.35 }}>
-                {showCycleDetails
-                  ? 'Temperature and discharge are open.'
-                  : hasCycleDetails
-                    ? 'Review temperature and discharge.'
-                    : 'Add temperature and discharge only if useful.'}
+                {showOptionalDetails
+                  ? 'Sleep, sex, temperature, and discharge are open.'
+                  : optionalDetailsChosen.length
+                    ? `You've added ${naturalList(optionalDetailsChosen)}.`
+                    : 'Sleep, sex, temperature, and discharge only if useful.'}
               </span>
             </span>
-            <span aria-hidden="true" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: showCycleDetails ? `${acc}14` : 'rgba(26,19,16,0.04)', color: showCycleDetails ? acc : T.text, fontSize: 18, lineHeight: 1 }}>
-              {showCycleDetails ? '−' : '+'}
+            <span aria-hidden="true" style={{ flexShrink: 0, width: 30, height: 30, borderRadius: 13, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: showOptionalDetails ? `${acc}14` : 'rgba(26,19,16,0.04)', color: showOptionalDetails ? acc : T.text, fontSize: 18, lineHeight: 1 }}>
+              {showOptionalDetails ? '−' : '+'}
             </span>
           </button>
         </div>
 
-        {showCycleDetails && (
+        {showOptionalDetails && (
           <>
+            <div className="insight-stagger" style={{ animationDelay: '272ms' }}>
+            <Eyebrow color={acc}>How you slept</Eyebrow>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+              {['Great','Okay','Restless','Poor'].map((s) => {
+                const on = sleep === s
+                return (
+                  <button key={s} onClick={() => {
+                    setSleep(on ? null : s)
+                    setTeachField(on ? null : 'sleep')
+                  }}
+                    className="alive-card"
+                    style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
+                    {s}
+                  </button>
+                )
+              })}
+            </div>
+            {teachField === 'sleep' && teachLesson && (
+              <div style={{ marginTop: -10, marginBottom: 24 }}>
+                <QuietLesson lesson={teachLesson} color={acc} keyId={`sleep-${sleep}-${phaseId}`} />
+              </div>
+            )}
+            </div>
+
+            <div className="insight-stagger" style={{ animationDelay: '280ms' }}>
+            <Eyebrow color={acc}>Sex</Eyebrow>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+              {SEX_OPTIONS.map((s) => {
+                const on = sex === s.id
+                return (
+                  <button key={s.id} onClick={() => {
+                    setSex(on ? null : s.id)
+                    setTeachField(on ? null : 'sex')
+                  }}
+                    className="alive-card"
+                    style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
+                    {s.label}
+                  </button>
+                )
+              })}
+            </div>
+            {teachField === 'sex' && teachLesson && (
+              <div style={{ marginTop: -10, marginBottom: 24 }}>
+                <QuietLesson lesson={teachLesson} color={acc} keyId={`sex-${sex}-${phaseId}`} />
+              </div>
+            )}
+            </div>
+
             {/* Temperature (BBT) — frosted input + segmented unit toggle */}
-            <div className="insight-stagger" style={{ animationDelay: '285ms' }}>
+            <div className="insight-stagger" style={{ animationDelay: '290ms' }}>
             <Eyebrow color={acc}>Your morning temperature</Eyebrow>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
               <input
@@ -609,72 +698,6 @@ export default function Log() {
             </div>
           </>
         )}
-
-        {/* Sleep — frosted pill cards */}
-        <div className="insight-stagger" style={{ animationDelay: '340ms' }}>
-        <Eyebrow color={acc}>How you slept</Eyebrow>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
-          {['Great','Okay','Restless','Poor'].map((s) => {
-            const on = sleep === s
-            return (
-              <button key={s} onClick={() => {
-                setSleep(on ? null : s)
-                setTeachField(on ? null : 'sleep')
-              }}
-                className="alive-card"
-                style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 12, letterSpacing: 0.2, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
-                {s}
-              </button>
-            )
-          })}
-        </div>
-        {teachField === 'sleep' && teachLesson && (
-          <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <QuietLesson lesson={teachLesson} color={acc} keyId={`sleep-${sleep}-${phaseId}`} />
-          </div>
-        )}
-        </div>
-
-        {/* Sex — frosted pill cards */}
-        <div className="insight-stagger" style={{ animationDelay: '380ms' }}>
-        <Eyebrow color={acc}>Sex</Eyebrow>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
-          {SEX_OPTIONS.map((s) => {
-            const on = sex === s.id
-            return (
-              <button key={s.id} onClick={() => {
-                setSex(on ? null : s.id)
-                setTeachField(on ? null : 'sex')
-              }}
-                className="alive-card"
-                style={{ flex: 1, border: `1px solid ${on ? acc : 'transparent'}`, background: on ? acc : 'transparent', color: on ? '#fff' : T.text, padding: '14px 4px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, fontWeight: on ? 650 : 500, borderRadius: 14, boxShadow: 'none', transition: 'background 0.2s var(--ease-out), color 0.2s var(--ease-out), border-color 0.2s var(--ease-out)' }}>
-                {s.label}
-              </button>
-            )
-          })}
-        </div>
-        {teachField === 'sex' && teachLesson && (
-          <div style={{ marginTop: -10, marginBottom: 24 }}>
-            <QuietLesson lesson={teachLesson} color={acc} keyId={`sex-${sex}-${phaseId}`} />
-          </div>
-        )}
-        </div>
-
-        {/* Note — frosted glass textarea */}
-        <div className="insight-stagger" style={{ animationDelay: '420ms' }}>
-        <Eyebrow color={acc}>Anything else on your mind</Eyebrow>
-        <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A line, a sentence — whatever you want to remember."
-          maxLength={2000}
-          className="frost-card"
-          style={{ width: '100%', background: 'rgba(253,250,245,0.55)', border: `1px solid rgba(26,19,16,0.08)`, padding: 16, fontSize: 14.5, lineHeight: 1.6, color: T.text, minHeight: 96, borderRadius: 18, fontFamily: T.serif, fontStyle: 'italic', outline: 'none', resize: 'vertical' }}
-          onFocus={(e) => { e.target.style.borderColor = acc; e.target.style.boxShadow = `0 0 0 3px ${acc}18` }}
-          onBlur={(e)  => { e.target.style.borderColor = 'rgba(26,19,16,0.08)'; e.target.style.boxShadow = 'none' }} />
-        {note.length > 1900 && (
-          <div style={{ fontSize: 11, fontFamily: T.serif, fontStyle: 'italic', color: T.muted, textAlign: 'right', marginTop: 6 }}>
-            {note.length} / 2000
-          </div>
-        )}
-        </div>
 
         <div style={{ marginTop: 20, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.6, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.05)' }}>
           Tracked over time, this is what gives a doctor something concrete to work with.
