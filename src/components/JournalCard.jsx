@@ -28,10 +28,10 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
         width: '100%',
         textAlign: 'left',
         background: paper,
-        borderRadius: 22,
-        padding: '18px 20px 20px 40px',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.42), 0 12px 28px -22px rgba(26,19,16,0.20)',
-        border: `1px solid ${theme.accent}24`,
+        borderRadius: T.r,
+        padding: '16px 18px 18px 38px',
+        boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 10px 24px -18px rgba(26,19,16,0.16)',
+        border: 'none',
         cursor: 'pointer',
         color: theme.text,
         fontFamily: 'inherit',
@@ -50,8 +50,8 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
       }} />
       <div style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', letterSpacing: -0.1, fontWeight: 500, color: theme.accent, opacity: 0.95 }}>
-            The diary {entryCount > 0 && `(${entryCount} page${entryCount === 1 ? '' : 's'})`}
+          <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.3, fontWeight: 600, color: theme.accent, opacity: 0.9 }}>
+            THE DIARY {entryCount > 0 && `· ${entryCount} PAGE${entryCount === 1 ? '' : 'S'}`}
           </div>
           <div style={{ fontFamily: T.sans, fontSize: 11, color: theme.accent, fontWeight: 600, letterSpacing: 0.3 }}>
             {latest ? 'Open the book →' : 'Start a page →'}
@@ -74,7 +74,7 @@ export default function JournalCard({ entries, journalTheme, phaseColor, onTap }
             minHeight: LINE_H * 3,
           }}>
             A blank book.<br />
-            Whatever you want to write. Entries stack here.
+            Whatever you want to write — entries stack here.
           </div>
         )}
       </div>

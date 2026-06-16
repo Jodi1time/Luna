@@ -191,7 +191,7 @@ export function Rule() {
 export function SourceLine({ children }) {
   return (
     <div style={{ fontSize: 11, fontFamily: T.mono, color: T.muted, letterSpacing: 0.5, marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.hair}` }}>
-      Source: {children}
+      SOURCE — {children}
     </div>
   )
 }
