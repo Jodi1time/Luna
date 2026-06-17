@@ -117,7 +117,12 @@ export default function Auth() {
   const headline = mode === 'signin' ? 'Welcome back.' : mode === 'signup' ? 'Make a little space for you.' : 'Forgot it? It happens.'
   const sub = mode === 'reset'
     ? "We'll email you a link to set a new password."
-    : "Sign in to come back to your cycle on any device. Your data is encrypted at rest — only you can read it."
+    : mode === 'signup'
+      ? 'Create an account when you want sync, backup, or sharing. Until then, Luna can stay local to this device.'
+      : 'Sign in to come back to your cycle on any device. Luna keeps a recent copy on this device for speed; your account becomes the source of truth.'
+  const trustLine = mode === 'reset'
+    ? 'Resetting your password only affects the signed-in account. It does not erase the local copy already on this device.'
+    : "Without an account, Luna still works — it just stays on this device. Sign in when you want sync, sharing, or a recoverable copy."
 
   return (
     <div className="home-stage">
@@ -174,7 +179,7 @@ export default function Auth() {
         )}
 
         <div className="frost-card" style={{ marginTop: 28, padding: 18, background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 20, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.65 }}>
-          Your cycle data lives on Luna's servers, encrypted at rest, only readable from your signed-in account. We don't sell or share it.
+          {trustLine} If you do sign in, your cycle data lives on Luna's servers encrypted at rest. We don't sell it or share it for advertising.
         </div>
       </div>
       </Screen>

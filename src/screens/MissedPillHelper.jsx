@@ -165,7 +165,7 @@ export default function MissedPillHelper() {
           <Card>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 700, color: T.muted, marginBottom: 6 }}>Generally true</div>
             <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.6, color: T.text }}>
-              Missing 1 pill is rarely serious on the combined pill. Missing 2+ in a row, or anytime around the placebo week, is what reduces protection. Set a daily reminder if this happens more than once a year — there's also the patch, ring, IUD, implant, and shot if remembering a daily pill is fighting you.
+              Missing 1 pill is rarely serious on the combined pill. Missing 2+ in a row, or anytime around the placebo week, is what reduces protection. If this happens more than once a year, anchor the pill to an existing ritual, or consider a method that asks less of memory: patch, ring, IUD, implant, or shot.
             </div>
           </Card>
         )}

@@ -181,7 +181,7 @@ export default function AcceptShare() {
               fontSize: 13, color: T.text, lineHeight: 1.6,
               marginBottom: 18,
             }}>
-              Read-only — you can see what they share, but you can't log or edit anything for them. They can revoke any time, and so can you.
+              Read-only — you can see what they share, but you can't log or edit anything for them. Diary entries, journal photos, voice journaling, and saved reads stay private. They can revoke any time, and so can you.
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

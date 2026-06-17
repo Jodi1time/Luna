@@ -72,9 +72,20 @@ export default function PrivacyDashboard() {
   const acc = phase?.color || T.accent
   const stats = useMemo(() => dataStats(store, cycle), [store, cycle])
   const [copied, setCopied] = useState(false)
+  const signedIn = Boolean(session?.user)
 
   const exportCSV = () => exportLunaCSV(useLuna.getState())
   const deleteAccount = () => deleteLunaAccount({ session, clearLocalData })
+  const storageTitle = signedIn
+    ? "In your Luna account, plus a recent copy on this device."
+    : 'On this device right now.'
+  const storageBody = signedIn
+    ? "Your signed-in account is the source of truth. Luna also keeps a recent local copy in this browser so the app opens fast. Signing out clears that cache."
+    : "Until you sign in, Luna keeps your cycle in this browser's local storage only. Clear this browser or lose this device, and Luna cannot recover that history."
+  const infraBody = signedIn
+    ? 'Server access is gated by row-level security so only your signed-in account can read or write your data. Transfers use TLS. We use Sentry for crash reporting (PII-stripped) and PostHog for anonymous analytics (toggle below).'
+    : 'Because you are not signed in, Luna is not sending your cycle history to the server. We still use Sentry for crash reporting (PII-stripped) and PostHog for anonymous analytics if you leave analytics on.'
+  const destructiveLabel = signedIn ? 'Delete my account & all data' : 'Clear Luna from this device'
 
   const span = (() => {
     if (!stats.firstDate || !stats.lastDate) return null
@@ -121,14 +132,32 @@ export default function PrivacyDashboard() {
             Covering {span}.
           </div>
         )}
+        {!stats.entries && (
+          <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 22 }}>
+            Nothing tracked yet. As you use Luna, this screen will show exactly what exists and how it is being held.
+          </div>
+        )}
 
         <Eyebrow color={acc}>Where it lives</Eyebrow>
         <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 22 }}>
           <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.4, marginBottom: 8, letterSpacing: -0.1 }}>
-            On Luna's servers (Supabase), encrypted at rest.
+            {storageTitle}
           </div>
           <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
-            Access is gated by row-level security — only your signed-in account can read or write your data. Transfers between your device and the server use TLS. We use Sentry for crash reporting (PII-stripped) and PostHog for anonymous analytics (toggle below).
+            {storageBody}
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.55, marginTop: 10 }}>
+            {infraBody}
+          </div>
+        </div>
+
+        <Eyebrow color={acc}>Current limits</Eyebrow>
+        <div className="glass-card" style={{ padding: 16, borderRadius: T.r, marginBottom: 22 }}>
+          <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.4, marginBottom: 8, letterSpacing: -0.1 }}>
+            Device lock still matters.
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
+            Luna's web app does not add a second in-app passcode or Face ID wall yet. Your phone or laptop lock screen is still the main privacy boundary, and shared computers are a bad fit for cycle tracking.
           </div>
         </div>
 
@@ -183,7 +212,7 @@ export default function PrivacyDashboard() {
           </button>
           <button onClick={deleteAccount}
             style={{ width: '100%', padding: '13px 14px', background: 'transparent', color: T.accent, border: `1px solid ${T.accent}`, cursor: 'pointer', fontFamily: T.sans, fontSize: 12.5, fontWeight: 600, letterSpacing: 0.4, borderRadius: T.r }}>
-            Delete my account & all data
+            {destructiveLabel}
           </button>
         </div>
 

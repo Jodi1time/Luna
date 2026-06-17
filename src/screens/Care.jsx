@@ -10,13 +10,16 @@ const CATEGORIES = [...new Set(CHECKUPS.map((c) => c.category))]
 
 export default function Care() {
   const store = useLuna()
-  const { back, completedChecks, toggleCheck } = store
+  const { back, completedChecks, toggleCheck, session } = store
   const cycle = useCycle(store)
   const phase = cycle?.phase
   const acc = phase?.color || T.accent
   const totalChecks = CHECKUPS.length
   const doneTotal = CHECKUPS.filter((item) => completedChecks?.includes(item.id)).length
   const nextOpen = CHECKUPS.find((item) => !completedChecks?.includes(item.id)) || null
+  const storageLine = session?.user
+    ? 'These check marks sync with your Luna account and stay cached on this device for speed.'
+    : 'Without an account, these check marks stay only on this device.'
 
   const findProvider = () => {
     window.open('https://maps.google.com/?q=OB+GYN+near+me', '_blank')
@@ -124,7 +127,7 @@ export default function Care() {
         })}
 
         <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.serif, fontStyle: 'italic', lineHeight: 1.55, paddingBottom: 8 }}>
-          Completion is saved on your device only. This is a reminder tool, not a medical record.
+          {storageLine} Care is a planning checklist, not a medical record.
         </div>
       </div>
     </Screen>

@@ -47,7 +47,7 @@ function PaywallHint({ onUpgrade }) {
         Share with someone who supports you.
       </div>
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14.5, color: T.muted, lineHeight: 1.6, marginBottom: 16 }}>
-        A partner, your mother, a doula, a sister — anyone you'd want to know where you are this week. You pick what they see. Diary entries stay private.
+        A partner, your mother, a doula, a sister — anyone you'd want to know where you are this week. You pick what they see. Diary entries, journal photos, voice journaling, and saved reads stay private.
       </div>
       <button onClick={onUpgrade}
         className="alive-card"
@@ -185,7 +185,7 @@ export default function ShareWith() {
             fontFamily: T.serif, fontStyle: 'italic',
             fontSize: 13, color: T.text, lineHeight: 1.6,
           }}>
-            Whatever you share, you keep control of. Revoke any time. Diary entries and photos are never shared.
+            Whatever you share, you keep control of. Revoke any time. Diary entries, journal photos, voice journaling, and saved reads are never shared.
           </div>
         </div>
       </Screen>
@@ -209,7 +209,7 @@ export default function ShareWith() {
         </div>
 
         <ContextualTip tipId="share-link" accent={accent}>
-          The link works anywhere — Messages, WhatsApp, email. Diary entries and photos are never shared, even at the full-picture scope.
+          The link works anywhere — Messages, WhatsApp, email. Diary entries, journal photos, voice journaling, and saved reads are never shared, even at the full-picture scope.
         </ContextualTip>
 
         {/* Newly created invite — show the link prominently */}
@@ -384,7 +384,7 @@ export default function ShareWith() {
           fontFamily: T.serif, fontStyle: 'italic',
           fontSize: 13, color: T.text, lineHeight: 1.6,
         }}>
-          Diary entries and photos are never shared, even at full picture. Whatever you share, the person seeing it can only read — they can't log, edit, or delete anything for you. Revoke any time and their access goes blank.
+          Diary entries, journal photos, voice journaling, and saved reads are never shared, even at full picture. Whatever you share, the person seeing it can only read — they can't log, edit, or delete anything for you. Revoke any time and their access goes blank.
         </div>
 
         <div style={{ height: 16 }} />

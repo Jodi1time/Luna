@@ -328,6 +328,9 @@ export default function SharedWithYou() {
             <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 8, lineHeight: 1.5 }}>
               {profile.display_name?.split(' ')[0] || 'They'} are sharing <strong style={{ fontStyle: 'normal', fontWeight: 600 }}>{scopeLabel(activeShare.scope).toLowerCase()}</strong> with you.
             </div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, marginBottom: 10, lineHeight: 1.55 }}>
+              This stays read-only. Diary pages, journal photos, voice journaling, and saved reads never appear here.
+            </div>
             <button onClick={() => handleRevoke(activeShareId)}
               style={{
                 background: 'transparent',

@@ -60,9 +60,13 @@ export function exportLunaCSV(state) {
 // clears the local cache and reloads the app. Idempotent on failure —
 // shows an alert and leaves the user signed in.
 export async function deleteLunaAccount({ session, clearLocalData }) {
-  if (!window.confirm('This permanently deletes your Luna account and all your cycle data on our servers. Continue?')) return false
+  const signedIn = Boolean(session)
+  const prompt = signedIn
+    ? 'This permanently deletes your Luna account and all your cycle data on our servers. Continue?'
+    : 'This clears Luna from this device only. Because you are not signed in, there is no server copy to delete. Continue?'
+  if (!window.confirm(prompt)) return false
 
-  if (session) {
+  if (signedIn) {
     try {
       const { data: { session: s } } = await supabase.auth.getSession()
       if (s) {

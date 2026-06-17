@@ -221,7 +221,7 @@ export function scopeLabel(scope) {
 
 export function scopeBlurb(scope) {
   if (!scope) return ''
-  if (scope.fullLog) return 'Phase, predictions, symptoms, mood, flow, sleep, BBT. Diary entries stay private.'
-  if (scope.cycle) return 'Phase, cycle day, period prediction, fertile window. No symptoms, no diary.'
+  if (scope.fullLog) return 'Phase, predictions, symptoms, mood, flow, sleep, BBT. Diary entries, journal photos, voice journaling, and saved reads stay private.'
+  if (scope.cycle) return 'Phase, cycle day, period prediction, fertile window. No symptoms, no diary, no notes.'
   return ''
 }

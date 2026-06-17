@@ -157,8 +157,15 @@ export default function Settings() {
     return `Week ${wk}`
   })()
   const session = useLuna((s) => s.session)
+  const signedIn = Boolean(session?.user)
   const initial = (displayName || session?.user?.email || 'L').trim().charAt(0).toUpperCase()
   const cyclesLogged = cycle?.periodHistory?.length || 0
+  const storageValue = signedIn ? 'account + device cache' : 'this browser only'
+  const storageLine = signedIn
+    ? 'Your account is the source of truth. Luna also keeps a recent copy on this device so it opens fast when you come back.'
+    : 'Without an account, this cycle lives only in this browser on this device. Clear the browser data or lose the device, and Luna cannot restore it.'
+  const stageLine = 'Switching stages changes the framing, not your history. Cycle logs stay put when you move into TTC or pregnancy, and Luna returns to them when that season ends.'
+  const destructiveLabel = signedIn ? 'Delete my account' : 'Clear Luna from this device'
 
   const handleSignOut = async () => {
     await signOut()
@@ -221,6 +228,7 @@ export default function Settings() {
           {session ? (
             <>
               <Row label="Signed in as" value={session.user.email} />
+              <Row label="Where your data is right now" value={storageValue} />
               <Row label="Sign out" onTap={handleSignOut} />
               {!session.user.email_confirmed_at && (
                 <Row label="Verify email" onTap={async () => {
@@ -240,13 +248,14 @@ export default function Settings() {
             </>
           ) : (
             <>
-              <Row label="Not signed in" value="local only" />
+              <Row label="Not signed in" value="this browser only" />
+              <Row label="Where your data is right now" value={storageValue} />
               <Row label="Sign in or create an account" onTap={() => go('auth')} />
             </>
           )}
         </Panel>
         <div style={{ padding: '8px 22px', fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.4 }}>
-          {session ? 'Sign in on any device to come back to your cycle.' : 'Without an account, your cycle lives only on this device.'}
+          {storageLine}
         </div>
       </div>
 
@@ -322,7 +331,7 @@ export default function Settings() {
         <Row label="Perimenopause / menopause" value="Coming soon" />
       </Panel>
       <div style={{ padding: '8px 22px 12px', fontSize: 11, color: T.muted, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic' }}>
-        Luna grows with you. Each stage gets its own thoughtful mode — built for the body you're in, not optimised against it.
+        Luna grows with you. Each stage gets its own thoughtful mode — built for the body you're in, not optimised against it. {stageLine}
       </div>
       </div>
 
@@ -387,7 +396,7 @@ export default function Settings() {
       <SectionLabel color={sectionColors('plan').accent}>Account</SectionLabel>
       <Panel>
         <Row label="View Pro features"  onTap={() => go('paywall')} />
-        <Row label="Delete my account"  onTap={deleteAccount} danger />
+        <Row label={destructiveLabel}  onTap={deleteAccount} danger />
       </Panel>
       </div>
 
