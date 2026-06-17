@@ -8,9 +8,12 @@ import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
+import { moodIdsOf } from '../lib/moods'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
 import { hapticSoft, hapticSuccess } from '../lib/haptics'
+
+const MS_PER_DAY = 86400000
 
 // Bleeding intensity colors — soft Luna palette, not stoplight red.
 // Each step deepens slightly so the row reads as a gradient of
@@ -65,9 +68,31 @@ function naturalList(items = []) {
   return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
 }
 
+function logHasContent(log) {
+  if (!log) return false
+  return Boolean(
+    moodIdsOf(log).length ||
+    (Array.isArray(log.symptoms) && log.symptoms.length) ||
+    log.flow ||
+    log.bbt?.value ||
+    log.mucus ||
+    log.sex ||
+    log.sleep ||
+    (typeof log.note === 'string' && log.note.trim()) ||
+    log.intimate
+  )
+}
+
+function daysBetweenISO(fromISO, toISO) {
+  if (!fromISO || !toISO) return null
+  const from = new Date(fromISO + 'T00:00:00')
+  const to = new Date(toISO + 'T00:00:00')
+  return Math.max(0, Math.floor((to - from) / MS_PER_DAY))
+}
+
 export default function Log() {
   const store = useLuna()
-  const { back, goArticle, goSymptom, saveLog, removeLog, getLog, activeLogDate, setActiveLogDate } = store
+  const { back, goArticle, goSymptom, saveLog, removeLog, getLog, activeLogDate, setActiveLogDate, logs = {} } = store
   const cycle = useCycle(store)
   const phase = cycle.phase
   const todayISO = new Date().toISOString().slice(0, 10)
@@ -254,6 +279,29 @@ export default function Log() {
 
   const dateLabel = new Date(editingISO + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
   const isToday = editingISO === todayISO
+  const returnContext = (() => {
+    if (!isToday || logHasContent(existing)) return null
+    const loggedDates = Object.keys(logs)
+      .filter((iso) => iso < todayISO && logHasContent(logs[iso]))
+      .sort()
+    const lastLoggedISO = loggedDates[loggedDates.length - 1]
+    const daysAway = daysBetweenISO(lastLoggedISO, todayISO)
+    if (!daysAway || daysAway < 3) return null
+    if (daysAway >= 14) {
+      return {
+        tone: 'long',
+        title: <>Start with <em>today.</em></>,
+        body: 'No need to rebuild the missing weeks. One honest detail gives Luna a new anchor.',
+        note: 'If your period dates changed, mark those separately when you feel ready.',
+      }
+    }
+    return {
+      tone: 'soft',
+      title: <>Just <em>today</em> is enough.</>,
+      body: 'The quiet days can stay quiet. Add whatever feels useful right now.',
+      note: 'Even one tap helps Luna understand the shape of this week.',
+    }
+  })()
   // Phase-aware accent — when Luna knows the user's phase, the form
   // tints itself to that color. Today's phase becomes the Log's
   // visual key (selection borders, save button, dividers, flourishes).
@@ -267,7 +315,7 @@ export default function Log() {
       note.trim() ? 'a note' : null,
       optionalDetailsChosen.length ? 'more detail' : null,
     ].filter(Boolean)
-    if (parts.length === 0) return 'Start with what felt obvious. Leave the rest alone.'
+    if (parts.length === 0) return returnContext ? '' : 'Start with what felt obvious. Leave the rest alone.'
     return `So far: ${naturalList(parts)}.`
   })()
 
@@ -307,7 +355,7 @@ export default function Log() {
             of life, matched to the day's phase color. */}
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, margin: '18px 0 6px', animationDelay: '40ms' }}>
           <div style={{ fontFamily: T.serif, fontSize: 31, fontWeight: 500, letterSpacing: -0.65, lineHeight: 1.08, flex: 1, minWidth: 0, textWrap: 'balance' }}>
-            {isToday ? <>What stood out <em>today?</em></> : <>What stood out <em>that day?</em></>}
+            {returnContext ? returnContext.title : (isToday ? <>What stood out <em>today?</em></> : <>What stood out <em>that day?</em></>)}
           </div>
           {phase && (
             <div aria-hidden="true" style={{ color: acc, opacity: 0.55, paddingTop: 4 }}>
@@ -317,12 +365,51 @@ export default function Log() {
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '90ms' }}>
           {isToday
-            ? <>Whatever you noticed. None of this needs to be complete.</>
+            ? <>{returnContext ? returnContext.body : 'Whatever you noticed. None of this needs to be complete.'}</>
             : <>You can fill in what you remember — or change what you'd logged. Use the arrows above to move to another day.</>}
-          <div style={{ marginTop: 8, color: T.muted, fontSize: 13.5 }}>
-            {topSummary}
-          </div>
+          {topSummary && (
+            <div style={{ marginTop: 8, color: T.muted, fontSize: 13.5 }}>
+              {topSummary}
+            </div>
+          )}
         </div>
+
+        {returnContext && (
+          <div className="insight-stagger"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              margin: '-8px 0 24px',
+              padding: '13px 14px',
+              background: 'rgba(253,250,245,0.5)',
+              border: `1px solid ${acc}22`,
+              borderRadius: 18,
+              boxShadow: '0 14px 34px -30px rgba(88,56,38,0.45)',
+              animationDelay: '112ms',
+            }}>
+            <span aria-hidden="true"
+              style={{
+                width: 30,
+                height: 30,
+                borderRadius: 13,
+                flexShrink: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `${acc}14`,
+                color: acc,
+                fontFamily: T.serif,
+                fontSize: 17,
+                lineHeight: 1,
+              }}>
+              {returnContext.tone === 'long' ? '·' : '◦'}
+            </span>
+            <div style={{ minWidth: 0, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, lineHeight: 1.5, color: T.text }}>
+              {returnContext.note}
+            </div>
+          </div>
+        )}
 
         {/* Mood — flat one-tap choices with each mood's own color tint */}
         <div className="insight-stagger" style={{ animationDelay: '140ms' }}>
