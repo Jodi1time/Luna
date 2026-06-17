@@ -138,23 +138,24 @@ function search(corpus, query) {
 // usually an article match — so the shortcut doesn't promise an answer
 // the corpus can't deliver. Reviewed when new articles land.
 const SUGGESTED = [
-  'cramps endometriosis',
-  'spotting between periods',
-  'PMDD',
   'why am I tired',
-  'egg white mucus',
-  'painful sex',
-  'iron heavy bleeding',
-  'PCOS',
-  'BBT charting',
   'late period',
-  'perimenopause',
+  'spotting between periods',
+  'PCOS',
+  'painful sex',
   'birth control side effects',
+  'cramps endometriosis',
+  'PMDD',
+  'egg white mucus',
+  'iron heavy bleeding',
+  'BBT charting',
+  'perimenopause',
   'stress missed period',
   'mittelschmerz ovulation pain',
   'cervical screening Pap HPV',
   'jaw acne hormonal',
 ]
+const INITIAL_SUGGESTION_COUNT = 6
 
 export default function AskLuna() {
   const store = useLuna()
@@ -162,6 +163,7 @@ export default function AskLuna() {
   const accent = sectionColors('read').accent
   const corpus = useMemo(() => buildCorpus(), [])
   const [query, setQuery] = useState('')
+  const [showAllSuggestions, setShowAllSuggestions] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -171,6 +173,7 @@ export default function AskLuna() {
   const results = useMemo(() => search(corpus, query), [corpus, query])
   const topResult = query ? results[0] : null
   const moreResults = query ? results.slice(1) : []
+  const visibleSuggestions = showAllSuggestions ? SUGGESTED : SUGGESTED.slice(0, INITIAL_SUGGESTION_COUNT)
 
   const openResult = (entry) => {
     if (!entry.route) return
@@ -212,7 +215,7 @@ export default function AskLuna() {
           </span>
           <input
             ref={inputRef}
-            type="search"
+            type="text"
             inputMode="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -235,25 +238,46 @@ export default function AskLuna() {
         {!query && (
           <div className="insight-stagger" style={{ animationDelay: '200ms' }}>
             <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: T.text, opacity: 0.62, marginBottom: 10 }}>
-              You could start with:
+              Questions people often bring here:
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {SUGGESTED.map((s) => (
+            <div style={{ borderTop: `1px solid ${accent}22` }}>
+              {visibleSuggestions.map((s) => (
                 <button key={s} onClick={() => setQuery(s)}
-                  className="frost-card"
+                  className="alive-card"
                   style={{
-                    background: 'rgba(253,250,245,0.55)',
-                    border: '1px solid rgba(26,19,16,0.08)',
-                    borderRadius: 999,
-                    padding: '8px 14px',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: `1px solid ${accent}22`,
+                    borderRadius: 0,
+                    padding: '12px 2px',
                     cursor: 'pointer',
                     fontFamily: T.serif, fontStyle: 'italic',
-                    fontSize: 13, color: T.text, letterSpacing: -0.1,
+                    fontSize: 14, color: T.text, letterSpacing: -0.1,
+                    textAlign: 'left',
                   }}>
-                  {s}
+                  <span>{s}</span>
+                  <span aria-hidden="true" style={{ color: accent, fontFamily: T.sans, fontSize: 13, fontStyle: 'normal', flexShrink: 0 }}>→</span>
                 </button>
               ))}
             </div>
+            <button type="button" onClick={() => setShowAllSuggestions((open) => !open)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: accent,
+                cursor: 'pointer',
+                padding: '11px 0 0',
+                fontFamily: T.serif,
+                fontSize: 13,
+                fontStyle: 'italic',
+              }}>
+              {showAllSuggestions ? 'Show fewer questions' : `See ${SUGGESTED.length - INITIAL_SUGGESTION_COUNT} more topics`}
+            </button>
           </div>
         )}
 

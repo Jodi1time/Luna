@@ -43,33 +43,56 @@ export default function Care() {
           The checkups that quietly matter. Mark what is done, leave the rest for when you're ready.
         </div>
 
-        <div className="insight-stagger" style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28, animationDelay: '120ms' }}>
-          <div className="glass-card" style={{ padding: 16, borderRadius: T.r }}>
-            <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: acc, marginBottom: 8 }}>
-              What you've covered
+        <div className="insight-stagger" style={{ marginBottom: 28, animationDelay: '120ms' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14, marginBottom: 10 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: acc }}>
+              Your care plan
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 24, fontWeight: 500, letterSpacing: -0.35, lineHeight: 1.2, marginBottom: 8 }}>
-              {doneTotal} of {totalChecks} check-ins marked.
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.58, color: T.muted, fontStyle: 'italic' }}>
-              {nextOpen
-                ? `Next easy thing to make concrete: ${nextOpen.label.toLowerCase()}.`
-                : 'Everything here is marked done right now.'}
+            <div style={{ fontFamily: T.mono, fontSize: 11.5, color: T.muted, letterSpacing: 0.5, fontVariantNumeric: 'tabular-nums' }}>
+              {doneTotal} / {totalChecks}
             </div>
           </div>
-
+          <div style={{ height: 4, background: T.hair, overflow: 'hidden', marginBottom: 12 }}>
+            <div style={{
+              width: `${totalChecks ? (doneTotal / totalChecks) * 100 : 0}%`,
+              height: '100%',
+              background: acc,
+              transition: 'width 0.3s var(--ease-out)',
+            }} />
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.58, color: T.muted, fontStyle: 'italic', marginBottom: 14 }}>
+            {nextOpen
+              ? `A practical next step: ${nextOpen.label.toLowerCase()}.`
+              : 'Everything here is marked done right now.'}
+          </div>
           <button onClick={findProvider}
-            className="glass-card alive-card"
-            style={{ width: '100%', padding: 16, background: sectionPaper('care'), color: T.text, border: `1px solid ${sectionColors('care').accent}22`, borderRadius: T.r, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-            <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: acc, marginBottom: 8 }}>
-              When you're ready to book
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.2, marginBottom: 4 }}>
-              Find an OB/GYN near you →
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
-              Opens Maps with nearby providers, so the next step is easier to take.
-            </div>
+            className="alive-card"
+            style={{
+              width: '100%',
+              padding: '13px 0',
+              background: 'transparent',
+              color: T.text,
+              border: 'none',
+              borderTop: `1px solid ${sectionColors('care').accent}22`,
+              borderBottom: `1px solid ${sectionColors('care').accent}22`,
+              borderRadius: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}>
+            <span>
+              <span style={{ display: 'block', fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.15 }}>
+                Find an OB/GYN near you
+              </span>
+              <span style={{ display: 'block', fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.5, fontStyle: 'italic', marginTop: 2 }}>
+                Opens nearby providers in Maps.
+              </span>
+            </span>
+            <span aria-hidden="true" style={{ color: acc, fontFamily: T.sans, fontSize: 16, flexShrink: 0 }}>→</span>
           </button>
         </div>
 
