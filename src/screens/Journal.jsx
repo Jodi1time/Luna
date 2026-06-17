@@ -16,6 +16,12 @@ import useLuna from '../store/useLuna'
 
 const LINE_H = 28
 
+const JOURNAL_STARTERS = [
+  { label: 'Remember', text: 'Today I want to remember ' },
+  { label: 'Name it', text: 'What I have not said out loud is ' },
+  { label: 'Body', text: 'My body felt ' },
+]
+
 // Format a timestamp as a notebook page header.
 //   Same-day:   "Today · 7:42 PM"
 //   Other:      "Friday, May 31 · 7:42 PM"
@@ -52,6 +58,7 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   const recRef = useRef(null)
   const timerRef = useRef(null)
   const voiceSupported = useMemo(() => isVoiceSupported(), [])
+  const blankPage = !text.trim() && photos.length === 0 && !recording
 
   // Resize the textarea to fit content as the user writes — or as
   // dictated transcript flows in.
@@ -90,6 +97,12 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   }
   const handleAddPhoto = () => {
     onPickPhoto((photo) => { setPhotos((cur) => [...cur, photo]) })
+  }
+  const useStarter = (starter) => {
+    setText(starter)
+    const focus = () => taRef.current?.focus()
+    if (typeof window !== 'undefined' && window.requestAnimationFrame) window.requestAnimationFrame(focus)
+    else setTimeout(focus, 0)
   }
   const removePhoto = (id) => {
     setPhotos((cur) => cur.filter((p) => p.id !== id))
@@ -140,19 +153,24 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
   return (
     <div style={{
       background: paperBackground(theme),
-      borderRadius: T.r,
-      padding: '20px 22px 22px 44px',
+      borderRadius: T.radius.lg,
+      padding: '20px 22px 20px 44px',
       border: `1px solid ${theme.accent}18`,
-      boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 10px 24px -20px rgba(26,19,16,0.18)',
+      boxShadow: '0 1px 0 rgba(26,19,16,0.04), 0 18px 38px -28px rgba(26,19,16,0.24)',
       marginBottom: 22,
       position: 'relative',
       color: theme.text,
     }}>
       <JournalDecorations decorations={decorations} accent={theme.accent} opacity={0.18} />
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
-          <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', fontWeight: 500, color: theme.accent, opacity: 0.88 }}>
-            A blank page.
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 10 }}>
+          <div>
+            <div style={{ fontFamily: T.serif, fontSize: 14.5, fontStyle: 'italic', fontWeight: 500, color: theme.accent, opacity: 0.92, letterSpacing: -0.1 }}>
+              A blank page.
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: theme.text, opacity: 0.58, lineHeight: 1.45, marginTop: 2 }}>
+              No right beginning. No need to make it neat.
+            </div>
           </div>
           {phaseId && (
             <span aria-hidden="true" style={{ color: theme.accent, opacity: 0.55, display: 'inline-flex' }}>
@@ -176,6 +194,32 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
             display: 'block',
           }}
         />
+        {blankPage && (
+          <div style={{ marginTop: 10, marginBottom: 2 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: theme.text, opacity: 0.6, marginBottom: 8 }}>
+              Borrow a first line:
+            </div>
+            <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+              {JOURNAL_STARTERS.map((starter) => (
+                <button key={starter.label} type="button" onClick={() => useStarter(starter.text)}
+                  style={{
+                    background: `${theme.accent}0f`,
+                    color: theme.accent,
+                    border: `1px solid ${theme.accent}30`,
+                    borderRadius: 999,
+                    padding: '7px 10px',
+                    cursor: 'pointer',
+                    fontFamily: T.sans,
+                    fontSize: 11,
+                    fontWeight: 650,
+                    letterSpacing: 0.15,
+                  }}>
+                  {starter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Live interim transcript — what Luna is hearing right now,
             before the final chunk lands in the textarea. Rendered as
             ghost-italic so the user sees a draft without the cursor
@@ -282,6 +326,9 @@ function EntryComposer({ theme, decorations, onSave, onPickPhoto, phaseId }) {
             }}>
             Keep this page
           </button>
+        </div>
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${theme.accent}18`, fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', lineHeight: 1.45, color: theme.text, opacity: 0.58 }}>
+          This stays in your diary unless you choose to share it.
         </div>
       </div>
     </div>
@@ -708,12 +755,28 @@ export default function Journal() {
           )}
 
           {entries.length === 0 && (
-            <div className="insight-stagger" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '4px 22px 32px', animationDelay: '180ms' }}>
-              <div style={{ color: theme.accent, opacity: 0.85, marginBottom: 6 }}>
-                <OpenDiary size={156} accent={theme.accent} />
+            <div className="insight-stagger" style={{
+              display: 'grid',
+              gridTemplateColumns: '64px 1fr',
+              gap: 14,
+              alignItems: 'center',
+              margin: '-4px 0 26px',
+              padding: '14px 16px',
+              background: theme.accent + '0c',
+              border: `1px solid ${theme.accent}24`,
+              borderRadius: T.radius.md,
+              animationDelay: '180ms',
+            }}>
+              <div style={{ color: theme.accent, opacity: 0.72, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <OpenDiary size={58} accent={theme.accent} />
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: theme.text, opacity: 0.58, lineHeight: 1.65, maxWidth: 240 }}>
-                Nothing has been kept here yet. The first thing you save becomes the first page.
+              <div>
+                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', color: theme.text, lineHeight: 1.35, letterSpacing: -0.12 }}>
+                  The first page changes the room.
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 13, fontStyle: 'italic', color: theme.text, opacity: 0.62, lineHeight: 1.55, marginTop: 4 }}>
+                  One line, one photo, or one spoken thought is enough for this to become yours.
+                </div>
               </div>
             </div>
           )}

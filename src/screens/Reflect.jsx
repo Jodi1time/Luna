@@ -1128,6 +1128,10 @@ export default function Reflect() {
 
   // The phase-aware recommendation for this week.
   const recommendation = phase ? PHASE_PRACTICE[phase.id] : null
+  const visiblePractices = useMemo(
+    () => recommendation ? PRACTICES.filter((p) => p.id !== recommendation.id) : PRACTICES,
+    [recommendation?.id]
+  )
 
   const handleSavePractice = (entry) => {
     const next = [
@@ -1234,9 +1238,9 @@ export default function Reflect() {
         </div>
 
         {/* Guided practices */}
-        <Eyebrow>If you want a little structure</Eyebrow>
+        <Eyebrow>More structure, if you want it</Eyebrow>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-          {PRACTICES.map((p) => {
+          {visiblePractices.map((p) => {
             const c = sectionColors(PRACTICE_SECTION[p.id] || 'reflect')
             return (
               <button key={p.id} onClick={() => setOpenPractice(p.id)}
