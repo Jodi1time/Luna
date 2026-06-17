@@ -190,6 +190,28 @@ function Greeting({ name, phaseId }) {
   )
 }
 
+function logHasContent(log) {
+  if (!log) return false
+  return Boolean(
+    moodIdsOf(log).length ||
+    (Array.isArray(log.symptoms) && log.symptoms.length) ||
+    log.flow ||
+    log.bbt?.value ||
+    log.mucus ||
+    log.sex ||
+    log.sleep ||
+    (typeof log.note === 'string' && log.note.trim()) ||
+    log.intimate
+  )
+}
+
+function daysSinceISO(iso, todayISO) {
+  if (!iso) return null
+  const a = new Date(iso + 'T00:00:00')
+  const b = new Date(todayISO + 'T00:00:00')
+  return Math.max(0, Math.floor((b - a) / MS_PER_DAY))
+}
+
 // Compact 7-day strip — Mon–Sun of the current week. Today is shown
 // with a soft pulsing accent ring and a filled disc; period days
 // (logged or predicted) get a small dot below the number.
@@ -1083,6 +1105,16 @@ export default function Home() {
 
   const todayISO = new Date().toISOString().slice(0, 10)
   const todayLog = logs?.[todayISO]
+  const todayHasContent = logHasContent(todayLog)
+  const lastMeaningfulLogISO = useMemo(() => {
+    return Object.entries(logs || {})
+      .filter(([iso, log]) => iso <= todayISO && logHasContent(log))
+      .map(([iso]) => iso)
+      .sort()
+      .pop() || null
+  }, [logs, todayISO])
+  const daysSinceLastLog = daysSinceISO(lastMeaningfulLogISO, todayISO)
+  const showQuietReturn = !todayHasContent && daysSinceLastLog != null && daysSinceLastLog >= 3 && daysSinceLastLog < 14
 
   // ─── Adaptive Home flags ─────────────────────────────────────
   // Drive section ordering + visibility from onboarding answers
@@ -1138,9 +1170,9 @@ export default function Home() {
   //   stalePeriod: predicted period was 10+ days ago AND no flow
   //                logged since — the anchor is almost certainly
   //                wrong, predictions are way off.
-  //   staleLogs:  the user hasn't logged ANYTHING in 21+ days —
-  //                they've drifted away from Luna, gently invite
-  //                them back without scolding.
+  //   staleLogs:  the user hasn't logged anything meaningful in
+  //                14+ days — they've drifted away from Luna, gently
+  //                invite them back without scolding.
   //
   // Suppressed when the regular period CTA is already showing, when
   // the user is on hormonal BC (no cycle to predict), and during
@@ -1152,13 +1184,7 @@ export default function Home() {
     if (cycleDay != null && cycleDay > cycleLength + 10) {
       return { kind: 'stalePeriod', daysOver: cycleDay - cycleLength }
     }
-    // staleLogs: 21+ days since any log
-    const allLogDates = Object.keys(logs || {}).sort()
-    const lastLogISO = allLogDates[allLogDates.length - 1]
-    if (lastLogISO) {
-      const daysSince = Math.floor((Date.now() - new Date(lastLogISO + 'T00:00:00').getTime()) / 86400000)
-      if (daysSince >= 21) return { kind: 'staleLogs', daysSince }
-    }
+    if (daysSinceLastLog != null && daysSinceLastLog >= 14) return { kind: 'staleLogs', daysSince: daysSinceLastLog }
     return null
   })()
 
@@ -1491,27 +1517,31 @@ export default function Home() {
               style={{
                 marginTop: 18, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
                 padding: '17px 18px 17px 20px', borderRadius: 18,
-                background: todayLog ? 'rgba(253,250,245,0.58)' : T.accent,
-                border: todayLog ? `1px solid ${T.accent}2e` : `1px solid ${T.accent}`,
-                color: todayLog ? T.text : '#fff',
-                boxShadow: todayLog
+                background: todayHasContent ? 'rgba(253,250,245,0.58)' : T.accent,
+                border: todayHasContent ? `1px solid ${T.accent}2e` : `1px solid ${T.accent}`,
+                color: todayHasContent ? T.text : '#fff',
+                boxShadow: todayHasContent
                   ? 'none'
                   : `0 12px 22px -18px ${T.accent}85`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
               }}>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3 }}>
-                  {todayLog ? 'Today’s noted.' : 'How are you feeling today?'}
+                  {todayHasContent ? 'Today’s noted.' : showQuietReturn ? 'Welcome back. Start with today.' : 'How are you feeling today?'}
                 </span>
-                <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayLog ? T.muted : 'rgba(255,250,245,0.88)' }}>
-                  {todayLog ? 'Add more anytime — a symptom, a mood, a note.' : 'A few taps. It teaches Luna your body, and takes a moment.'}
+                <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayHasContent ? T.muted : 'rgba(255,250,245,0.88)' }}>
+                  {todayHasContent
+                    ? 'Add more anytime — a symptom, a mood, a note.'
+                    : showQuietReturn
+                      ? 'The quiet days can stay quiet. A few taps is enough.'
+                      : 'A few taps. It teaches Luna your body, and takes a moment.'}
                 </span>
               </span>
               <span aria-hidden="true" style={{
                 flexShrink: 0, width: 38, height: 38, borderRadius: 999,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: todayLog ? `${T.accent}14` : 'rgba(255,255,255,0.22)',
-                color: todayLog ? T.accent : '#fff',
+                background: todayHasContent ? `${T.accent}14` : 'rgba(255,255,255,0.22)',
+                color: todayHasContent ? T.accent : '#fff',
               }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h9M8 3l5 5-5 5"/></svg>
               </span>
@@ -1565,10 +1595,9 @@ export default function Home() {
 
           {/* Catch-up nudge — surfaces when Luna's anchor is almost
               certainly stale (predicted period was 10+ days ago) or
-              the user has drifted from logging entirely (21+ days
-              with no log). Routes to EditPeriodStart for a quick
-              re-anchor. The doula version of Flo's "did your period
-              happen?" — gentle, not pestering. */}
+              the user has been away for two quiet weeks. The actions
+              match the problem: period selection for a stale anchor,
+              today's Log for a gentle return. */}
           {showCatchUp && (
             <div className="alive-card frost-card" style={{ marginTop: 18, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
               <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 8 }}>
@@ -1582,12 +1611,29 @@ export default function Home() {
               <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5, marginBottom: 14 }}>
                 {showCatchUp.kind === 'stalePeriod'
                   ? `Luna's been working off a guess for the last ${showCatchUp.daysOver} days. A quick update sharpens every prediction from here.`
-                  : `It's been ${showCatchUp.daysSince} days since you last logged. Predictions drift without fresh data — a few taps catches Luna up.`}
+                  : `It's been ${showCatchUp.daysSince} days since you last checked in. You can start with today; only backfill what actually matters.`}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {showCatchUp.kind === 'staleLogs' && (
+                  <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
+                    style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
+                    Log today
+                  </button>
+                )}
                 <button onClick={() => go('periodDays')}
-                  style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
-                  Select days
+                  style={{
+                    background: showCatchUp.kind === 'stalePeriod' ? T.accent : 'transparent',
+                    color: showCatchUp.kind === 'stalePeriod' ? '#fff' : T.accent,
+                    border: showCatchUp.kind === 'stalePeriod' ? 'none' : `1px solid ${T.accent}40`,
+                    padding: '11px 18px',
+                    cursor: 'pointer',
+                    fontFamily: T.sans,
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    letterSpacing: 0.6,
+                    borderRadius: 999,
+                  }}>
+                  {showCatchUp.kind === 'stalePeriod' ? 'Select days' : 'Mark period days'}
                 </button>
               </div>
             </div>
