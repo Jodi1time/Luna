@@ -13,7 +13,7 @@ import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { getBcCycleModel } from '../lib/bcCycle'
 import { choreoOnce } from '../lib/choreo'
-import { Constellation, MoonMark } from '../components/Illustrations'
+import { MoonMark } from '../components/Illustrations'
 import { moodIdsOf } from '../lib/moods'
 
 // Stroke-arc path between two angles at radius r — the building block
@@ -762,6 +762,97 @@ function PatternVisualDeck({ deck, accent, cyclesLogged }) {
   )
 }
 
+function LearningProgressCard({ cyclesLogged, loggedDays, hasPeriodAnchor, accent, go }) {
+  const rows = [
+    {
+      label: 'Period anchor',
+      value: hasPeriodAnchor ? 'set' : 'needed',
+      done: hasPeriodAnchor,
+      body: hasPeriodAnchor
+        ? 'Luna has a starting point for this cycle.'
+        : 'Mark the days you bled so predictions have a real anchor.',
+    },
+    {
+      label: 'Daily check-ins',
+      value: `${Math.min(loggedDays, 5)}/5`,
+      done: loggedDays >= 5,
+      body: loggedDays >= 5
+        ? 'There is enough day-to-day texture to start reading softly.'
+        : 'A few ordinary days teach Luna more than one perfect entry.',
+    },
+    {
+      label: 'Cycle history',
+      value: `${Math.min(cyclesLogged, 2)}/2`,
+      done: cyclesLogged >= 2,
+      body: cyclesLogged >= 2
+        ? 'Repeats can now be compared across cycles.'
+        : 'Two cycles is usually where repeating patterns become clearer.',
+    },
+  ]
+
+  return (
+    <div className="alive-card" style={{
+      marginTop: 6,
+      padding: 18,
+      background: 'rgba(253,250,245,0.58)',
+      border: `1px solid ${accent}18`,
+      borderRadius: 20,
+      boxShadow: `0 1px 0 ${accent}10, 0 12px 26px -24px ${accent}34`,
+    }}>
+      <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.28, lineHeight: 1.24, marginBottom: 6 }}>
+        Luna is learning your baseline.
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55, marginBottom: 14 }}>
+        No strong pattern yet is not a blank result. It means Luna is still separating one-off days from things that repeat.
+      </div>
+
+      <div style={{ borderTop: `1px solid ${T.hair}` }}>
+        {rows.map((row, idx) => (
+          <div key={row.label} style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) auto',
+            gap: 12,
+            padding: '13px 0',
+            borderBottom: idx === rows.length - 1 ? 'none' : `1px solid ${T.hair}`,
+          }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <span style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: 999,
+                  background: row.done ? accent : 'rgba(26,19,16,0.16)',
+                  flexShrink: 0,
+                }} />
+                <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, letterSpacing: -0.1, color: T.text }}>
+                  {row.label}
+                </div>
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 12.8, lineHeight: 1.48, color: T.muted, fontStyle: 'italic', paddingLeft: 15 }}>
+                {row.body}
+              </div>
+            </div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.8, fontWeight: 600, color: row.done ? accent : T.muted, paddingTop: 2 }}>
+              {row.value}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+        <button onClick={() => go('log')}
+          style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, borderRadius: 999 }}>
+          Log today
+        </button>
+        <button onClick={() => go('periodDays')}
+          style={{ background: 'transparent', color: T.accent, border: `1px solid ${T.accent}3d`, padding: '11px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, borderRadius: 999 }}>
+          Mark period days
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function Insights() {
   const store = useLuna()
   const cycle = useCycle(store)
@@ -784,6 +875,7 @@ export default function Insights() {
   const ovulation = !onHormonalBC ? cycle.ovulation : null
   const cycleDay = cycle.cycleDay
   const loggedDays = Object.keys(logs || {}).length
+  const hasPeriodAnchor = Boolean(cycle.lastPeriodStart || cyclesLogged > 0)
   const goPhase = useLuna((s) => s.goPhase)
   // Gentle condition matching — surfaces conditions worth knowing about
   // based on log patterns. Never diagnostic. Hidden when no matches
@@ -1012,33 +1104,13 @@ export default function Insights() {
         <div className="insight-stagger" style={{ animationDelay: '280ms' }}>
         <Eyebrow>{patterns.length > 0 ? 'A closer look' : 'What keeps coming back'}</Eyebrow>
         {patterns.length === 0 ? (
-          <div className="alive-card" style={{
-            marginTop: 6,
-            padding: 20,
-            background: 'rgba(253,250,245,0.58)',
-            border: `1px solid ${(phase?.color || T.accent)}18`,
-            borderRadius: 20,
-            boxShadow: `0 1px 0 ${(phase?.color || T.accent)}10, 0 12px 26px -24px ${(phase?.color || T.accent)}34`,
-          }}>
-            {/* Constellation forming — points connecting into a shape,
-                "patterns become visible with more of them." */}
-            <div style={{ marginBottom: 8 }}>
-              <Constellation size={150} accent={phase?.color || T.accent} />
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.28, lineHeight: 1.24, marginBottom: 6 }}>
-              {cyclesLogged < 2 ? 'Your patterns are still forming.' : 'No strong patterns yet.'}
-            </div>
-            <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.55 }}>
-              {cyclesLogged < 2
-                ? 'Patterns surface after about a cycle of logging. Luna is paying attention — keep going.'
-                : "Keep logging and they'll arrive here as they emerge. Three connected dots make a constellation."}
-            </div>
-            {cyclesLogged > 0 && (
-              <div style={{ marginTop: 12, fontFamily: T.mono, fontSize: 11, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>
-                {cyclesLogged} CYCLE{cyclesLogged === 1 ? '' : 'S'} TRACKED · {Object.keys(logs || {}).length} DAY{Object.keys(logs || {}).length === 1 ? '' : 'S'} LOGGED
-              </div>
-            )}
-          </div>
+          <LearningProgressCard
+            cyclesLogged={cyclesLogged}
+            loggedDays={loggedDays}
+            hasPeriodAnchor={hasPeriodAnchor}
+            accent={phase?.color || T.accent}
+            go={go}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
             {patterns.map((p, idx) => {
