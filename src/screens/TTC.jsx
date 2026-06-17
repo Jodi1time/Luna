@@ -62,17 +62,11 @@ function GroupHead({ label, accent }) {
 
 // Signal row — frosted soft card with label, value chip, italic
 // hint, optional CTA. Replaces the old glass-card pattern.
-function SignalRow({ label, value, hint, cta, accent, present }) {
+function SignalRow({ label, value, hint, cta, accent, present, last = false }) {
   return (
-    <div className="alive-card frost-card" style={{
-      padding: 16,
-      background: present ? `${accent}10` : 'rgba(253,250,245,0.55)',
-      border: `1px solid ${present ? accent + '33' : 'rgba(26,19,16,0.06)'}`,
-      borderRadius: 18,
-      boxShadow: present
-        ? `0 14px 30px -22px ${accent}55`
-        : '0 10px 22px -22px rgba(26,19,16,0.18)',
-      transition: 'all .22s var(--ease-out)',
+    <div style={{
+      padding: '14px 0',
+      borderBottom: last ? 'none' : '1px solid rgba(26,19,16,0.06)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
         <div style={{ fontFamily: T.serif, fontSize: 14.5, fontWeight: 500, color: T.text, letterSpacing: -0.1 }}>{label}</div>
@@ -253,7 +247,13 @@ export default function TTC() {
         {!onBC && (
           <div style={{ marginTop: 26 }}>
             <GroupHead label="What your signals say" accent={planAccent} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="frost-card" style={{
+              padding: '0 16px',
+              background: 'rgba(253,250,245,0.55)',
+              border: `1px solid ${planAccent}22`,
+              borderRadius: 18,
+              boxShadow: `0 10px 22px -22px ${planAccent}28`,
+            }}>
               <SignalRow
                 accent={planAccent}
                 label="Basal body temperature"
@@ -265,6 +265,7 @@ export default function TTC() {
                     : 'Daily BBT first thing in the morning, before sitting up. After 2–3 cycles, Luna detects your ovulation marker.'
                 }
                 cta={hasBBT ? null : { label: 'Log it', onTap: () => go('log') }}
+                last={false}
               />
               <SignalRow
                 accent={planAccent}
@@ -281,6 +282,7 @@ export default function TTC() {
                     : 'Cervical mucus shifts are one of the clearest fertility signals — abundant and stretchy near ovulation, drier after.'
                 }
                 cta={hasMucus ? null : { label: 'Log it', onTap: () => go('log') }}
+                last={false}
               />
               <SignalRow
                 accent={planAccent}
@@ -293,6 +295,7 @@ export default function TTC() {
                     : 'High or open libido days are a supporting signal. Logged in your intimate health surface.'
                 }
                 cta={hasLibido ? null : { label: 'Log it', onTap: () => go('intimate') }}
+                last
               />
             </div>
           </div>

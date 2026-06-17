@@ -29,8 +29,8 @@ import { homaIR, homaIRReading } from '../data/pcosClinical'
 //   - What you're noticing this month (PCOS-axis signal summary)
 //   - Today's next thing (one quiet suggestion)
 //   - A small thing to know (rotating literacy)
-//   - Coming-soon stubs for the v2 surfaces (bloodwork, medications,
-//     doctor scripts) so she knows where this is going.
+//   - Linked tracking surfaces for bloodwork, treatments, and
+//     doctor-ready summaries.
 //
 // Voice rules from src/data/pcos.js apply throughout — never "diet",
 // never "weight loss", never "obese", never "infertility", and the
@@ -61,27 +61,33 @@ function StatCard({ label, value, hint, accent }) {
   )
 }
 
-function ComingSoonCard({ title, body, accent }) {
+function TrackingRow({ label, body, meta, onTap, last = false }) {
   return (
-    <div className="frost-card" style={{
-      padding: '14px 16px',
-      background: 'rgba(253,250,245,0.4)',
-      border: `1px dashed ${accent}40`,
-      borderRadius: 16,
-      opacity: 0.85,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 15, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
-          {title}
+    <button onClick={onTap}
+      className="alive-card"
+      style={{
+        width: '100%',
+        padding: '15px 0',
+        background: 'transparent',
+        border: 'none',
+        borderBottom: last ? 'none' : '1px solid rgba(26,19,16,0.06)',
+        textAlign: 'left',
+        cursor: 'pointer',
+        color: T.text,
+        fontFamily: 'inherit',
+      }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
+          {label}
         </div>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11.5, color: T.muted }}>
-          coming next
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted }}>
+          {meta}
         </div>
       </div>
       <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
         {body}
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -138,6 +144,14 @@ export default function Pcos() {
   )
 
   const literacy = todaysPcosLiteracy()
+  const topSignals = useMemo(() => {
+    const allIds = [...ANDROGEN_PATTERN_SIGNALS, ...INSULIN_PATTERN_SIGNALS]
+    return allIds
+      .map((id) => ({ id, label: SYMPTOMS[id]?.label || id, count: signalCounts[id] || 0 }))
+      .filter((x) => x.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4)
+  }, [signalCounts])
 
   // Handler for the next-thing CTA when it routes somewhere.
   const handleNextThingCta = () => {
@@ -205,42 +219,48 @@ export default function Pcos() {
             still computed for the next-thing recommender, but the
             dashboard just shows her the top few signals as a calm
             "this is what's been showing up" list. HAVEN, not classroom. */}
-        {(() => {
-          const allIds = [...ANDROGEN_PATTERN_SIGNALS, ...INSULIN_PATTERN_SIGNALS]
-          const top = allIds
-            .map((id) => ({ id, label: SYMPTOMS[id]?.label || id, count: signalCounts[id] || 0 }))
-            .filter((x) => x.count > 0)
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 4)
-          if (top.length === 0) return null
-          return (
-            <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '140ms' }}>
-              <Eyebrow color={accent}>What you’ve been noticing</Eyebrow>
-              <div style={{ padding: '14px 16px', background: 'rgba(253,250,245,0.55)', border: `1px solid ${accent}22`, borderRadius: 18, marginTop: 4 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {top.map((x) => (
-                    <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{
-                        width: 22, height: 22, borderRadius: 999,
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        background: `${accent}14`, color: accent, flexShrink: 0,
-                      }}>
-                        <SymptomIcon id={x.id} size={14} />
-                      </span>
-                      <div style={{ fontFamily: T.serif, fontSize: 14, color: T.text, flex: 1 }}>{x.label}</div>
-                      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 600 }}>
-                        {x.count}d
-                      </div>
+        <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '140ms' }}>
+          <Eyebrow color={accent}>What you’ve been noticing</Eyebrow>
+          {topSignals.length > 0 ? (
+            <div style={{ padding: '14px 16px', background: 'rgba(253,250,245,0.55)', border: `1px solid ${accent}22`, borderRadius: 18, marginTop: 4 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {topSignals.map((x) => (
+                  <div key={x.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{
+                      width: 22, height: 22, borderRadius: 999,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      background: `${accent}14`, color: accent, flexShrink: 0,
+                    }}>
+                      <SymptomIcon id={x.id} size={14} />
+                    </span>
+                    <div style={{ fontFamily: T.serif, fontSize: 14, color: T.text, flex: 1 }}>{x.label}</div>
+                    <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 0.5, color: T.muted, fontWeight: 600 }}>
+                      {x.count}d
                     </div>
-                  ))}
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 10, lineHeight: 1.5 }}>
-                  Last 30 days. Tap “For your appointment” below to send these with you.
-                </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 10, lineHeight: 1.5 }}>
+                Last 30 days. Tap “For your appointment” below to send these with you.
               </div>
             </div>
-          )
-        })()}
+          ) : (
+            <div className="frost-card" style={{
+              padding: '16px 18px',
+              background: 'rgba(253,250,245,0.55)',
+              border: `1px solid ${accent}18`,
+              borderRadius: 18,
+              marginTop: 4,
+            }}>
+              <div style={{ fontFamily: T.serif, fontSize: 15, lineHeight: 1.6, color: T.text, marginBottom: 8 }}>
+                Nothing loud has repeated yet.
+              </div>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
+                PCOS often reads in accumulation. A few more weeks of cycle, symptom, or bloodwork detail will make this section more personal.
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Today's next thing — one quiet recommendation. */}
         <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '200ms' }}>
@@ -300,105 +320,46 @@ export default function Pcos() {
             she sees at a glance whether she's been logging. */}
         <div className="insight-stagger" style={{ marginTop: 8, marginBottom: 18, animationDelay: '320ms' }}>
           <Eyebrow color={accent}>Your tracking</Eyebrow>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-            {/* Bloodwork summary card */}
-            <button onClick={() => go('pcosBloodwork')}
-              className="alive-card frost-card"
-              style={{
-                padding: '14px 16px',
-                background: sectionPaper('plan'),
-                border: `1px solid ${accent}28`,
-                borderRadius: 16,
-                textAlign: 'left', cursor: 'pointer',
-                color: T.text, fontFamily: 'inherit', width: '100%',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
-                  Bloodwork
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
-                  open →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
-                {hasBloodwork
-                  ? (homaSummary
-                      ? `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged · HOMA-IR ${homaSummary.score} (${homaSummary.interp?.label})`
-                      : `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged — log fasting glucose + insulin for HOMA-IR`)
-                  : 'Log testosterone, AMH, fasting insulin, SHBG, DHEA-S, TSH — Luna pairs each with what it means in PCOS.'}
-              </div>
-            </button>
-
-            {/* Medications summary card with today's check-in state */}
-            <button onClick={() => go('pcosMedications')}
-              className="alive-card frost-card"
-              style={{
-                padding: '14px 16px',
-                background: sectionPaper('plan'),
-                border: `1px solid ${accent}28`,
-                borderRadius: 16,
-                textAlign: 'left', cursor: 'pointer',
-                color: T.text, fontFamily: 'inherit', width: '100%',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
-                  Treatments
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
-                  open →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
-                {meds.length === 0
-                  ? 'Inositol, metformin, spironolactone, GLP-1s, BC — track what you’re taking, day by day.'
-                  : `${meds.length} tracking · ${takenTodayCount}/${meds.length} taken today`}
-              </div>
-            </button>
-
-            {/* Doctor-script generator — live */}
-            <button onClick={() => go('pcosDoctorScript')}
-              className="alive-card frost-card"
-              style={{
-                padding: '14px 16px',
-                background: sectionPaper('plan'),
-                border: `1px solid ${accent}28`,
-                borderRadius: 16,
-                textAlign: 'left', cursor: 'pointer',
-                color: T.text, fontFamily: 'inherit', width: '100%',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2, color: T.text }}>
-                  For your next appointment
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent }}>
-                  open →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
-                Stitch your symptoms, cycle, bloodwork, and treatments into a one-page doctor-ready summary. Print, or copy into a portal message.
-              </div>
-            </button>
+          <div className="frost-card" style={{
+            padding: '0 16px',
+            background: sectionPaper('plan'),
+            border: `1px solid ${accent}22`,
+            borderRadius: 18,
+            marginTop: 4,
+          }}>
+            <TrackingRow
+              label="Bloodwork"
+              meta="open →"
+              body={hasBloodwork
+                ? (homaSummary
+                    ? `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged · HOMA-IR ${homaSummary.score} (${homaSummary.interp?.label})`
+                    : `${bloodwork.length} reading${bloodwork.length === 1 ? '' : 's'} logged — log fasting glucose + insulin for HOMA-IR`)
+                : 'Log testosterone, AMH, fasting insulin, SHBG, DHEA-S, TSH — Luna pairs each with what it means in PCOS.'}
+              onTap={() => go('pcosBloodwork')}
+            />
+            <TrackingRow
+              label="Treatments"
+              meta="open →"
+              body={meds.length === 0
+                ? 'Inositol, metformin, spironolactone, GLP-1s, BC — track what you’re taking, day by day.'
+                : `${meds.length} tracking · ${takenTodayCount}/${meds.length} taken today`}
+              onTap={() => go('pcosMedications')}
+            />
+            <TrackingRow
+              label="For your next appointment"
+              meta="open →"
+              body="Stitch your symptoms, cycle, bloodwork, and treatments into a one-page doctor-ready summary. Print, or copy into a portal message."
+              onTap={() => go('pcosDoctorScript')}
+            />
+            <TrackingRow
+              label="The full PCOS read"
+              meta="open →"
+              body="Plain-English signs, tests to ask for, and the different treatment paths — all in one place."
+              onTap={() => { useLuna.setState({ activeConditionId: 'pcos' }); go('conditions') }}
+              last
+            />
           </div>
         </div>
-
-        {/* Quiet handoff — the Conditions Atlas is still where the
-            full plain-English explainer lives. */}
-        <button onClick={() => { useLuna.setState({ activeConditionId: 'pcos' }); go('conditions') }}
-          className="alive-card frost-card"
-          style={{
-            marginTop: 18, padding: '14px 16px', width: '100%',
-            background: 'rgba(253,250,245,0.55)',
-            border: '1px solid rgba(26,19,16,0.06)',
-            borderRadius: 18, cursor: 'pointer', textAlign: 'left',
-            color: T.text, fontFamily: 'inherit',
-          }}>
-          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 4 }}>
-            the full read
-          </div>
-          <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, letterSpacing: -0.2 }}>
-            What PCOS is, signs, tests to ask for, treatments →
-          </div>
-        </button>
       </div>
     </Screen>
   )

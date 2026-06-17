@@ -183,6 +183,13 @@ function PregnantState() {
     : daysToDue === 0
       ? 'Today is your due date'
       : `${Math.abs(daysToDue)} day${Math.abs(daysToDue) === 1 ? '' : 's'} past due date`
+  const kickReady = week >= 28
+  const contractionsReady = week >= 36
+  const toolsIntro = kickReady
+    ? (contractionsReady
+        ? 'These are the tools most likely to matter now.'
+        : 'Kick counts are useful now. Contraction timing usually becomes relevant later in the third trimester.')
+    : 'These tools stay here the whole time, but they usually become useful later: kick counts around week 28, contraction timing closer to labor.'
 
   const handleEnd = () => {
     const ok = window.confirm('End pregnancy mode? Your data stays — Luna will return to cycle tracking.')
@@ -251,95 +258,103 @@ function PregnantState() {
           </div>
         )}
 
-        {/* Pregnancy tools — v1.1 surfaces. Kick counter is shown from
-            week 28 (third trimester); contractions timer from week 36
-            (when labor preparation makes it relevant). Both available
-            anytime via a "show all tools" affordance below. */}
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 10, letterSpacing: -0.1 }}>
-          tools for this week
+        {/* Pregnancy tools — always reachable, but the copy makes it
+            clear when each one usually becomes relevant so the screen
+            does not feel like a pile of tools on week 9. */}
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, marginBottom: 8, letterSpacing: -0.1 }}>
+          tools in reach
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 22 }}>
-          {(week >= 28 || true) && (
-            <button onClick={() => go('kickCounter')}
-              className="alive-card frost-card"
-              style={{
-                width: '100%', padding: 16,
-                background: 'rgba(253,250,245,0.55)',
-                border: `1px solid ${accent}28`,
-                borderRadius: 18,
-                cursor: 'pointer', textAlign: 'left',
-                color: T.text, fontFamily: 'inherit',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
-                  Kick counter
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: accent, fontWeight: 500 }}>
-                  count to 10 →
-                </div>
+        <div className="frost-card" style={{
+          padding: '0 16px',
+          background: 'rgba(253,250,245,0.55)',
+          border: `1px solid ${accent}22`,
+          borderRadius: 18,
+          marginBottom: 10,
+        }}>
+          <button onClick={() => go('kickCounter')}
+            className="alive-card"
+            style={{
+              width: '100%', padding: '15px 0',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: '1px solid rgba(26,19,16,0.06)',
+              cursor: 'pointer', textAlign: 'left',
+              color: T.text, fontFamily: 'inherit',
+            }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
+                Kick counter
               </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
-                Track your baby's movements once a day from week 28 onward. Most days it takes 10-30 minutes.
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: kickReady ? accent : T.muted, fontWeight: 500 }}>
+                {kickReady ? 'useful now' : 'usually from week 28'}
               </div>
-            </button>
-          )}
-          {(week >= 32 || true) && (
-            <button onClick={() => go('contractions')}
-              className="alive-card frost-card"
-              style={{
-                width: '100%', padding: 16,
-                background: 'rgba(253,250,245,0.55)',
-                border: `1px solid ${T.accent}28`,
-                borderRadius: 18,
-                cursor: 'pointer', textAlign: 'left',
-                color: T.text, fontFamily: 'inherit',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
-                  Contractions timer
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.accent, fontWeight: 500 }}>
-                  5-1-1 detection →
-                </div>
+            </div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
+              Count to 10 during your baby's active window. Most days it takes 10-30 minutes.
+            </div>
+          </button>
+
+          <button onClick={() => go('contractions')}
+            className="alive-card"
+            style={{
+              width: '100%', padding: '15px 0',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer', textAlign: 'left',
+              color: T.text, fontFamily: 'inherit',
+            }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, letterSpacing: -0.2 }}>
+                Contractions timer
               </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
-                Tap when a contraction starts and ends. Luna tracks the pattern and signals when it's time to go in.
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: contractionsReady ? accent : T.muted, fontWeight: 500 }}>
+                {contractionsReady ? 'useful now' : 'usually later'}
               </div>
-            </button>
-          )}
+            </div>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: T.muted, lineHeight: 1.55 }}>
+              Tap when a contraction starts and ends. Luna tracks spacing and can flag the 5-1-1 pattern.
+            </div>
+          </button>
+        </div>
+        <div style={{ fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic', marginBottom: 22 }}>
+          {toolsIntro}
         </div>
 
         <div style={{ height: 1, background: T.hair, margin: '18px 0' }} />
 
-        <button onClick={handleEnd}
-          style={{
-            width: '100%', textAlign: 'left',
-            background: 'transparent', border: `1px solid ${T.accent}`,
-            padding: '14px 16px', borderRadius: T.r, cursor: 'pointer',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            color: T.accent, fontFamily: T.sans, fontSize: 13, fontWeight: 600,
-          }}>
-          <span>End pregnancy mode</span>
-          <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>back to your cycle</span>
-        </button>
-        <div style={{ marginTop: 10, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
-          Your logs are kept. Use this after birth, or if circumstances change.
-        </div>
+        <div className="frost-card" style={{
+          padding: '0 16px',
+          background: 'rgba(253,250,245,0.55)',
+          border: '1px solid rgba(26,19,16,0.06)',
+          borderRadius: 18,
+        }}>
+          <button onClick={handleEnd}
+            style={{
+              width: '100%', textAlign: 'left',
+              background: 'transparent', border: 'none',
+              borderBottom: '1px solid rgba(26,19,16,0.06)',
+              padding: '15px 0', cursor: 'pointer',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              color: T.accent, fontFamily: T.sans, fontSize: 13, fontWeight: 600,
+            }}>
+            <span>End pregnancy mode</span>
+            <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>back to your cycle</span>
+          </button>
 
-        <button onClick={handleLoss}
-          style={{
-            width: '100%', textAlign: 'left',
-            background: 'transparent', border: `1px solid ${T.hair}`,
-            padding: '14px 16px', borderRadius: T.r, cursor: 'pointer',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            color: T.text, fontFamily: T.sans, fontSize: 13, fontWeight: 500,
-            marginTop: 14,
-          }}>
-          <span>If this pregnancy ended in loss</span>
-          <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>support + resources</span>
-        </button>
+          <button onClick={handleLoss}
+            style={{
+              width: '100%', textAlign: 'left',
+              background: 'transparent', border: 'none',
+              padding: '15px 0', cursor: 'pointer',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              color: T.text, fontFamily: T.sans, fontSize: 13, fontWeight: 500,
+            }}>
+            <span>If this pregnancy ended in loss</span>
+            <span style={{ fontFamily: T.sans, fontSize: 11, letterSpacing: 0.3, opacity: 0.7 }}>support + resources</span>
+          </button>
+        </div>
         <div style={{ marginTop: 10, fontFamily: T.serif, fontSize: 12.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
-          You don't have to fill anything in. Opens a quiet room with helplines and reflection.
+          Your logs are kept if this mode ends. If circumstances changed painfully, Luna opens a quieter room instead of asking you to explain everything first.
         </div>
       </div>
     </Screen>
