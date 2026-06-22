@@ -113,29 +113,13 @@ export async function previewInvite(code) {
   return data
 }
 
-// Accept a pending invite by code. Updates the share row to set
-// to_user_id = current user, status = 'accepted', accepted_at = now,
-// invite_code = null (so it can't be reused). Uses the accept-policy
-// in RLS which only allows this transition.
+// Accept a pending invite by code. The database function performs the
+// exact transition atomically and expires old/self-authored invites.
 export async function acceptInvite(code) {
   if (!supabaseEnabled) throw new Error('Sharing requires an account')
-  const { data: auth } = await supabase.auth.getUser()
-  const userId = auth?.user?.id
-  if (!userId) throw new Error('Not signed in')
-
-  const { data, error } = await supabase
-    .from('shares')
-    .update({
-      to_user_id: userId,
-      status: 'accepted',
-      accepted_at: new Date().toISOString(),
-      invite_code: null,
-    })
-    .eq('invite_code', code)
-    .eq('status', 'pending')
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('accept_share_invite', { code })
   if (error) throw error
+  if (!data) throw new Error('This invite is invalid or has expired')
   return data
 }
 
@@ -163,16 +147,11 @@ export async function listIncomingShares() {
 // ends.
 export async function revokeIncomingShare(shareId) {
   if (!supabaseEnabled) throw new Error('Sharing requires an account')
-  const { data, error } = await supabase
-    .from('shares')
-    .update({
-      status: 'revoked',
-      revoked_at: new Date().toISOString(),
-    })
-    .eq('id', shareId)
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('revoke_incoming_share', {
+    share_id: shareId,
+  })
   if (error) throw error
+  if (!data) throw new Error('This share is no longer active')
   return data
 }
 

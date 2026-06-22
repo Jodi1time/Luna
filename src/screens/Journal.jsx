@@ -13,6 +13,7 @@ import { OpenDiary } from '../components/Illustrations'
 import { compressImage } from '../lib/imageCompress'
 import { createRecognizer, isVoiceSupported } from '../lib/voiceRecognition'
 import useLuna from '../store/useLuna'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 const LINE_H = 28
 
@@ -28,7 +29,7 @@ const JOURNAL_STARTERS = [
 function formatEntryDate(iso, todayISO) {
   const d = new Date(iso)
   const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  const dateISO = d.toISOString().slice(0, 10)
+  const dateISO = toDateKey(d)
   if (dateISO === todayISO) return `Today · ${time}`
   return `${d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })} · ${time}`
 }
@@ -473,7 +474,7 @@ export default function Journal() {
     () => resolveTheme(journalTheme.themeId, phase?.color, journalTheme.custom),
     [journalTheme.themeId, phase?.color, journalTheme.custom]
   )
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const [customizing, setCustomizing] = useState(false)
 
   // The book grows — render it like one. Pages mount 6 at a time

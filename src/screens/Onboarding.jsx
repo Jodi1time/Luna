@@ -11,6 +11,7 @@ import { getCycleDay, getPhaseForDay } from '../hooks/useCycle'
 import { getReflectionPrompt } from '../data/lunaData'
 import { dailyThought } from '../lib/lunaChat'
 import { CrescentCradle } from '../components/Illustrations'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 // Intent — what brings her to Luna. Drives every downstream surface:
 // which home cards lead, which features she sees first, which copy
@@ -317,6 +318,7 @@ export function StepPriorities({ values, onChange }) {
 // starts with a blank slate and home ordering has something to lean on
 // even if she skips priorities entirely. She can still pick anything in
 // the picker; whatever she picks replaces these.
+// eslint-disable-next-line react-refresh/only-export-components
 export function defaultPrioritiesForIntent(intent) {
   switch (intent) {
     case 'understanding':       return ['understand', 'predict']
@@ -414,7 +416,7 @@ const PRIORITY_COMMITMENT = {
 // (she's seen what Luna is for her). Falls back to the local static
 // reflection prompt if the Edge Function isn't reachable, so the
 // screen never feels broken.
-function StepPayoff({ settings, displayName, lastPeriodISO, cycleDays }) {
+function StepPayoff({ settings, lastPeriodISO, cycleDays }) {
   const accent = sectionColors('plan').accent
   const intent = settings?.intent
   const conditions = settings?.conditions || []
@@ -430,11 +432,10 @@ function StepPayoff({ settings, displayName, lastPeriodISO, cycleDays }) {
   const phase = cycleDay ? getPhaseForDay(cycleDay, cycleDays || 28) : null
 
   const [aiThought, setAiThought] = useState(null)
-  const [thoughtLoading, setThoughtLoading] = useState(true)
+  const [thoughtLoading, setThoughtLoading] = useState(Boolean(phase))
   useEffect(() => {
-    if (!phase) { setThoughtLoading(false); return }
+    if (!phase) return
     let cancelled = false
-    setThoughtLoading(true)
     dailyThought({
       userId: 'onboarding',  // pre-account; cached as anon for today
       phaseId: phase.id,
@@ -538,7 +539,7 @@ function StepPayoff({ settings, displayName, lastPeriodISO, cycleDays }) {
 function StepDate({ value, onChange }) {
   const days = ['M','T','W','T','F','S','S']
   const now = new Date()
-  const todayISO = now.toISOString().slice(0, 10)
+  const todayISO = toDateKey(now)
   const initialDate = value ? new Date(value + 'T12:00:00') : now
   const [viewing, setViewing] = useState({
     year:  initialDate.getFullYear(),
@@ -818,7 +819,7 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
         border: '1px solid rgba(26,19,16,0.06)',
         borderRadius: 16,
       }}>
-        Sign in on any device to come back to your cycle. Your data is encrypted at rest — only you can read it.
+        Sign in on any device to come back to your cycle. Your account controls access to your data.
       </div>
     </div>
   )
@@ -857,7 +858,7 @@ export default function Onboarding({ step, slug: slugProp }) {
   // Period start is stored as an ISO date string so the picker can
   // navigate back across months. Defaults to today; the user can
   // step back up to 12 months via the calendar header.
-  const [lastPeriodISO, setLastPeriodISO] = useState(() => new Date().toISOString().slice(0, 10))
+  const [lastPeriodISO, setLastPeriodISO] = useState(todayKey)
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [account, setAccount] = useState({
     name: '', email: '', accountPassword: '',
@@ -893,8 +894,6 @@ export default function Onboarding({ step, slug: slugProp }) {
   }, [slug, settings?.intent, settings?.priorities, updateSetting])
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
-
-  const now = new Date()
 
   const finish = async () => {
     if (finishing) return
@@ -954,12 +953,12 @@ export default function Onboarding({ step, slug: slugProp }) {
       // Stamp the join date — anchors the first-week arc on Home
       // (lib/firstWeek.js). Existing users never get one, so the arc
       // only ever fires for accounts created from today forward.
-      updateSetting('joinedAt', new Date().toISOString().slice(0, 10))
+      updateSetting('joinedAt', todayKey())
 
       // Save profile to cloud and flip onboarded=true. The store's
       // setOnboarding action handles the cloud write.
       setOnboarding({
-        lastPeriodStart: d.toISOString().slice(0, 10),
+        lastPeriodStart: toDateKey(d),
         cycleLength: cycleDays,
         displayName: account.name.trim(),
         account: acct,
@@ -968,7 +967,9 @@ export default function Onboarding({ step, slug: slugProp }) {
       try {
         const { capture } = await import('../lib/posthog')
         capture('onboarding_completed', { account_created: Boolean(acct) })
-      } catch {}
+      } catch {
+        // Analytics is optional and must never block onboarding.
+      }
       // Success haptic on arrival — the "you're in" moment.
       import('../lib/haptics').then(({ hapticSuccess }) => hapticSuccess())
 
@@ -1136,7 +1137,6 @@ export default function Onboarding({ step, slug: slugProp }) {
         </div>
         <StepPayoff
           settings={settings}
-          displayName={account.name}
           lastPeriodISO={lastPeriodISO}
           cycleDays={cycleDays}
         />

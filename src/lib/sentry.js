@@ -35,26 +35,11 @@ if (sentryEnabled) {
     dsn,
     // Only capture errors in production — avoid noise from local dev
     enabled: import.meta.env.PROD,
-    // Performance / distributed tracing — enables span tracking on
-    // navigation + fetch calls so we can spot regressions.
-    integrations: [
-      Sentry.browserTracingIntegration(),
-    ],
-    // Sample rates conservative — 10% transactions in prod is plenty
-    // for catching real perf regressions without ballooning the bill.
-    // Bump locally if investigating a specific perf issue.
-    tracesSampleRate: 0.1,
-    // Distributed tracing only to our own backends. Anything outside
-    // this list gets no trace headers — avoids CORS issues with
-    // third-party APIs (PostHog, Sentry itself, Stripe).
-    tracePropagationTargets: [
-      'localhost',
-      'lunadiary.app',
-      /^https:\/\/.*\.supabase\.co\//,
-    ],
-    // Replays — only on error, conservative sample.
+    // Health data can leak through high-volume telemetry context. Keep
+    // tracing and replay disabled; explicit scrubbed errors are enough.
+    tracesSampleRate: 0,
     replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0.1,
+    replaysOnErrorSampleRate: 0,
     // Don't send PII automatically
     sendDefaultPii: false,
     // beforeSend: scrub PII + drop known browser noise.
@@ -85,6 +70,25 @@ if (sentryEnabled) {
           if (v.value) v.value = scrub(v.value)
         })
       }
+      // Password recovery and email-confirmation tokens can live in URL
+      // fragments. Error telemetry never needs query strings or hashes.
+      if (event.request?.url) {
+        try {
+          const url = new URL(event.request.url)
+          event.request.url = `${url.origin}${url.pathname}`
+        } catch {
+          event.request.url = String(event.request.url).split(/[?#]/)[0]
+        }
+      }
+      if (Array.isArray(event.breadcrumbs)) {
+        event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => {
+          if (!breadcrumb?.data?.url) return breadcrumb
+          return {
+            ...breadcrumb,
+            data: { ...breadcrumb.data, url: String(breadcrumb.data.url).split(/[?#]/)[0] },
+          }
+        })
+      }
       return event
     },
   })
@@ -92,5 +96,8 @@ if (sentryEnabled) {
 
 export function reportError(error, info) {
   if (!sentryEnabled) return
-  Sentry.captureException(error, { extra: info })
+  const extra = {}
+  if (typeof info?.where === 'string') extra.where = info.where.slice(0, 120)
+  if (typeof info?.componentStack === 'string') extra.componentStack = info.componentStack.slice(0, 2000)
+  Sentry.captureException(error, { extra })
 }

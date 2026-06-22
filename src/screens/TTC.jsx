@@ -5,6 +5,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
 import { useCycle, isOnHormonalBC } from '../hooks/useCycle'
+import { todayKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -99,7 +100,7 @@ export default function TTC() {
   const cycle = useCycle(store)
   const onBC = isOnHormonalBC(birthControl)
 
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const todayLog = logs?.[todayISO] || {}
 
   // Use the fused ovulation day when available (BBT + mucus + libido),
@@ -128,7 +129,7 @@ export default function TTC() {
 
   const markStart = () => {
     if (!ttcSince) {
-      updateSetting('ttcStartISO', new Date().toISOString().slice(0, 10))
+      updateSetting('ttcStartISO', todayKey())
     }
   }
 

@@ -6,6 +6,7 @@ import { breathTone } from '../lib/sounds'
 import { useScrollLock } from '../lib/useScrollLock'
 import Portal from '../lib/Portal'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { todayKey } from '../lib/dateOnly'
 
 // Shared scaffold for all "what now" helper screens. Each helper
 // provides its content via props; the shell handles the layout,
@@ -152,7 +153,7 @@ export default function HelperShell({
       ...history,
       {
         helperKey,
-        dateISO: new Date().toISOString().slice(0, 10),
+        dateISO: todayKey(),
         triage: triageState,
         helped,
         recordedAt: new Date().toISOString(),

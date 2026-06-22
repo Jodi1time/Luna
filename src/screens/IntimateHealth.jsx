@@ -7,6 +7,7 @@ import { PhaseFlourish } from '../components/phaseFlourishes'
 import { useCycle } from '../hooks/useCycle'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
+import { todayKey } from '../lib/dateOnly'
 
 // Doula-toned scales. Each option is a value, not a verdict — the
 // labels deliberately don't lean on "good / bad" framing.
@@ -133,7 +134,7 @@ export default function IntimateHealth() {
   const phase = cycle?.phase
   const intimate = sectionColors('intimate')
   const acc = intimate.accent
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const existing = getLog(todayISO) || {}
   const initialIntimate = existing.intimate || {}
 

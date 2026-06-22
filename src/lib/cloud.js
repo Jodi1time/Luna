@@ -59,7 +59,9 @@ export async function loadLogs() {
       moods: Array.isArray(row.moods) ? row.moods : (row.mood ? [row.mood] : []),
       symptoms: row.symptoms || [],
       flow: row.flow,
-      bbt: row.bbt != null ? Number(row.bbt) : null,
+      bbt: row.bbt != null
+        ? { value: Number(row.bbt), unit: row.bbt_unit === 'C' ? 'C' : 'F' }
+        : null,
       mucus: row.mucus,
       sex: row.sex,
       sleep: row.sleep,
@@ -80,69 +82,48 @@ export async function loadLogs() {
 export async function upsertLog(date, log) {
   const user = await currentUser()
   if (!user) return
+  const bbtValue = log.bbt && typeof log.bbt === 'object'
+    ? Number(log.bbt.value)
+    : (log.bbt != null ? Number(log.bbt) : null)
+  const bbtUnit = log.bbt && typeof log.bbt === 'object'
+    ? (log.bbt.unit === 'C' ? 'C' : 'F')
+    : null
   const base = {
     user_id: user.id,
     date,
     mood: log.mood ?? (Array.isArray(log.moods) && log.moods[0]) ?? null,
     symptoms: log.symptoms ?? [],
     flow: log.flow ?? null,
-    bbt: log.bbt ?? null,
+    bbt: Number.isFinite(bbtValue) ? bbtValue : null,
     mucus: log.mucus ?? null,
     sex: log.sex ?? null,
     note: log.note ?? null,
     updated_at: new Date().toISOString(),
   }
-  // Try the richest payload first, then defensively drop newer optional
-  // columns one tier at a time if Supabase reports them missing. Tiers,
-  // newest → oldest: moods, intimate, sleep. Each retry catches up an
-  // older Supabase instance that hasn't run the latest migration yet.
-  const isMissingColumn = (msg, col) => msg.includes(col) && (msg.includes('column') || msg.includes('not found'))
-  const tryUpsert = async (payload) => {
-    const { error } = await supabase.from('logs').upsert(payload, { onConflict: 'user_id,date' })
-    return error
-  }
+  // Optional columns were added over time. Start with the richest row and
+  // only drop a field when Postgres explicitly reports that exact column
+  // missing. Other failures still surface instead of silently losing data.
   const moodsArr = Array.isArray(log.moods) ? log.moods : (log.mood ? [log.mood] : [])
-  const full = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null, moods: moodsArr }
-  const err1 = await tryUpsert(full)
-  if (!err1) return
-  const msg1 = String(err1.message || '').toLowerCase()
-  if (isMissingColumn(msg1, 'moods')) {
-    // eslint-disable-next-line no-console
-    console.warn('[cloud] moods column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable multi-mood logging server-side.')
-    const noMoods = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null }
-    const err2 = await tryUpsert(noMoods)
-    if (!err2) return
-    const msg2 = String(err2.message || '').toLowerCase()
-    if (!isMissingColumn(msg2, 'intimate') && !isMissingColumn(msg2, 'sleep')) throw err2
-    if (isMissingColumn(msg2, 'intimate')) {
-      // eslint-disable-next-line no-console
-      console.warn('[cloud] intimate column missing on logs table — saving without it.')
-      const noIntimate = { ...base, sleep: log.sleep ?? null }
-      const err3 = await tryUpsert(noIntimate)
-      if (!err3) return
-      const msg3 = String(err3.message || '').toLowerCase()
-      if (!isMissingColumn(msg3, 'sleep')) throw err3
-    }
-    // eslint-disable-next-line no-console
-    console.warn('[cloud] sleep column missing on logs table — saving without it.')
-    const err4 = await tryUpsert(base)
-    if (err4) throw err4
-    return
+  const payload = {
+    ...base,
+    sleep: log.sleep ?? null,
+    intimate: log.intimate ?? null,
+    moods: moodsArr,
+    bbt_unit: bbtUnit,
   }
-  if (!isMissingColumn(msg1, 'intimate') && !isMissingColumn(msg1, 'sleep')) throw err1
-  if (isMissingColumn(msg1, 'intimate')) {
-    // eslint-disable-next-line no-console
-    console.warn('[cloud] intimate column missing on logs table — saving without it.')
-    const noIntimate = { ...base, sleep: log.sleep ?? null }
-    const err5 = await tryUpsert(noIntimate)
-    if (!err5) return
-    const msg5 = String(err5.message || '').toLowerCase()
-    if (!isMissingColumn(msg5, 'sleep')) throw err5
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { error } = await supabase
+      .from('logs')
+      .upsert(payload, { onConflict: 'user_id,date' })
+    if (!error) return
+    const message = String(error.message || '').toLowerCase()
+    const missing = ['moods', 'intimate', 'sleep', 'bbt_unit'].find((column) => (
+      Object.hasOwn(payload, column) && message.includes(column) &&
+      (message.includes('column') || message.includes('not found'))
+    ))
+    if (!missing) throw error
+    delete payload[missing]
   }
-  // eslint-disable-next-line no-console
-  console.warn('[cloud] sleep column missing on logs table — saving without it.')
-  const err6 = await tryUpsert(base)
-  if (err6) throw err6
 }
 
 export async function deleteLog(date) {
@@ -235,7 +216,6 @@ function wrapSupabaseError(e, where) {
 
 export function fireAndForget(promise, where) {
   promise.catch((e) => {
-    // eslint-disable-next-line no-console
     console.error(`[cloud] ${where} failed:`, e)
     reportError(wrapSupabaseError(e, where), {
       where: `cloud.${where}`,

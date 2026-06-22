@@ -5,6 +5,7 @@
 import { signOut, supabase } from './supabase'
 import { resetAnalytics } from './posthog'
 import { moodIdsOf } from './moods'
+import { todayKey } from './dateOnly'
 
 // CSV-injection defuse: prepend a tab so cells beginning with
 // =, +, -, @, tab, or CR aren't interpreted as a formula by Excel.
@@ -49,7 +50,7 @@ export function exportLunaCSV(state) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `luna-export-${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = `luna-export-${todayKey()}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

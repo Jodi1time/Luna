@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
+import { parseDateOnly } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -17,16 +18,14 @@ export default function LatePeriodHelper() {
   const cycle = useCycle(store)
 
   const { daysLate, expectedISO, conf, why, range, hasBC } = useMemo(() => {
-    const today = new Date(); today.setHours(0,0,0,0)
-    const startISO = cycle?.lastPeriodStart
-    const cycleLen = cycle?.cycleLength || 28
-    if (!startISO) return { daysLate: null }
-    const start = new Date(startISO + 'T00:00:00')
-    const expected = new Date(start.getTime() + cycleLen * MS_PER_DAY)
-    const days = Math.floor((today - expected) / MS_PER_DAY)
+    const today = parseDateOnly(new Date())
+    const periodPrediction = cycle?.predictions?.find((p) => p.label === 'Next period')
+    if (!periodPrediction?.iso) return { daysLate: null }
+    const expected = parseDateOnly(periodPrediction.iso)
+    const days = Math.round((today - expected) / MS_PER_DAY)
     return {
       daysLate: days,
-      expectedISO: expected.toISOString().slice(0, 10),
+      expectedISO: periodPrediction.iso,
       conf: cycle?.variance?.conf || 'medium',
       why: cycle?.variance?.why,
       range: cycle?.variance?.range || 3,

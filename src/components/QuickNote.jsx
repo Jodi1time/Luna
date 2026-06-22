@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import useLuna from '../store/useLuna'
 import { useScrollLock } from '../lib/useScrollLock'
 import Portal from '../lib/Portal'
+import { todayKey } from '../lib/dateOnly'
 
 // A tiny bottom-sheet for the "A note" quick action — opens straight
 // to a focused textarea, saves to today's log, and closes. Designed
@@ -17,7 +18,7 @@ export default function QuickNote({ open, onClose }) {
   const saveLog = useLuna((s) => s.saveLog)
   const getLog = useLuna((s) => s.getLog)
   const soundsOn = useLuna((s) => Boolean(s.settings?.sounds))
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const existing = open ? (getLog(todayISO) || {}) : {}
 
   const [text, setText] = useState('')

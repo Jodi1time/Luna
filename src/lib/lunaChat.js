@@ -1,4 +1,5 @@
 import { supabase, supabaseEnabled } from './supabase'
+import { todayKey } from './dateOnly'
 
 // Wraps the luna-chat Edge Function. Two modes:
 //   dailyThought(ctx)  → string  (cached in localStorage per user per day)
@@ -43,7 +44,7 @@ async function callFunction(payload) {
 // buildPatternSummary() in src/hooks/useCycle.js — derived, qualitative,
 // never raw logs / dates / identifiers.
 export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycleLength, patternSummary }) {
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const summaryHash = (() => {
     if (!patternSummary) return 'nopat'
     let h = 0

@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
-import { SymptomIcon, MOOD_LABELS as MOOD_LABELS_CANON, MOOD_COLORS as MOOD_COLORS_CANON } from '../components/symptomIcons'
-import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
+import { PHASES, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor } from '../data/bodyLiteracy'
-import { matchConditions, getCondition } from '../data/conditions'
+import { getCondition } from '../data/conditions'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
@@ -18,12 +17,12 @@ import StickyNote from '../components/StickyNote'
 import JournalCard from '../components/JournalCard'
 import Backdrop, { useBackdropKind } from '../components/Backdrop'
 import { usePregnancy } from '../hooks/usePregnancy'
-import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
 import { choreoOnce } from '../lib/choreo'
 import { getFirstWeekMoment } from '../lib/firstWeek'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -33,15 +32,6 @@ const phasePresence = {
   follicular: 'A gentle re-opening. Move when it feels right.',
   ovulation:  'Notice what feels easier today — words, wanting, warmth.',
   luteal:     'Be a little softer with yourself. Cravings are signal, not weakness.',
-}
-
-// Pick one short article that matches the current phase mood. Manual
-// curation so the suggestion never feels random.
-const phaseArticle = {
-  menstrual:  'iron',
-  follicular: 'basics',
-  ovulation:  'basics',
-  luteal:     'cravings',
 }
 
 // A "what's next" sentence under the cover. Now confidence-aware:
@@ -90,14 +80,14 @@ function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, 
     if (days <= 1) {
       return { text: 'Your period is expected tomorrow.', sub: null }
     }
-    // Confidence-aware framing — the peace-of-mind line.
+    // Keep the cover calm. Detailed confidence reasoning lives in Insights.
     if (conf === 'high') {
-      return { text: `Your period is due in about ${days} days.`, sub: `${variance?.why} You don't have to keep track.` }
+      return { text: `Your period is due in about ${days} days.`, sub: 'Your recent cycles give us a steady signal.' }
     }
     if (conf === 'medium') {
-      return { text: `Your period is likely in ${days} days (give it a day or two).`, sub: variance?.why }
+      return { text: `Your period is likely in ${days} days.`, sub: 'The timing is getting clearer as Luna learns your rhythm.' }
     }
-    return { text: `Your period might arrive in ${days} days.`, sub: variance?.why }
+    return { text: `Your period might arrive in ${days} days.`, sub: 'Still learning your rhythm.' }
   }
   return null
 }
@@ -161,11 +151,11 @@ function Greeting({ name, phaseId }) {
   const first = (name || '').split(' ')[0]
   const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
   // Build the greeting as discrete segments so each can fade in with
-  // its own delay. We use a non-breaking space ( ) for trailing
+  // its own delay. We use a non-breaking space for trailing
   // gaps — `display: inline-block` collapses trailing whitespace from
   // text content, which made the greeting render as e.g. "Quietevening"
   // instead of "Quiet evening". NBSP is non-collapsible.
-  const NBSP = ' '
+  const NBSP = '\u00A0'
   const segments = first
     ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
     : [`${opener}${NBSP}`, timeOfDay, '.']
@@ -221,7 +211,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   const monday = new Date(today)
   monday.setDate(today.getDate() - dayOfWeek)
   monday.setHours(0, 0, 0, 0)
-  const todayISO = today.toISOString().slice(0, 10)
+  const todayISO = toDateKey(today)
   const labels = ['M','T','W','T','F','S','S']
 
   const nextPeriodStart = (cycle.lastPeriodStart)
@@ -240,7 +230,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   const cells = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
-    const iso = d.toISOString().slice(0, 10)
+    const iso = toDateKey(d)
     return {
       iso,
       day: d.getDate(),
@@ -292,7 +282,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
 function BCReminder({ bcMethod, wellness, markWellness }) {
   const dailyMethods = ['combined-pill', 'mini-pill']
   if (!dailyMethods.includes(bcMethod)) return null
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const taken = wellness?.bcTakenToday === todayISO
   if (taken) return null
   return (
@@ -311,83 +301,6 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
       </button>
     </div>
   )
-}
-
-// Monthly recap — a quiet narrative summary on the 1st of the month
-// (or for the first 3 days of the month), looking back at the prior
-// 30 days of logs. "What we noticed."
-function buildMonthlyRecap(logs) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const cutoff = new Date(today.getTime() - 30 * 86400000)
-  const recentLogs = Object.entries(logs || {})
-    .filter(([d]) => new Date(d + 'T00:00:00') >= cutoff)
-    .map(([d, l]) => ({ date: d, ...l }))
-  if (recentLogs.length < 5) return null
-  const moodCount = {}
-  recentLogs.forEach((l) => moodIdsOf(l).forEach((m) => { moodCount[m] = (moodCount[m] || 0) + 1 }))
-  const topMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0]
-  const symptomCount = {}
-  recentLogs.forEach((l) => (l.symptoms || []).forEach((s) => {
-    symptomCount[s] = (symptomCount[s] || 0) + 1
-  }))
-  const topSymptom = Object.entries(symptomCount).sort((a, b) => b[1] - a[1])[0]
-  const periodDays = recentLogs.filter((l) => l.flow && l.flow !== 'Spotting').length
-  const loggedDays = recentLogs.length
-  // Compose a short narrative.
-  const bits = []
-  bits.push(`You showed up ${loggedDays} day${loggedDays === 1 ? '' : 's'} this month`)
-  if (topMood && topMood[1] >= 3) {
-    bits.push(`${topMood[0].toLowerCase()} came up most often`)
-  }
-  if (topSymptom && topSymptom[1] >= 3) {
-    bits.push(`${topSymptom[0]} repeated`)
-  }
-  if (periodDays > 0) {
-    bits.push(`${periodDays} period day${periodDays === 1 ? '' : 's'}`)
-  }
-  return { logged: loggedDays, sentence: bits.join(' · ') + '.' }
-}
-
-function MonthlyRecap({ recap }) {
-  if (!recap) return null
-  return (
-    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
-      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-        The last 30 days
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, color: T.text, fontStyle: 'italic' }}>
-        {recap.sentence}
-      </div>
-    </div>
-  )
-}
-
-
-// Compute the wellness habit nudges that should surface on Home —
-// only when overdue, so they don't always clutter the screen.
-function dueWellnessNudges(wellness) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const daysSince = (iso) => iso ? Math.floor((today - new Date(iso + 'T00:00:00')) / 86400000) : Infinity
-  const nudges = []
-  // BSE — monthly. Show only when it's been ≥30 days (or never).
-  if (daysSince(wellness?.bse) >= 30) {
-    nudges.push({
-      key: 'bse',
-      label: 'Check your breasts',
-      sub: 'Once a month, in the shower. Looking for new lumps, dimpling, or changes.',
-      cta: 'Done this month',
-    })
-  }
-  // Pelvic floor — weekly. Show when ≥7 days since last.
-  if (daysSince(wellness?.pelvicFloor) >= 7) {
-    nudges.push({
-      key: 'pelvicFloor',
-      label: 'Pelvic floor, a moment',
-      sub: 'Three sets of ten gentle squeezes. Two minutes, anywhere.',
-      cta: 'Done this week',
-    })
-  }
-  return nudges
 }
 
 // Quiet invitations under the phase cover. The first row is the
@@ -503,7 +416,7 @@ function QuickActions({ go, onOpenChat }) {
     const tick = (now) => {
       if (cancelled) return
       const t = Math.min(1, (now - start) / duration)
-      let x = 0
+      let x
       if (t < 0.42) {
         const p = t / 0.42
         x = peak * (1 - Math.pow(1 - p, 3))
@@ -633,18 +546,6 @@ function QuickActions({ go, onOpenChat }) {
   )
 }
 
-// Rotating Health Watch self-check — one RED_FLAGS prompt per week,
-// surfaced as a soft "worth noticing" card. Brings Health Watch up
-// from Settings burial into the daily surface, without becoming spammy.
-// Selection is deterministic per-week so the user sees the same question
-// for seven days, then it changes.
-function weeklyHealthCheck(date = new Date()) {
-  if (!RED_FLAGS?.length) return null
-  const start = new Date(date.getFullYear(), 0, 1)
-  const week = Math.floor((date - start) / (1000 * 60 * 60 * 24 * 7))
-  return RED_FLAGS[((week % RED_FLAGS.length) + RED_FLAGS.length) % RED_FLAGS.length]
-}
-
 // Smart helper card — reusable Home surface for any of the "what now"
 // helpers. Only mounted when a relevant signal is in today's log.
 function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
@@ -676,114 +577,6 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
         Open the helper →
       </div>
     </button>
-  )
-}
-
-// From-the-archive card — surfaces a meaningful old note when one fits
-// (anniversary today, same cycle day previously, same phase). Quiet
-// editorial register, never instructive. Tap goes to that day's Log.
-function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
-  if (!surfaced) return null
-  const open = () => { setActiveLogDate(surfaced.dateISO); go('log') }
-  // Trim very long notes so the card stays a card.
-  const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
-  return (
-    <button onClick={open} className="glass-card alive-card frost-card sheen-once"
-      style={{
-        position: 'relative',
-        marginTop: 22,
-        padding: 18,
-        borderRadius: 22,
-        boxShadow: `0 14px 30px -20px ${T.accent}40`,
-        textAlign: 'left',
-        cursor: 'pointer',
-        width: '100%',
-        color: T.text,
-        fontFamily: 'inherit',
-        display: 'block',
-        overflow: 'hidden',
-      }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
-          from your past self
-        </div>
-        <div style={{ fontFamily: T.sans, fontSize: 11, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-          Open the day →
-        </div>
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.1, marginBottom: 8 }}>
-        "{text}"
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 12, color: T.muted, fontStyle: 'italic' }}>
-        — {surfaced.label}
-      </div>
-    </button>
-  )
-}
-
-function WeeklyHealthCheckCard({ go }) {
-  const item = weeklyHealthCheck()
-  if (!item) return null
-  return (
-    <button onClick={() => go('watch')} className="glass-card alive-card frost-card"
-      style={{
-        marginTop: 22,
-        padding: 18,
-        borderRadius: 22,
-        boxShadow: `0 14px 30px -20px ${T.accent}40`,
-        textAlign: 'left',
-        cursor: 'pointer',
-        width: '100%',
-        color: T.text,
-        fontFamily: 'inherit',
-        display: 'block',
-      }}>
-      <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-        Worth noticing this week
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.35, letterSpacing: -0.1, marginBottom: 6 }}>
-        {item.q}?
-      </div>
-      <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5 }}>
-        If it sounds familiar, Luna can help you gather the words for a visit.
-      </div>
-    </button>
-  )
-}
-
-// Always-here surfaces only the wellness nudges that are due
-// (monthly breast self-exam, weekly pelvic floor). The navigation
-// cards that used to live here (intimate / watch / cheatsheet / care)
-// are now part of the QuickActions horizontal scroll under the cover,
-// so this section is for body-care nudges only. Renders nothing when
-// nothing is due.
-function AlwaysHere({ wellness, markWellness }) {
-  const nudges = dueWellnessNudges(wellness)
-  const todayISO = new Date().toISOString().slice(0, 10)
-  if (nudges.length === 0) return null
-  return (
-    <div style={{ marginTop: 28 }}>
-      <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
-        Always here.
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {nudges.map((n) => (
-          <div key={n.key} className="glass-card alive-card frost-card"
-            style={{ padding: 18, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
-            <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
-              {n.label}
-            </div>
-            <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5, marginBottom: 10 }}>
-              {n.sub}
-            </div>
-            <button onClick={() => markWellness(n.key, todayISO)}
-              style={{ background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '8px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999 }}>
-              {n.cta}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
   )
 }
 
@@ -911,7 +704,7 @@ function PinnedConditionCard({ conditionId, go }) {
 // might come next week.
 function CircleCard({ phase, settings, updateSetting, cycle, go }) {
   if (!phase) return null  // hides during pregnancy / hormonal BC
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   if (settings?.circleDismissedISO === todayISO) return null
 
   // First-cycle milestone — one-time, overrides phase copy. Treats the
@@ -1007,14 +800,12 @@ export default function Home() {
   // Entrance choreography plays once per session; re-visits render settled.
   const [animateIn] = useState(() => choreoOnce('home'))
   const animatedDay = useCountUp(isPreg ? preg.week : cycleDay, animateIn ? 900 : 0)
-  const [quickMood, setQuickMood] = useState(null)
   const onHormonalBC = isOnHormonalBC(birthControl)
-  const bcLabel = BC_LABELS[birthControl?.method] || 'None'
   // Per-method cycle model — drives the cover and the BC-aware "next
   // thing" surface (shot countdown, pack-week tracker, etc.). For
   // 'none' and 'copper-iud' this returns kind: 'natural' and the rest
   // of Home renders unchanged.
-  const bcModel = useMemo(() => getBcCycleModel(birthControl), [birthControl?.method, birthControl?.startDate])
+  const bcModel = useMemo(() => getBcCycleModel(birthControl), [birthControl])
   const bcUsesCover = onHormonalBC && bcModel?.cover
 
   // Blob tap effects — ripple/bloom only fire when the user's
@@ -1103,7 +894,7 @@ export default function Home() {
     }
   }, [])
 
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const todayLog = logs?.[todayISO]
   const todayHasContent = logHasContent(todayLog)
   const lastMeaningfulLogISO = useMemo(() => {
@@ -1161,7 +952,11 @@ export default function Home() {
   // Evening callback — fulfill the promise Luna made this morning.
   // After 6pm, if she set an intention today, surface a check-in.
   const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
-  const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+  const daysSinceLastPeriod = cycle.daysSinceLastPeriod
+  const expectedPeriodWindow = daysSinceLastPeriod != null &&
+    daysSinceLastPeriod >= cycleLength - 3 &&
+    daysSinceLastPeriod <= cycleLength + 9
+  const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && expectedPeriodWindow
 
   // Catch-up state — predictions degrade silently when a user stops
   // logging. Detect two flavours of "Luna has gone stale" so we can
@@ -1180,9 +975,9 @@ export default function Home() {
   const showCatchUp = (() => {
     if (isPreg || onHormonalBC) return null
     if (showPeriodCTA) return null
-    // stalePeriod: cycleDay has rolled past expected by 10+ days
-    if (cycleDay != null && cycleDay > cycleLength + 10) {
-      return { kind: 'stalePeriod', daysOver: cycleDay - cycleLength }
+    // Use raw anchor age, not modulo cycle day, to detect a missed cycle.
+    if (daysSinceLastPeriod != null && daysSinceLastPeriod > cycleLength + 10) {
+      return { kind: 'stalePeriod', daysOver: daysSinceLastPeriod - cycleLength }
     }
     if (daysSinceLastLog != null && daysSinceLastLog >= 14) return { kind: 'staleLogs', daysSince: daysSinceLastLog }
     return null
@@ -1201,35 +996,6 @@ export default function Home() {
     })
     return () => cancelAnimationFrame(raf)
   }, [phase?.id, cycleDay, showPeriodCTA, onHormonalBC, isPreg])
-
-  // Mood → emotional color. Used to tint the blob ripple when she
-  // taps a mood — Luna's quiet way of saying "I received that, in
-  // your color." Soft Luna palette tones; never neon.
-  const MOOD_COLORS = {
-    Calm:   '#9D6F8C', // soft luteal purple — settled, internal
-    Bright: '#E8B765', // ovulation gold — energy, outward
-    Tired:  '#7D7269', // muted neutral — quiet
-    Sore:   '#C84E2E', // accent terra cotta — pain
-    Low:    '#5A4A72', // deep purple — heaviness
-  }
-
-  const handleQuickMood = (m) => {
-    // Tap an already-selected mood to clear it — the same gesture that
-    // sets a mood also takes it back, so a mistap is one tap away from
-    // undone. Saves `null` so the day's mood field actually clears.
-    const next = quickMood === m ? null : m
-    setQuickMood(next)
-    saveLog(new Date(), { mood: next })
-    if (next) {
-      // Light blob bloom in the mood's color — acknowledges the tap
-      // visually without saying anything.
-      triggerBlobEffect({ name: 'bloom', color: MOOD_COLORS[next] || null })
-    }
-  }
-
-  // Insight surfaced when a mood is tapped — text + (optional) article id,
-  // varied by phase. Null when no phase is known yet.
-  const moodInsight = (quickMood && phase) ? MOOD_INSIGHTS[phase.id]?.[quickMood] : null
 
   // Daily AI-generated reflection. Lives behind the Edge Function;
   // falls back to the local static prompts when the function isn't
@@ -1267,7 +1033,7 @@ export default function Home() {
       patternSummary,
     }).then((text) => { if (!cancelled && text) setAiThought(text) })
     return () => { cancelled = true }
-  }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
+  }, [phase, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
   // Use the AI thought if we have one, otherwise the local static prompt.
   const thoughtText = aiThought || (phase ? getReflectionPrompt(phase.id) : null)
 
@@ -1929,84 +1695,6 @@ export default function Home() {
               The Move card also wrongly routed to Care (preventive
               checkups) — that mismatch is gone with the cut. */}
 
-          {/* ─── DAILY LOG GESTURE ────────────────────────────────────
-              Mood pills — the essential one-tap log surface every
-              period app has. Kept right under the differentiators
-              so it stays accessible without scrolling far. */}
-
-          {/* How are you, today? — one-tap mood log, kept quiet so it
-              reads like a check-in instead of another card section. */}
-          <div style={{ padding: '4px 0', marginTop: 24, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
-                How are you, today?
-              </div>
-              <button onClick={() => go('log')}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
-                Log more →
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              {[
-                ['calm','Calm','#9D6F8C'],
-                ['energy','Bright','#E8B765'],
-                ['tired','Tired','#7D7269'],
-                ['cramps','Sore','#C84E2E'],
-                ['low','Low','#5A4A72'],
-              ].map(([id, l, color]) => {
-                const isSelected = quickMood === l
-                return (
-                  <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
-                    className={`alive-card${isSelected ? ' tap-bloom' : ''}`}
-                    style={{
-                      flex: 1,
-                      minHeight: 76,
-                      border: `1px solid ${isSelected ? color + '42' : 'transparent'}`,
-                      cursor: 'pointer',
-                      background: isSelected ? `${color}12` : 'transparent',
-                      padding: '10px 4px 9px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                      borderRadius: 16,
-                      color: isSelected ? color : T.text, fontFamily: T.sans,
-                      boxShadow: 'none',
-                      transition: 'background .25s ease, border-color .25s ease, color .25s ease',
-                    }}>
-                    <span style={{
-                      width: 31, height: 31, borderRadius: 13,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSelected ? `${color}18` : 'rgba(26,19,16,0.035)',
-                      color: isSelected ? color : T.muted,
-                      transition: 'background .25s ease, color .25s ease',
-                    }}>
-                      <SymptomIcon id={id} size={19} />
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: isSelected ? 650 : 500, letterSpacing: 0.15 }}>{l}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {moodInsight && (
-              <div key={`${phase?.id}-${quickMood}`}
-                style={{
-                  marginTop: 16,
-                  padding: '2px 0 2px 14px',
-                  background: 'transparent',
-                  borderLeft: `2px solid ${T.accent}70`,
-                  animation: 'fadeUp 0.35s ease-out both',
-                }}>
-                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.58, color: T.text, fontStyle: 'italic', letterSpacing: -0.05 }}>
-                  {moodInsight.text}
-                </div>
-                {moodInsight.read && (
-                  <button onClick={() => goArticle(moodInsight.read)}
-                    style={{ marginTop: 8, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.25, fontFamily: T.sans, padding: 0 }}>
-                    Read more →
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
           {/* Celebration moments now live at the app level (App.jsx
               GlobalCelebration) so they show wherever the user lands. */}
 
@@ -2050,50 +1738,6 @@ export default function Home() {
               landing review. The `markWellness('hydration', ...)`
               store action is still defined; future feature can reuse
               if we ever bring it back as a phase-specific surface. */}
-
-          {/* Monthly recap — quiet narrative summary of the last 30 days */}
-          {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
-
-
-          {/* A rotating Health Watch prompt — one per week, doula-toned,
-              promotes our existing screener out of Settings burial. */}
-          {!isPreg && <WeeklyHealthCheckCard go={go} />}
-
-          {/* Always here — wellness nudges only (BSE / pelvic floor when
-              due). Navigation cards now live in the QuickActions scroll. */}
-          {!isPreg && (
-            <AlwaysHere
-              wellness={wellness}
-              markWellness={markWellness}
-            />
-          )}
-
-          {/* "For your mind and heart" — soft inline entry to Reflect.
-              Moved here (from above the daily thought) so the bottom
-              of the page closes with a reflective surface instead of
-              the mood row. Suppressed when the morning intention is
-              already showing. */}
-          {!isPreg && phase && !showMorningIntention && (
-            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
-              style={{
-                marginTop: 22, padding: 20, borderRadius: 22,
-                boxShadow: `0 14px 30px -20px ${phase.color}50`,
-                textAlign: 'left', cursor: 'pointer', width: '100%',
-                color: T.text, fontFamily: 'inherit', display: 'block',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
-                  for your mind and heart
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
-                  reflect →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
-                Write freely, sit with a practice, or talk it through with Luna.
-              </div>
-            </button>
-          )}
 
           <div style={{ height: 16 }} />
         </div>

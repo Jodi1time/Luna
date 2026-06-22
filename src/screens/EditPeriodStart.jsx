@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, CTAButton, Icons, Screen } from '../components/shared'
 import useLuna from '../store/useLuna'
 import { useCycle } from '../hooks/useCycle'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 // Compact date editor for the "Update last period start" Settings row.
 // Shows the previous + current month; tap any past day to set it as the
@@ -24,7 +25,7 @@ function CalendarBlock({ year, month, selectedISO, onPick }) {
   const first = new Date(year, month, 1).getDay()
   const adj = first === 0 ? 6 : first - 1
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
 
   return (
     <div className="frost-card" style={{ background: 'rgba(253,250,245,0.55)', padding: 18, border: '1px solid rgba(26,19,16,0.06)', borderRadius: 24, marginBottom: 14, boxShadow: '0 14px 30px -22px rgba(26,19,16,0.20)' }}>
@@ -35,7 +36,7 @@ function CalendarBlock({ year, month, selectedISO, onPick }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
-          const iso = new Date(year, month, d).toISOString().slice(0, 10)
+          const iso = toDateKey(new Date(year, month, d))
           const isFuture = iso > todayISO
           const isSelected = iso === selectedISO
           return (

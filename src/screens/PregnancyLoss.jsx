@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import useLuna from '../store/useLuna'
+import { todayKey } from '../lib/dateOnly'
 
 // One of the deepest gaps in mainstream period apps. The voice here
 // matters more than the form fields — language is gentle, optional,
@@ -104,7 +105,7 @@ export default function PregnancyLoss() {
 
   const [showForm, setShowForm] = useState(false)
   const [type, setType] = useState('miscarriage')
-  const [dateISO, setDateISO] = useState(new Date().toISOString().slice(0, 10))
+  const [dateISO, setDateISO] = useState(todayKey)
   const [gestation, setGestation] = useState('')
   const [note, setNote] = useState('')
   const [justSaved, setJustSaved] = useState(false)
@@ -121,7 +122,7 @@ export default function PregnancyLoss() {
     setTimeout(() => {
       setShowForm(false)
       setType('miscarriage')
-      setDateISO(new Date().toISOString().slice(0, 10))
+      setDateISO(todayKey())
       setGestation('')
       setNote('')
       setJustSaved(false)
@@ -197,7 +198,7 @@ export default function PregnancyLoss() {
 
             <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', marginBottom: 8, color: T.text }}>Date</div>
             <input type="date" value={dateISO} onChange={(e) => setDateISO(e.target.value)}
-              max={new Date().toISOString().slice(0, 10)}
+              max={todayKey()}
               style={{ width: '100%', background: T.card, border: `1px solid ${T.hair}`, borderRadius: T.r, padding: '11px 14px', fontSize: 14, fontFamily: T.sans, color: T.text, outline: 'none', marginBottom: 16 }}
             />
 

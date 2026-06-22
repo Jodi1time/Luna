@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { getPhaseForDay } from '../hooks/useCycle'
 import { DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
 import {
   loadProfile, saveProfile,
@@ -8,10 +7,7 @@ import {
   loadJournalEntries, upsertJournalEntry, deleteJournalEntryCloud,
   fireAndForget,
 } from '../lib/cloud'
-
-// Date helpers
-const toISO = (d) => d instanceof Date ? d.toISOString().slice(0, 10) : d
-const today = () => new Date().toISOString().slice(0, 10)
+import { addCalendarDays, todayKey, toDateKey } from '../lib/dateOnly'
 
 // ── History-API sync ──────────────────────────────────────────
 // Every forward navigation pushes one browser-history entry, so the
@@ -32,9 +28,7 @@ const pushNav = (s, screen, extra = {}) => {
 }
 const lmpToDueDate = (lmp) => {
   if (!lmp) return null
-  const d = new Date(lmp + 'T00:00:00')
-  d.setDate(d.getDate() + 280) // Naegele's rule: LMP + 280 days
-  return d.toISOString().slice(0, 10)
+  return toDateKey(addCalendarDays(lmp, 280)) // Naegele's rule: LMP + 280 days
 }
 
 // Default settings shape — mirrored in the profiles.settings column
@@ -50,7 +44,7 @@ const DEFAULT_SETTINGS = {
   notifyPeriod:  true,
   notifyLog:     true,
   notifyWeekly:  true,
-  analytics:     true,
+  analytics:     false,
   sounds:        false,             // soft chimes on save / milestones — opt-in
   // 4-card welcome tour. Set true once the user dismisses it; never
   // re-shows after that.
@@ -145,7 +139,7 @@ const useLuna = create(
         fireAndForget(saveProfile({ period_length: n }), 'setPeriodLength')
       },
       setLastPeriodStart: (d) => {
-        const iso = toISO(d)
+        const iso = toDateKey(d)
         set({ lastPeriodStart: iso })
         fireAndForget(saveProfile({ last_period_start: iso }), 'setLastPeriodStart')
       },
@@ -156,7 +150,7 @@ const useLuna = create(
       },
       startPregnancy: ({ lmp }) => {
         const dueDate = lmpToDueDate(lmp)
-        const next = { active: true, lmp, dueDate, startedAt: new Date().toISOString().slice(0, 10) }
+        const next = { active: true, lmp, dueDate, startedAt: todayKey() }
         set({ pregnancy: next, birthControl: { method: 'none', startDate: null } })
         fireAndForget(saveProfile({
           pregnancy: next,
@@ -176,7 +170,7 @@ const useLuna = create(
         const entry = {
           id,
           type: loss?.type || 'miscarriage',
-          dateISO: loss?.dateISO || new Date().toISOString().slice(0, 10),
+          dateISO: loss?.dateISO || todayKey(),
           gestationWeeks: loss?.gestationWeeks ?? null,
           note: (loss?.note || '').trim() || null,
           recordedAt: new Date().toISOString(),
@@ -202,7 +196,7 @@ const useLuna = create(
       logs: {},
 
       saveLog: (date, log) => {
-        const iso = toISO(date)
+        const iso = toDateKey(date)
         const now = new Date().toISOString()
         // Stamp every save with updated_at so hydrate can merge cloud
         // vs local correctly — if a refresh happens before the cloud
@@ -213,7 +207,7 @@ const useLuna = create(
       },
 
       removeLog: (date) => {
-        const iso = toISO(date)
+        const iso = toDateKey(date)
         set((s) => {
           const next = { ...s.logs }
           delete next[iso]
@@ -222,7 +216,7 @@ const useLuna = create(
         fireAndForget(deleteLog(iso), 'removeLog')
       },
 
-      getLog: (date) => get().logs[toISO(date)] || null,
+      getLog: (date) => get().logs[toDateKey(date)] || null,
 
       // ── Settings ─────────────────────────────────────────────
       settings: DEFAULT_SETTINGS,

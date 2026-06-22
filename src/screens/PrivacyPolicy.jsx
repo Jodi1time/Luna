@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="Privacy" onBack={back} />
-        <Eyebrow color={T.accent}>Policy · effective 2026-05-30</Eyebrow>
+        <Eyebrow color={T.accent}>Policy · effective 2026-06-22</Eyebrow>
         <div style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 500, letterSpacing: -0.7, lineHeight: 1.05 }}>
           Privacy Policy
         </div>
@@ -40,7 +40,7 @@ export default function PrivacyPolicy() {
 
         <H>What we do not collect</H>
         <P>
-          We do not collect your location, contacts, advertising identifiers, browsing history, device sensors, or any health data you have not entered yourself. There are no third-party analytics or advertising SDKs embedded in Luna.
+          We do not collect your location, contacts, advertising identifiers, browsing history, or device sensors. We do not use advertising SDKs. Optional anonymous product analytics is off until you enable it in Settings.
         </P>
 
         <H>Where your data lives</H>
@@ -50,7 +50,7 @@ export default function PrivacyPolicy() {
 
         <H>Optional local cache</H>
         <P>
-          For speed, the app keeps a copy of your most recent data in your browser's local storage so it can render immediately on startup. This cache is cleared when you sign out or delete your account.
+          For speed, the app keeps a copy of your most recent data in your browser's local storage so it can render immediately on startup. This cache is not separately encrypted by Luna today; it relies on your device and browser account protections. It is cleared when you sign out or delete your account. We are migrating the native apps to encrypted local storage backed by the iOS Keychain and Android Keystore.
         </P>
 
         <H>Children</H>
@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
 
         <H>Third parties</H>
         <P>
-          We rely on three third-party services to operate Luna: Supabase for database and authentication, Sentry for error reporting (configured to strip likely-PII patterns before transmission), and Google Fonts for the typefaces used in the interface. We also send anonymous product analytics to PostHog by default — event names and category data only (for example, "log saved · 3 symptoms · BBT included"), never the content of what you logged, your name, email, or any identifier. You can switch this off in Settings → Privacy → Anonymous analytics. We do not use advertising networks, attribution SDKs, or social login providers.
+          We use Supabase for database and authentication, Anthropic to generate Talk to Luna responses, Sentry for limited error reporting, PostHog for optional anonymous product analytics, and Google Fonts for interface typefaces. When you use Talk to Luna, your typed conversation and a short derived cycle context are sent through our Supabase function to Anthropic; raw logs, diary entries, email, and name are not added automatically. PostHog remains off unless you enable it and receives event categories only, never log content. We do not use advertising networks, attribution SDKs, or social login providers.
         </P>
 
         <H>Your rights</H>
@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
           If you access Luna from the EU or UK, you have rights of access, rectification, erasure, restriction, portability, and objection under the GDPR / UK GDPR. You can exercise most of these in-app: export your data as CSV from Settings, edit any field directly, and delete your account (which permanently removes your data from our servers within 30 days). The lawful basis for processing your account email and authentication data is contract performance; for the cycle data you enter, it is your consent — which you can withdraw at any time by deleting your account or signing out and asking us to remove the data via the contact below.
         </P>
         <P>
-          We are working toward an explicit, granular consent prompt on first use for EU / UK users specifically — covering analytics and error reporting — to satisfy ePrivacy requirements alongside GDPR. Until that prompt ships, EU / UK users can decline analytics and error reporting from Settings → Privacy at any time, and we will treat that as their consent decision. If you have a complaint, you may contact your local data protection authority.
+          Anonymous analytics remains off unless you enable it in Settings. If you have a complaint, you may contact your local data protection authority.
         </P>
 
         <H>Changes to this policy</H>
