@@ -3,6 +3,7 @@ import { T } from '../data/theme'
 import { Masthead, Eyebrow, Rule, Screen, SourceLine } from '../components/shared'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { todayKey } from '../lib/dateOnly'
 
 // One soft category per practice — gives each practice its own
 // chromatic identity in the picker list. Intention/gratitude/feeling
@@ -1141,7 +1142,7 @@ export default function Reflect() {
   const handleSavePractice = (entry) => {
     const next = [
       ...history,
-      { ...entry, dateISO: new Date().toISOString().slice(0, 10), recordedAt: new Date().toISOString() },
+      { ...entry, dateISO: todayKey(), recordedAt: new Date().toISOString() },
     ].slice(-60)  // keep last ~2 months
     updateSetting('reflectHistory', next)
   }

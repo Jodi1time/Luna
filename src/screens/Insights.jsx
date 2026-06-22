@@ -1,7 +1,7 @@
 import { T } from '../data/theme'
-import { Masthead, Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
+import { Eyebrow, Rule, SourceLine, Screen } from '../components/shared'
 import { PHASES, SYMPTOMS } from '../data/lunaData'
-import { useCycle, detectSymptomPatterns, detectBBTShift, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
+import { useCycle, detectSymptomPatterns, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { matchConditions } from '../data/conditions'
 import { SymptomIcon, MOOD_LABELS } from '../components/symptomIcons'
 import { PhaseFlourish } from '../components/phaseFlourishes'
@@ -37,8 +37,8 @@ function arcPath(cx, cy, innerR, outerR, startAngle, endAngle) {
 // Each phase segment is now tappable — tap any phase to open its
 // teaching surface (PhaseDetail) so the wheel doubles as a textbook.
 function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase }) {
+  const animatedCenter = useCountUp(cycleDay || 0, 1100)
   if (!cycleDay || !cycleLength) return null
-  const animatedCenter = useCountUp(cycleDay, 1100)
   const size = 260
   const r = 112
   const cx = size / 2
@@ -170,10 +170,8 @@ function periodLengthTag(n) {
   if (n > 7) return 'on the longer side'
   return 'typical'
 }
-function varianceTag(conf) {
-  if (conf === 'high') return 'Steady'
-  if (conf === 'medium') return 'Some variation'
-  return 'Variable'
+function varianceTag(variance) {
+  return variance?.label || 'Still learning'
 }
 
 // Cycle summary card — pulls together what the engine already knows
@@ -182,20 +180,25 @@ function varianceTag(conf) {
 // period length, and cycles-logged numbers count up on mount so the
 // card reads as a small live dashboard, not a static fact sheet.
 function CycleSummaryCard({ cycleLength, periodLength, variance, cyclesLogged }) {
-  if (!cycleLength) return null
-  const animCL = useCountUp(cycleLength, 1200)
+  const animCL = useCountUp(cycleLength || 0, 1200)
   const animPL = useCountUp(periodLength || 0, 1200)
   const animCY = useCountUp(cyclesLogged || 0, 1400)
+  if (!cycleLength) return null
   const clTag = cycleLengthTag(cycleLength)
   const plTag = periodLengthTag(periodLength)
-  const vTag  = varianceTag(variance?.conf)
+  const vTag  = varianceTag(variance)
+  const isStarting = cyclesLogged === 0
   return (
     <div className="insight-stagger alive-card" style={{ padding: 18, background: sectionPaper('body'), border: `1px solid ${sectionColors('body').accent}22`, borderLeft: `3px solid ${T.accent}`, boxShadow: `0 1px 0 ${sectionColors('body').accent}10, 0 14px 30px -20px ${sectionColors('body').accent}40`, borderRadius: 20, marginBottom: 22, animationDelay: '120ms' }}>
       <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 8 }}>
-        Your cycles
+        {isStarting ? 'Your starting point' : 'Your cycles'}
       </div>
       <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 400, lineHeight: 1.45, color: T.text, letterSpacing: -0.2 }}>
-        About <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animCL} days</em>, end to end — {clTag}. Your bleed runs about <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animPL} day{animPL === 1 ? '' : 's'}</em> — {plTag}.
+        {isStarting ? (
+          <>Luna is beginning with the <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animCL}-day cycle</em> and <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animPL}-day period</em> from your setup.</>
+        ) : (
+          <>About <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animCL} days</em>, end to end — {clTag}. Your bleed runs about <em style={{ color: T.accent, fontStyle: 'normal', fontWeight: 500 }}>{animPL} day{animPL === 1 ? '' : 's'}</em> — {plTag}.</>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${T.hair}` }}>
         <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1, color: T.muted, fontWeight: 600 }}>RHYTHM</span>
@@ -311,7 +314,7 @@ export default function Insights() {
   const go = useLuna((s) => s.go)
   const onHormonalBC = isOnHormonalBC(birthControl)
   const patterns = detectSymptomPatterns(logs, periodHistory, cycle.cycleLength, cycle.periodLength)
-  const cyclesLogged = periodHistory ? periodHistory.length : 0
+  const cyclesLogged = cycle.cyclesLogged
   const bbtShift = !onHormonalBC ? cycle.bbtShift : null
   const ovulation = !onHormonalBC ? cycle.ovulation : null
   const cycleDay = cycle.cycleDay
@@ -402,7 +405,7 @@ export default function Insights() {
 
         {ovulation && (
           <div className="insight-stagger" style={{ marginBottom: 22, animationDelay: '240ms' }}>
-            <Eyebrow>Your ovulation marker</Eyebrow>
+            <Eyebrow>Your ovulation estimate</Eyebrow>
             <div className="alive-card" style={{ padding: 18, background: sectionPaper('care'), border: `1px solid ${sectionColors('care').accent}22`, borderLeft: `3px solid ${PHASES.ovulation.color}`, boxShadow: `0 1px 0 ${sectionColors('care').accent}10, 0 14px 30px -20px ${sectionColors('care').accent}40`, borderRadius: 20, marginTop: 4 }}>
               {/* Confidence pill — multi-signal cases get visibly louder.
                   Very-high / high cases use phase color; medium grey; low grey. */}
@@ -424,7 +427,7 @@ export default function Insights() {
                 </div>
               </div>
               <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, marginBottom: 12, lineHeight: 1.3 }}>
-                You ovulate around <em style={{ color: T.accent }}>day {ovulation.day}.</em>
+                Luna estimates ovulation around <em style={{ color: T.accent }}>day {ovulation.day}.</em>
               </div>
 
               {/* Signal chips — show each contributing signal with its day */}

@@ -6,6 +6,7 @@ import useLuna from '../store/useLuna'
 import { getSession } from '../lib/supabase'
 import { StatusView } from '../components/StatusView'
 import { validateName, validateAccountPassword, validateEmail } from '../lib/validation'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 // Editorial progress indicator — three small italic-serif step labels,
 // current step lit in accent, completed steps dimmed but legible.
@@ -57,7 +58,7 @@ function ProgressBar({ step, total = 3 }) {
 function StepDate({ value, onChange }) {
   const days = ['M','T','W','T','F','S','S']
   const now = new Date()
-  const todayISO = now.toISOString().slice(0, 10)
+  const todayISO = toDateKey(now)
   const initialDate = value ? new Date(value + 'T12:00:00') : now
   const [viewing, setViewing] = useState({
     year:  initialDate.getFullYear(),
@@ -265,7 +266,7 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
         border: '1px solid rgba(26,19,16,0.06)',
         borderRadius: 16,
       }}>
-        Sign in on any device to come back to your cycle. Your data is encrypted at rest — only you can read it.
+        Sign in on any device to come back to your cycle. Your account controls access to your data.
       </div>
     </div>
   )
@@ -276,7 +277,7 @@ export default function Onboarding({ step }) {
   // Period start is stored as an ISO date string so the picker can
   // navigate back across months. Defaults to today; the user can
   // step back up to 12 months via the calendar header.
-  const [lastPeriodISO, setLastPeriodISO] = useState(() => new Date().toISOString().slice(0, 10))
+  const [lastPeriodISO, setLastPeriodISO] = useState(todayKey)
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [account, setAccount] = useState({
     name: '', email: '', accountPassword: '',
@@ -300,8 +301,6 @@ export default function Onboarding({ step }) {
 
   const setAccountField = (key, val) => setAccount((a) => ({ ...a, [key]: val }))
 
-  const now = new Date()
-
   const finish = async () => {
     if (finishing) return
     setSignupError('')
@@ -310,8 +309,6 @@ export default function Onboarding({ step }) {
     try {
       // lastPeriodISO is already the user's exact pick (YYYY-MM-DD),
       // possibly in a previous month.
-      const d = new Date(lastPeriodISO + 'T12:00:00')
-
       let acct = null
       if (signedInEmail) {
         // Returning sign-in — session already established.
@@ -360,7 +357,7 @@ export default function Onboarding({ step }) {
       // Save profile to cloud and flip onboarded=true. The store's
       // setOnboarding action handles the cloud write.
       setOnboarding({
-        lastPeriodStart: d.toISOString().slice(0, 10),
+        lastPeriodStart: lastPeriodISO,
         cycleLength: cycleDays,
         displayName: account.name.trim(),
         account: acct,
@@ -369,7 +366,9 @@ export default function Onboarding({ step }) {
       try {
         const { capture } = await import('../lib/posthog')
         capture('onboarding_completed', { account_created: Boolean(acct) })
-      } catch {}
+      } catch {
+        // Analytics is optional and must never block onboarding.
+      }
 
       go('home')
     } catch (e) {

@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
-import { SymptomIcon, MOOD_LABELS as MOOD_LABELS_CANON, MOOD_COLORS as MOOD_COLORS_CANON } from '../components/symptomIcons'
-import { PHASES, ARTICLES, MOOD_INSIGHTS, RED_FLAGS, getReflectionPrompt } from '../data/lunaData'
+import { PHASES, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor } from '../data/bodyLiteracy'
-import { matchConditions } from '../data/conditions'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary } from '../hooks/useCycle'
+import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary, estimatedOvulationDay } from '../hooks/useCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
 import StickyNote from '../components/StickyNote'
@@ -21,6 +19,7 @@ import { BC_LABELS } from '../data/birthControl'
 import useLuna from '../store/useLuna'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import { schoolForPhase } from '../data/cycleSchools'
+import { parseDateOnly, todayKey, toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -30,15 +29,6 @@ const phasePresence = {
   follicular: 'A gentle re-opening. Move when it feels right.',
   ovulation:  'Notice what feels easier today — words, wanting, warmth.',
   luteal:     'Be a little softer with yourself. Cravings are signal, not weakness.',
-}
-
-// Pick one short article that matches the current phase mood. Manual
-// curation so the suggestion never feels random.
-const phaseArticle = {
-  menstrual:  'iron',
-  follicular: 'basics',
-  ovulation:  'basics',
-  luteal:     'cravings',
 }
 
 // A "what's next" sentence under the cover. Now confidence-aware:
@@ -63,19 +53,19 @@ function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, 
     // Prefer the fused ovulation day (BBT + mucus + libido) when
     // available — it's typically tighter than BBT alone. Fall back
     // to BBT, then to cycle-length midpoint.
-    const ovDay = ovulation?.day ?? bbtShift?.shiftDayMedian ?? Math.round(cycleLength / 2)
+    const ovDay = ovulation?.day ?? bbtShift?.shiftDayMedian ?? estimatedOvulationDay(cycleLength, periodLength)
     const days = ovDay - cycleDay
     const sub = ovulation && ovulation.signals.length >= 2
-      ? `Triangulated from ${ovulation.signals.length} signals.`
-      : bbtShift ? 'Anchored to your BBT shift.' : null
+      ? `Estimated from ${ovulation.signals.length} signals.`
+      : bbtShift ? 'Estimated from your BBT shift.' : null
     if (days <= 1) return { text: 'Ovulation begins tomorrow.', sub }
     return { text: `${days} days until ovulation.`, sub }
   }
 
   if (phase.id === 'ovulation') {
     const sub = ovulation && ovulation.signals.length >= 2
-      ? `Confirmed by ${ovulation.signals.length} signals.`
-      : bbtShift ? 'Confirmed by your BBT shift.' : null
+      ? `Estimated from ${ovulation.signals.length} signals.`
+      : bbtShift ? 'Estimated from your BBT shift.' : null
     return { text: 'You\'re in your fertile window.', sub }
   }
 
@@ -87,14 +77,14 @@ function contextualLine({ phase, cycleDay, cycleLength, periodLength, variance, 
     if (days <= 1) {
       return { text: 'Your period is expected tomorrow.', sub: null }
     }
-    // Confidence-aware framing — the peace-of-mind line.
+    // Keep the cover calm. The detailed confidence explanation lives in Insights.
     if (conf === 'high') {
-      return { text: `Your period is due in about ${days} days.`, sub: `${variance?.why} You don't have to keep track.` }
+      return { text: `Your period is due in about ${days} days.`, sub: 'Your recent cycles give us a steady signal.' }
     }
     if (conf === 'medium') {
-      return { text: `Your period is likely in ${days} days (give it a day or two).`, sub: variance?.why }
+      return { text: `Your period is likely in ${days} days.`, sub: 'The timing is getting clearer as Luna learns your rhythm.' }
     }
-    return { text: `Your period might arrive in ${days} days.`, sub: variance?.why }
+    return { text: `Your period might arrive in ${days} days.`, sub: 'Still learning your rhythm.' }
   }
   return null
 }
@@ -158,11 +148,11 @@ function Greeting({ name, phaseId }) {
   const first = (name || '').split(' ')[0]
   const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
   // Build the greeting as discrete segments so each can fade in with
-  // its own delay. We use a non-breaking space ( ) for trailing
+  // its own delay. We use a non-breaking space for trailing
   // gaps — `display: inline-block` collapses trailing whitespace from
   // text content, which made the greeting render as e.g. "Quietevening"
   // instead of "Quiet evening". NBSP is non-collapsible.
-  const NBSP = ' '
+  const NBSP = '\u00A0'
   const segments = first
     ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
     : [`${opener}${NBSP}`, timeOfDay, '.']
@@ -196,12 +186,11 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   const monday = new Date(today)
   monday.setDate(today.getDate() - dayOfWeek)
   monday.setHours(0, 0, 0, 0)
-  const todayISO = today.toISOString().slice(0, 10)
+  const todayISO = toDateKey(today)
   const labels = ['M','T','W','T','F','S','S']
 
-  const nextPeriodStart = (cycle.lastPeriodStart)
-    ? new Date(new Date(cycle.lastPeriodStart + 'T00:00:00').getTime() + cycle.cycleLength * MS_PER_DAY)
-    : null
+  const nextPeriodISO = cycle.predictions?.find((p) => p.label === 'Next period')?.iso
+  const nextPeriodStart = nextPeriodISO ? parseDateOnly(nextPeriodISO) : null
   const isPredictedPeriod = (date) => {
     if (!nextPeriodStart) return false
     const diff = Math.round((date - nextPeriodStart) / MS_PER_DAY)
@@ -215,7 +204,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
   const cells = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
-    const iso = d.toISOString().slice(0, 10)
+    const iso = toDateKey(d)
     return {
       iso,
       day: d.getDate(),
@@ -267,7 +256,7 @@ function WeekStrip({ go, setActiveLogDate, cycle, logs }) {
 function BCReminder({ bcMethod, wellness, markWellness }) {
   const dailyMethods = ['combined-pill', 'mini-pill']
   if (!dailyMethods.includes(bcMethod)) return null
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const taken = wellness?.bcTakenToday === todayISO
   if (taken) return null
   return (
@@ -288,119 +277,20 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   )
 }
 
-// Monthly recap — a quiet narrative summary on the 1st of the month
-// (or for the first 3 days of the month), looking back at the prior
-// 30 days of logs. "What we noticed."
-function buildMonthlyRecap(logs) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const cutoff = new Date(today.getTime() - 30 * 86400000)
-  const recentLogs = Object.entries(logs || {})
-    .filter(([d]) => new Date(d + 'T00:00:00') >= cutoff)
-    .map(([d, l]) => ({ date: d, ...l }))
-  if (recentLogs.length < 5) return null
-  const moods = recentLogs.filter((l) => l.mood)
-  const moodCount = {}
-  moods.forEach((l) => { moodCount[l.mood] = (moodCount[l.mood] || 0) + 1 })
-  const topMood = Object.entries(moodCount).sort((a, b) => b[1] - a[1])[0]
-  const symptomCount = {}
-  recentLogs.forEach((l) => (l.symptoms || []).forEach((s) => {
-    symptomCount[s] = (symptomCount[s] || 0) + 1
-  }))
-  const topSymptom = Object.entries(symptomCount).sort((a, b) => b[1] - a[1])[0]
-  const periodDays = recentLogs.filter((l) => l.flow && l.flow !== 'Spotting').length
-  const loggedDays = recentLogs.length
-  // Compose a short narrative.
-  const bits = []
-  bits.push(`You showed up ${loggedDays} day${loggedDays === 1 ? '' : 's'} this month`)
-  if (topMood && topMood[1] >= 3) {
-    bits.push(`${topMood[0].toLowerCase()} came up most often`)
-  }
-  if (topSymptom && topSymptom[1] >= 3) {
-    bits.push(`${topSymptom[0]} repeated`)
-  }
-  if (periodDays > 0) {
-    bits.push(`${periodDays} period day${periodDays === 1 ? '' : 's'}`)
-  }
-  return { logged: loggedDays, sentence: bits.join(' · ') + '.' }
-}
-
-function MonthlyRecap({ recap }) {
-  if (!recap) return null
-  return (
-    <div className="glass-card alive-card frost-card" style={{ marginTop: 22, padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-        The last 30 days
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.5, color: T.text, fontStyle: 'italic' }}>
-        {recap.sentence}
-      </div>
-    </div>
-  )
-}
-
-
-// Compute the wellness habit nudges that should surface on Home —
-// only when overdue, so they don't always clutter the screen.
-function dueWellnessNudges(wellness) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const daysSince = (iso) => iso ? Math.floor((today - new Date(iso + 'T00:00:00')) / 86400000) : Infinity
-  const nudges = []
-  // BSE — monthly. Show only when it's been ≥30 days (or never).
-  if (daysSince(wellness?.bse) >= 30) {
-    nudges.push({
-      key: 'bse',
-      label: 'Check your breasts',
-      sub: 'Once a month, in the shower. Looking for new lumps, dimpling, or changes.',
-      cta: 'Done this month',
-    })
-  }
-  // Pelvic floor — weekly. Show when ≥7 days since last.
-  if (daysSince(wellness?.pelvicFloor) >= 7) {
-    nudges.push({
-      key: 'pelvicFloor',
-      label: 'Pelvic floor, a moment',
-      sub: 'Three sets of ten gentle squeezes. Two minutes, anywhere.',
-      cta: 'Done this week',
-    })
-  }
-  return nudges
-}
-
-// Horizontal scroll wheel of quick entries under the phase cover.
-// Two "log/edit" actions first, then the navigation cards that used
-// to live in AlwaysHere. "A note" used to be here too — removed,
-// because the sticky note in the corner of Home now covers that
-// gimmick and a dedicated card became redundant.
-function QuickActions({ go, setActiveLogDate, onOpenChat }) {
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const openLogToday = () => { setActiveLogDate(todayISO); go('log') }
+// Three secondary destinations that are useful from Home but should
+// never compete with the phase cover or Luna's conversation surface.
+function QuickActions({ go }) {
   // Each card carries its functional category. Category drives the
   // card's soft tint + icon accent via SECTION_PALETTE — so the row
   // reads as chromatic variety instead of seven cream cards in a line.
-  // Five essential cards — each with its own animated icon motif so
-  // the row reads as alive surfaces instead of static glyphs. Motion
-  // is unique per card (write-erase, orbiting probe, scan-trace,
-  // slow rotation + pulse, line writing) so no two cards share the
-  // same beat. Off-tempo durations (3.2 → 7s) avoid synchronized
-  // mechanical feel. Animations respect prefers-reduced-motion.
+  // Each card has its own animated icon motif so the grid reads as
+  // alive surfaces instead of static glyphs. Off-tempo durations avoid
+  // synchronized motion and respect prefers-reduced-motion.
   const items = [
     // "Log today" QuickAction was a direct duplicate of the center
     // [+] button in the TabBar. Cut to enforce the "one canonical
     // home per job" rule — the [+] button is the canonical entry.
-    { key: 'talk', category: 'reflect', label: 'Talk to Luna', sub: 'A real conversation, on her phase',
-      icon: (
-        <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          {/* Chat bubble with three pulsing dots — typing-indicator
-              motif. The dots cycle in sequence so the bubble reads
-              as "Luna composing something for you". */}
-          <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-          <circle className="dot dot-1" cx="7" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-2" cx="10" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-3" cx="13" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-        </svg>
-      ),
-      onTap: () => onOpenChat?.() },
-    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search the library — sourced',
+    { key: 'lookup', category: 'read', label: 'Look it up', sub: 'Search sourced answers',
       icon: (
         <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* The whole glass-and-handle tilts around the end of the
@@ -414,16 +304,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('askLuna') },
-    { key: 'conditions', category: 'urgent', label: 'Conditions Atlas', sub: 'PCOS, endo, PMDD, more',
-      icon: (
-        <svg className="icon-anim-conditions" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          <circle className="ring" cx="10" cy="10" r="7" pathLength="100"/>
-          <path className="cv" pathLength="100" d="M10 5v10"/>
-          <path className="ch" pathLength="100" d="M5 10h10"/>
-        </svg>
-      ),
-      onTap: () => go('conditions') },
-    { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle wheel and patterns',
+    { key: 'insights', category: 'reflect', label: 'What we’ve noticed', sub: 'Your cycle patterns',
       icon: (
         <svg className="icon-anim-insights" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <circle className="ring" cx="10" cy="10" r="6.5" strokeDasharray="2 1.8"/>
@@ -431,7 +312,7 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('insights') },
-    { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points ready',
+    { key: 'cheatsheet', category: 'care', label: 'For your next visit', sub: 'Talking points',
       icon: (
         <svg className="icon-anim-cheatsheet" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="3" width="12" height="14" rx="1.5"/>
@@ -442,81 +323,28 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
       ),
       onTap: () => go('cheatsheet') },
   ]
-  // One-shot scroll teaser — runs once on mount unless the user
-  // touches the row first, in which case it cancels immediately so
-  // the user's finger always wins over the animation. Spring tail
-  // (forward glide → light overshoot → settle) reads as physical
-  // motion, not a programmed slide.
-  const scrollerRef = useRef(null)
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    let cancelled = false
-    let startTimer = 0
-    const cancel = () => {
-      cancelled = true
-      if (startTimer) clearTimeout(startTimer)
-      if (raf) cancelAnimationFrame(raf)
-    }
-    el.addEventListener('touchstart', cancel, { passive: true, once: true })
-    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
-    el.addEventListener('wheel', cancel, { passive: true, once: true })
-    const start = performance.now()
-    const duration = 1650
-    const peak = 64
-    const tick = (now) => {
-      if (cancelled) return
-      const t = Math.min(1, (now - start) / duration)
-      let x = 0
-      if (t < 0.42) {
-        const p = t / 0.42
-        x = peak * (1 - Math.pow(1 - p, 3))
-      } else if (t < 0.78) {
-        const p = (t - 0.42) / 0.36
-        const eased = 1 - Math.pow(1 - p, 2.5)
-        x = peak + (-peak - 8) * eased
-      } else {
-        const p = (t - 0.78) / 0.22
-        const eased = Math.sin((p * Math.PI) / 2)
-        x = -8 + 8 * eased
-      }
-      el.scrollLeft = Math.max(0, x)
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 650)
-    return () => {
-      cancel()
-      el.removeEventListener('touchstart', cancel)
-      el.removeEventListener('pointerdown', cancel)
-      el.removeEventListener('wheel', cancel)
-    }
-  }, [])
   return (
-    <div ref={scrollerRef} className="h-scroller" style={{
-      display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-      marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      marginTop: 16,
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+      gap: 9, marginTop: 14,
     }}>
       {items.map((it, idx) => {
         const colors = sectionColors(it.category)
         return (
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
-              flex: '0 0 36%',
-              maxWidth: 152,
-              scrollSnapAlign: 'start',
               textAlign: 'left',
-              borderRadius: 22,
-              padding: '14px 14px 14px',
+              borderRadius: 18,
+              minWidth: 0,
+              minHeight: 122,
+              padding: '12px 11px 13px',
               cursor: 'pointer',
               color: T.text,
               fontFamily: 'inherit',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: 8,
+              gap: 7,
               background: sectionPaper(it.category),
               border: `1px solid ${colors.accent}22`,
               boxShadow: `0 1px 0 ${colors.accent}10, 0 14px 30px -22px ${colors.accent}50`,
@@ -527,10 +355,10 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
               alignItems: 'center', justifyContent: 'center',
               background: colors.tint, color: colors.accent,
             }}>{it.icon}</span>
-            <span style={{ fontFamily: T.serif, fontSize: 14, fontWeight: 500, lineHeight: 1.2, letterSpacing: -0.1, color: T.text }}>
+            <span style={{ fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, lineHeight: 1.18, letterSpacing: 0, color: T.text }}>
               {it.label}
             </span>
-            <span style={{ fontFamily: T.sans, fontSize: 10, color: T.muted, lineHeight: 1.35, letterSpacing: 0.1 }}>
+            <span style={{ fontFamily: T.sans, fontSize: 9.5, color: T.muted, lineHeight: 1.35, letterSpacing: 0 }}>
               {it.sub}
             </span>
           </button>
@@ -540,16 +368,44 @@ function QuickActions({ go, setActiveLogDate, onOpenChat }) {
   )
 }
 
-// Rotating Health Watch self-check — one RED_FLAGS prompt per week,
-// surfaced as a soft "worth noticing" card. Brings Health Watch up
-// from Settings burial into the daily surface, without becoming spammy.
-// Selection is deterministic per-week so the user sees the same question
-// for seven days, then it changes.
-function weeklyHealthCheck(date = new Date()) {
-  if (!RED_FLAGS?.length) return null
-  const start = new Date(date.getFullYear(), 0, 1)
-  const week = Math.floor((date - start) / (1000 * 60 * 60 * 24 * 7))
-  return RED_FLAGS[((week % RED_FLAGS.length) + RED_FLAGS.length) % RED_FLAGS.length]
+function DailyThoughtCard({ phase, thoughtText, onOpen }) {
+  if (!phase || !thoughtText) return null
+  return (
+    <button onClick={onOpen}
+      aria-label={`Talk to Luna about today's thought: ${thoughtText}`}
+      className="alive-card frost-card sheen-once"
+      style={{
+        position: 'relative',
+        marginTop: 18, padding: '24px 22px 21px',
+        background: `linear-gradient(160deg, ${phase.color}1f, ${phase.color}0b 62%, rgba(253,250,245,0.58))`,
+        border: `1px solid ${phase.color}38`,
+        borderRadius: 24,
+        boxShadow: `0 20px 44px -22px ${phase.color}78`,
+        textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
+        fontFamily: 'inherit', color: 'inherit', overflow: 'hidden',
+      }}>
+      <div aria-hidden="true" style={{
+        position: 'absolute', top: -13, left: 12,
+        fontFamily: T.serif, fontSize: 92, lineHeight: 1, fontStyle: 'italic',
+        color: phase.color, opacity: 0.18, fontWeight: 400,
+        userSelect: 'none', pointerEvents: 'none',
+      }}>"</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 13, position: 'relative' }}>
+        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: 0 }}>
+          a thought, today
+        </div>
+        <div style={{ display: 'inline-flex', flexShrink: 0, alignItems: 'center', gap: 6, padding: '7px 10px', borderRadius: 999, background: `${phase.color}14`, border: `1px solid ${phase.color}26`, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 600 }}>
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+          </svg>
+          talk it through
+        </div>
+      </div>
+      <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.48, color: T.text, letterSpacing: 0, position: 'relative' }}>
+        {thoughtText}
+      </div>
+    </button>
+  )
 }
 
 // Smart helper card — reusable Home surface for any of the "what now"
@@ -584,116 +440,6 @@ function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
         Open the helper →
       </div>
     </button>
-  )
-}
-
-// From-the-archive card — surfaces a meaningful old note when one fits
-// (anniversary today, same cycle day previously, same phase). Quiet
-// editorial register, never instructive. Tap goes to that day's Log.
-function FromYourPastSelfCard({ surfaced, go, setActiveLogDate }) {
-  if (!surfaced) return null
-  const open = () => { setActiveLogDate(surfaced.dateISO); go('log') }
-  // Trim very long notes so the card stays a card.
-  const text = surfaced.note.length > 220 ? surfaced.note.slice(0, 217) + '…' : surfaced.note
-  return (
-    <button onClick={open} className="glass-card alive-card frost-card sheen-once"
-      style={{
-        position: 'relative',
-        marginTop: 22,
-        padding: 18,
-        borderLeft: `3px solid ${T.accent}`,
-        borderRadius: 22,
-        boxShadow: `0 14px 30px -20px ${T.accent}40`,
-        textAlign: 'left',
-        cursor: 'pointer',
-        width: '100%',
-        color: T.text,
-        fontFamily: 'inherit',
-        display: 'block',
-        overflow: 'hidden',
-      }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
-          from your past self
-        </div>
-        <div style={{ fontFamily: T.sans, fontSize: 10, color: T.accent, fontWeight: 600, letterSpacing: 0.3 }}>
-          Open the day →
-        </div>
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.1, marginBottom: 8 }}>
-        "{text}"
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 12, color: T.muted, fontStyle: 'italic' }}>
-        — {surfaced.label}
-      </div>
-    </button>
-  )
-}
-
-function WeeklyHealthCheckCard({ go }) {
-  const item = weeklyHealthCheck()
-  if (!item) return null
-  return (
-    <button onClick={() => go('watch')} className="glass-card alive-card frost-card"
-      style={{
-        marginTop: 22,
-        padding: 18,
-        borderLeft: `3px solid ${T.accent}`,
-        borderRadius: 22,
-        boxShadow: `0 14px 30px -20px ${T.accent}40`,
-        textAlign: 'left',
-        cursor: 'pointer',
-        width: '100%',
-        color: T.text,
-        fontFamily: 'inherit',
-        display: 'block',
-      }}>
-      <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.2, fontWeight: 600, color: T.muted, marginBottom: 6 }}>
-        Worth noticing this week
-      </div>
-      <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.35, letterSpacing: -0.1, marginBottom: 6 }}>
-        {item.q}?
-      </div>
-      <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5 }}>
-        If it sounds familiar, Luna can help you gather the words for a visit.
-      </div>
-    </button>
-  )
-}
-
-// Always-here surfaces only the wellness nudges that are due
-// (monthly breast self-exam, weekly pelvic floor). The navigation
-// cards that used to live here (intimate / watch / cheatsheet / care)
-// are now part of the QuickActions horizontal scroll under the cover,
-// so this section is for body-care nudges only. Renders nothing when
-// nothing is due.
-function AlwaysHere({ wellness, markWellness }) {
-  const nudges = dueWellnessNudges(wellness)
-  const todayISO = new Date().toISOString().slice(0, 10)
-  if (nudges.length === 0) return null
-  return (
-    <div style={{ marginTop: 28 }}>
-      <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', marginBottom: 12, letterSpacing: -0.2 }}>
-        Always here.
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {nudges.map((n) => (
-          <div key={n.key} className="glass-card alive-card frost-card"
-            style={{ padding: 18, borderLeft: `3px solid ${T.accent}`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}40` }}>
-            <div style={{ fontFamily: T.serif, fontSize: 15.5, fontWeight: 500, lineHeight: 1.3, letterSpacing: -0.1, marginBottom: 4 }}>
-              {n.label}
-            </div>
-            <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.5, marginBottom: 10 }}>
-              {n.sub}
-            </div>
-            <button onClick={() => markWellness(n.key, todayISO)}
-              style={{ background: 'transparent', border: `1px solid ${T.accent}`, color: T.accent, padding: '8px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999 }}>
-              {n.cta}
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
   )
 }
 
@@ -771,7 +517,6 @@ export default function Home() {
   const isPreg = preg.active
   const trimColor = isPreg ? trimesterColor(preg.trimester?.number) : null
   const animatedDay = useCountUp(isPreg ? preg.week : cycleDay)
-  const [quickMood, setQuickMood] = useState(null)
   const onHormonalBC = isOnHormonalBC(birthControl)
   const bcLabel = BC_LABELS[birthControl?.method] || 'None'
 
@@ -861,7 +606,7 @@ export default function Home() {
     }
   }, [])
 
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   const todayLog = logs?.[todayISO]
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
   // Smart cramps surface: if today's log has cramps as a mood OR as a
@@ -886,7 +631,9 @@ export default function Home() {
   // Evening callback — fulfill the promise Luna made this morning.
   // After 6pm, if she set an intention today, surface a check-in.
   const showEveningIntention = !isPreg && afterSix && hasMorningIntentionToday
-  const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && cycleDay != null && cycleDay >= cycleLength - 3
+  const anchorAge = cycle.daysSinceLastPeriod
+  const showPeriodCTA = !isPreg && !onHormonalBC && !hasFlowToday && anchorAge != null &&
+    anchorAge >= cycleLength - 3 && anchorAge <= cycleLength + Math.max(3, cycle.variance?.range || 0)
 
   // Catch-up state — predictions degrade silently when a user stops
   // logging. Detect two flavours of "Luna has gone stale" so we can
@@ -905,15 +652,17 @@ export default function Home() {
   const showCatchUp = (() => {
     if (isPreg || onHormonalBC) return null
     if (showPeriodCTA) return null
-    // stalePeriod: cycleDay has rolled past expected by 10+ days
-    if (cycleDay != null && cycleDay > cycleLength + 10) {
-      return { kind: 'stalePeriod', daysOver: cycleDay - cycleLength }
+    // Use the raw age of the last real period anchor. cycleDay wraps
+    // modulo the predicted length and can never reveal a missed cycle.
+    const staleAfter = cycleLength + Math.max(10, cycle.variance?.range || 0)
+    if (anchorAge != null && anchorAge > staleAfter) {
+      return { kind: 'stalePeriod', daysOver: anchorAge - cycleLength }
     }
     // staleLogs: 21+ days since any log
     const allLogDates = Object.keys(logs || {}).sort()
     const lastLogISO = allLogDates[allLogDates.length - 1]
     if (lastLogISO) {
-      const daysSince = Math.floor((Date.now() - new Date(lastLogISO + 'T00:00:00').getTime()) / 86400000)
+      const daysSince = Math.floor((parseDateOnly(todayISO) - parseDateOnly(lastLogISO)) / MS_PER_DAY)
       if (daysSince >= 21) return { kind: 'staleLogs', daysSince }
     }
     return null
@@ -932,35 +681,6 @@ export default function Home() {
     })
     return () => cancelAnimationFrame(raf)
   }, [phase?.id, cycleDay, showPeriodCTA, onHormonalBC, isPreg])
-
-  // Mood → emotional color. Used to tint the blob ripple when she
-  // taps a mood — Luna's quiet way of saying "I received that, in
-  // your color." Soft Luna palette tones; never neon.
-  const MOOD_COLORS = {
-    Calm:   '#9D6F8C', // soft luteal purple — settled, internal
-    Bright: '#E8B765', // ovulation gold — energy, outward
-    Tired:  '#7D7269', // muted neutral — quiet
-    Sore:   '#C84E2E', // accent terra cotta — pain
-    Low:    '#5A4A72', // deep purple — heaviness
-  }
-
-  const handleQuickMood = (m) => {
-    // Tap an already-selected mood to clear it — the same gesture that
-    // sets a mood also takes it back, so a mistap is one tap away from
-    // undone. Saves `null` so the day's mood field actually clears.
-    const next = quickMood === m ? null : m
-    setQuickMood(next)
-    saveLog(new Date(), { mood: next })
-    if (next) {
-      // Light blob bloom in the mood's color — acknowledges the tap
-      // visually without saying anything.
-      triggerBlobEffect({ name: 'bloom', color: MOOD_COLORS[next] || null })
-    }
-  }
-
-  // Insight surfaced when a mood is tapped — text + (optional) article id,
-  // varied by phase. Null when no phase is known yet.
-  const moodInsight = (quickMood && phase) ? MOOD_INSIGHTS[phase.id]?.[quickMood] : null
 
   // Daily AI-generated reflection. Lives behind the Edge Function;
   // falls back to the local static prompts when the function isn't
@@ -983,7 +703,7 @@ export default function Home() {
   const patternSummary = useMemo(() => {
     if (!cycle.cycleLength || !cycle.periodLength) return ''
     const patterns = detectSymptomPatterns(logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength)
-    return buildPatternSummary(patterns, cycle.variance, cycle.cycleLength, cycle.periodLength)
+    return buildPatternSummary(patterns, cycle.variance, cycle.cycleLength)
   }, [logs, cycle.periodHistory, cycle.cycleLength, cycle.periodLength, cycle.variance])
 
   useEffect(() => {
@@ -998,7 +718,7 @@ export default function Home() {
       patternSummary,
     }).then((text) => { if (!cancelled && text) setAiThought(text) })
     return () => { cancelled = true }
-  }, [phase?.id, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
+  }, [phase, cycle.cycleDay, cycle.cycleLength, session?.user?.id, patternSummary])
   // Use the AI thought if we have one, otherwise the local static prompt.
   const thoughtText = aiThought || (phase ? getReflectionPrompt(phase.id) : null)
   const logPeriodStart = () => {
@@ -1279,20 +999,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Quick actions — a horizontal scroll wheel of the most
-              common entries (Log today, Edit period) plus the four
-              navigation cards that used to live in AlwaysHere
-              (intimate / watch / cheatsheet / care). "A note" used to
-              be here but is now covered by the sticky note in the
-              corner, so removed to avoid redundancy. */}
-          {!isPreg && (
-            <QuickActions
-              go={go}
-              setActiveLogDate={setActiveLogDate}
-              onOpenChat={() => { setChatOpener(null); setChatOpen(true) }}
-            />
-          )}
-
           {/* Smart helper surfaces — only appear when she has told us
               something is happening today. Each gets its own eyebrow
               so the page reads as conversation, not a status bar.
@@ -1368,60 +1074,20 @@ export default function Home() {
             </button>
           )}
 
-          {/* ─── WHAT MAKES LUNA, LUNA ────────────────────────────────
-              Differentiators come FIRST after the cover + triggered
-              helpers.
-
-              Order (intentional): Luna's voice FIRST (the morning
-              thought + talk-it-through is the core differentiator
-              against Flo/Clue — nobody else gives women a
-              conversational companion this warm). Diary second
-              (loved gimmick, but private to the user). Cycle School
-              when active. Daily insight after that. */}
-
-          {/* Morning thought — promoted to lead the differentiators
-              tier (step 2 of the AI promotion pass). Large italic
-              serif quote, soft phase-tinted glass, opening serif
-              quotation mark as the visual signature, with a clear
-              "talk it through" affordance. Tap opens the LunaChat
-              overlay IMMEDIATELY, seeded with this thought, so the
-              gesture-to-conversation is one tap. */}
-          {!isPreg && phase && thoughtText && (
-            <button onClick={() => { setChatOpener(thoughtText); setChatOpen(true) }}
-              className="alive-card frost-card sheen-once"
-              style={{
-                position: 'relative',
-                marginTop: 22, padding: '26px 24px 22px',
-                background: `linear-gradient(160deg, ${phase.color}18, ${phase.color}08 60%, rgba(253,250,245,0.5))`,
-                border: `1px solid ${phase.color}30`,
-                borderRadius: 26,
-                boxShadow: `0 20px 44px -20px ${phase.color}70`,
-                textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
-                fontFamily: 'inherit', color: 'inherit',
-                overflow: 'hidden',
-              }}>
-              <div aria-hidden="true" style={{
-                position: 'absolute', top: -10, left: 14,
-                fontFamily: T.serif, fontSize: 96, lineHeight: 1, fontStyle: 'italic',
-                color: phase.color, opacity: 0.2, fontWeight: 400,
-                userSelect: 'none', pointerEvents: 'none',
-              }}>"</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, position: 'relative' }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
-                  a thought, today
-                </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-                  </svg>
-                  talk it through
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.5, color: T.text, letterSpacing: -0.3, position: 'relative' }}>
-                {thoughtText}
-              </div>
-            </button>
+          {/* Luna's voice is the first non-urgent surface after the
+              cover. This is the product's moat, not another shortcut. */}
+          {!isPreg && (
+            <DailyThoughtCard
+              phase={phase}
+              thoughtText={thoughtText}
+              onOpen={() => { setChatOpener(thoughtText); setChatOpen(true) }}
+            />
           )}
+
+          {/* Secondary destinations stay visible without becoming a
+              feature carousel. Talk to Luna now has one canonical Home
+              entry above; Conditions Atlas remains canonical in Library. */}
+          {!isPreg && <QuickActions go={go} />}
 
           {/* The diary — multi-entry writing with photos + voice +
               customisable paper. Still high in the order; the user's
@@ -1496,79 +1162,6 @@ export default function Home() {
               The Move card also wrongly routed to Care (preventive
               checkups) — that mismatch is gone with the cut. */}
 
-          {/* ─── DAILY LOG GESTURE ────────────────────────────────────
-              Mood pills — the essential one-tap log surface every
-              period app has. Kept right under the differentiators
-              so it stays accessible without scrolling far. */}
-
-          {/* How are you, today? — Five frosted mood pills. */}
-          <div style={{ padding: '4px 0', marginTop: 22, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div style={{ fontFamily: T.serif, fontSize: 17, fontStyle: 'italic', letterSpacing: -0.2 }}>
-                How are you, today?
-              </div>
-              <button onClick={() => go('log')}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 11, fontWeight: 600, letterSpacing: 0.4, fontFamily: T.sans, padding: 0 }}>
-                Log more →
-              </button>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              {[
-                ['calm','Calm','#9D6F8C'],
-                ['energy','Bright','#E8B765'],
-                ['tired','Tired','#7D7269'],
-                ['cramps','Sore','#C84E2E'],
-                ['low','Low','#5A4A72'],
-              ].map(([id, l, color]) => {
-                const isSelected = quickMood === l
-                return (
-                  <button key={`${l}-${isSelected ? 'on' : 'off'}`} onClick={() => handleQuickMood(l)}
-                    className={`alive-card frost-card${isSelected ? ' tap-bloom' : ''}`}
-                    style={{
-                      flex: 1,
-                      border: `1px solid ${isSelected ? color + '55' : 'rgba(26,19,16,0.06)'}`,
-                      cursor: 'pointer',
-                      background: isSelected ? `${color}1f` : 'rgba(253,250,245,0.55)',
-                      padding: '14px 6px 12px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                      borderRadius: 20,
-                      color: isSelected ? color : T.text, fontFamily: T.sans,
-                      boxShadow: isSelected
-                        ? `0 14px 28px -18px ${color}60`
-                        : '0 14px 26px -22px rgba(26,19,16,0.18)',
-                      transition: 'background .25s ease, border-color .25s ease, box-shadow .25s ease',
-                    }}>
-                    <span style={{
-                      width: 36, height: 36, borderRadius: 999,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      background: isSelected ? `${color}28` : `${color}14`,
-                      color: color,
-                      transition: 'background .25s ease',
-                    }}>
-                      <SymptomIcon id={id} size={22} />
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: 0.2 }}>{l}</span>
-                  </button>
-                )
-              })}
-            </div>
-            {moodInsight && (
-              <div key={`${phase?.id}-${quickMood}`}
-                className="frost-card"
-                style={{ marginTop: 14, padding: 18, background: `rgba(200,78,46,0.08)`, border: `1px solid ${T.accent}25`, borderRadius: 22, boxShadow: `0 14px 30px -22px ${T.accent}40`, animation: 'fadeUp 0.35s ease-out both' }}>
-                <div style={{ fontFamily: T.serif, fontSize: 14.5, lineHeight: 1.55, color: T.text }}>
-                  {moodInsight.text}
-                </div>
-                {moodInsight.read && (
-                  <button onClick={() => goArticle(moodInsight.read)}
-                    style={{ marginTop: 10, background: 'transparent', border: 'none', cursor: 'pointer', color: T.accent, fontSize: 12, fontWeight: 600, letterSpacing: 0.3, fontFamily: T.sans, padding: 0 }}>
-                    Read more →
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
           {/* Celebration moments now live at the app level (App.jsx
               GlobalCelebration) so they show wherever the user lands. */}
 
@@ -1616,51 +1209,6 @@ export default function Home() {
               landing review. The `markWellness('hydration', ...)`
               store action is still defined; future feature can reuse
               if we ever bring it back as a phase-specific surface. */}
-
-          {/* Monthly recap — quiet narrative summary of the last 30 days */}
-          {!isPreg && <MonthlyRecap recap={buildMonthlyRecap(logs)} />}
-
-
-          {/* A rotating Health Watch prompt — one per week, doula-toned,
-              promotes our existing screener out of Settings burial. */}
-          {!isPreg && <WeeklyHealthCheckCard go={go} />}
-
-          {/* Always here — wellness nudges only (BSE / pelvic floor when
-              due). Navigation cards now live in the QuickActions scroll. */}
-          {!isPreg && (
-            <AlwaysHere
-              wellness={wellness}
-              markWellness={markWellness}
-            />
-          )}
-
-          {/* "For your mind and heart" — soft inline entry to Reflect.
-              Moved here (from above the daily thought) so the bottom
-              of the page closes with a reflective surface instead of
-              the mood row. Suppressed when the morning intention is
-              already showing. */}
-          {!isPreg && phase && !showMorningIntention && (
-            <button onClick={() => go('reflect')} className="glass-card alive-card frost-card"
-              style={{
-                marginTop: 22, padding: 20,
-                borderLeft: `3px solid ${phase.color}`, borderRadius: 22,
-                boxShadow: `0 14px 30px -20px ${phase.color}50`,
-                textAlign: 'left', cursor: 'pointer', width: '100%',
-                color: T.text, fontFamily: 'inherit', display: 'block',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
-                  for your mind and heart
-                </div>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: phase.color, fontWeight: 500 }}>
-                  reflect →
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 16, fontStyle: 'italic', lineHeight: 1.45, color: T.text, letterSpacing: -0.1 }}>
-                Write freely, sit with a practice, or talk it through with Luna.
-              </div>
-            </button>
-          )}
 
           <div style={{ height: 16 }} />
         </div>

@@ -58,7 +58,9 @@ export async function loadLogs() {
       mood: row.mood,
       symptoms: row.symptoms || [],
       flow: row.flow,
-      bbt: row.bbt != null ? Number(row.bbt) : null,
+      bbt: row.bbt != null
+        ? { value: Number(row.bbt), unit: row.bbt_unit === 'C' ? 'C' : 'F' }
+        : null,
       mucus: row.mucus,
       sex: row.sex,
       sleep: row.sleep,
@@ -79,48 +81,46 @@ export async function loadLogs() {
 export async function upsertLog(date, log) {
   const user = await currentUser()
   if (!user) return
+  const bbtValue = log.bbt && typeof log.bbt === 'object'
+    ? Number(log.bbt.value)
+    : (log.bbt != null ? Number(log.bbt) : null)
+  const bbtUnit = log.bbt && typeof log.bbt === 'object'
+    ? (log.bbt.unit === 'C' ? 'C' : 'F')
+    : null
   const base = {
     user_id: user.id,
     date,
     mood: log.mood ?? null,
     symptoms: log.symptoms ?? [],
     flow: log.flow ?? null,
-    bbt: log.bbt ?? null,
+    bbt: Number.isFinite(bbtValue) ? bbtValue : null,
     mucus: log.mucus ?? null,
     sex: log.sex ?? null,
     note: log.note ?? null,
     updated_at: new Date().toISOString(),
   }
-  // Try full payload first, then defensively drop columns that may
-  // not be migrated server-side yet. Each newer optional column lives
-  // in its own retry tier so an older Supabase instance can still
-  // accept what it does know about.
-  const withSleepAndIntimate = { ...base, sleep: log.sleep ?? null, intimate: log.intimate ?? null }
-  const { error: firstError } = await supabase
-    .from('logs')
-    .upsert(withSleepAndIntimate, { onConflict: 'user_id,date' })
-  if (!firstError) return
-  const msg = String(firstError.message || '').toLowerCase()
-  const isMissingColumn = (col) => msg.includes(col) && (msg.includes('column') || msg.includes('not found'))
-  if (!isMissingColumn('intimate') && !isMissingColumn('sleep')) throw firstError
-  // Drop intimate first (newest), retry. Then drop sleep too if needed.
-  if (isMissingColumn('intimate')) {
-    // eslint-disable-next-line no-console
-    console.warn('[cloud] intimate column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable intimate tracking server-side.')
-    const withSleepOnly = { ...base, sleep: log.sleep ?? null }
-    const { error: secondError } = await supabase
-      .from('logs')
-      .upsert(withSleepOnly, { onConflict: 'user_id,date' })
-    if (!secondError) return
-    const msg2 = String(secondError.message || '').toLowerCase()
-    if (!(msg2.includes('sleep') && (msg2.includes('column') || msg2.includes('not found')))) throw secondError
+  // Optional columns were added over time. Retry without an optional
+  // column only when Postgres explicitly says that column is missing;
+  // all other failures still surface instead of silently dropping data.
+  const payload = {
+    ...base,
+    sleep: log.sleep ?? null,
+    intimate: log.intimate ?? null,
+    bbt_unit: bbtUnit,
   }
-  // eslint-disable-next-line no-console
-  console.warn('[cloud] sleep column missing on logs table — saving without it. Run the supabase-schema.sql migration to enable sleep tracking server-side.')
-  const { error: retryError } = await supabase
-    .from('logs')
-    .upsert(base, { onConflict: 'user_id,date' })
-  if (retryError) throw retryError
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const { error } = await supabase
+      .from('logs')
+      .upsert(payload, { onConflict: 'user_id,date' })
+    if (!error) return
+    const message = String(error.message || '').toLowerCase()
+    const missing = ['intimate', 'sleep', 'bbt_unit'].find((column) => (
+      Object.hasOwn(payload, column) && message.includes(column) &&
+      (message.includes('column') || message.includes('not found'))
+    ))
+    if (!missing) throw error
+    delete payload[missing]
+  }
 }
 
 export async function deleteLog(date) {
@@ -139,7 +139,6 @@ export async function deleteLog(date) {
 // to land in Sentry so we know about silent drift.
 export function fireAndForget(promise, where) {
   promise.catch((e) => {
-    // eslint-disable-next-line no-console
     console.error(`[cloud] ${where} failed:`, e)
     reportError(e, { where: `cloud.${where}` })
   })

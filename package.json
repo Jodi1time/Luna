@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:native": "VITE_NATIVE=true vite build",
+    "test": "node --test",
     "lint": "eslint .",
     "preview": "vite preview",
     "cap:sync": "npm run build:native && npx cap sync",

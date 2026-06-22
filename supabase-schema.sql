@@ -35,7 +35,7 @@ alter table public.profiles
   add column if not exists settings          jsonb default '{
     "showEditorial":true,"showLibrary":true,"showWatch":true,
     "notifyPeriod":true,"notifyLog":true,"notifyWeekly":true,
-    "analytics":true
+    "analytics":false
   }'::jsonb,
   add column if not exists is_pro            boolean default true,
   add column if not exists trial_days_left   integer default 7,
@@ -45,15 +45,19 @@ alter table public.profiles enable row level security;
 
 drop policy if exists "Profiles readable by owner" on public.profiles;
 create policy "Profiles readable by owner"
-  on public.profiles for select using (auth.uid() = id);
+  on public.profiles for select to authenticated
+  using ((select auth.uid()) = id);
 
 drop policy if exists "Profiles editable by owner" on public.profiles;
 create policy "Profiles editable by owner"
-  on public.profiles for update using (auth.uid() = id);
+  on public.profiles for update to authenticated
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
 
 drop policy if exists "Profiles insert by self" on public.profiles;
 create policy "Profiles insert by self"
-  on public.profiles for insert with check (auth.uid() = id);
+  on public.profiles for insert to authenticated
+  with check ((select auth.uid()) = id);
 
 drop policy if exists "Profiles deletes denied" on public.profiles;
 create policy "Profiles deletes denied"
@@ -61,7 +65,8 @@ create policy "Profiles deletes denied"
 
 -- Create a profile row whenever a new auth user is created.
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = '' as $$
 begin
   insert into public.profiles (id, email) values (new.id, new.email)
   on conflict (id) do nothing;
@@ -95,6 +100,10 @@ create table if not exists public.logs (
 -- Add sleep column to logs (idempotent — safe to re-run).
 alter table public.logs add column if not exists sleep text;
 
+-- BBT is numeric in Postgres; keep its display unit separately so the
+-- client can reconstruct { value, unit } without guessing after sync.
+alter table public.logs add column if not exists bbt_unit text;
+
 -- Add intimate jsonb to logs — covers libido, lubrication, painful_sex,
 -- and orgasm_count in a single column so future intimate-health fields
 -- don't each need a schema migration. Defaults to null.
@@ -114,19 +123,24 @@ alter table public.logs enable row level security;
 
 drop policy if exists "Logs readable by owner" on public.logs;
 create policy "Logs readable by owner"
-  on public.logs for select using (auth.uid() = user_id);
+  on public.logs for select to authenticated
+  using ((select auth.uid()) = user_id);
 
 drop policy if exists "Logs insertable by owner" on public.logs;
 create policy "Logs insertable by owner"
-  on public.logs for insert with check (auth.uid() = user_id);
+  on public.logs for insert to authenticated
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "Logs updatable by owner" on public.logs;
 create policy "Logs updatable by owner"
-  on public.logs for update using (auth.uid() = user_id);
+  on public.logs for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 drop policy if exists "Logs deletable by owner" on public.logs;
 create policy "Logs deletable by owner"
-  on public.logs for delete using (auth.uid() = user_id);
+  on public.logs for delete to authenticated
+  using ((select auth.uid()) = user_id);
 
 -- ── shares ──────────────────────────────────────────────────────────
 --
@@ -168,21 +182,20 @@ alter table public.shares enable row level security;
 drop policy if exists "Shares: owner full access" on public.shares;
 create policy "Shares: owner full access"
   on public.shares for all
-  using (auth.uid() = from_user_id)
-  with check (auth.uid() = from_user_id);
+  to authenticated
+  using ((select auth.uid()) = from_user_id)
+  with check ((select auth.uid()) = from_user_id);
 
 -- Recipient can see shares where they are the to_user_id (after accept).
 drop policy if exists "Shares: recipient read" on public.shares;
 create policy "Shares: recipient read"
-  on public.shares for select
-  using (auth.uid() = to_user_id);
+  on public.shares for select to authenticated
+  using ((select auth.uid()) = to_user_id);
 
--- Recipient can revoke a share from their side (sets revoked_at, status).
+-- Recipient mutations go through narrow SECURITY DEFINER functions below.
+-- A broad UPDATE policy would also let a recipient change `scope` and grant
+-- themselves full-log access, so direct recipient updates are denied.
 drop policy if exists "Shares: recipient revoke" on public.shares;
-create policy "Shares: recipient revoke"
-  on public.shares for update
-  using (auth.uid() = to_user_id and status = 'accepted')
-  with check (auth.uid() = to_user_id);
 
 -- Recipient accept flow: while the share is pending, any authenticated
 -- user can update it to set themselves as to_user_id IF they know the
@@ -190,10 +203,68 @@ create policy "Shares: recipient revoke"
 -- enforces that the only valid update from this state sets status to
 -- 'accepted' and themselves as the recipient.
 drop policy if exists "Shares: accept invite by code" on public.shares;
-create policy "Shares: accept invite by code"
-  on public.shares for update
-  using (status = 'pending' and invite_code is not null and to_user_id is null)
-  with check (to_user_id = auth.uid() and status = 'accepted');
+
+create or replace function public.accept_share_invite(code text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  accepted public.shares%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  update public.shares
+  set to_user_id = auth.uid(),
+      status = 'accepted',
+      accepted_at = now(),
+      invite_code = null
+  where invite_code = code
+    and status = 'pending'
+    and to_user_id is null
+    and from_user_id <> auth.uid()
+    and created_at > now() - interval '30 days'
+  returning * into accepted;
+
+  if not found then return null; end if;
+  return to_jsonb(accepted);
+end;
+$$;
+
+revoke all on function public.accept_share_invite(text) from public;
+grant execute on function public.accept_share_invite(text) to authenticated;
+
+create or replace function public.revoke_incoming_share(share_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  revoked public.shares%rowtype;
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  update public.shares
+  set status = 'revoked', revoked_at = now()
+  where id = share_id
+    and to_user_id = auth.uid()
+    and status = 'accepted'
+    and revoked_at is null
+  returning * into revoked;
+
+  if not found then return null; end if;
+  return to_jsonb(revoked);
+end;
+$$;
+
+revoke all on function public.revoke_incoming_share(uuid) from public;
+grant execute on function public.revoke_incoming_share(uuid) to authenticated;
 
 -- ── Shared read functions (SECURITY DEFINER, scope-enforced) ───────
 --
@@ -300,6 +371,7 @@ begin
   where invite_code = code
     and status = 'pending'
     and to_user_id is null
+    and created_at > now() - interval '30 days'
   limit 1;
 
   if not found then

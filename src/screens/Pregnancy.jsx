@@ -4,6 +4,7 @@ import { Masthead, Eyebrow, CTAButton, Icons, Screen, SourceLine } from '../comp
 import { PHASES } from '../data/lunaData'
 import useLuna from '../store/useLuna'
 import { usePregnancy } from '../hooks/usePregnancy'
+import { addCalendarDays, todayKey, toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -24,9 +25,7 @@ function formatLongDate(iso) {
 
 function lmpToDue(iso) {
   if (!iso) return null
-  const d = new Date(iso + 'T00:00:00')
-  d.setDate(d.getDate() + 280)
-  return d.toISOString().slice(0, 10)
+  return toDateKey(addCalendarDays(iso, 280))
 }
 
 function weeksFromToday(iso) {
@@ -52,7 +51,7 @@ function CalendarBlock({ year, month, selectedISO, onPick, minISO, maxISO }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
         {Array.from({ length: adj }).map((_, i) => <div key={`e${i}`} />)}
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
-          const iso = new Date(year, month, d).toISOString().slice(0, 10)
+          const iso = toDateKey(new Date(year, month, d))
           const outOfRange = (minISO && iso < minISO) || (maxISO && iso > maxISO)
           const isSelected = iso === selectedISO
           return (
@@ -85,9 +84,9 @@ function NotPregnantState() {
   // logging slightly before what would be the canonical LMP date.
   const { minISO, maxISO } = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
-    const min = new Date(today.getTime() - 280 * MS_PER_DAY)
-    const max = new Date(today.getTime() + 10 * MS_PER_DAY)
-    return { minISO: min.toISOString().slice(0, 10), maxISO: max.toISOString().slice(0, 10) }
+    const min = addCalendarDays(today, -280)
+    const max = addCalendarDays(today, 10)
+    return { minISO: toDateKey(min), maxISO: toDateKey(max) }
   }, [])
 
   const due = selected ? lmpToDue(selected) : null
@@ -201,7 +200,7 @@ function PregnantState() {
     if (!ok) return
     addPregnancyLoss({
       type: week >= 20 ? 'stillbirth' : 'miscarriage',
-      dateISO: new Date().toISOString().slice(0, 10),
+      dateISO: todayKey(),
       gestationWeeks: week || null,
     })
     endPregnancy()

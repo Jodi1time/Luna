@@ -37,6 +37,25 @@ const corsHeaders = {
 const ANTHROPIC_MODEL_DEFAULT       = 'claude-haiku-4-5-20251001'
 const ANTHROPIC_MODEL_DAILY_THOUGHT = Deno.env.get('ANTHROPIC_MODEL_DAILY_THOUGHT') || ANTHROPIC_MODEL_DEFAULT
 const ANTHROPIC_MODEL_CHAT          = Deno.env.get('ANTHROPIC_MODEL_CHAT')          || ANTHROPIC_MODEL_DEFAULT
+const MAX_MESSAGE_CHARS = 2000
+const MAX_PATTERN_CHARS = 240
+
+function boundedNumber(value: unknown, fallback: number, min: number, max: number): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback
+}
+
+function sanitizeContext(input: any): Record<string, unknown> {
+  return {
+    phase_name: typeof input?.phase_name === 'string' ? input.phase_name.slice(0, 32) : '',
+    cycle_day: boundedNumber(input?.cycle_day, 1, 1, 180),
+    cycle_length: boundedNumber(input?.cycle_length, 28, 18, 120),
+    hour: boundedNumber(input?.hour, new Date().getUTCHours(), 0, 23),
+    pattern_summary: typeof input?.pattern_summary === 'string'
+      ? input.pattern_summary.trim().slice(0, MAX_PATTERN_CHARS)
+      : '',
+  }
+}
 
 // Luna's voice + safety rails. Lives server-side so the client can't
 // override it. Wording mirrors what Luna says elsewhere in the UI.
@@ -136,8 +155,9 @@ async function callAnthropic(
     }),
   })
   if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Anthropic error ${res.status}: ${body}`)
+    // Do not reflect an upstream response body to the client; provider
+    // diagnostics can contain request metadata that users should not see.
+    throw new Error(`Anthropic request failed (${res.status})`)
   }
   const json = await res.json()
   return json.content?.[0]?.text?.trim() || ''
@@ -155,6 +175,13 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const contentLength = Number(req.headers.get('content-length') || 0)
+    if (contentLength > 50000) {
+      return new Response(JSON.stringify({ error: 'Request too large' }), {
+        status: 413,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Sign in required' }), {
@@ -180,7 +207,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}))
     const mode = body.mode || 'daily-thought'
-    const context = body.context || {}
+    const context = sanitizeContext(body.context || {})
 
     let reply = ''
     let modelUsed = ''
@@ -193,7 +220,13 @@ Deno.serve(async (req) => {
         120,
       )
     } else if (mode === 'chat') {
-      const messages: AnthropicMessage[] = Array.isArray(body.messages) ? body.messages : []
+      const messages: AnthropicMessage[] = Array.isArray(body.messages)
+        ? body.messages.slice(-12).flatMap((message: any) => {
+          if ((message?.role !== 'user' && message?.role !== 'assistant') || typeof message?.content !== 'string') return []
+          const content = message.content.trim().slice(0, MAX_MESSAGE_CHARS)
+          return content ? [{ role: message.role, content } as AnthropicMessage] : []
+        })
+        : []
       if (messages.length === 0) {
         return new Response(JSON.stringify({ error: 'Missing messages' }), {
           status: 400,
@@ -201,10 +234,9 @@ Deno.serve(async (req) => {
         })
       }
       // Hard cap conversation length to prevent runaway cost.
-      const trimmed = messages.slice(-12)
       modelUsed = ANTHROPIC_MODEL_CHAT
       reply = await callAnthropic(
-        trimmed,
+        messages,
         `${SYSTEM_PROMPT}\n\n${chatSystemAddition(context)}`,
         modelUsed,
         220,
@@ -221,7 +253,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
+    return new Response(JSON.stringify({ error: 'Luna could not respond right now' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

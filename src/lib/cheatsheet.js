@@ -1,4 +1,5 @@
 // Doctor's-office cheat sheet generator.
+import { todayKey } from './dateOnly'
 //
 // Reads the user's logs + the engine-computed cycle signals (variance,
 // BBT shift, recurring patterns) and produces a small, ordered list of
@@ -269,7 +270,7 @@ export function buildCheatsheet({ logs, cycle, patterns = [] }) {
 // clipboard or an email. Kept simple — no markdown styling so it pastes
 // cleanly into any provider portal.
 export function cheatsheetText(points, { displayName, generatedISO } = {}) {
-  const date = generatedISO || new Date().toISOString().slice(0, 10)
+  const date = generatedISO || todayKey()
   const lines = []
   lines.push(displayName ? `Notes from ${displayName} — for our appointment` : 'Notes for our appointment')
   lines.push(`Prepared ${date}`)

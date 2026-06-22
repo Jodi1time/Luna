@@ -1,13 +1,13 @@
 import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
-import { Masthead, Eyebrow, Rule, Screen } from '../components/shared'
+import { Rule, Screen } from '../components/shared'
 import { PHASES } from '../data/lunaData'
 import { useCycle, isOnHormonalBC, getPhaseForDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
-import { sectionPaper } from '../data/sectionPalette'
-import { WhyChip, SourceTag } from '../components/Sourced'
+import { WhyChip } from '../components/Sourced'
+import { toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 
@@ -35,7 +35,7 @@ export default function Calendar() {
     : null
 
   const now = new Date()
-  const todayISO = now.toISOString().slice(0, 10)
+  const todayISO = toDateKey(now)
 
   // viewed = the first day of the month currently on screen.
   const [viewed, setViewed] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
@@ -49,10 +49,9 @@ export default function Calendar() {
 
   const loggedPeriods = useMemo(() => buildLoggedPeriodSet(store.logs), [store.logs])
   const nextPeriodStart = useMemo(() => {
-    if (!cycle.lastPeriodStart) return null
-    const start = new Date(cycle.lastPeriodStart + 'T00:00:00')
-    return new Date(start.getTime() + cycle.cycleLength * MS_PER_DAY)
-  }, [cycle.lastPeriodStart, cycle.cycleLength])
+    const periodPrediction = cycle.predictions?.find((p) => p.label === 'Next period')
+    return periodPrediction?.iso ? new Date(periodPrediction.iso + 'T00:00:00') : null
+  }, [cycle.predictions])
 
   const isPredictedPeriod = (iso) => {
     if (!nextPeriodStart) return false
@@ -61,17 +60,17 @@ export default function Calendar() {
     return diff >= 0 && diff < cycle.periodLength
   }
 
-  const monthCells = useMemo(() => {
+  const monthCells = (() => {
     const cells = []
     for (let d = 1; d <= daysInMonth; d++) {
-      const iso = new Date(viewed.getFullYear(), viewed.getMonth(), d).toISOString().slice(0, 10)
+      const iso = toDateKey(new Date(viewed.getFullYear(), viewed.getMonth(), d))
       const isFuture = iso > todayISO
       let phase = null
       let dayInCycle = null
       if (cycle.lastPeriodStart) {
         const anchor = new Date(cycle.lastPeriodStart + 'T00:00:00')
         const cur = new Date(iso + 'T00:00:00')
-        const diff = Math.floor((cur - anchor) / MS_PER_DAY)
+        const diff = Math.round((cur - anchor) / MS_PER_DAY)
         if (diff >= 0) {
           dayInCycle = (diff % cycle.cycleLength) + 1
           phase = getPhaseForDay(dayInCycle, cycle.cycleLength, cycle.periodLength)
@@ -81,20 +80,20 @@ export default function Calendar() {
       cells.push({ date: iso, day: d, phase, future: isFuture, isPeriodDay, isLoggedPeriod: loggedPeriods.has(iso), dayInCycle })
     }
     return cells
-  }, [viewed, daysInMonth, todayISO, loggedPeriods, cycle.lastPeriodStart, cycle.cycleLength, cycle.periodLength])
+  })()
 
   // Mark phase boundaries — the first day of a new phase gets a small
   // visual cue (left edge accent) so the eye can see "this is where
   // follicular becomes ovulation" without reading copy. Computed
   // per-cell by comparing each cell's phase id to the previous cell's.
-  const cellsWithBoundary = useMemo(() => {
+  const cellsWithBoundary = (() => {
     let prevPhaseId = null
     return monthCells.map((c) => {
       const startsPhase = c.phase && c.phase.id !== prevPhaseId
       prevPhaseId = c.phase?.id ?? prevPhaseId
       return { ...c, startsPhase }
     })
-  }, [monthCells])
+  })()
 
   const monthLabel = viewed.toLocaleDateString('en-US', { month: 'long' })
   const yearLabel = viewed.getFullYear()
@@ -231,99 +230,80 @@ export default function Calendar() {
 
         <Rule />
 
-        {/* Predictions — written like a friend, not a dashboard */}
+        {/* One quiet prediction surface. Dates stay scannable; the reasoning
+            lives behind a single disclosure instead of three repeated cards. */}
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 500, letterSpacing: -0.3, marginBottom: 4, animationDelay: '600ms' }}>
           Looking ahead.
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginBottom: 14, fontStyle: 'italic', animationDelay: '640ms' }}>
-          What's likely coming up, with how steady the call is.
+          A useful window, never a promise.
         </div>
         {filteredPredictions ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div className="insight-stagger frost-card" style={{
+            background: 'rgba(253,250,245,0.66)',
+            border: `1px solid ${T.accent}20`,
+            borderRadius: 18,
+            overflow: 'hidden',
+            boxShadow: `0 14px 32px -26px ${T.accent}55`,
+            animationDelay: '680ms',
+          }}>
+            <div style={{ padding: '15px 16px 13px', borderBottom: `1px solid ${T.hair}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: T.accent, boxShadow: `0 0 0 4px ${T.accent}12` }} />
+                <span style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: 1.1, color: T.accent, fontWeight: 700, textTransform: 'uppercase' }}>
+                  {cycle.variance?.label || 'Still learning'}
+                </span>
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, lineHeight: 1.45, fontStyle: 'italic' }}>
+                {cycle.variance?.why}
+              </div>
+            </div>
             {filteredPredictions.map((p, i) => {
               const title =
-                p.label === 'Next period'    ? 'Your next period' :
-                p.label === 'Fertile window' ? 'Your fertile window' :
-                p.label === 'PMS window'     ? 'When PMS may show up' :
+                p.label === 'Next period'    ? 'Next period' :
+                p.label === 'Fertile window' ? 'Fertile window' :
+                p.label === 'PMS window'     ? 'PMS may gather' :
                 p.label
               const accentColor =
                 p.label === 'Next period'    ? PHASES.menstrual.color :
                 p.label === 'Fertile window' ? PHASES.ovulation.color :
                 p.label === 'PMS window'     ? PHASES.luteal.color :
                 T.accent
-              const certaintyLabel =
-                p.conf === 'high'   ? 'Pretty sure'   :
-                p.conf === 'medium' ? 'Likely'        :
-                                      'Best guess'
               const rangeLabel = p.range
                 ? p.range.replace('±', 'give or take').replace(/(\d+) days?/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
                 : null
-              // Map each prediction kind to a section category for the
-              // soft background tint. Period predictions → urgent (rose),
-              // fertile window → care (gold — preciousness), PMS → plan
-              // (moonlight, the "luteal anticipating" feel).
-              const category =
-                p.label === 'Next period'    ? 'urgent' :
-                p.label === 'Fertile window' ? 'care' :
-                p.label === 'PMS window'     ? 'plan' :
-                'default'
               return (
-                <div key={i} className="insight-stagger alive-card" style={{
-                  padding: 16,
-                  background: sectionPaper(category),
-                  border: `1px solid ${accentColor}22`,
-                  borderLeft: `3px solid ${accentColor}`,
-                  boxShadow: `0 1px 0 ${accentColor}10, 0 10px 22px -18px ${accentColor}30`,
-                  borderRadius: T.r,
-                  animationDelay: `${680 + i * 80}ms`,
+                <div key={i} style={{
+                  display: 'grid',
+                  gridTemplateColumns: '8px minmax(0, 1fr)',
+                  gap: 10,
+                  padding: '13px 16px',
+                  borderBottom: `1px solid ${T.hair}`,
                 }}>
-                  <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.2, color: accentColor, fontWeight: 600, marginBottom: 6 }}>
-                    {certaintyLabel}
-                  </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, marginBottom: 6 }}>
-                    {title} — <em style={{ color: accentColor }}>{p.date}</em>
+                  <span aria-hidden="true" style={{ width: 3, height: 26, borderRadius: 3, background: accentColor, opacity: 0.75, marginTop: 2 }} />
+                  <div>
+                    <div style={{ fontFamily: T.mono, fontSize: 9, letterSpacing: 1, color: T.muted, fontWeight: 600, textTransform: 'uppercase', marginBottom: 3 }}>
+                      {title}
+                    </div>
+                    <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.3, color: accentColor }}>
+                      {p.date}
+                    </div>
                     {rangeLabel && (
-                      <span style={{ fontFamily: T.sans, fontSize: 13, fontStyle: 'normal', color: T.muted, fontWeight: 400 }}>
-                        {' '}({rangeLabel})
-                      </span>
+                      <div style={{ fontFamily: T.serif, fontSize: 12.5, color: T.muted, fontStyle: 'italic', marginTop: 2 }}>
+                        {rangeLabel}
+                      </div>
                     )}
                   </div>
-                  <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.muted, lineHeight: 1.55, fontStyle: 'italic' }}>
-                    {p.why}
-                  </div>
-                  {/* Show your work — expandable underlying math. The
-                      transparency Flo never offers. */}
-                  <WhyChip
-                    label="learn more"
-                    color={accentColor}
-                    source={
-                      p.label === 'Next period' ? 'Computed from your logged cycle starts' :
-                      p.label === 'Fertile window' ? 'BBT + mucus + libido fusion' :
-                      'Late luteal — late-cycle hormone drop'
-                    }
-                  >
-                    {p.label === 'Next period' && (
-                      <>
-                        Cycle length averages <strong>{cycle.cycleLength} days</strong> across your last {Math.min(6, cycle.cyclesLogged)} logged cycle{cycle.cyclesLogged === 1 ? '' : 's'}{cycle.variance?.stdDev != null ? `, varying by ±${cycle.variance.stdDev.toFixed(1)} days` : ''}.
-                        {' '}Today is day <strong>{cycle.cycleDay}</strong>. Add {cycle.cycleLength - cycle.cycleDay + 1} days from today → predicted start.
-                      </>
-                    )}
-                    {p.label === 'Fertile window' && (
-                      <>
-                        {cycle.ovulation
-                          ? <>Your fertile window centers on day <strong>{cycle.ovulation.day}</strong> — triangulated from {cycle.ovulation.signals.length} signal{cycle.ovulation.signals.length === 1 ? '' : 's'} ({cycle.ovulation.signals.map((s) => s.type === 'bbt' ? 'BBT shift' : s.type === 'mucus' ? 'egg-white mucus' : 'libido peak').join(', ')}). Sperm survives 3-5 days, so the window stretches before ovulation, not after.</>
-                          : <>Without logged BBT or mucus, this is anchored to the calendar midpoint of your <strong>{cycle.cycleLength}-day</strong> cycle. Logging mucus and BBT tightens this materially.</>}
-                      </>
-                    )}
-                    {p.label === 'PMS window' && (
-                      <>
-                        PMS-pattern symptoms cluster in the final ~5 days of luteal — estrogen and progesterone both drop sharply, serotonin follows. With a {cycle.cycleLength}-day cycle, that's days <strong>{cycle.cycleLength - cycle.periodLength - 4}–{cycle.cycleLength - 1}</strong>.
-                      </>
-                    )}
-                  </WhyChip>
                 </div>
               )
             })}
+            <div style={{ padding: '3px 16px 12px' }}>
+              <WhyChip label="How Luna estimated this" source="Your cycle starts and optional body signals">
+                Your next period uses {cycle.cyclesLogged > 0 ? `${cycle.cyclesLogged} completed cycle${cycle.cyclesLogged === 1 ? '' : 's'}` : `the ${cycle.cycleLength}-day starting estimate you entered`}.
+                {' '}The fertile window {cycle.ovulation ? `also reflects ${cycle.ovulation.signals.length} body signal${cycle.ovulation.signals.length === 1 ? '' : 's'}` : 'uses a calendar estimate until you log repeat BBT or cervical-mucus patterns'}.
+                {' '}PMS is shown as the final five days before the next expected period. These windows are for awareness, not birth control.
+              </WhyChip>
+            </div>
           </div>
         ) : (
           <div className="alive-card frost-card" style={{

@@ -11,6 +11,7 @@
 // worth surfacing exists. `kind` drives the label rendered on Home.
 
 const MS_PER_DAY = 86400000
+import { todayKey } from './dateOnly'
 
 function notesFromLogs(logs) {
   return Object.entries(logs || {})
@@ -57,7 +58,7 @@ function phaseFor(day, cycleLength = 28, periodLength = 5) {
 }
 
 export function resurfaceNote({ logs, cycle, todayPhaseId, todayISO }) {
-  const today = todayISO || new Date().toISOString().slice(0, 10)
+  const today = todayISO || todayKey()
   const allNotes = notesFromLogs(logs)
   if (allNotes.length === 0) return null
 

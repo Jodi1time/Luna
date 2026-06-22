@@ -1,9 +1,7 @@
 // PostHog product analytics wrapper.
 //
 // Privacy posture:
-// - Defaults ON now (was opt-out). Users can switch it off in
-//   Settings any time. Justification: only category-level events
-//   leave the device; nothing user-identifying or content-bearing.
+// - Defaults OFF. Users can explicitly enable it in Settings.
 // - Anonymous IDs only — never sets user.id to email or anything PII.
 // - Captures event names + category-level properties only. NEVER sends:
 //     * cycle data (period dates, symptoms, mood, BBT, mucus, sex)
@@ -38,7 +36,7 @@ export function initPostHog() {
     disable_session_recording: true,
     disable_persistence: false,    // Anonymous distinct_id can persist
     persistence: 'localStorage',
-    opt_out_capturing_by_default: false, // Default ON — users can switch off in Settings
+    opt_out_capturing_by_default: true,
     bootstrap: {},
     loaded: () => {
       _initialized = true
@@ -95,11 +93,8 @@ export function capture(event, props = {}) {
 // localStorage — NEVER email or display name.
 export function identifyAnonymous() {
   if (!_initialized || !_enabled || !apiKey) return
-  try {
-    // PostHog already generates a distinct_id on init. We don't
-    // need to override it. This function exists so call sites can
-    // express intent — but it's a no-op.
-  } catch {}
+  // PostHog already generates a distinct_id on init. We intentionally
+  // do not replace it with an account-derived identifier.
 }
 
 // Reset analytics state — used on sign-out and account delete so
@@ -108,5 +103,7 @@ export function resetAnalytics() {
   if (!_initialized) return
   try {
     posthog.reset()
-  } catch {}
+  } catch {
+    return
+  }
 }

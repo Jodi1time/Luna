@@ -88,7 +88,7 @@ export function TabBar({ active, onChange }) {
     { key: 'settings', label: 'You',      icon: Icons.settings },
   ]
   return (
-    <div className="luna-tabbar" style={{
+    <nav className="luna-tabbar" aria-label="Primary" style={{
       // Floating pill: lifted off the bottom edge, inset from the
       // sides. Scale lives in a CSS var so Screen.jsx can shrink the
       // pill smoothly as the user scrolls away from the top.
@@ -110,6 +110,7 @@ export function TabBar({ active, onChange }) {
         if (it.key === 'log') {
           return (
             <button key="log" onClick={() => onChange('log')} className="alive-card"
+              aria-label="Log today"
               style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
               <div className="plus-pulse" style={{
                 width: 50, height: 50,
@@ -123,6 +124,7 @@ export function TabBar({ active, onChange }) {
         const on = active === it.key
         return (
           <button key={it.key} onClick={() => onChange(it.key)} className="no-tap"
+            aria-current={on ? 'page' : undefined}
             style={{
               border: 'none', background: 'transparent', cursor: 'pointer',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -140,7 +142,7 @@ export function TabBar({ active, onChange }) {
           </button>
         )
       })}
-    </div>
+    </nav>
   )
 }
 

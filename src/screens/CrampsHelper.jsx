@@ -6,6 +6,7 @@ import { breathTone } from '../lib/sounds'
 import { useScrollLock } from '../lib/useScrollLock'
 import Portal from '../lib/Portal'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
+import { todayKey } from '../lib/dateOnly'
 
 // Cramps Helper — Luna's first true "what now?" surface.
 // The prototype for the pattern that turns Luna from logger into
@@ -158,7 +159,7 @@ export default function CrampsHelper() {
     const next = [
       ...history,
       {
-        dateISO: new Date().toISOString().slice(0, 10),
+        dateISO: todayKey(),
         where,
         intensity,
         helped,

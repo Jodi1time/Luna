@@ -117,7 +117,7 @@ export default function Auth() {
   const headline = mode === 'signin' ? 'Welcome back.' : mode === 'signup' ? 'Make a little space for you.' : 'Forgot it? It happens.'
   const sub = mode === 'reset'
     ? "We'll email you a link to set a new password."
-    : "Sign in to come back to your cycle on any device. Your data is encrypted at rest — only you can read it."
+    : 'Sign in to come back to your cycle on any device. Your account controls access to your data.'
 
   return (
     <div className="home-stage">

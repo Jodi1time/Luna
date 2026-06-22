@@ -30,7 +30,7 @@ export default function Welcome() {
 
       <div style={{ padding: '18px 0', borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 24 }}>
         {[
-          { n: '01', h: 'Yours alone',      s: 'Encrypted at rest. Never sold, never shared.' },
+          { n: '01', h: 'Yours alone',      s: 'Encrypted at rest. Never sold.' },
           { n: '02', h: 'Grounded in care', s: 'Every claim sourced from doctors and clinical research.' },
           { n: '03', h: 'Quiet by design',  s: 'No notifications you didn\'t ask for. No optimisation talk.' },
         ].map((p) => (

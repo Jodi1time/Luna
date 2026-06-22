@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { T } from '../data/theme'
-import { Eyebrow, SourceLine, Icons } from '../components/shared'
+import { Eyebrow, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS, MOOD_COLORS, MOOD_TINTS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, SEX_LESSONS, BBT_LESSONS } from '../data/bodyLiteracy'
@@ -10,6 +10,7 @@ import { sectionColors, sectionPaper } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
 import { validateBBT } from '../lib/validation'
 import { chime, bloomSound } from '../lib/sounds'
+import { todayKey, toDateKey } from '../lib/dateOnly'
 
 // Bleeding intensity colors — soft Luna palette, not stoplight red.
 // Each step deepens slightly so the row reads as a gradient of
@@ -63,7 +64,7 @@ export default function Log() {
   const { back, goArticle, goSymptom, saveLog, removeLog, getLog, activeLogDate, setActiveLogDate } = store
   const cycle = useCycle(store)
   const phase = cycle.phase
-  const todayISO = new Date().toISOString().slice(0, 10)
+  const todayISO = todayKey()
   // The user can land on Log with an explicit past date (Calendar tap)
   // — otherwise default to today. Never go past today.
   const initialISO = activeLogDate && activeLogDate <= todayISO ? activeLogDate : todayISO
@@ -80,6 +81,9 @@ export default function Log() {
   const [note,     setNote]     = useState(existing.note || '')
   const [bbtError, setBbtError] = useState('')
   const [savedJustNow, setSavedJustNow] = useState(false)
+  const [showPredictionSignals, setShowPredictionSignals] = useState(Boolean(
+    existing.bbt || existing.mucus || existing.sleep || existing.sex
+  ))
   // Last-tapped symptom (for the inline insight). Cleared when the
   // user untaps the same symptom or taps a different one.
   const [activeSym, setActiveSym] = useState(null)
@@ -135,6 +139,7 @@ export default function Log() {
   // that date's existing log into the form state so it shows as the
   // user actually saved it (rather than carrying the previous day's
   // values over).
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const log = getLog(editingISO) || {}
     setMood(log.mood || null)
@@ -147,15 +152,17 @@ export default function Log() {
     setSleep(log.sleep || null)
     setNote(log.note || '')
     setBbtError('')
+    setShowPredictionSignals(Boolean(log.bbt || log.mucus || log.sleep || log.sex))
     setActiveSym(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingISO])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Date navigation — bound to <= today.
   const shiftDate = (delta) => {
     const d = new Date(editingISO + 'T12:00:00')
     d.setDate(d.getDate() + delta)
-    const next = d.toISOString().slice(0, 10)
+    const next = toDateKey(d)
     if (next > todayISO) return
     setEditingISO(next)
   }
@@ -170,7 +177,11 @@ export default function Log() {
 
   const save = () => {
     const bbtErr = validateBBT(bbt, bbtUnit)
-    if (bbtErr) { setBbtError(bbtErr); return }
+    if (bbtErr) {
+      setBbtError(bbtErr)
+      setShowPredictionSignals(true)
+      return
+    }
     setBbtError('')
     const bbtNum = parseFloat(bbt)
     const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
@@ -227,6 +238,7 @@ export default function Log() {
   // visual key (selection borders, save button, dividers, flourishes).
   // Falls back to the brand accent when no phase is known yet.
   const acc = phase?.color || T.accent
+  const predictionSignalCount = [bbt, mucus, sleep, sex].filter(Boolean).length
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, color: T.text, animation: 'fadeUp .3s ease-out both', overflow: 'hidden' }}>
@@ -287,7 +299,7 @@ export default function Log() {
             const moodTint   = MOOD_TINTS[id]
             const on = mood === id
             return (
-              <button key={id} onClick={() => setMood(on ? null : id)}
+              <button key={id} onClick={() => setMood(on ? null : id)} aria-pressed={on}
                 className={`alive-card frost-card${on ? ' tap-bloom' : ''}`}
                 style={{
                   flex: 1,
@@ -336,7 +348,7 @@ export default function Log() {
                   boxShadow: on ? `0 12px 22px -16px ${acc}70` : `0 10px 22px -22px ${bodyColors.accent}40`,
                   transition: 'all 0.2s var(--ease-out)',
                 }}>
-                <button onClick={() => toggleSym(id)}
+                <button onClick={() => toggleSym(id)} aria-pressed={on}
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: 'inherit', color: on ? acc : T.text, padding: 0, width: '100%' }}>
                   <span style={{
                     width: 30, height: 30, borderRadius: 999,
@@ -387,7 +399,7 @@ export default function Log() {
             const on = flow === f
             const fc = FLOW_COLORS[f]
             return (
-              <button key={f} onClick={() => {
+              <button key={f} aria-pressed={on} onClick={() => {
                 setFlow(on ? null : f)
                 setTeachField(on ? null : 'flow')
               }}
@@ -416,6 +428,54 @@ export default function Log() {
         )}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setShowPredictionSignals((open) => !open)}
+          aria-expanded={showPredictionSignals}
+          className="insight-stagger alive-card frost-card"
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+            margin: '2px 0 22px', padding: '16px 16px 17px',
+            background: `linear-gradient(145deg, ${acc}10, rgba(253,250,245,0.58))`,
+            border: `1px solid ${acc}28`, borderRadius: 20,
+            boxShadow: `0 14px 30px -24px ${acc}50`,
+            textAlign: 'left', cursor: 'pointer', color: T.text, fontFamily: 'inherit',
+            animationDelay: '260ms',
+          }}>
+          <span aria-hidden="true" style={{
+            width: 34, height: 34, flexShrink: 0, borderRadius: 999,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            background: `${acc}14`, color: acc,
+          }}>
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 2v10" />
+              <path d="M6.5 9.5a5 5 0 1 0 7 0" />
+              <path d="M7.5 5h2.5" />
+            </svg>
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: 'block', fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.25, marginBottom: 3 }}>
+              Sharpen predictions
+            </span>
+            <span style={{ display: 'block', fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, lineHeight: 1.45 }}>
+              {predictionSignalCount
+                ? `${predictionSignalCount} optional signal${predictionSignalCount === 1 ? '' : 's'} logged`
+                : 'Temperature, discharge, sleep, and sex — all optional'}
+            </span>
+          </span>
+          <span aria-hidden="true" style={{
+            color: acc, fontFamily: T.sans, fontSize: 18,
+            transform: `rotate(${showPredictionSignals ? 180 : 0}deg)`,
+            transition: 'transform 0.22s var(--ease-out)',
+          }}>⌄</span>
+        </button>
+
+        {showPredictionSignals && (
+        <div className="prediction-signals" style={{ animation: 'fadeUp 0.28s ease-out both' }}>
+        <div style={{ fontFamily: T.serif, fontSize: 12.5, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, margin: '-8px 2px 20px' }}>
+          Temperature and discharge can help estimate ovulation timing. The rest adds context to patterns Luna sees over time.
+        </div>
+
         {/* Temperature (BBT) — frosted input + segmented unit toggle */}
         <div className="insight-stagger" style={{ animationDelay: '260ms' }}>
         <Eyebrow color={acc}>Your morning temperature</Eyebrow>
@@ -433,7 +493,7 @@ export default function Log() {
           />
           <div className="frost-card" style={{ display: 'flex', background: 'rgba(253,250,245,0.55)', border: '1px solid rgba(26,19,16,0.06)', borderRadius: 999, padding: 3 }}>
             {['F','C'].map((u) => (
-              <button key={u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
+              <button key={u} aria-pressed={bbtUnit === u} onClick={() => { setBbtUnit(u); if (bbtError) setBbtError('') }}
                 style={{ background: bbtUnit === u ? T.text : 'transparent', color: bbtUnit === u ? T.bg : T.text, border: 'none', padding: '9px 14px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11, fontWeight: 600, letterSpacing: 0.3, borderRadius: 999, transition: 'all 0.2s var(--ease-out)' }}>
                 °{u}
               </button>
@@ -446,7 +506,7 @@ export default function Log() {
           </div>
         )}
         <div style={{ fontSize: 12.5, color: T.muted, fontFamily: T.serif, lineHeight: 1.6, marginBottom: 12, fontStyle: 'italic' }}>
-          Take it first thing in the morning, before sitting up. It rises about 0.5°F after ovulation — that's how Luna knows.
+          Take it first thing in the morning, before sitting up. A sustained rise can signal that ovulation has passed.
         </div>
         {teachField === 'bbt' && teachLesson && (
           <div style={{ marginBottom: 24 }}>
@@ -463,7 +523,7 @@ export default function Log() {
             const on = mucus === m.id
             const careColors = sectionColors('care')
             return (
-              <button key={m.id} onClick={() => {
+              <button key={m.id} aria-pressed={on} onClick={() => {
                 setMucus(on ? null : m.id)
                 setTeachField(on ? null : 'mucus')
               }}
@@ -499,7 +559,7 @@ export default function Log() {
           {['Great','Okay','Restless','Poor'].map((s) => {
             const on = sleep === s
             return (
-              <button key={s} onClick={() => {
+              <button key={s} aria-pressed={on} onClick={() => {
                 setSleep(on ? null : s)
                 setTeachField(on ? null : 'sleep')
               }}
@@ -524,7 +584,7 @@ export default function Log() {
           {SEX_OPTIONS.map((s) => {
             const on = sex === s.id
             return (
-              <button key={s.id} onClick={() => {
+              <button key={s.id} aria-pressed={on} onClick={() => {
                 setSex(on ? null : s.id)
                 setTeachField(on ? null : 'sex')
               }}
@@ -541,6 +601,9 @@ export default function Log() {
           </div>
         )}
         </div>
+
+        </div>
+        )}
 
         {/* Note — frosted glass textarea */}
         <div className="insight-stagger" style={{ animationDelay: '420ms' }}>

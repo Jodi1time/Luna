@@ -127,10 +127,11 @@ the on-device model meant signing out, deleting the app, or switching
 devices wiped a user's cycle data — a hostile UX for a wellness app users
 return to monthly.
 
-Result: Luna can technically decrypt user data to serve it, which is the
-same threat model as Flo / Clue / Apple Health / Strava. The Privacy
-Policy ([`src/screens/PrivacyPolicy.jsx`](src/screens/PrivacyPolicy.jsx))
-states this honestly.
+Result: Luna and its current cloud infrastructure can technically decrypt
+user data to serve it. The Privacy Policy
+([`src/screens/PrivacyPolicy.jsx`](src/screens/PrivacyPolicy.jsx)) states
+this honestly. `SECURITY_ARCHITECTURE.md` documents the recommended move
+to native encrypted storage and client-side envelope encryption.
 
 **Two tables, both gated by Row-Level Security on `auth.uid()`:**
 
@@ -148,7 +149,7 @@ profiles (one row per auth user)
 
 logs (one row per user × date)
   id, user_id -> auth.users, date,
-  mood, symptoms text[], flow, bbt numeric, mucus, sex, sleep,
+  mood, symptoms text[], flow, bbt numeric, bbt_unit, mucus, sex, sleep,
   intimate jsonb, note, created_at, updated_at
 
 shares (Pro feature — see §5)
@@ -157,7 +158,9 @@ shares (Pro feature — see §5)
 ```
 
 **Local persistence:** Zustand's `persist` middleware mirrors the store
-to localStorage (key: `luna-store`). On sign-in, `hydrateFromCloud()`
+to plaintext browser localStorage (key: `luna-store`). This cache is not
+separately encrypted and is an explicit pre-native-launch migration item.
+On sign-in, `hydrateFromCloud()`
 pulls cloud state and merges with local by `updated_at` per log — local
 edits during an in-flight write aren't clobbered. On sign-out,
 `clearLocalData()` resets the local slice; the server copy persists so
@@ -179,7 +182,7 @@ users can sign back in.
 
 ### What syncs to the server
 
-Effectively everything except diary photos (which are stored inline as
+Effectively everything, including diary photos (stored inline as
 compressed JPEG data URLs inside `profiles.settings.journalEntries[]`).
 
 | Local state | Server target |
@@ -199,8 +202,8 @@ Writes are fire-and-forget (`fireAndForget()` wrapper) — UI doesn't block on t
 | Service | What's sent | What's NOT sent |
 |---|---|---|
 | **Supabase** (data + auth) | Everything in the tables above | n/a — this is our DB |
-| **Anthropic** (via `luna-chat` Edge Function) | Current phase id/name + cycle day + cycle length, plus the user's typed chat messages. JWT used only to verify a signed-in user before spending tokens. | Email, name, log history, symptoms, flow, BBT, diary. None of these are passed in the payload. |
-| **Sentry** | Stacktraces + error messages. `beforeSend` regex-scrubs email patterns from both. PII scrubbing pass. | Sample rate 10% traces, 0% session replay (10% on error). |
+| **Anthropic** (via `luna-chat` Edge Function) | Current phase id/name + cycle day + cycle length, a short client-derived qualitative pattern summary, and the user's typed chat messages. The pattern summary is capped at 240 characters and contains no raw logs, dates, or identifiers. JWT is used only to verify a signed-in user before spending tokens. | Email, name, raw log history, raw symptoms, flow, BBT, diary. None of these are passed in the payload. |
+| **Sentry** | Scrubbed stacktraces + error messages. Email patterns are removed; request and breadcrumb URLs have query strings and fragments stripped. | Performance traces and session replay are both disabled. |
 | **PostHog** | Explicit event names + boolean/numeric categories only (e.g. `log_saved`, `{ has_mood: true, symptom_count: 3 }`). `BLOCKED_KEYS` guard rejects events containing keys like `mood`, `note`, `email`, etc. 64-char string-length filter. `autocapture: false`, `capture_pageview: false`. | Mood content, symptom contents, journal text, names, emails. |
 | **Resend** (SMTP via Supabase Auth) | Email address + reset link only. | No app data. |
 | **RevenueCat** | Not currently in use. The lib stub exists but the decision (2026-06-03) is to use native StoreKit + Play Billing directly when native ships. | n/a |
@@ -218,7 +221,7 @@ Writes are fire-and-forget (`fireAndForget()` wrapper) — UI doesn't block on t
 ### Privacy posture
 
 - No advertising trackers, no third-party SDKs beyond the four above.
-- Anonymous analytics defaults ON (event categories only); toggle in
+- Anonymous analytics defaults OFF (event categories only); opt-in toggle in
   Settings → Privacy → Anonymous analytics. Reset on sign-out + account
   delete.
 - CSV export of all data available from Settings.
@@ -265,7 +268,7 @@ Writes are fire-and-forget (`fireAndForget()` wrapper) — UI doesn't block on t
 From `supabase/functions/luna-chat/index.ts`:
 
 ```typescript
-const SYSTEM_PROMPT = `You are Luna — a women's wellness companion. Your voice is that of a wise older sister or a thoughtful doula. You speak warmly but not saccharinely. You're knowing without being prescriptive.
+const SYSTEM_PROMPT = `You are Luna — a women's wellness companion. Your voice is warm, brief, intimate, and embodied. Never prescriptive, never clinical, never categorical. Never name your own tone or relationship to the user (no "as your friend," "as a doula," "as a wise older sister") — let her attribute it. Never list back what you know about her — speak to her, not about her.
 
 You help with:
 - Reflection prompts about the menstrual cycle, mental health, self-care
@@ -280,9 +283,12 @@ You DO NOT:
 - Tell users they "should" or "must" do anything
 - Pathologise normal feelings
 - Pretend to be a real person
+- Categorise the user back to herself ("I notice you tend toward...", "Your pattern is...", "It sounds like you often...")
+- Echo back any provided pattern data as a list, a chart, or an observation
+- Name your own role or compare yourself to one (no "like a friend would say...")
 
 When users mention:
-- Suicidal thoughts or self-harm: acknowledge briefly, then surface crisis resources (988 Suicide & Crisis Lifeline in US, Crisis Text Line 741741, or "your local equivalent"). Encourage reaching out to a provider. Stop the casual conversation; this is the moment to be direct and warm.
+- Suicidal thoughts or self-harm: acknowledge briefly, then surface crisis resources (988 Suicide & Crisis Lifeline in US, Crisis Text Line 741741, or "your local equivalent"). Encourage reaching out to a provider. Stop the casual conversation; be direct and warm.
 - Severe symptoms (heavy bleeding past 7 days, severe pain, fever with period, fainting, sudden change in cycle): acknowledge and gently suggest seeing a doctor. Don't catastrophise.
 - Pregnancy / TTC: be honest that an app's role is limited; recommend an OB-GYN.
 
@@ -306,7 +312,19 @@ function dailyThoughtUserPrompt(ctx: any): string {
   const cycleLen = ctx?.cycle_length || 28
   const hour = ctx?.hour ?? new Date().getUTCHours()
   const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  // Pattern summary is a derived, qualitative string from the client
+  // (e.g. "tends toward low mood and cramps in late luteal; cycles
+  // steady"). NEVER contains raw logs / dates / identifiers. When
+  // present, lets the reflection root in patterns the user actually
+  // lives. When absent, fall back to the un-personalised prompt so
+  // first-cycle users still get a clean reflection.
+  const patternSummary = (ctx?.pattern_summary || '').toString().trim()
+  const patternLine = patternSummary
+    ? `Her cycle pattern, observed across her own tracking: ${patternSummary}. Let it shape the reflection only if it genuinely fits.`
+    : ''
   return `Generate ONE short reflection — 1–2 sentences max, ending in a question or open invitation — for a woman in her ${phaseName} phase, day ${cycleDay} of ${cycleLen}, this ${timeOfDay}.
+
+${patternLine}
 
 Topic should be one of: cycle-aware self-care, mental health in hormonal context, body literacy, embodied presence, emotional acceptance, the meaning of small daily acts.
 
@@ -319,7 +337,11 @@ Do not say "you should" or "you must". Do not begin with "Today" or "It's day ${
 ```typescript
 function chatSystemAddition(ctx: any): string {
   const phase = ctx?.phase_name ? `Currently in their ${ctx.phase_name} phase, day ${ctx.cycle_day} of ${ctx.cycle_length}.` : ''
-  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. ${phase}`
+  const patternSummary = (ctx?.pattern_summary || '').toString().trim()
+  const patternLine = patternSummary
+    ? `Her cycle pattern, derived from her own tracking: ${patternSummary}. Let it shape what you say only when it genuinely fits.`
+    : ''
+  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. ${phase} ${patternLine}`.trim()
 }
 ```
 
@@ -353,97 +375,22 @@ async function callAnthropic(
     }),
   })
   if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Anthropic error ${res.status}: ${body}`)
+    // Do not reflect an upstream response body to the client; provider
+    // diagnostics can contain request metadata that users should not see.
+    throw new Error(`Anthropic request failed (${res.status})`)
   }
   const json = await res.json()
   return json.content?.[0]?.text?.trim() || ''
 }
 ```
 
-### Edge Function dispatcher (verbatim)
+### Edge Function dispatcher
 
-```typescript
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  try {
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'Sign in required' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Verify the user via their JWT — confirms they're a real signed-in
-    // user before we spend any tokens on their behalf.
-    const userClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    )
-    const { data: userData, error: userErr } = await userClient.auth.getUser()
-    if (userErr || !userData?.user) {
-      return new Response(JSON.stringify({ error: 'Invalid session' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    const body = await req.json().catch(() => ({}))
-    const mode = body.mode || 'daily-thought'
-    const context = body.context || {}
-
-    let reply = ''
-    if (mode === 'daily-thought') {
-      reply = await callAnthropic(
-        [{ role: 'user', content: dailyThoughtUserPrompt(context) }],
-        SYSTEM_PROMPT,
-        120,
-      )
-    } else if (mode === 'chat') {
-      const messages: AnthropicMessage[] = Array.isArray(body.messages) ? body.messages : []
-      if (messages.length === 0) {
-        return new Response(JSON.stringify({ error: 'Missing messages' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
-      // Hard cap conversation length to prevent runaway cost.
-      const trimmed = messages.slice(-12)
-      reply = await callAnthropic(
-        trimmed,
-        `${SYSTEM_PROMPT}\n\n${chatSystemAddition(context)}`,
-        220,
-      )
-    } else {
-      return new Response(JSON.stringify({ error: 'Unknown mode' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    return new Response(JSON.stringify({ text: reply, model: ANTHROPIC_MODEL }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  } catch (e) {
-    return new Response(JSON.stringify({ error: String(e?.message || e) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-})
-```
+The dispatcher verifies the Supabase JWT, rejects bodies over 50 KB,
+normalizes phase and cycle context into bounded values, caps the derived
+pattern summary at 240 characters, keeps only the last 12 valid chat
+messages, and caps each message at 2,000 characters. Provider response
+bodies and internal exception details are not returned to clients.
 
 ### Client-side call (verbatim)
 
@@ -472,9 +419,18 @@ async function callFunction(payload) {
   }
 }
 
-export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycleLength }) {
-  const todayISO = new Date().toISOString().slice(0, 10)
-  const key = `${CACHE_PREFIX}${userId || 'anon'}:${todayISO}`
+export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycleLength, patternSummary }) {
+  const todayISO = todayKey()
+  const summaryHash = (() => {
+    if (!patternSummary) return 'nopat'
+    let h = 0
+    for (let i = 0; i < patternSummary.length; i++) {
+      h = ((h << 5) - h) + patternSummary.charCodeAt(i)
+      h |= 0
+    }
+    return Math.abs(h).toString(36)
+  })()
+  const key = `${CACHE_PREFIX}${userId || 'anon'}:${todayISO}:${summaryHash}`
   try {
     const cached = localStorage.getItem(key)
     if (cached) return cached
@@ -487,6 +443,7 @@ export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycle
       cycle_day: cycleDay,
       cycle_length: cycleLength,
       hour: new Date().getHours(),
+      pattern_summary: patternSummary || null,
     },
   })
   if (text) {
@@ -495,7 +452,7 @@ export async function dailyThought({ userId, phaseId, phaseName, cycleDay, cycle
   return text
 }
 
-export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength }) {
+export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength, patternSummary }) {
   return callFunction({
     mode: 'chat',
     messages,
@@ -504,6 +461,7 @@ export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength
       phase_name: phaseName,
       cycle_day: cycleDay,
       cycle_length: cycleLength,
+      pattern_summary: patternSummary || null,
     },
   })
 }
@@ -519,17 +477,19 @@ export async function chat({ messages, phaseId, phaseName, cycleDay, cycleLength
   "phase_name": "Luteal",
   "cycle_day": 24,
   "cycle_length": 29,
-  "hour": 21   // daily-thought only
+  "hour": 21,  // daily-thought only
+  "pattern_summary": "tends toward low mood and cramps in late luteal; cycles steady"
 }
 ```
 
-Plus, in `chat` mode only, the last 12 user/assistant messages — i.e.
-whatever the user typed.
+The pattern summary is computed on-device from multiple logs and contains
+no raw symptoms, dates, or identifiers. In `chat` mode, the last 12
+user/assistant messages are also sent — i.e. whatever the user typed.
 
 **Explicitly NOT sent:** the user's email, display name, account id (only
 the JWT is sent, and the function uses it solely to verify a signed-in
 user — `userData.user` is read but never echoed into the prompt), log
-history, symptom history, flow data, BBT readings, mucus observations,
+raw log history, raw symptom history, flow data, BBT readings, mucus observations,
 sex log, diary entries, journal photos, saved articles, helper history.
 
 ### Real example

@@ -127,7 +127,7 @@ export default function PrivacyDashboard() {
             On Luna's servers (Supabase), encrypted at rest.
           </div>
           <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.55 }}>
-            Access is gated by row-level security — only your signed-in account can read or write your data. Transfers between your device and the server use TLS. We use Sentry for crash reporting (PII-stripped) and PostHog for anonymous analytics (toggle below).
+            Access is gated by row-level security — only your signed-in account can read or write your data. Transfers use TLS. Luna keeps a fast device cache that is not yet separately encrypted; native encrypted storage is the next security migration. Sentry receives limited error diagnostics, and PostHog stays off unless you enable it below.
           </div>
         </div>
 

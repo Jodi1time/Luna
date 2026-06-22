@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { T } from '../data/theme'
-import { Eyebrow, Rule, Screen } from '../components/shared'
-import { ARTICLES, PHASES } from '../data/lunaData'
+import { Screen } from '../components/shared'
+import { ARTICLES } from '../data/lunaData'
 import { CONDITIONS } from '../data/conditions'
 import { useCycle } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
@@ -22,6 +22,14 @@ const ARTICLE_CAT_TO_SECTION = {
   'Know your body':'read',
 }
 const articleSection = (cat) => ARTICLE_CAT_TO_SECTION[cat] || 'default'
+
+const LIBRARY_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'cycle', label: 'Cycle', categories: ['Nutrition', 'Know your body', 'Movement', 'Mental Health'] },
+  { id: 'conditions', label: 'Conditions', categories: ['Conditions', 'Vaginal health', 'Pregnancy loss'] },
+  { id: 'intimate', label: 'Intimate', categories: ['Sexual health'] },
+  { id: 'basics', label: 'Basics', categories: ['Basics', 'Your Data'] },
+]
 
 // Pick a hero article for the current phase. Looks for articles
 // explicitly mapped to this phase first; falls back to the basics
@@ -62,11 +70,16 @@ export default function Library() {
   const heroAccent = accentFor(heroArticle.id)
   const heroPhaseId = ARTICLE_PHASE[heroArticle.id] || phaseId || 'follicular'
   const conditionsAccent = sectionColors('urgent').accent
+  const [activeFilter, setActiveFilter] = useState('all')
 
   // The body of the Library — every article except the hero, grouped
   // into sections so the page reads as an editorial table of contents.
-  const restArticles = useMemo(() => ARTICLES.filter((a) => a.id !== heroArticle.id), [heroArticle.id])
-  const sections = useMemo(() => groupByCategory(restArticles), [restArticles])
+  const visibleArticles = useMemo(() => {
+    if (activeFilter === 'all') return ARTICLES.filter((a) => a.id !== heroArticle.id)
+    const filter = LIBRARY_FILTERS.find((item) => item.id === activeFilter)
+    return ARTICLES.filter((article) => filter?.categories?.includes(article.cat))
+  }, [activeFilter, heroArticle.id])
+  const sections = useMemo(() => groupByCategory(visibleArticles), [visibleArticles])
 
   return (
     <div className="home-stage">
@@ -98,7 +111,7 @@ export default function Library() {
             borderRadius: 18,
             padding: '12px 14px',
             cursor: 'pointer',
-            marginBottom: 22,
+            marginBottom: 12,
             textAlign: 'left',
             color: T.text, fontFamily: 'inherit',
             animationDelay: '140ms',
@@ -114,8 +127,37 @@ export default function Library() {
           </span>
         </button>
 
+        <div role="group" aria-label="Filter library by topic"
+          className="insight-stagger"
+          style={{
+            display: 'flex', gap: 8, overflowX: 'auto',
+            margin: '0 -22px 22px', padding: '2px 22px 5px',
+            animationDelay: '160ms',
+          }}>
+          {LIBRARY_FILTERS.map((filter) => {
+            const selected = activeFilter === filter.id
+            return (
+              <button key={filter.id} type="button"
+                onClick={() => setActiveFilter(filter.id)}
+                aria-pressed={selected}
+                className="alive-card"
+                style={{
+                  flex: '0 0 auto', padding: '9px 14px', borderRadius: 999,
+                  border: `1px solid ${selected ? heroAccent + '55' : 'rgba(26,19,16,0.08)'}`,
+                  background: selected ? `${heroAccent}16` : 'rgba(253,250,245,0.5)',
+                  color: selected ? heroAccent : T.muted,
+                  fontFamily: T.sans, fontSize: 11, fontWeight: 600,
+                  letterSpacing: 0, cursor: 'pointer',
+                }}>
+                {filter.label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* Conditions Atlas entry — the named-things-you-can-ask-for
             surface. Pulls from the conditions data. */}
+        {(activeFilter === 'all' || activeFilter === 'conditions') && (
         <button onClick={() => go('conditions')}
           className="insight-stagger alive-card"
           style={{
@@ -146,12 +188,14 @@ export default function Library() {
             PCOS · Endo · PMDD · Thyroid · Fibroids · HA — what they are, what to ask for, what works.
           </div>
         </button>
+        )}
 
         {/* Hero — phase-matched feature with editorial treatment.
             Background now uses the article's subject-category tint
             from the section palette, so the card has real chromatic
             identity. Phase flourish + eyebrow + left edge still take
             the phase accent. */}
+        {activeFilter === 'all' && (
         <button onClick={() => goArticle(heroArticle.id)}
           className="insight-stagger alive-card"
           style={{
@@ -196,6 +240,7 @@ export default function Library() {
             </div>
           )}
         </button>
+        )}
 
         {/* Sectioned table of contents — by category, in the order
             categories first appear in the data. Reads like a magazine
