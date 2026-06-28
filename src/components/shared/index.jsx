@@ -43,7 +43,7 @@ export function AppShell({ children }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#E8E3D8',
+      background: 'var(--luna-room-bg, #E8E3D8)',
       padding: '0',
       overflow: 'hidden',
     }}>

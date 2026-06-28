@@ -303,11 +303,9 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   )
 }
 
-// Quiet invitations under the phase cover. The first row is the
-// emotional layer: talk, share, look something up. The compact shelf
-// below keeps the deeper tools present without making every feature
-// fight for the same visual weight.
-function QuickActions({ go, onOpenChat }) {
+// Quiet invitations under the phase cover. Talk to Luna has its own
+// hero card below; this row stays focused on sharing and lookup.
+function QuickActions({ go }) {
   // Each action still carries its route and category. Category gives
   // the icon a quiet accent, but the card backgrounds now stay close
   // to Luna's paper so the row feels like invitations, not a menu.
@@ -315,19 +313,6 @@ function QuickActions({ go, onOpenChat }) {
     // "Log today" QuickAction was a direct duplicate of the center
     // [+] button in the TabBar. Cut to enforce the "one canonical
     // home per job" rule — the [+] button is the canonical entry.
-    { key: 'talk', category: 'reflect', tier: 'primary', label: 'Talk to Luna', sub: 'A real conversation for today',
-      icon: (
-        <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          {/* Chat bubble with three pulsing dots — typing-indicator
-              motif. The dots cycle in sequence so the bubble reads
-              as "Luna composing something for you". */}
-          <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-          <circle className="dot dot-1" cx="7" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-2" cx="10" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-3" cx="13" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-        </svg>
-      ),
-      onTap: () => onOpenChat?.() },
     { key: 'share', category: 'plan', tier: 'primary', label: 'Share with someone', sub: 'A partner, your mother, a friend',
       icon: (
         <svg className="icon-anim-share" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -389,62 +374,13 @@ function QuickActions({ go, onOpenChat }) {
   ]
   const primaryItems = items.filter((it) => it.tier === 'primary')
   const secondaryItems = items.filter((it) => it.tier === 'secondary')
-  // One-shot scroll teaser — runs once on mount unless the user
-  // touches the row first, in which case it cancels immediately so
-  // the user's finger always wins over the animation. Spring tail
-  // (forward glide → light overshoot → settle) reads as physical
-  // motion, not a programmed slide.
-  const scrollerRef = useRef(null)
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    let cancelled = false
-    let startTimer = 0
-    const cancel = () => {
-      cancelled = true
-      if (startTimer) clearTimeout(startTimer)
-      if (raf) cancelAnimationFrame(raf)
-    }
-    el.addEventListener('touchstart', cancel, { passive: true, once: true })
-    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
-    el.addEventListener('wheel', cancel, { passive: true, once: true })
-    const start = performance.now()
-    const duration = 1650
-    const peak = 64
-    const tick = (now) => {
-      if (cancelled) return
-      const t = Math.min(1, (now - start) / duration)
-      let x
-      if (t < 0.42) {
-        const p = t / 0.42
-        x = peak * (1 - Math.pow(1 - p, 3))
-      } else if (t < 0.78) {
-        const p = (t - 0.42) / 0.36
-        const eased = 1 - Math.pow(1 - p, 2.5)
-        x = peak + (-peak - 8) * eased
-      } else {
-        const p = (t - 0.78) / 0.22
-        const eased = Math.sin((p * Math.PI) / 2)
-        x = -8 + 8 * eased
-      }
-      el.scrollLeft = Math.max(0, x)
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 650)
-    return () => {
-      cancel()
-      el.removeEventListener('touchstart', cancel)
-      el.removeEventListener('pointerdown', cancel)
-      el.removeEventListener('wheel', cancel)
-    }
-  }, [])
   return (
     <div style={{ marginTop: 16 }}>
-      <div ref={scrollerRef} className="h-scroller" style={{
-        display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-        marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+        gap: 10,
+        padding: '2px 0',
       }}>
       {primaryItems.map((it, idx) => {
         const colors = sectionColors(it.category)
@@ -452,10 +388,7 @@ function QuickActions({ go, onOpenChat }) {
           <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
             style={{
               position: 'relative',
-              flex: '0 0 58%',
-              maxWidth: 222,
-              minHeight: 130,
-              scrollSnapAlign: 'start',
+              minHeight: 124,
               textAlign: 'left',
               borderRadius: 24,
               padding: 16,
@@ -543,6 +476,94 @@ function QuickActions({ go, onOpenChat }) {
         })}
       </div>
     </div>
+  )
+}
+
+function LunaHeroCard({ phase, text, fwMoment, go, onOpenChat }) {
+  if (!phase || (!fwMoment && !text)) return null
+  const opensWheel = fwMoment?.cta === 'wheel'
+  const body = fwMoment ? fwMoment.text : text
+  return (
+    <button
+      onClick={() => {
+        if (opensWheel) {
+          go('insights')
+          return
+        }
+        onOpenChat?.(body)
+      }}
+      className="luna-voice-card alive-card frost-card"
+      style={{
+        '--voice-accent': phase.color,
+        position: 'relative',
+        marginTop: 18,
+        padding: 20,
+        width: '100%',
+        border: `1px solid color-mix(in srgb, ${phase.color}, transparent 72%)`,
+        borderRadius: 28,
+        background: `linear-gradient(145deg, rgba(253,250,245,0.70), color-mix(in srgb, ${phase.color}, #fff 91%))`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.64), 0 24px 46px -34px ${phase.color}`,
+        color: T.text,
+        cursor: 'pointer',
+        overflow: 'hidden',
+        textAlign: 'left',
+        fontFamily: 'inherit',
+      }}
+    >
+      <div aria-hidden="true" style={{
+        position: 'absolute',
+        top: -38,
+        right: -28,
+        width: 122,
+        height: 122,
+        borderRadius: '50%',
+        background: `radial-gradient(circle, color-mix(in srgb, ${phase.color}, transparent 56%), transparent 68%)`,
+        opacity: 0.72,
+      }} />
+      <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, fontWeight: 500, letterSpacing: -0.1 }}>
+            {fwMoment ? fwMoment.eyebrow : 'a thought, today'}
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 11, color: T.muted, marginTop: 3 }}>
+            {opensWheel ? 'See the pattern' : 'Open a real conversation'}
+          </div>
+        </div>
+        <span aria-hidden="true" className="luna-voice-mark" style={{
+          flexShrink: 0,
+          width: 42,
+          height: 42,
+          borderRadius: 18,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: phase.color,
+          background: 'rgba(255,255,255,0.38)',
+          border: '1px solid rgba(255,255,255,0.55)',
+        }}>
+          {opensWheel ? (
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+              <circle cx="10" cy="10" r="6.8" strokeDasharray="3 2.3" />
+              <circle cx="10" cy="10" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+          ) : (
+            <svg className="icon-anim-talk" width="19" height="19" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+              <circle className="dot dot-1" cx="7" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+              <circle className="dot dot-2" cx="10" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+              <circle className="dot dot-3" cx="13" cy="9.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+          )}
+        </span>
+      </div>
+      <div style={{ position: 'relative', fontFamily: T.serif, fontSize: 20, fontStyle: 'italic', lineHeight: 1.42, letterSpacing: -0.35, color: T.text }}>
+        {body}
+      </div>
+      <div style={{ position: 'relative', marginTop: 16, display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: T.sans, fontSize: 12, fontWeight: 700, letterSpacing: 0.2, color: phase.color }}>
+        {opensWheel ? 'See your wheel' : 'Talk to Luna'}
+        <span aria-hidden="true">→</span>
+      </div>
+    </button>
   )
 }
 
@@ -1314,6 +1335,19 @@ export default function Home() {
             </button>
           )}
 
+          {!isPreg && (
+            <LunaHeroCard
+              phase={phase}
+              text={thoughtText}
+              fwMoment={fwMoment}
+              go={go}
+              onOpenChat={(opener) => {
+                setChatOpener(opener || null)
+                setChatOpen(true)
+              }}
+            />
+          )}
+
           {/* BC missing-date prompt — when she's on a method that
               needs a start date (shot, IUD, implant, pill/patch/ring)
               and we don't have it yet. Single tap into BirthControl
@@ -1442,7 +1476,6 @@ export default function Home() {
           {!isPreg && (
             <QuickActions
               go={go}
-              onOpenChat={() => { setChatOpener(null); setChatOpen(true) }}
             />
           )}
 
@@ -1552,59 +1585,6 @@ export default function Home() {
               phaseColor={phase?.color}
               onTap={() => go('journal')}
             />
-          )}
-
-          {/* Morning thought — now a flat editorial strip instead of
-              another decorated card. Tap opens LunaChat immediately,
-              seeded with this thought, so the gesture-to-conversation
-              stays one tap without adding more visual weight. */}
-          {!isPreg && phase && (fwMoment || thoughtText) && (
-            <button onClick={() => {
-                if (fwMoment?.cta === 'wheel') { go('insights'); return }
-                setChatOpener(fwMoment ? fwMoment.text : thoughtText)
-                setChatOpen(true)
-              }}
-              className="alive-card"
-              style={{
-                position: 'relative',
-                marginTop: 26, padding: '18px 0 20px',
-                background: 'transparent',
-                border: 'none',
-                borderTop: '1px solid rgba(26,19,16,0.07)',
-                borderBottom: '1px solid rgba(26,19,16,0.07)',
-                borderRadius: 0,
-                boxShadow: 'none',
-                textAlign: 'left', cursor: 'pointer', display: 'block', width: '100%',
-                fontFamily: 'inherit', color: 'inherit',
-                overflow: 'hidden',
-              }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 10, position: 'relative' }}>
-                <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, letterSpacing: -0.1 }}>
-                  {fwMoment ? fwMoment.eyebrow : 'a thought, today'}
-                </div>
-                <div style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, color: phase.color, fontWeight: 600 }}>
-                  {fwMoment?.cta === 'wheel' ? (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                        <circle cx="10" cy="10" r="6.5" strokeDasharray="3 2.4" />
-                        <circle cx="10" cy="10" r="1.4" fill="currentColor" stroke="none" />
-                      </svg>
-                      see your wheel
-                    </>
-                  ) : (
-                    <>
-                      <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
-                      </svg>
-                      talk it through
-                    </>
-                  )}
-                </div>
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 18.5, fontStyle: 'italic', lineHeight: 1.48, color: T.text, letterSpacing: -0.25, position: 'relative' }}>
-                {fwMoment ? fwMoment.text : thoughtText}
-              </div>
-            </button>
           )}
 
           {/* Circle card — only for the first-cycle milestone now.
