@@ -3,7 +3,7 @@ import { T } from '../data/theme'
 import { CTAButton, SourceLine, Icons } from '../components/shared'
 import Backdrop from '../components/Backdrop'
 import useLuna from '../store/useLuna'
-import { getSession } from '../lib/supabase'
+import { getSession, supabaseEnabled } from '../lib/supabase'
 import { StatusView } from '../components/StatusView'
 import { validateName, validateAccountPassword, validateEmail } from '../lib/validation'
 import { sectionColors } from '../data/sectionPalette'
@@ -790,7 +790,7 @@ function Field({ label, type = 'text', value, onChange, placeholder }) {
   )
 }
 
-function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) {
+function StepAccount({ name, email, accountPassword, onChange, signedInEmail, authEnabled = true }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <Field label="your name" value={name} onChange={(v) => onChange('name', v)} placeholder="Mira" />
@@ -801,6 +801,15 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
             signed in as
           </div>
           <div style={{ fontFamily: T.sans, fontSize: 14, color: T.text }}>{signedInEmail}</div>
+        </div>
+      ) : !authEnabled ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, fontWeight: 500, color: T.muted, letterSpacing: -0.1 }}>
+            local preview
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 12.5, color: T.muted, lineHeight: 1.5 }}>
+            Auth is not configured on this test link, so Luna will save this preview on this device only.
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
@@ -819,7 +828,9 @@ function StepAccount({ name, email, accountPassword, onChange, signedInEmail }) 
         border: '1px solid rgba(26,19,16,0.06)',
         borderRadius: 16,
       }}>
-        Sign in on any device to come back to your cycle. Your account controls access to your data.
+        {authEnabled
+          ? 'Sign in on any device to come back to your cycle. Your account controls access to your data.'
+          : 'This is only for local testing. Production builds should have Supabase auth configured before launch.'}
       </div>
     </div>
   )
@@ -909,6 +920,12 @@ export default function Onboarding({ step, slug: slugProp }) {
       if (signedInEmail) {
         // Returning sign-in — session already established.
         acct = { email: signedInEmail }
+      } else if (!supabaseEnabled) {
+        // Local/dev preview: allow onboarding without cloud auth so
+        // phone testing is not blocked by missing env vars. Production
+        // builds should configure Supabase and will take the branch
+        // below.
+        acct = null
       } else {
         const email = account.email.trim()
         const password = account.accountPassword
@@ -985,6 +1002,7 @@ export default function Onboarding({ step, slug: slugProp }) {
     const nameErr = validateName(account.name)
     if (nameErr) return nameErr
     if (signedInEmail) return null
+    if (!supabaseEnabled) return null
     const emailErr = validateEmail(account.email)
     if (emailErr) return emailErr
     const apErr = validateAccountPassword(account.accountPassword)
@@ -1147,7 +1165,7 @@ export default function Onboarding({ step, slug: slugProp }) {
           Last thing —<br /><em>what shall we call you?</em>
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
-          Your name greets you on your home screen.{signedInEmail ? '' : ' Your account is how you sign in on any device.'}
+          Your name greets you on your home screen.{signedInEmail ? '' : (supabaseEnabled ? ' Your account is how you sign in on any device.' : ' This preview will stay on this device.')}
         </div>
         <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
           <StepAccount
@@ -1156,6 +1174,7 @@ export default function Onboarding({ step, slug: slugProp }) {
             accountPassword={account.accountPassword}
             onChange={setAccountField}
             signedInEmail={signedInEmail}
+            authEnabled={supabaseEnabled}
           />
         </div>
         {signupError && (
@@ -1192,7 +1211,7 @@ export default function Onboarding({ step, slug: slugProp }) {
           <CTAButton full onClick={() => { if (canAdvance && !finishing) next() }} style={{ opacity: canAdvance && !finishing ? 1 : 0.5, letterSpacing: 0.3, textTransform: 'none', fontSize: 13 }}>
             {finishing
               ? 'Getting things ready…'
-              : (slug === 'account' ? 'Welcome to Luna' : (slug === 'payoff' ? 'Save your space' : 'Continue'))} {Icons.arrow}
+              : (slug === 'account' ? (supabaseEnabled ? 'Welcome to Luna' : 'Enter Luna') : (slug === 'payoff' ? 'Save your space' : 'Continue'))} {Icons.arrow}
           </CTAButton>
         </div>
 
