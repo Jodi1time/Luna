@@ -39,11 +39,11 @@ export default function Welcome() {
         </div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingBottom: 20 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 43, fontWeight: 500, letterSpacing: -1.35, lineHeight: 0.98, textWrap: 'balance' }}>
-          A companion, on the days you need one.
+        <div style={{ fontFamily: T.serif, fontSize: 42, fontWeight: 500, letterSpacing: -1.25, lineHeight: 1.02, textWrap: 'balance' }}>
+          Understand why your body feels different today.
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.55, color: T.muted, marginTop: 18, maxWidth: 320 }}>
-          Track your cycle. Notice your patterns. Keep one private place for your body.
+          Mood, energy, sleep, symptoms, and cycle patterns in one private daily ritual.
         </div>
       </div>
 
@@ -57,9 +57,9 @@ export default function Welcome() {
         marginTop: 8,
       }}>
         {[
-          { h: 'Private by default', s: 'Your diary stays yours. Luna never sells your data.' },
-          { h: 'Clear when it matters', s: 'Predictions show uncertainty instead of pretending the body is a clock.' },
-          { h: 'Quiet unless invited', s: 'No noise for the sake of engagement.' },
+          { h: 'Ritual, not routine', s: 'A calm check-in for what your body is asking for today.' },
+          { h: 'Science, softly', s: 'Evidence-informed guidance without turning your body into homework.' },
+          { h: 'Private by design', s: 'Your diary stays yours. Luna never sells your data.' },
         ].map((p) => (
           <div key={p.h} style={{ display: 'grid', gridTemplateColumns: '118px 1fr', gap: 12, alignItems: 'baseline' }}>
             <div style={{ fontFamily: T.serif, fontSize: 13.5, fontWeight: 600, letterSpacing: -0.1 }}>{p.h}</div>

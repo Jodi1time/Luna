@@ -168,7 +168,7 @@ const SCENES = {
 export function CardArt({ kind, accent }) {
   const Scene = SCENES[kind]
   if (!Scene) return null
-  return <Scene accent={accent || '#C84E2E'} />
+  return <Scene accent={accent || '#6B4739'} />
 }
 
 export const CARD_ART_KINDS = Object.keys(SCENES)

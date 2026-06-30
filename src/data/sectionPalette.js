@@ -14,24 +14,24 @@
 //
 // Categories chosen by app structure, not vibe — every Luna surface
 // fits into one of these:
-//   reflect   — writing, journaling, looking back (soft lavender)
-//   body      — logging, tracking, BBT, period (warm peach)
-//   read      — library, articles, knowledge (sage green)
-//   intimate  — sexual/vaginal health (dusty mauve)
-//   care      — checkups, nourish, routine (golden cream)
-//   urgent    — helpers, when-something-feels-off (warm rose)
-//   plan      — pregnancy, life-stage, TTC (moonlight purple)
+//   reflect   — writing, journaling, looking back (oat clay)
+//   body      — check-ins, BBT, period (warm clay)
+//   read      — library, articles, knowledge (muted sage)
+//   intimate  — sexual/vaginal health (soft rose)
+//   care      — checkups, nourish, routine (sand)
+//   urgent    — helpers, when-something-feels-off (earth rose)
+//   plan      — pregnancy, life-stage, TTC (taupe)
 
 import { T } from './theme'
 
 export const SECTION_PALETTE = {
-  reflect:  { tint: '#EFE7F3', accent: '#9F7BB8', label: 'Reflective' },
-  body:     { tint: '#FBE9D9', accent: '#D88B5A', label: 'Body' },
-  read:     { tint: '#E8EDDD', accent: '#7A9070', label: 'Read' },
-  intimate: { tint: '#F5DCE0', accent: '#C68799', label: 'Intimate' },
-  care:     { tint: '#F5E6CC', accent: '#C49B5A', label: 'Care' },
-  urgent:   { tint: '#F7DAD2', accent: '#C84E2E', label: 'Urgent' },
-  plan:     { tint: '#E8E1F0', accent: '#7E5DA8', label: 'Plan' },
+  reflect:  { tint: '#EFE4DC', accent: '#9C7465', label: 'Reflect' },
+  body:     { tint: '#F1DED2', accent: '#B98370', label: 'Body' },
+  read:     { tint: '#E7ECDF', accent: '#7F9271', label: 'Learn' },
+  intimate: { tint: '#F1DDE1', accent: '#B9828D', label: 'Intimate' },
+  care:     { tint: '#F1E6D2', accent: '#A88A62', label: 'Care' },
+  urgent:   { tint: '#EED4CC', accent: '#9B5A49', label: 'Support' },
+  plan:     { tint: '#E8E0DA', accent: '#7D6D65', label: 'Plan' },
   // Fallback when nothing else applies — same warm cream we had.
   default:  { tint: T.card,    accent: T.accent,  label: '—' },
 }

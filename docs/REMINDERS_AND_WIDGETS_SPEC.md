@@ -177,7 +177,7 @@ Tap target:
 
 Shows:
 
-- `Log today`
+- `Check in`
 - optional one-tap mood entry if platform supports interactive widgets later
 
 Tap target:

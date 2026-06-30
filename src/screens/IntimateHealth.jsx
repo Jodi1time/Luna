@@ -55,7 +55,7 @@ const PHASE_NOTE = {
 // identical chips." Tints are picked from the intimate section family.
 const LIBIDO_SHADES =      ['#F5DCE0', '#EDC0CB', '#D89BAE', '#C68799']
 const LUBRICATION_SHADES = ['#F5E0D2', '#F1CDB6', '#E3B49C', '#D88B5A']
-const PAIN_SHADES =        ['#E8E0EC', '#E5B5B5', '#C84E2E']
+const PAIN_SHADES =        ['#E8E0DA', '#E5B5B5', '#9B5A49']
 
 // Soft frosted "scale" row. Each option is a pill carrying a soft tint
 // from the gradient (deeper = "more"). Selected fills with the shade.

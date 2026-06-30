@@ -163,8 +163,8 @@ export default function Settings() {
   const storageValue = signedIn ? 'account + device cache' : 'this browser only'
   const storageLine = signedIn
     ? 'Your account is the source of truth. Luna also keeps a recent copy on this device so it opens fast when you come back.'
-    : 'Without an account, this cycle lives only in this browser on this device. Clear the browser data or lose the device, and Luna cannot restore it.'
-  const stageLine = 'Switching stages changes the framing, not your history. Cycle logs stay put when you move into TTC or pregnancy, and Luna returns to them when that season ends.'
+    : 'Without an account, this history lives only in this browser on this device. Clear the browser data or lose the device, and Luna cannot restore it.'
+  const stageLine = 'Switching stages changes the framing, not your history. Your body records stay put when you move into TTC or pregnancy, and Luna returns to them when that season ends.'
   const destructiveLabel = signedIn ? 'Delete my account' : 'Clear Luna from this device'
 
   const handleSignOut = async () => {
@@ -186,7 +186,7 @@ export default function Settings() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1 }}>{displayName ? `Hi, ${displayName.split(' ')[0]}.` : 'Welcome.'}</div>
             <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 6, fontStyle: 'italic' }}>
-              Your account, your cycle, your preferences.
+              Your account, your body, your preferences.
             </div>
           </div>
           {phase && (
@@ -271,9 +271,9 @@ export default function Settings() {
       </div>
 
       <div className="insight-stagger" style={{ animationDelay: '290ms' }}>
-      <SectionLabel color={acc}>Your cycle</SectionLabel>
+      <SectionLabel color={acc}>Your rhythm</SectionLabel>
       <Panel>
-        <Row label="Cycle & period length" value={`${cycleLength} / ${periodLength} days`} onTap={() => go('editCycleNumbers')} />
+        <Row label="Rhythm & period length" value={`${cycleLength} / ${periodLength} days`} onTap={() => go('editCycleNumbers')} />
         <Row label="Update period start" onTap={() => go('editPeriodStart')} />
         <Row label="Period history" onTap={() => go('periodHistory')} />
         <Row label="Birth control" value={methodLabel} onTap={() => go('birthControl')} />
@@ -313,7 +313,7 @@ export default function Settings() {
       <div className="insight-stagger" style={{ animationDelay: '490ms' }}>
       <SectionLabel color={acc}>Your life stage</SectionLabel>
       <Panel>
-        <Row label="Cycle tracking"
+        <Row label="Body rhythm"
              value={settings?.lifecycle === 'ttc' ? 'Underlying' : 'Active'} />
         <Row label="Pregnancy"
              value={pregnancy?.active ? pregLabel : 'Available'}
@@ -358,10 +358,10 @@ export default function Settings() {
       {/* Former "More from Luna" — split into four labeled groups so
           11 mixed-purpose rows stop reading as a wall. Each group now
           also wears its functional category's soft tint:
-            Reflective → lavender
-            When something's wrong → warm rose
-            Manage → golden cream
-            Account → moonlight purple
+            Reflect → oat clay
+            When something's wrong → earth rose
+            Manage → sand
+            Account → taupe
           Cards stop reading as identical glass slabs. */}
       <div className="insight-stagger" style={{ animationDelay: '640ms' }}>
       <SectionLabel color={sectionColors('reflect').accent}>Reflective</SectionLabel>

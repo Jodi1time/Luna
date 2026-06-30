@@ -40,7 +40,7 @@ export const BACKDROPS = [
 // max/min channel math is plenty here — galaxy's hue is a vibe knob,
 // not a precise palette match.
 function hexToHue(hex) {
-  const h = (hex || '#C84E2E').replace('#', '')
+  const h = (hex || '#6B4739').replace('#', '')
   const r = parseInt(h.slice(0, 2), 16) / 255
   const g = parseInt(h.slice(2, 4), 16) / 255
   const b = parseInt(h.slice(4, 6), 16) / 255

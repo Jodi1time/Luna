@@ -10,6 +10,7 @@ export const Icons = {
   calendar: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="14" height="14" rx="2"/><path d="M3 8h14M7 2v4M13 2v4"/></svg>,
   plus:     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M10 4v12M4 10h12"/></svg>,
   library:  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 16l4-4 3 3 7-7"/><path d="M14 8h3v3"/></svg>,
+  reflect:  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M5 15.5h10"/><path d="M6.5 13.5l6.7-6.7a1.8 1.8 0 012.5 2.5L9 16l-3.5.7z"/><path d="M12.2 7.8l2 2"/></svg>,
   settings: <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="10" cy="10" r="2.4"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2M5 5l1.5 1.5M13.5 13.5L15 15M5 15l1.5-1.5M13.5 6.5L15 5" strokeLinecap="round"/></svg>,
   back:     <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 7H3M7 3L3 7l4 4"/></svg>,
   close:    <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>,
@@ -43,7 +44,7 @@ export function AppShell({ children }) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'var(--luna-room-bg, #E8E3D8)',
+      background: 'var(--luna-room-bg, #F7F2EA)',
       padding: '0',
       overflow: 'hidden',
     }}>
@@ -86,12 +87,9 @@ export function AppShell({ children }) {
 export function TabBar({ active, onChange }) {
   const items = [
     { key: 'home',     label: 'Today',    icon: Icons.home },
-    { key: 'calendar', label: 'Calendar', icon: Icons.calendar },
+    { key: 'reflect',  label: 'Reflect',  icon: Icons.reflect },
     { key: 'log',      label: '',         icon: null },
-    // Insights holds the fourth slot — the cycle wheel + pattern
-    // cards are the most distinctly-Luna surfaces and deserve one
-    // tap, not a chip. Library stays reachable from Home + articles.
-    { key: 'insights', label: 'Patterns', icon: Icons.library },
+    { key: 'insights', label: 'Insights', icon: Icons.library },
     { key: 'settings', label: 'You',      icon: Icons.settings },
   ]
   return (
@@ -117,14 +115,15 @@ export function TabBar({ active, onChange }) {
         if (it.key === 'log') {
           return (
             <button key="log" onClick={() => onChange('log')} className="alive-card"
-              aria-label="Log today"
-              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
+              aria-label="Check in"
+              style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
               <div className="plus-pulse" style={{
-                width: 50, height: 50,
+                width: 46, height: 46,
                 background: T.accent, color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: 999, marginBottom: 2,
+                borderRadius: 999, marginBottom: 0,
               }}>{Icons.plus}</div>
+              <span style={{ fontSize: 10.5, fontWeight: 600, color: T.accent, fontFamily: T.sans, lineHeight: 1 }}>Check-in</span>
             </button>
           )
         }

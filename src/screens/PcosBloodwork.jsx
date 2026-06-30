@@ -28,7 +28,7 @@ import {
 // ─── A single reading row ─────────────────────────────────────
 function ReadingRow({ reading, panel, accent, onDelete }) {
   const pos = readingPosition(panel, reading.value, reading.unit)
-  const cueColor = pos === 'above' ? '#C84E2E' : pos === 'below' ? '#9F7BB8' : T.muted
+  const cueColor = pos === 'above' ? '#9B5A49' : pos === 'below' ? '#74637D' : T.muted
   const cueLabel = pos === 'above' ? 'above typical' : pos === 'below' ? 'below typical' : 'within typical'
   const dateLabel = new Date(reading.dateISO + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase()
   return (
@@ -165,7 +165,7 @@ function PanelCard({ panel, readings, accent, onAdd, onDelete }) {
   const visible = showAll ? sorted : sorted.slice(0, 3)
   const latest = sorted[0]
   const latestPos = latest ? readingPosition(panel, latest.value, latest.unit) : null
-  const latestCue = latestPos === 'above' ? '#C84E2E' : latestPos === 'below' ? '#9F7BB8' : T.muted
+  const latestCue = latestPos === 'above' ? '#9B5A49' : latestPos === 'below' ? '#74637D' : T.muted
   return (
     <div className="alive-card" style={{
       padding: 18,
@@ -387,7 +387,7 @@ export default function PcosBloodwork() {
               <div style={{ fontFamily: T.serif, fontSize: 40, fontStyle: 'italic', fontWeight: 500, color: accent, letterSpacing: -0.8, lineHeight: 1 }}>
                 {homaScore}
               </div>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: homaInterp?.kind === 'flag' ? '#C84E2E' : homaInterp?.kind === 'borderline' ? '#C49B5A' : T.muted }}>
+              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 14, color: homaInterp?.kind === 'flag' ? '#9B5A49' : homaInterp?.kind === 'borderline' ? '#A88A62' : T.muted }}>
                 {homaInterp?.label}
               </div>
             </div>

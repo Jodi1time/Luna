@@ -7,9 +7,9 @@ import { todayKey } from '../lib/dateOnly'
 
 // One soft category per practice — gives each practice its own
 // chromatic identity in the picker list. Intention/gratitude/feeling
-// wear reflect (lavender); bodyscan wears body (peach); compassion
-// wears intimate (mauve); reframe wears read (sage — "thinking
-// through"); bedtime wears plan (moonlight).
+// wear reflect (oat clay); bodyscan wears body (warm clay); compassion
+// wears intimate (soft rose); reframe wears read (sage — "thinking
+// through"); bedtime wears plan (taupe).
 const PRACTICE_SECTION = {
   intention:  'reflect',
   gratitude:  'reflect',

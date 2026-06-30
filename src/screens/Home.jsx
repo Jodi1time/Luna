@@ -310,7 +310,7 @@ function QuickActions({ go }) {
   // the icon a quiet accent, but the card backgrounds now stay close
   // to Luna's paper so the row feels like invitations, not a menu.
   const items = [
-    // "Log today" QuickAction was a direct duplicate of the center
+    // "Check in" QuickAction was a direct duplicate of the center
     // [+] button in the TabBar. Cut to enforce the "one canonical
     // home per job" rule — the [+] button is the canonical entry.
     { key: 'share', category: 'plan', tier: 'primary', label: 'Share with someone', sub: 'A partner, your mother, a friend',
@@ -572,9 +572,9 @@ function LunaHeroCard({ phase, text, fwMoment, go, onOpenChat }) {
 function SmartHelperCard({ onTap, eyebrow, line, category = 'urgent' }) {
   // smart-arrival glows the border with a one-shot accent halo on mount.
   // Category drives the soft tint + accent — physical-acute helpers
-  // (cramps, UTI) wear 'urgent' rose, emotional (heavy mood) wears
-  // lavender, sleep wears moonlight purple, morning intention wears
-  // lavender too. Tells the user at a glance what KIND of nudge this is.
+  // (cramps, UTI) wear 'urgent' rose, emotional surfaces wear reflect
+  // clay, sleep wears taupe, morning intention wears reflect too.
+  // Tells the user at a glance what KIND of nudge this is.
   const colors = sectionColors(category)
   return (
     <button onClick={onTap} className="smart-arrival alive-card frost-card sheen-once"
@@ -1314,14 +1314,14 @@ export default function Home() {
               }}>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3 }}>
-                  {todayHasContent ? 'Today’s noted.' : showQuietReturn ? 'Welcome back. Start with today.' : 'How are you feeling today?'}
+                  {todayHasContent ? 'Today’s check-in is saved.' : showQuietReturn ? 'Welcome back. Start with today.' : 'How is your body today?'}
                 </span>
                 <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayHasContent ? T.muted : 'rgba(255,250,245,0.88)' }}>
                   {todayHasContent
-                    ? 'Add more anytime — a symptom, a mood, a note.'
+                    ? 'Add more anytime: a mood, symptom, sleep note, or thought.'
                     : showQuietReturn
                       ? 'The quiet days can stay quiet. A few taps is enough.'
-                      : 'A few taps. It teaches Luna your body, and takes a moment.'}
+                      : 'Mood, energy, symptoms, sleep, or anything you noticed.'}
                 </span>
               </span>
               <span aria-hidden="true" style={{
@@ -1417,7 +1417,7 @@ export default function Home() {
                 {showCatchUp.kind === 'staleLogs' && (
                   <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
                     style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 18px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.6, borderRadius: 999 }}>
-                    Log today
+                    Check in
                   </button>
                 )}
                 <button onClick={() => go('periodDays')}
@@ -1468,7 +1468,7 @@ export default function Home() {
           )}
 
           {/* Quick actions — a horizontal scroll wheel of the most
-              common entries (Log today, Edit period) plus the four
+              common entries (Check in, Edit period) plus the four
               navigation cards that used to live in AlwaysHere
               (intimate / watch / cheatsheet / care). "A note" used to
               be here but is now covered by the sticky note in the

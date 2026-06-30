@@ -13,8 +13,9 @@ import { MoonMark } from '../components/Illustrations'
 // Map an article's subject category to a section palette category so
 // each article card / section header can wear a soft chromatic tint
 // that matches what the piece is about. Mental Health pieces wear
-// lavender; Nutrition wears gold; Conditions (PMDD, endo, PCOS) wear
-// rose because they demand attention; body-literacy pieces wear sage.
+// reflect clay; Nutrition wears sand; Conditions (PMDD, endo, PCOS)
+// wear earth rose because they demand attention; body-literacy pieces
+// wear sage.
 const ARTICLE_CAT_TO_SECTION = {
   'Mental Health': 'reflect',
   'Nutrition':     'care',

@@ -69,7 +69,7 @@ function FoldSection({ label, children, accent }) {
 
 function Bullets({ items, accent, cue }) {
   if (!items || items.length === 0) return null
-  const color = cue === 'red' ? '#C84E2E' : cue === 'less' ? T.muted : accent
+  const color = cue === 'red' ? '#9B5A49' : cue === 'less' ? T.muted : accent
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {items.map((it, i) => (

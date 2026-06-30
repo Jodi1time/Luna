@@ -5,16 +5,16 @@
 // consistency is most of what separates "crafted" from "assembled".
 
 export const T = {
-  // Surfaces — warm editorial creams, espresso ink.
-  bg:     '#F4EFE5',
-  card:   '#FFFFFF',
-  subtle: '#EBE3D5',
-  accent: '#C84E2E',
-  ink:    '#1A1310',
-  text:   '#1A1310',
-  muted:  '#756A60',
-  hair:   'rgba(26,19,16,0.10)',
-  faint:  'rgba(26,19,16,0.06)',
+  // Surfaces — luxury skincare neutrals: ivory, oat, clay, cocoa.
+  bg:     '#F7F2EA',
+  card:   '#FFFDF8',
+  subtle: '#EDE5DA',
+  accent: '#6B4739',
+  ink:    '#2B211C',
+  text:   '#2B211C',
+  muted:  '#74685E',
+  hair:   'rgba(43,33,28,0.10)',
+  faint:  'rgba(43,33,28,0.06)',
 
   // Type — a variable editorial serif against a precise mono. No
   // banned UI-default fonts; the serif does the emotional work.

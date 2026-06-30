@@ -19,10 +19,10 @@ const MS_PER_DAY = 86400000
 // its own soft hue so the eye sees "you've moved" between days.
 const WINDOW_ACCENT = {
   pre:     '#7A9070',  // sage — preparing
-  opening: '#D88B5A',  // peach — energy gathering
+  opening: '#B98370',  // clay — energy gathering
   peak:    '#3F7E55',  // green — fertile peak
-  past:    '#9F7BB8',  // lavender — wait
-  late:    '#C84E2E',  // terra — late
+  past:    '#74637D',  // soft plum — wait
+  late:    '#9B5A49',  // earth rose — late
 }
 
 function dayWindow({ cycleDay, ovDay, cycleLength }) {

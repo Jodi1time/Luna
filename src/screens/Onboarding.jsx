@@ -20,13 +20,13 @@ import { todayKey, toDateKey } from '../lib/dateOnly'
 // hurting woman), planning second (TTC / avoiding / pregnant /
 // menopause), the calm-default last.
 const INTENT_OPTIONS = [
-  { id: 'understanding',       label: 'Understanding my cycle & moods',         hint: 'Why I feel how I feel, week to week.' },
+  { id: 'understanding',       label: 'Understanding my body & moods',         hint: 'Why my body feels different, day to day.' },
   { id: 'managing-condition',  label: 'Managing a condition',                    hint: 'PCOS, endo, PMDD, fibroids, thyroid, HA.' },
   { id: 'ttc',                 label: 'Trying to conceive',                      hint: 'Make this window as clear as it can be.' },
   { id: 'avoiding',            label: 'Avoiding pregnancy',                      hint: 'Know my fertile days, without guessing.' },
   { id: 'pregnant',            label: 'Pregnant or postpartum',                  hint: 'Walk this with someone, week by week.' },
   { id: 'menopause',           label: 'Approaching menopause',                   hint: 'Hold space for a body that’s changing.' },
-  { id: 'just-tracking',       label: 'Just tracking, simply',                   hint: 'The basics, beautifully. Nothing more.' },
+  { id: 'just-tracking',       label: 'Keeping up with my rhythm',               hint: 'The basics, beautifully. Nothing more.' },
 ]
 
 // Priorities — what she most wants Luna to do for her right now. Five
@@ -109,13 +109,13 @@ const CONDITION_OPTIONS = [
 // never optimisation talk, never "Great!". This is the first taste of
 // the moat: the moment she realises Luna talks to her like a person.
 const INTENT_REPLIES = {
-  'understanding':       'Then let’s start with what’s actually happening in your body.',
+  'understanding':       'Then let’s start with why your body feels different day to day.',
   'managing-condition':  'Then let’s make sure Luna actually understands it — not just tracks it.',
   'ttc':                 'Then let’s make this window as clear as it can be.',
   'avoiding':            'Then knowing your fertile days is power. Luna will be honest about them.',
   'pregnant':            'Then welcome — Luna will walk this with you, week by week.',
   'menopause':           'Then let’s hold space for a body that’s changing — without alarm.',
-  'just-tracking':       'Then we keep it simple. The basics, beautifully.',
+  'just-tracking':       'Then we keep your rhythm simple. The basics, beautifully.',
 }
 
 // Editorial progress indicator — three small italic-serif step labels,
@@ -239,11 +239,11 @@ function OptionCard({ label, hint, selected, accent, dot, icon, onTap }) {
 // choices instead of stacking them as seven identical cards. Picked to
 // roughly match the downstream Home register each intent lands in.
 const INTENT_CATEGORY = {
-  'understanding':       'reflect',     // lavender — body literacy
+  'understanding':       'reflect',     // oat clay — body literacy
   'managing-condition':  'urgent',      // rose — when something feels off
-  'ttc':                 'plan',        // moonlight purple — life-stage planning
-  'avoiding':            'care',        // gold — routines, prevention
-  'pregnant':            'body',        // peach — body changes
+  'ttc':                 'plan',        // taupe — life-stage planning
+  'avoiding':            'care',        // sand — routines, prevention
+  'pregnant':            'body',        // warm clay — body changes
   'menopause':           'intimate',    // mauve — a different chapter
   'just-tracking':       'read',        // sage — quiet, knowledge
 }

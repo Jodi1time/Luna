@@ -842,7 +842,7 @@ function LearningProgressCard({ cyclesLogged, loggedDays, hasPeriodAnchor, accen
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
         <button onClick={() => go('log')}
           style={{ background: T.accent, color: '#fff', border: 'none', padding: '11px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, borderRadius: 999 }}>
-          Log today
+          Check in
         </button>
         <button onClick={() => go('periodDays')}
           style={{ background: 'transparent', color: T.accent, border: `1px solid ${T.accent}3d`, padding: '11px 16px', cursor: 'pointer', fontFamily: T.sans, fontSize: 11.5, fontWeight: 600, letterSpacing: 0.5, borderRadius: 999 }}>
@@ -895,14 +895,14 @@ export default function Insights() {
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: 6, marginBottom: 10, animationDelay: '0ms' }}>
           <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, flex: 1 }}>
-            What we've noticed.
+            Your rhythm, in context.
           </div>
           <div aria-hidden="true" style={{ color: (phase?.color || T.accent), opacity: 0.6, paddingTop: 4 }}>
             <MoonMark size={28} />
           </div>
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginBottom: 18, fontStyle: 'italic', animationDelay: '60ms' }}>
-          Patterns Luna sees across your cycles, gathered gently.
+          Patterns across mood, energy, symptoms, and your cycle, gathered gently.
         </div>
 
         {/* Cycle wheel — circular visualization of where you are. Now

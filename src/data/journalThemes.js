@@ -8,59 +8,59 @@
 export const JOURNAL_THEMES = {
   cream: {
     label: 'Cream',
-    paper: '#FAF4DC',
-    sub:   '#F5EED0',
-    text:  '#1A1310',
+    paper: '#FFF8EA',
+    sub:   '#F3E9D7',
+    text:  '#2B211C',
     accent: null, // null → use the day's phase color
-    swatch: '#FAF4DC',
+    swatch: '#FFF8EA',
   },
   pink: {
-    label: 'Pink',
-    paper: '#FBE7EE',
-    sub:   '#F5D8E1',
-    text:  '#3A1A24',
-    accent: '#D85F87',
-    swatch: '#F5D8E1',
+    label: 'Rose',
+    paper: '#F6E5E4',
+    sub:   '#EDD3D2',
+    text:  '#39201E',
+    accent: '#B9828D',
+    swatch: '#EDD3D2',
   },
   lavender: {
-    label: 'Lavender',
-    paper: '#EEE7F3',
-    sub:   '#E4D8EA',
-    text:  '#241934',
-    accent: '#9F7BB8',
-    swatch: '#E4D8EA',
+    label: 'Plum',
+    paper: '#ECE5EA',
+    sub:   '#DED4DE',
+    text:  '#281E28',
+    accent: '#74637D',
+    swatch: '#DED4DE',
   },
   sage: {
     label: 'Sage',
-    paper: '#E8EDDD',
-    sub:   '#D9E1CB',
-    text:  '#1F2A1F',
-    accent: '#7A9070',
-    swatch: '#D9E1CB',
+    paper: '#E7ECDF',
+    sub:   '#D8E0CE',
+    text:  '#222A20',
+    accent: '#7F9271',
+    swatch: '#D8E0CE',
   },
   peach: {
-    label: 'Peach',
-    paper: '#FCEBDB',
-    sub:   '#F7DCC4',
-    text:  '#3A2415',
-    accent: '#E0A179',
-    swatch: '#F7DCC4',
+    label: 'Clay',
+    paper: '#F3E1D4',
+    sub:   '#E8CDBB',
+    text:  '#35231D',
+    accent: '#B98370',
+    swatch: '#E8CDBB',
   },
   sky: {
-    label: 'Sky',
-    paper: '#E0EDF1',
-    sub:   '#CFE0E7',
-    text:  '#1F2A33',
-    accent: '#7BA0B5',
-    swatch: '#CFE0E7',
+    label: 'Mist',
+    paper: '#E9EEE9',
+    sub:   '#D9E1DB',
+    text:  '#202926',
+    accent: '#7F9271',
+    swatch: '#D9E1DB',
   },
   moonlight: {
-    label: 'Moonlight',
-    paper: '#E8E1F0',
-    sub:   '#DDD3E8',
-    text:  '#221A2D',
-    accent: '#7E5DA8',
-    swatch: '#DDD3E8',
+    label: 'Taupe',
+    paper: '#E8E0DA',
+    sub:   '#DCD1CA',
+    text:  '#2C211E',
+    accent: '#7D6D65',
+    swatch: '#DCD1CA',
   },
 }
 
@@ -130,7 +130,7 @@ export function resolveTheme(themeId, phaseColor, custom) {
   const t = JOURNAL_THEMES[themeId] || JOURNAL_THEMES.cream
   let paper = t.paper
   let paperBg = t.paper
-  let accent = t.accent || phaseColor || '#C84E2E'
+  let accent = t.accent || phaseColor || '#6B4739'
   let text = t.text
   if (themeId === 'custom' && custom) {
     paper = custom.color || t.paper

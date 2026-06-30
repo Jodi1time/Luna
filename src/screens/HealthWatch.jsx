@@ -314,7 +314,7 @@ export default function HealthWatch() {
   .none{font-size:14px;color:#888;font-style:italic;}
   .footer{margin-top:36px;padding-top:16px;border-top:1px solid #e8e3d8;font-size:11px;color:#999;line-height:1.5;}
   .mark{margin-top:10px;font-size:10px;color:#999;}
-  .mark b{letter-spacing:3px;font-weight:700;color:#C84E2E;font-size:10px;}
+  .mark b{letter-spacing:3px;font-weight:700;color:#9B5A49;font-size:10px;}
 </style></head><body>
 <h1>Luna Health Screener Summary</h1>
 <div class="sub">Generated ${htmlEscape(generated)}</div>

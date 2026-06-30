@@ -75,7 +75,7 @@ const ShareWith       = lazy(() => import('./screens/ShareWith'))
 const AcceptShare     = lazy(() => import('./screens/AcceptShare'))
 const SharedWithYou   = lazy(() => import('./screens/SharedWithYou'))
 
-const TAB_SCREENS = ['home', 'calendar', 'library', 'settings', 'insights']
+const TAB_SCREENS = ['home', 'reflect', 'insights', 'settings', 'calendar', 'library']
 
 export default function App() {
   const { screen, go, onboarded } = useLuna()

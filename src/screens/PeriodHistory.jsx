@@ -45,7 +45,7 @@ export default function PeriodHistory() {
             <div style={{ fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.6, color: T.muted, marginBottom: 16 }}>
               When you log a few days of flow, your history starts filling in here. Two cycles is usually enough to see a rhythm.
             </div>
-            <CTAButton onClick={() => go('log')} full>Log today</CTAButton>
+            <CTAButton onClick={() => go('log')} full>Check in</CTAButton>
           </>
         ) : (
           <>

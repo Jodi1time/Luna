@@ -27,7 +27,7 @@ initPostHog()
     const { StatusBar, Style } = await importCapacitorModule('@capacitor/status-bar')
     // "Light" content style = dark glyphs over the cream background.
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
-    StatusBar.setBackgroundColor({ color: '#F4EFE5' }).catch(() => {})
+    StatusBar.setBackgroundColor({ color: '#F7F2EA' }).catch(() => {})
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
   } catch {}
   try {

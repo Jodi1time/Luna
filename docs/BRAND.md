@@ -11,12 +11,13 @@ The tokens live in code at `src/data/theme.js` (the `T` object) and
 
 ## 0. The one-line brief
 
-> Luna looks like a **physical editorial object** — a well-made paper
-> journal a thoughtful person designed — not a digital dashboard.
+> Luna feels like opening a **beautiful daily body ritual** — a premium
+> wellness companion with cycle intelligence underneath, not a period
+> tracker wearing nicer clothes.
 
 If a surface could appear in a SaaS analytics tool, it is wrong. If it
 could be a page in a beautifully art-directed magazine about the body,
-it is right.
+skin, mood, energy, rest, and rhythm, it is right.
 
 ---
 
@@ -82,14 +83,17 @@ details that earn it:
 ## 3. Color
 
 **Foundation**
-- Paper `#F4EFE5`, card `#FFFFFF`, espresso ink `#1A1310`, muted
-  `#756A60`. Brand accent **terracotta `#C84E2E`**.
+- Room `#F7F2EA`, card `#FFFDF8`, subtle oat `#EDE5DA`, cocoa ink
+  `#2B211C`, muted taupe `#74685E`. Brand accent **cocoa clay
+  `#6B4739`**.
 - The background warms ~2–3% across the day (time-of-day tint).
+- The palette should read like luxury skincare: ivory, cream, oat,
+  taupe, clay, cocoa, muted sage. Never candy, never neon.
 
 **Section palette** — functional color-coding, not decoration. Seven
 soft families, each mapped to *what a surface does* (`sectionPalette.js`):
-reflect (lavender), body (peach), read (sage), intimate (mauve),
-care (gold), urgent (rose), plan (moonlight purple).
+reflect (oat clay), body (warm clay), read (muted sage), intimate
+(soft rose), care (sand), urgent/support (earth rose), plan (taupe).
 
 **The discipline (this is the part that was drifting)**
 - Color **punctuates, it does not flood.** A category shows its
@@ -133,7 +137,24 @@ plays **once per session** (`lib/choreo.js`). All motion respects
 
 ---
 
-## 6. Iconography & illustration
+## 6. Product language
+
+Primary navigation is a promise, not an org chart:
+
+- **Today** — the daily ritual and right-now body story.
+- **Check-in** — the one canonical place to log mood, energy, flow,
+  symptoms, sleep, notes, and anything noticed.
+- **Reflect** — the one canonical place to write, look back, and make
+  meaning.
+- **Insights** — patterns and trends, explained softly.
+- **You** — account, privacy, preferences, and health profile.
+
+Use **body**, **rhythm**, and **today** for lifestyle surfaces. Use
+**cycle**, **period**, **ovulation**, and medical words when precision
+matters. The rule is not to hide biology; it is to avoid making the
+whole app feel clinical when the user came for care.
+
+## 7. Iconography & imagery
 
 - Icons: ultra-light precise line work, ~1.6 stroke, round caps. No
   thick filled icons, no Material/FontAwesome.
@@ -142,12 +163,16 @@ plays **once per session** (`lib/choreo.js`). All motion respects
   Stroke-led, themeable by accent, gently animated. Used at empty
   states, the onboarding reward, the share moment, and as the
   `MoonMark` signature on section headers.
+- Illustration is supporting texture, not the brand's main visual
+  world. Prefer editorial, material cues when possible: morning light,
+  linen, ceramics, water, stone, journals, tea, skincare, movement, and
+  real women. No cartoons, no mascot energy.
 - The moon is Luna's throughline. When a surface needs a mark, it's a
   moon — never arbitrary.
 
 ---
 
-## 7. Voice (visual)
+## 8. Voice (visual)
 
 Lowercase phase names. Italic-serif eyebrows for warmth; mono eyebrows
 for precision. Source lines on medical claims, quiet. One idea per
@@ -157,7 +182,7 @@ never childish.
 
 ---
 
-## 8. The pre-ship check (run this on any new screen)
+## 9. The pre-ship check (run this on any new screen)
 
 - [ ] Sits on grain, not flat digital cream
 - [ ] Radii come from `T.radius`; nested elements use `concentric()`

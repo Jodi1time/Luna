@@ -20,9 +20,9 @@ const MS_PER_DAY = 86400000
 // intensity, not four identical chips.
 const FLOW_COLORS = {
   Spotting: '#E6B5A8',
-  Light:    '#D88B5A',
-  Medium:   '#C84E2E',
-  Heavy:    '#9A2F1A',
+  Light:    '#B98370',
+  Medium:   '#9B5A49',
+  Heavy:    '#6B4739',
 }
 
 const MUCUS_OPTIONS = [
@@ -564,8 +564,8 @@ export default function Log() {
           </div>
         )}
 
-        {/* Flow — intensity gradient. Spotting is soft peach, Heavy
-            is deep terracotta. The row reads as a scale, not four
+        {/* Flow — intensity gradient. Spotting is soft clay, Heavy
+            is deep cocoa. The row reads as a scale, not four
             identical buttons. Selected = filled with that intensity. */}
         <div className="insight-stagger" style={{ animationDelay: '220ms' }}>
         <Eyebrow color={acc}>Bleeding</Eyebrow>

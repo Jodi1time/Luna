@@ -16,7 +16,7 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
-  --luna-room-bg: #E8E3D8;
+  --luna-room-bg: #F7F2EA;
 }
 
 html, body, #root {
@@ -32,10 +32,10 @@ html, body, #root {
 /* Time-of-day ambient tint on the page background. Very subtle —
    ~2-3% warmth shift. Applied via class on the AppShell root,
    driven by hour-of-day in App.jsx. */
-.time-morning { --luna-room-bg: #F6EFE2; background-color: var(--luna-room-bg); }
-.time-midday  { --luna-room-bg: #F4EFE5; background-color: var(--luna-room-bg); }
-.time-evening { --luna-room-bg: #F2EBDD; background-color: var(--luna-room-bg); }
-.time-night   { --luna-room-bg: #ECE6DA; background-color: var(--luna-room-bg); }
+.time-morning { --luna-room-bg: #FAF5ED; background-color: var(--luna-room-bg); }
+.time-midday  { --luna-room-bg: #F7F2EA; background-color: var(--luna-room-bg); }
+.time-evening { --luna-room-bg: #F3EADF; background-color: var(--luna-room-bg); }
+.time-night   { --luna-room-bg: #EEE5DB; background-color: var(--luna-room-bg); }
 
 /* ── Reduced motion ─────────────────────────────────────────────
    Respects the OS-level "Reduce motion" toggle. Every ambient
@@ -63,7 +63,7 @@ html, body, #root {
 @property --phase-color {
   syntax: '<color>';
   inherits: true;
-  initial-value: #C84E2E;
+  initial-value: #6B4739;
 }
 
 /* Hide scrollbars globally in the app */
@@ -1177,9 +1177,9 @@ button.glass-card:active {
 }
 
 /* Range input — accent color */
-input[type=range] { -webkit-appearance: none; width: 100%; height: 3px; background: rgba(26,19,16,.15); border-radius: 2px; outline: none; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #C84E2E; cursor: pointer; }
-input[type=range]::-moz-range-thumb    { width: 22px; height: 22px; border-radius: 50%; background: #C84E2E; cursor: pointer; border: none; }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 3px; background: rgba(43,33,28,.15); border-radius: 2px; outline: none; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #6B4739; cursor: pointer; }
+input[type=range]::-moz-range-thumb    { width: 22px; height: 22px; border-radius: 50%; background: #6B4739; cursor: pointer; border: none; }
 
 textarea {
   font-family: "Newsreader", Georgia, serif;

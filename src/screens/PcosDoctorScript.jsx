@@ -219,7 +219,7 @@ function buildPrintableHTML(script) {
   .opener{font-size:15px;font-style:italic;margin:14px 0;padding:14px 16px;background:#f6efe2;border-left:3px solid #7E5DA8;border-radius:4px;}
   .footer{margin-top:32px;padding-top:14px;border-top:1px solid #e8e3d8;font-size:11px;color:#999;}
   .mark{margin-top:10px;font-size:10px;color:#999;}
-  .mark b{letter-spacing:3px;font-weight:700;color:#C84E2E;font-size:10px;}
+  .mark b{letter-spacing:3px;font-weight:700;color:#9B5A49;font-size:10px;}
 </style></head><body>
 <h1>PCOS — for my appointment</h1>
 <div class="sub">${htmlEscape(displayName ? `${displayName} · ` : '')}${htmlEscape(today)}</div>
