@@ -25,6 +25,7 @@ import { getFirstWeekMoment } from '../lib/firstWeek'
 import { todayKey, toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
+const RITUAL_IMAGE = '/luna-ritual-still-life.webp'
 
 // Warm, embodied phase line — no optimisation-coded copy.
 const phasePresence = {
@@ -563,6 +564,58 @@ function LunaHeroCard({ phase, text, fwMoment, go, onOpenChat }) {
         {opensWheel ? 'See your wheel' : 'Talk to Luna'}
         <span aria-hidden="true">→</span>
       </div>
+    </button>
+  )
+}
+
+function NourishTodayCard({ phase, onTap }) {
+  if (!phase?.nutrition) return null
+  return (
+    <button
+      onClick={onTap}
+      className="alive-card"
+      style={{
+        position: 'relative',
+        marginTop: 16,
+        width: '100%',
+        padding: 0,
+        display: 'grid',
+        gridTemplateColumns: '1fr 104px',
+        minHeight: 132,
+        border: `1px solid ${T.hair}`,
+        borderRadius: 26,
+        background: 'rgba(255,253,248,0.68)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.58), 0 22px 42px -34px rgba(43,33,28,0.34)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        textAlign: 'left',
+        color: T.text,
+        fontFamily: 'inherit',
+      }}
+    >
+      <div style={{ padding: '18px 16px 17px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14 }}>
+        <div>
+          <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: 1.5, fontWeight: 700, textTransform: 'uppercase', color: `color-mix(in srgb, ${phase.color}, ${T.ink} 24%)`, marginBottom: 8 }}>
+            nourish today
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, lineHeight: 1.18, letterSpacing: -0.35, color: T.text }}>
+            Food as care, not a chore.
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 13.5, lineHeight: 1.45, color: T.muted, fontStyle: 'italic', marginTop: 7 }}>
+            {phase.nutrition.headline}
+          </div>
+        </div>
+        <div style={{ fontFamily: T.sans, fontSize: 11.5, fontWeight: 700, letterSpacing: 0.2, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 20%)` }}>
+          See phase guidance →
+        </div>
+      </div>
+      <div aria-hidden="true" style={{
+        minHeight: '100%',
+        backgroundImage: `linear-gradient(180deg, rgba(255,253,248,0.10), rgba(43,33,28,0.10)), url(${RITUAL_IMAGE})`,
+        backgroundSize: 'cover',
+        backgroundPosition: '61% 70%',
+        borderLeft: `1px solid ${T.hair}`,
+      }} />
     </button>
   )
 }
@@ -1345,6 +1398,13 @@ export default function Home() {
                 setChatOpener(opener || null)
                 setChatOpen(true)
               }}
+            />
+          )}
+
+          {!isPreg && phase && !hideEducational && (
+            <NourishTodayCard
+              phase={phase}
+              onTap={() => goPhase(phase.id)}
             />
           )}
 

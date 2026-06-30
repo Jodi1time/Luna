@@ -2,6 +2,8 @@ import { T } from '../data/theme'
 import { CTAButton } from '../components/shared'
 import useLuna from '../store/useLuna'
 
+const RITUAL_IMAGE = '/luna-ritual-still-life.webp'
+
 export default function Welcome() {
   const go = useLuna((s) => s.go)
   return (
@@ -9,8 +11,8 @@ export default function Welcome() {
       <div className="blob-stage subtle" aria-hidden="true">
         <div className="breathing-blob" style={{ '--phase-color': T.accent }} />
       </div>
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '52px 26px 34px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}>
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '42px 26px 32px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, marginBottom: 18 }}>
           <div>
             <div style={{ fontSize: 11, letterSpacing: 2.4, fontWeight: 700, fontFamily: T.sans, color: T.text }}>
               LUNA
@@ -38,11 +40,23 @@ export default function Welcome() {
           </div>
         </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingBottom: 20 }}>
-        <div style={{ fontFamily: T.serif, fontSize: 42, fontWeight: 500, letterSpacing: -1.25, lineHeight: 1.02, textWrap: 'balance' }}>
+      <div aria-hidden="true" className="alive-card" style={{
+        height: 118,
+        borderRadius: 28,
+        overflow: 'hidden',
+        marginBottom: 22,
+        backgroundImage: `linear-gradient(90deg, rgba(247,242,234,0.16), rgba(43,33,28,0.08)), url(${RITUAL_IMAGE})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center 62%',
+        border: `1px solid ${T.hair}`,
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.46), 0 24px 52px -38px rgba(43,33,28,0.35)',
+      }} />
+
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingBottom: 18 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 39, fontWeight: 500, letterSpacing: -1.15, lineHeight: 1.03, textWrap: 'balance' }}>
           Understand why your body feels different today.
         </div>
-        <div style={{ fontFamily: T.serif, fontSize: 17, lineHeight: 1.55, color: T.muted, marginTop: 18, maxWidth: 320 }}>
+        <div style={{ fontFamily: T.serif, fontSize: 16.5, lineHeight: 1.55, color: T.muted, marginTop: 16, maxWidth: 320 }}>
           Mood, energy, sleep, symptoms, and cycle patterns in one private daily ritual.
         </div>
       </div>

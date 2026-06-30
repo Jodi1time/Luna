@@ -154,6 +154,21 @@ Use **body**, **rhythm**, and **today** for lifestyle surfaces. Use
 matters. The rule is not to hide biology; it is to avoid making the
 whole app feel clinical when the user came for care.
 
+### Nourish
+
+Food belongs in Luna when it explains the body, not when it turns the
+app into a diet tracker.
+
+- **V1:** phase-aware nourishment guidance, gentle meal ideas, optional
+  food notes, cravings and energy context, and links into existing
+  phase education.
+- **Not V1:** calorie targets, macro rings, grocery lists, meal-plan
+  databases, streak pressure, or weight-loss framing.
+- Language: **nourish**, **steady energy**, **food as care**, **what
+  supports this phase**.
+- Avoid: "good/bad food," "clean eating," "earn/burn," and any copy
+  that could intensify body checking or disordered eating.
+
 ## 7. Iconography & imagery
 
 - Icons: ultra-light precise line work, ~1.6 stroke, round caps. No
@@ -167,6 +182,9 @@ whole app feel clinical when the user came for care.
   world. Prefer editorial, material cues when possible: morning light,
   linen, ceramics, water, stone, journals, tea, skincare, movement, and
   real women. No cartoons, no mascot energy.
+- Use photography as a **ritual signal**, not wallpaper. One strong
+  still-life panel can carry more brand than five decorative cards.
+  Example asset: `public/luna-ritual-still-life.webp`.
 - The moon is Luna's throughline. When a surface needs a mark, it's a
   moon — never arbitrary.
 
