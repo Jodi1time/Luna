@@ -59,11 +59,23 @@ export default function Calendar() {
 
   const now = new Date()
   const todayISO = now.toISOString().slice(0, 10)
+  const [selectedISO, setSelectedISO] = useState(todayISO)
 
   // viewed = the first day of the month currently on screen.
   const [viewed, setViewed] = useState(new Date(now.getFullYear(), now.getMonth(), 1))
-  const stepMonth = (delta) => setViewed((v) => new Date(v.getFullYear(), v.getMonth() + delta, 1))
-  const goToday = () => setViewed(new Date(now.getFullYear(), now.getMonth(), 1))
+  const stepMonth = (delta) => {
+    const next = new Date(viewed.getFullYear(), viewed.getMonth() + delta, 1)
+    const firstISO = new Date(next.getFullYear(), next.getMonth(), 1).toISOString().slice(0, 10)
+    const lastISO = new Date(next.getFullYear(), next.getMonth() + 1, 0).toISOString().slice(0, 10)
+    if (firstISO > todayISO) setSelectedISO(null)
+    else if (todayISO >= firstISO && todayISO <= lastISO) setSelectedISO(todayISO)
+    else setSelectedISO(lastISO)
+    setViewed(next)
+  }
+  const goToday = () => {
+    setViewed(new Date(now.getFullYear(), now.getMonth(), 1))
+    setSelectedISO(todayISO)
+  }
 
   const dayLetters = ['M','T','W','T','F','S','S']
   const firstDay   = viewed.getDay()
@@ -131,6 +143,23 @@ export default function Calendar() {
       return { ...c, startsPhase }
     })
   }, [monthCells])
+  const selectedCell = cellsWithBoundary.find((c) => c.date === selectedISO) || null
+  const selectedLog = store.logs?.[selectedISO] || null
+  const selectedDateLabel = selectedISO
+    ? new Date(selectedISO + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : null
+  const selectedPhase = selectedCell?.phase || cycle.phase
+  const selectedDetail = bcMode
+    ? (selectedLog?.flow || selectedLog?.sleep || selectedLog?.note ? 'A few notes are saved here.' : 'Nothing logged yet.')
+    : selectedCell?.dayInCycle
+      ? `Cycle day ${selectedCell.dayInCycle}${selectedPhase ? ` · ${selectedPhase.name.toLowerCase()} phase` : ''}`
+      : 'A day in your rhythm.'
+  const selectedSignals = [
+    selectedLog?.flow ? selectedLog.flow : null,
+    selectedLog?.sleep ? `${selectedLog.sleep} sleep` : null,
+    Array.isArray(selectedLog?.symptoms) && selectedLog.symptoms.length ? `${selectedLog.symptoms.length} symptom${selectedLog.symptoms.length === 1 ? '' : 's'}` : null,
+    selectedLog?.note ? 'note saved' : null,
+  ].filter(Boolean)
 
   const monthLabel = viewed.toLocaleDateString('en-US', { month: 'long' })
   const yearLabel = viewed.getFullYear()
@@ -265,6 +294,7 @@ export default function Calendar() {
             {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
             {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue, startsPhase }, cellIdx) => {
               const isToday = date === todayISO
+              const isSelected = date === selectedISO
               const showLoggedDot = isLoggedPeriod && !bcMode
               const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
               const tappable = !future
@@ -291,27 +321,29 @@ export default function Calendar() {
                 : (future && phase ? `1px dashed ${phase.color}88` : 'none')
               return (
                 <button key={date}
-                  onClick={tappable ? () => openLogFor(date) : undefined}
+                  onClick={tappable ? () => setSelectedISO(date) : undefined}
                   disabled={!tappable}
-                  aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
+                  aria-label={tappable ? `Select ${date}` : `Future day ${date}`}
                   className="insight-stagger"
                   style={{
                     position: 'relative',
                     aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
-                    background: cellBg,
-                    color: isToday && phase && !bcMode ? '#fff' : T.text,
-                    border: cellBorder,
-                    borderRadius: T.r,
+                    background: isSelected ? 'rgba(255,253,248,0.72)' : cellBg,
+                    color: isToday && phase && !bcMode && !isSelected ? '#fff' : T.text,
+                    border: isSelected ? `1px solid ${bcMode ? T.accent : (phase?.color || T.accent)}66` : cellBorder,
+                    borderRadius: 10,
                     cursor: tappable ? 'pointer' : 'default',
                     padding: 0,
                     animationDelay: `${cellDelay}ms`,
                     // Phase-start cells (natural) / pack-start cells (BC)
                     // get a thin accent line on the left edge — "something
                     // begins here" without copy.
-                    boxShadow: bcMode
-                      ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
-                      : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
+                    boxShadow: isSelected
+                      ? `0 10px 24px -18px ${bcMode ? T.accent : (phase?.color || T.accent)}`
+                      : bcMode
+                        ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
+                        : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
                   }}>
                   {/* Today cell pulse ring — quiet "you are here" anchor */}
                   {isToday && (phase || bcMode) && (
@@ -319,7 +351,7 @@ export default function Calendar() {
                       style={{
                         position: 'absolute', inset: -3,
                         border: `1.5px solid ${bcMode ? T.accent : phase.color}`,
-                        borderRadius: T.r,
+                        borderRadius: 12,
                         pointerEvents: 'none',
                       }} />
                   )}
@@ -338,8 +370,73 @@ export default function Calendar() {
             })}
           </div>
 
+          {selectedISO && (
+            <div className="insight-stagger frost-card" style={{
+              marginTop: 16,
+              padding: 16,
+              borderRadius: 24,
+              background: 'rgba(255,253,248,0.58)',
+              border: `1px solid ${(selectedPhase?.color || T.accent)}26`,
+              boxShadow: `0 18px 38px -30px ${(selectedPhase?.color || T.accent)}`,
+              animationDelay: '500ms',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr) 44px',
+              gap: 14,
+              alignItems: 'center',
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, letterSpacing: -0.28, color: T.text, lineHeight: 1.2 }}>
+                  {selectedDateLabel}
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', color: selectedPhase?.color || T.accent, marginTop: 4, lineHeight: 1.35 }}>
+                  {selectedDetail}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                  {(selectedSignals.length ? selectedSignals : ['No check-in yet']).map((signal) => (
+                    <span key={signal} style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      borderRadius: 999,
+                      padding: '5px 8px',
+                      background: 'rgba(43,33,28,0.045)',
+                      color: T.muted,
+                      fontFamily: T.sans,
+                      fontSize: 10.5,
+                      lineHeight: 1,
+                    }}>
+                      {signal}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => openLogFor(selectedISO)}
+                aria-label={`Open check-in for ${selectedISO}`}
+                className="alive-card"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  border: 'none',
+                  background: selectedPhase?.color || T.accent,
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: `0 12px 24px -16px ${selectedPhase?.color || T.accent}`,
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M8.5 3.5v10M3.5 8.5h10" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: T.muted, marginTop: 10, animationDelay: '520ms' }}>
-            Tap any past day to add or update a log.
+            Select a past day, then tap plus to add or update a check-in.
           </div>
 
         <Rule />
@@ -352,11 +449,11 @@ export default function Calendar() {
           {bcMode ? 'What your method has coming up.' : "What's likely coming up, with how steady the call is."}
         </div>
         {bcMode ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {bcModel.missingStartDate ? (
               <button onClick={() => go('birthControl')}
                 className="insight-stagger"
-                style={{ padding: '14px 0 16px', background: 'transparent', border: 'none', borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', animationDelay: '680ms' }}>
+                style={{ padding: 16, background: 'rgba(255,253,248,0.58)', border: `1px solid ${T.hair}`, borderRadius: 22, textAlign: 'left', cursor: 'pointer', width: '100%', color: T.text, fontFamily: 'inherit', animationDelay: '680ms' }}>
                 <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, fontWeight: 500, color: T.accent, letterSpacing: -0.1, marginBottom: 6 }}>
                   a small thing to set
                 </div>
@@ -374,9 +471,11 @@ export default function Calendar() {
               const todayPackDay = bcModel.kind === 'pillPack' && bcStart ? packDayForDate(bcStart, todayISO) : null
               return (
                 <div className="insight-stagger" style={{
-                  padding: '14px 0 16px',
-                  borderTop: `1px solid ${T.hair}`,
-                  borderBottom: `1px solid ${T.hair}`,
+                  padding: 16,
+                  background: 'rgba(255,253,248,0.58)',
+                  border: `1px solid ${ntAccent}24`,
+                  borderRadius: 22,
+                  boxShadow: `0 16px 34px -30px ${ntAccent}`,
                   animationDelay: '680ms',
                 }}>
                   <div style={{ fontFamily: T.serif, fontSize: 12.5, fontStyle: 'italic', color: ntAccent, marginBottom: 6 }}>
@@ -407,7 +506,7 @@ export default function Calendar() {
             </button>
           </div>
         ) : filteredPredictions ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filteredPredictions.map((p, i) => {
               const title =
                 p.label === 'Next period'    ? 'Your next period' :
@@ -428,9 +527,11 @@ export default function Calendar() {
                 : null
               return (
                 <div key={i} className="insight-stagger" style={{
-                  padding: '14px 0 16px',
-                  borderTop: i === 0 ? `1px solid ${T.hair}` : 'none',
-                  borderBottom: `1px solid ${T.hair}`,
+                  padding: 16,
+                  background: 'rgba(255,253,248,0.58)',
+                  border: `1px solid ${accentColor}24`,
+                  borderRadius: 22,
+                  boxShadow: `0 16px 34px -30px ${accentColor}`,
                   animationDelay: `${680 + i * 80}ms`,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>

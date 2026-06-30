@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { PHASES, getReflectionPrompt } from '../data/lunaData'
@@ -26,14 +26,6 @@ import { todayKey, toDateKey } from '../lib/dateOnly'
 
 const MS_PER_DAY = 86400000
 const RITUAL_IMAGE = '/luna-ritual-still-life.webp'
-
-// Warm, embodied phase line — no optimisation-coded copy.
-const phasePresence = {
-  menstrual:  'Rest is the work this week.',
-  follicular: 'A gentle re-opening. Move when it feels right.',
-  ovulation:  'Notice what feels easier today — words, wanting, warmth.',
-  luteal:     'Be a little softer with yourself. Cravings are signal, not weakness.',
-}
 
 // A "what's next" sentence under the cover. Now confidence-aware:
 // adds a small reassurance / honesty tag based on how steady the
@@ -137,47 +129,220 @@ function BackgroundBlob({ color, effect }) {
   )
 }
 
-// Phase-aware tonal opener — the same time of day reads slightly
-// different depending on where the user is in her cycle.
-const PHASE_GREETING = {
-  menstrual:  'Quiet',
-  follicular: 'Bright',
-  ovulation:  'Warm',
-  luteal:     'Soft',
+const TODAY_RITUAL = {
+  menstrual: {
+    eyebrow: 'today, gently',
+    headline: 'Rest can be the most useful thing today.',
+    body: 'Your body is doing quiet, demanding work. Keep the day smaller where you can.',
+    energy: 'Low',
+    care: 'Warmth',
+    food: 'Iron',
+    noticeTitle: 'You may also notice',
+    notices: ['cramps or heaviness', 'a slower morning', 'wanting softer plans'],
+  },
+  follicular: {
+    eyebrow: 'the rising stretch',
+    headline: 'Your energy may naturally come back online.',
+    body: 'Estrogen is beginning to rise. This can be a good window for momentum without forcing it.',
+    energy: 'Rising',
+    care: 'Build',
+    food: 'Protein',
+    noticeTitle: 'You may also notice',
+    notices: ['clearer focus', 'lighter mood', 'more patience for plans'],
+  },
+  ovulation: {
+    eyebrow: 'outward-facing',
+    headline: 'Today may feel a little easier to meet.',
+    body: 'Connection, confidence, words, and movement can feel more available in this part of your cycle.',
+    energy: 'High',
+    care: 'Move',
+    food: 'Color',
+    noticeTitle: 'You may also notice',
+    notices: ['brighter mood', 'increased confidence', 'clearer skin'],
+  },
+  luteal: {
+    eyebrow: 'the quiet edit',
+    headline: 'Your body may want steadier choices today.',
+    body: 'Progesterone changes the tempo. Cravings, tenderness, and lower patience are signals, not flaws.',
+    energy: 'Steady',
+    care: 'Soften',
+    food: 'Magnesium',
+    noticeTitle: 'You may also notice',
+    notices: ['more sensitivity', 'stronger cravings', 'needing extra sleep'],
+  },
 }
 
-function Greeting({ name, phaseId }) {
-  const hour = new Date().getHours()
-  const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
-  const first = (name || '').split(' ')[0]
-  const opener = phaseId && PHASE_GREETING[phaseId] ? PHASE_GREETING[phaseId] : 'Good'
-  // Build the greeting as discrete segments so each can fade in with
-  // its own delay. We use a non-breaking space for trailing
-  // gaps — `display: inline-block` collapses trailing whitespace from
-  // text content, which made the greeting render as e.g. "Quietevening"
-  // instead of "Quiet evening". NBSP is non-collapsible.
-  const NBSP = '\u00A0'
-  const segments = first
-    ? [`${opener}${NBSP}`, `${timeOfDay},${NBSP}`, { text: first, italic: false }, '.']
-    : [`${opener}${NBSP}`, timeOfDay, '.']
+const MOOD_WORDS = {
+  calm: 'Calm',
+  bright: 'Bright',
+  energy: 'Energized',
+  tired: 'Tired',
+  cramps: 'Sore',
+  sore: 'Sore',
+  low: 'Low',
+  hopeful: 'Hopeful',
+  tense: 'Tense',
+  frustrated: 'Tender',
+}
+
+function firstNameOf(name) {
+  return (name || '').trim().split(/\s+/)[0] || null
+}
+
+function moodLabelFor(log) {
+  const [first] = moodIdsOf(log)
+  return first ? (MOOD_WORDS[first] || first.replace(/-/g, ' ')) : 'Open'
+}
+
+function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, displayName, onTapPhase }) {
+  if (!phase) return null
+  const copy = TODAY_RITUAL[phase.id] || TODAY_RITUAL.follicular
+  const name = firstNameOf(displayName)
+  const highlights = [
+    { label: 'Energy', value: copy.energy },
+    { label: 'Mood', value: moodLabelFor(todayLog) },
+    { label: 'Care', value: copy.care },
+    { label: 'Nourish', value: copy.food },
+  ]
+  const cycleLine = cycleDay
+    ? `Day ${cycleDay}${cycleLength ? ` of ${cycleLength}` : ''} · ${phase.name.toLowerCase()} phase`
+    : `${phase.name} phase`
   return (
-    <div style={{ paddingTop: 2, marginBottom: 10 }}>
-      <div style={{ fontFamily: T.serif, fontSize: 22, fontWeight: 400, letterSpacing: -0.4, color: T.text, fontStyle: 'italic' }}>
-        {segments.map((seg, i) => {
-          const text = typeof seg === 'string' ? seg : seg.text
-          const italic = typeof seg === 'string' ? true : seg.italic !== false
-          return (
-            <span key={i} className="word-in"
-              style={{
-                animationDelay: `${i * 110}ms`,
-                fontStyle: italic ? 'italic' : 'normal',
-              }}>
-              {text}
-            </span>
-          )
-        })}
+    <section className="today-ritual-shell" style={{ marginTop: 8 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        gap: 14,
+        marginBottom: 11,
+      }}>
+        <div>
+          <div style={{ fontFamily: T.serif, fontSize: 29, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.02, color: T.text }}>
+            {name ? `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${name}.` : 'Today.'}
+          </div>
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, marginTop: 5, lineHeight: 1.35 }}>
+            {cycleLine}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onTapPhase}
+          className="alive-card"
+          style={{
+            flexShrink: 0,
+            width: 42,
+            height: 42,
+            borderRadius: 16,
+            border: `1px solid ${phase.color}26`,
+            background: 'rgba(255,253,248,0.58)',
+            color: phase.color,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+          aria-label={`Read about your ${phase.name.toLowerCase()} phase`}
+        >
+          <PhaseFlourish phaseId={phase.id} size={20} />
+        </button>
       </div>
-    </div>
+
+      <button
+        type="button"
+        onClick={onTapPhase}
+        className="today-ritual-card alive-card"
+        style={{
+          position: 'relative',
+          width: '100%',
+          border: `1px solid ${phase.color}22`,
+          borderRadius: 28,
+          padding: 0,
+          background: `linear-gradient(145deg, rgba(255,253,248,0.88), color-mix(in srgb, ${phase.color}, #fff 92%))`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.70), 0 28px 58px -42px ${phase.color}`,
+          overflow: 'hidden',
+          textAlign: 'left',
+          color: T.text,
+          fontFamily: 'inherit',
+          cursor: 'pointer',
+        }}
+      >
+        <div aria-hidden="true" style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(circle at 18% 10%, rgba(255,255,255,0.92), transparent 36%), radial-gradient(circle at 82% 28%, rgba(255,255,255,0.38), transparent 34%)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'relative',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 92px',
+          gap: 16,
+          padding: '20px 18px 0 20px',
+          alignItems: 'stretch',
+        }}>
+          <div>
+            <div style={{ fontFamily: T.mono, fontSize: 10.5, letterSpacing: 1.6, fontWeight: 700, textTransform: 'uppercase', color: `color-mix(in srgb, ${phase.color}, ${T.ink} 24%)`, marginBottom: 10 }}>
+              {copy.eyebrow}
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 500, letterSpacing: -0.85, lineHeight: 1.04, color: T.text, textWrap: 'balance' }}>
+              {copy.headline}
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.5, color: T.muted, marginTop: 10, maxWidth: 232 }}>
+              {copy.body}
+            </div>
+          </div>
+          <div style={{
+            minHeight: 148,
+            borderRadius: 22,
+            backgroundImage: `linear-gradient(180deg, rgba(255,253,248,0.08), rgba(43,33,28,0.12)), url(${RITUAL_IMAGE})`,
+            backgroundSize: 'cover',
+            backgroundPosition: '59% 70%',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.48), 0 16px 32px -24px rgba(26,19,16,0.34)',
+          }} />
+        </div>
+
+        <div style={{ position: 'relative', padding: '16px 18px 18px 20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 7, marginBottom: 16 }}>
+            {highlights.map((item) => (
+              <div key={item.label} style={{
+                minWidth: 0,
+                padding: '10px 7px',
+                borderRadius: 16,
+                background: 'rgba(255,253,248,0.54)',
+                border: '1px solid rgba(43,33,28,0.055)',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontFamily: T.mono, fontSize: 8.5, letterSpacing: 0.85, textTransform: 'uppercase', color: T.muted, marginBottom: 5, whiteSpace: 'nowrap' }}>
+                  {item.label}
+                </div>
+                <div style={{ fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, letterSpacing: -0.15, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item.value}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ borderTop: '1px solid rgba(43,33,28,0.075)', paddingTop: 14 }}>
+            <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 25%)`, marginBottom: 9 }}>
+              {copy.noticeTitle}
+            </div>
+            <div style={{ display: 'grid', gap: 6 }}>
+              {copy.notices.map((notice) => (
+                <div key={notice} style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: T.sans, fontSize: 12.5, color: T.text, lineHeight: 1.35 }}>
+                  <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: 999, background: phase.color, opacity: 0.58, flexShrink: 0 }} />
+                  <span>{notice}</span>
+                </div>
+              ))}
+            </div>
+            {contextLine?.text && (
+              <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.45 }}>
+                {contextLine.text}
+              </div>
+            )}
+          </div>
+        </div>
+      </button>
+    </section>
   )
 }
 
@@ -903,71 +1068,6 @@ export default function Home() {
     triggerBlobEffect()
   }
 
-  // Collapse-in-place scroll behaviour. The cover does NOT slide
-  // off the top — it physically COMPRESSES where it sits, freeing
-  // real layout space below so cards-below rise up to fill the gap.
-  //
-  // Unified fade-into-collapse aesthetic — both sections do the
-  // SAME thing (opacity fade + maxHeight shrink), just staged:
-  //   • bodyRef     (p 0.00 → 0.42): body fades + collapses first
-  //   • headlineRef (p 0.32 → 0.80): headline fades + collapses
-  //   • overlap     (p 0.32 → 0.42): both collapse simultaneously —
-  //     the seam reads as a single continuous gesture, not two
-  //     separate animations
-  //
-  // No scale transform — the previous "headline scales 1→0.5" read
-  // as a slide-out, breaking the gentle fade-collapse feel. Now
-  // every element disappears the same way: it grows transparent
-  // while its layout box shrinks proportionally.
-  //
-  // Natural heights are measured in a layout effect so the maxHeight
-  // shrinks reference the actual rendered heights of each section,
-  // re-measured whenever the cover content changes.
-  //
-  // rAF-throttled, written direct to DOM — no re-render on scroll.
-  const screenRef = useRef(null)
-  const coverRef = useRef(null)
-  const headlineRef = useRef(null)
-  const bodyRef = useRef(null)
-  const bodyNatH = useRef(9999)
-  const headNatH = useRef(9999)
-  useEffect(() => {
-    const el = screenRef.current
-    if (!el) return
-    let rafId = null
-    let lastY = 0
-    const COLLAPSE_DISTANCE = 360
-    const clamp = (v) => Math.min(1, Math.max(0, v))
-    const update = () => {
-      rafId = null
-      const cover = coverRef.current
-      if (!cover) return
-      const p = clamp(lastY / COLLAPSE_DISTANCE)
-      const bodyProg = clamp(p / 0.42)
-      const headProg = clamp((p - 0.32) / 0.48)
-
-      if (bodyRef.current) {
-        bodyRef.current.style.opacity = String(1 - bodyProg)
-        bodyRef.current.style.maxHeight = `${bodyNatH.current * (1 - bodyProg)}px`
-      }
-      if (headlineRef.current) {
-        headlineRef.current.style.opacity = String(1 - headProg)
-        headlineRef.current.style.maxHeight = `${headNatH.current * (1 - headProg)}px`
-      }
-      cover.style.pointerEvents = headProg > 0.92 ? 'none' : 'auto'
-    }
-    const onScroll = () => {
-      lastY = el.scrollTop
-      if (rafId) return
-      rafId = requestAnimationFrame(update)
-    }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      if (rafId) cancelAnimationFrame(rafId)
-    }
-  }, [])
-
   const todayISO = todayKey()
   const todayLog = logs?.[todayISO]
   const todayHasContent = logHasContent(todayLog)
@@ -1056,20 +1156,6 @@ export default function Home() {
     if (daysSinceLastLog != null && daysSinceLastLog >= 14) return { kind: 'staleLogs', daysSince: daysSinceLastLog }
     return null
   })()
-
-  // Measure natural heights of the headline + body sections AFTER
-  // each render that may have changed their contents. scrollHeight
-  // returns the unconstrained content height even when maxHeight
-  // is applied — perfect for our collapse math which multiplies
-  // the natural height by a progress fraction. Wrapping in rAF lets
-  // the layout settle (font load, dynamic content) before measuring.
-  useLayoutEffect(() => {
-    const raf = requestAnimationFrame(() => {
-      if (bodyRef.current) bodyNatH.current = bodyRef.current.scrollHeight
-      if (headlineRef.current) headNatH.current = headlineRef.current.scrollHeight
-    })
-    return () => cancelAnimationFrame(raf)
-  }, [phase?.id, cycleDay, showPeriodCTA, onHormonalBC, isPreg])
 
   // Daily AI-generated reflection. Lives behind the Edge Function;
   // falls back to the local static prompts when the function isn't
@@ -1196,27 +1282,24 @@ export default function Home() {
       {/* Blob layer — pinned to .home-stage, doesn't scroll. */}
       <BackgroundBlob color={blobColor} effect={effect} />
       {/* Content layer — scrolls past the stationary blob. */}
-      <Screen ref={screenRef}>
+      <Screen>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
-          <Greeting name={displayName} phaseId={phase?.id} />
-
-          {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
-
-          {/* Sticky note — tucked into the top-right corner just under
-              the Sunday cell of the week strip. Always present (unless
-              the user has disabled it in Settings), so the gimmick is
-              reliable. Today's note > resurfaced past note > soft empty
-              CTA with attention arrows. Tap → opens QuickNote. */}
-          {stickyNote && (
-            <StickyNote
-              body={stickyNote.body}
-              eyebrow={stickyNote.eyebrow}
-              signature={stickyNote.signature}
-              tapeColor={phase?.color || T.accent}
-              seed={stickyNote.seed}
-              isEmpty={stickyNote.isEmpty}
-              onTap={stickyNote.onTap}
+          {!isPreg && phase && (
+            <TodayRitualHero
+              phase={phase}
+              cycleDay={cycleDay}
+              cycleLength={cycleLength}
+              todayLog={todayLog}
+              contextLine={contextLine}
+              displayName={displayName}
+              onTapPhase={() => goPhase(phase.id)}
             />
+          )}
+
+          {!isPreg && (
+            <div style={{ marginTop: 14 }}>
+              <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />
+            </div>
           )}
 
           {/* Cover — Pregnancy variant. Centered like the mockup —
@@ -1251,99 +1334,6 @@ export default function Home() {
                 </div>
               )}
             </div>
-          )}
-
-          {/* Cover — Cycle variant. The cover is the magazine moment:
-              eyebrow → flourish → giant italic day number → phase name
-              → ONE narrative line (mood) → ONE italic presence line.
-              The WHOLE cover is the affordance — tap anywhere to open
-              the phase detail (Apple-style: the surface IS the button,
-              no explicit "more →" CTA renting a row). Streamlined to
-              get QuickActions visible above the fold. */}
-          {!isPreg && (
-          <div ref={coverRef}
-            role={phase ? 'button' : undefined}
-            tabIndex={phase ? 0 : undefined}
-            onClick={(e) => {
-              // Don't navigate when the user is tapping a button INSIDE the
-              // cover (period CTA). Only the outer cover surface itself
-              // navigates to phase detail.
-              if (e.target.closest('button')) return
-              if (phase) goPhase(phase.id)
-            }}
-            style={{
-              marginBottom: 4,
-              textAlign: 'center',
-              cursor: phase ? 'pointer' : 'default',
-            }}>
-            <div ref={headlineRef} style={{
-              willChange: 'opacity, max-height',
-              overflow: 'hidden',
-              padding: '4px 0 0',
-            }}>
-              <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13, letterSpacing: 0.4, fontWeight: 500, color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)` : T.muted, marginBottom: 4, opacity: 0.9 }}>
-                {bcUsesCover
-                  ? bcModel.cover.eyebrow
-                  : (phase ? `day ${cycleDay || '—'} · your ${phase.name.toLowerCase()} phase` : 'day —')}
-              </div>
-              {phase && !bcUsesCover && (
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 4, marginBottom: 10, color: phase.color, opacity: 0.7 }} aria-hidden="true">
-                  <PhaseFlourish phaseId={phase.id} size={20} />
-                </div>
-              )}
-              <div key={bcUsesCover ? `bc-${bcModel.cover.bigNumber ?? 'x'}` : cycleDay}
-                className={`ambient-breath day-bloom${cycleDay && cycleLength - cycleDay <= 3 && cycleDay <= cycleLength && !bcUsesCover ? ' countdown' : ''}`}
-                style={{ fontFamily: T.serif, fontSize: 116, fontWeight: 300, fontStyle: 'italic', color: phase && !bcUsesCover ? `color-mix(in srgb, ${phase.color}, ${T.ink} 15%)` : T.accent, lineHeight: 0.9, letterSpacing: -5.5, transition: 'color 0.6s ease-out' }}>
-                {bcUsesCover
-                  ? (bcModel.cover.bigNumber != null ? bcModel.cover.bigNumber : '—')
-                  : (cycleDay ? animatedDay : '—')}
-              </div>
-              <div style={{ fontFamily: T.serif, fontSize: 26, fontWeight: 400, fontStyle: 'italic', letterSpacing: -0.5, lineHeight: 1.1, marginTop: 4, color: T.text }}>
-                {bcUsesCover ? bcModel.cover.headline : (phase?.name || 'Just getting started')}.
-              </div>
-            </div>
-
-            <div ref={bodyRef} style={{
-              willChange: 'opacity, max-height',
-              overflow: 'hidden',
-            }}>
-              {contextLine && !bcUsesCover && (
-                <div style={{ marginTop: 12, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  {/* Countdown is data, not poetry — functional sans,
-                      stronger contrast, so it reads instantly. */}
-                  <div style={{ fontFamily: T.sans, fontSize: 13, fontWeight: 600, letterSpacing: 0.2, color: `color-mix(in srgb, ${phase ? phase.color : T.accent}, ${T.ink} 35%)` }}>
-                    {contextLine.text}
-                  </div>
-                  {contextLine.sub && (
-                    <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>
-                      {contextLine.sub}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {phase && !onHormonalBC && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 45%)`, maxWidth: 300, marginLeft: 'auto', marginRight: 'auto', letterSpacing: -0.1 }}>
-                  {phasePresence[phase.id]}
-                </div>
-              )}
-              {bcUsesCover && bcModel.cover.presence && (
-                <div style={{ fontFamily: T.serif, fontSize: 15, fontStyle: 'italic', lineHeight: 1.5, marginTop: 8, color: T.muted, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
-                  {bcModel.cover.presence}
-                </div>
-              )}
-              {/* Affordance hint — tells the user the whole cover is
-                  tappable. Soft italic serif so it reads as a quiet
-                  invitation, not an instruction. Uses the phase color
-                  so it ties to the rest of the cover. */}
-              {phase && (
-                <div className="cover-hint" style={{ fontFamily: T.sans, fontSize: 11, marginTop: 12, color: phase ? `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)` : T.muted, letterSpacing: 1.4, fontWeight: 600, opacity: 0.7, textTransform: 'lowercase' }}>
-                  tap to learn more
-                </div>
-              )}
-
-            </div>
-          </div>
           )}
 
           {/* The one dominant action — the screen's answer to "what
@@ -1499,11 +1489,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* Period-start nudge — lives OUTSIDE the cover so its
-              buttons stay tappable. (Previously it lived inside the
-              cover's bodyRef, which collapses on scroll, meaning
-              users couldn't reach the very CTA Luna asked them
-              to tap.) */}
+          {/* Period-start nudge — stays as its own card so the action
+              is reachable even when the Today story sits above it. */}
           {!isPreg && showPeriodCTA && (
             <div className="alive-card frost-card" style={{ marginTop: 18, padding: 20, background: T.accent + '12', border: `1px solid ${T.accent}40`, borderRadius: 22, boxShadow: `0 14px 30px -20px ${T.accent}50`, textAlign: 'left' }}>
               <div style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, marginBottom: 8, lineHeight: 1.35 }}>
@@ -1537,6 +1524,20 @@ export default function Home() {
             <QuickActions
               go={go}
             />
+          )}
+
+          {stickyNote && (
+            <div style={{ marginTop: 20 }}>
+              <StickyNote
+                body={stickyNote.body}
+                eyebrow={stickyNote.eyebrow}
+                signature={stickyNote.signature}
+                tapeColor={phase?.color || T.accent}
+                seed={stickyNote.seed}
+                isEmpty={stickyNote.isEmpty}
+                onTap={stickyNote.onTap}
+              />
+            </div>
           )}
 
           {/* Smart helper surfaces — only appear when she has told us
@@ -1615,7 +1616,7 @@ export default function Home() {
           )}
 
           {/* ─── WHAT MAKES LUNA, LUNA ────────────────────────────────
-              Differentiators come FIRST after the cover + triggered
+              Differentiators come FIRST after the Today story + triggered
               helpers.
 
               Order (intentional): Luna's voice FIRST (the morning
