@@ -194,6 +194,15 @@ function moodLabelFor(log) {
   return first ? (MOOD_WORDS[first] || first.replace(/-/g, ' ')) : 'Open'
 }
 
+function cycleStatusText(phase, contextLine) {
+  if (contextLine?.text) return contextLine.text
+  if (phase?.id === 'menstrual') return 'Your period is here.'
+  if (phase?.id === 'follicular') return 'Your body is rebuilding.'
+  if (phase?.id === 'ovulation') return 'Your fertile window is near.'
+  if (phase?.id === 'luteal') return 'Your body is winding inward.'
+  return 'Your rhythm is taking shape.'
+}
+
 function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, displayName, onTapPhase }) {
   if (!phase) return null
   const copy = TODAY_RITUAL[phase.id] || TODAY_RITUAL.follicular
@@ -204,9 +213,7 @@ function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, 
     { label: 'Care', value: copy.care },
     { label: 'Nourish', value: copy.food },
   ]
-  const cycleLine = cycleDay
-    ? `Day ${cycleDay}${cycleLength ? ` of ${cycleLength}` : ''} · ${phase.name.toLowerCase()} phase`
-    : `${phase.name} phase`
+  const statusText = cycleStatusText(phase, contextLine)
   return (
     <section className="today-ritual-shell" style={{ marginTop: 8 }}>
       <div style={{
@@ -221,7 +228,7 @@ function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, 
             {name ? `Good ${new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'}, ${name}.` : 'Today.'}
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, color: T.muted, marginTop: 5, lineHeight: 1.35 }}>
-            {cycleLine}
+            Here is where your body is today.
           </div>
         </div>
         <button
@@ -246,6 +253,73 @@ function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, 
           <PhaseFlourish phaseId={phase.id} size={20} />
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={onTapPhase}
+        className="alive-card frost-card"
+        style={{
+          width: '100%',
+          marginBottom: 12,
+          padding: '14px 16px 15px',
+          borderRadius: 26,
+          border: `1px solid ${phase.color}30`,
+          background: `linear-gradient(135deg, rgba(255,253,248,0.76), color-mix(in srgb, ${phase.color}, #fff 94%))`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.62), 0 20px 46px -38px ${phase.color}`,
+          color: T.text,
+          fontFamily: 'inherit',
+          cursor: 'pointer',
+          textAlign: 'left',
+          display: 'grid',
+          gridTemplateColumns: '116px minmax(0, 1fr)',
+          gap: 14,
+          alignItems: 'center',
+        }}
+        aria-label={`Cycle day ${cycleDay || ''}, ${phase.name} phase`}
+      >
+        <div style={{
+          minHeight: 96,
+          borderRadius: 22,
+          background: 'rgba(255,253,248,0.54)',
+          border: '1px solid rgba(43,33,28,0.055)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.55)',
+        }}>
+          <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: 1.5, fontWeight: 700, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 30%)`, textTransform: 'uppercase', marginBottom: 1 }}>
+            day
+          </div>
+          <div style={{ fontFamily: T.serif, fontSize: 62, fontWeight: 300, fontStyle: 'italic', lineHeight: 0.9, letterSpacing: -3.2, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 14%)`, fontVariantNumeric: 'tabular-nums' }}>
+            {cycleDay || '—'}
+          </div>
+          {cycleLength && (
+            <div style={{ fontFamily: T.serif, fontSize: 12, fontStyle: 'italic', color: T.muted, marginTop: 5 }}>
+              of {cycleLength}
+            </div>
+          )}
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: phase.color, marginBottom: 8 }}>
+            <PhaseFlourish phaseId={phase.id} size={18} />
+            <span style={{ fontFamily: T.serif, fontSize: 20, fontWeight: 500, letterSpacing: -0.35, color: T.text, lineHeight: 1.1 }}>
+              {phase.name} phase
+            </span>
+          </div>
+          <div style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.45, color: T.text, fontWeight: 600 }}>
+            {statusText}
+          </div>
+          {contextLine?.sub && (
+            <div style={{ fontFamily: T.sans, fontSize: 11.5, lineHeight: 1.45, color: T.muted, marginTop: 5 }}>
+              {contextLine.sub}
+            </div>
+          )}
+          <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 24%)`, marginTop: 9 }}>
+            Tap for the deeper read →
+          </div>
+        </div>
+      </button>
 
       <button
         type="button"
@@ -334,11 +408,6 @@ function TodayRitualHero({ phase, cycleDay, cycleLength, todayLog, contextLine, 
                 </div>
               ))}
             </div>
-            {contextLine?.text && (
-              <div style={{ marginTop: 12, fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.45 }}>
-                {contextLine.text}
-              </div>
-            )}
           </div>
         </div>
       </button>
