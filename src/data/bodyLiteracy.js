@@ -219,6 +219,23 @@ export function adaptiveLessonFor({ phaseId, cycleDay, todayLog, recentLogs }) {
   return dailyLessonFor(phaseId, cycleDay)
 }
 
+// Tomorrow hook — one forward-looking line shown ONLY on the eve of a
+// phase change (or predicted day one). Rare on purpose: an open loop
+// the user carries overnight, not daily wallpaper. Returns null on
+// ordinary days so the surface stays quiet.
+export function tomorrowHookFor({ todayPhaseId, tomorrowPhaseId, tomorrowIsDayOne }) {
+  if (tomorrowIsDayOne) {
+    return "If your rhythm holds, tomorrow could be day one. Luna's watching with you."
+  }
+  if (!tomorrowPhaseId || tomorrowPhaseId === todayPhaseId) return null
+  const lines = {
+    follicular: 'Tomorrow you step out of your period — estrogen is already climbing, and energy usually follows.',
+    ovulation: 'Tomorrow you cross into your ovulation window — the loudest two or three days of your cycle.',
+    luteal: 'Tomorrow the luteal stretch begins — progesterone takes the wheel, and the pace softens.',
+  }
+  return lines[tomorrowPhaseId] || null
+}
+
 // Convenience export — phase summary for the cycle wheel tap teach modal
 export function phaseSummary(phaseId) {
   const p = PHASES[phaseId]

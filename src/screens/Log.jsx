@@ -4,7 +4,7 @@ import { Eyebrow, SourceLine, Icons } from '../components/shared'
 import { SymptomIcon, MOOD_IDS, MOOD_LABELS, MOOD_COLORS, MOOD_TINTS } from '../components/symptomIcons'
 import { SYMPTOMS, SYMPTOM_INSIGHTS } from '../data/lunaData'
 import { FLOW_LESSONS, MUCUS_LESSONS, SLEEP_LESSONS, SEX_LESSONS, BBT_LESSONS } from '../data/bodyLiteracy'
-import { useCycle, detectPeriodStarts } from '../hooks/useCycle'
+import { useCycle, detectPeriodStarts, predictLogForCycleDay } from '../hooks/useCycle'
 import { PhaseFlourish } from '../components/phaseFlourishes'
 import { sectionColors } from '../data/sectionPalette'
 import useLuna from '../store/useLuna'
@@ -125,6 +125,13 @@ export default function Log() {
   // section. Cleared when they tap the same value again (deselection)
   // or pick something different in another section.
   const [teachField, setTeachField] = useState(null)
+  // "Same as usual?" — Luna's pre-made call for today, built from the
+  // same cycle day in past cycles. The user's job is to agree (one
+  // tap logs it) or adjust — never to compose from scratch.
+  const [predictionDismissed, setPredictionDismissed] = useState(false)
+  // True after "Not quite — adjust": the correction she's about to
+  // make feeds the next cycle's guess, and Luna says so.
+  const [predictionAdjusted, setPredictionAdjusted] = useState(false)
 
   const toggleSym = (id) => {
     setSymptoms((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
@@ -186,6 +193,8 @@ export default function Log() {
     setBbtError('')
     setShowOptionalDetails(Boolean(log.bbt?.value || log.mucus || log.sleep || log.sex))
     setActiveSym(null)
+    setPredictionDismissed(false)
+    setPredictionAdjusted(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingISO])
 
@@ -216,22 +225,16 @@ export default function Log() {
     back()
   }
 
-  const save = () => {
-    const bbtErr = validateBBT(bbt, bbtUnit)
-    if (bbtErr) {
-      setBbtError(bbtErr)
-      setShowOptionalDetails(true)
-      return
-    }
-    setBbtError('')
-    const bbtNum = parseFloat(bbt)
-    const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
+  // Core save path — shared by the manual Save button and the
+  // one-tap prediction accept, which passes explicit values instead
+  // of reading (possibly stale) form state.
+  const doSave = (vals) => {
     // Before saving, check whether this save will be a new period
     // start (so we can fire the celebration). A new start = flow is
     // set (not Spotting), wasn't a flow day before, and is the first
     // day of a 1-day flow stretch that's >7 days after the previous.
     const wasNewPeriodStart = (() => {
-      if (!flow || flow === 'Spotting') return false
+      if (!vals.flow || vals.flow === 'Spotting') return false
       if (existing.flow && existing.flow !== 'Spotting') return false
       const allLogs = useLuna.getState().logs
       const prevStarts = detectPeriodStarts(allLogs)
@@ -240,7 +243,7 @@ export default function Log() {
       const days = (new Date(editingISO + 'T00:00:00') - new Date(latestStart + 'T00:00:00')) / 86400000
       return days > 7
     })()
-    saveLog(editingISO, { moods, mood: moods[0] || null, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note })
+    saveLog(editingISO, { moods: vals.moods, mood: vals.moods[0] || null, symptoms: vals.symptoms, flow: vals.flow, bbt: vals.bbt, mucus: vals.mucus, sex: vals.sex, sleep: vals.sleep, note: vals.note })
     // Sounds — gated on the user's settings.sounds toggle.
     const soundsOn = Boolean(useLuna.getState().settings?.sounds)
     if (wasNewPeriodStart) bloomSound(soundsOn)
@@ -259,15 +262,16 @@ export default function Log() {
     // Analytics: which CATEGORIES of fields were filled, not contents.
     // Fire-and-forget — never block navigation on analytics.
     import('../lib/posthog').then(({ capture }) => capture('log_saved', {
-      has_mood: moods.length > 0,
-      mood_count: moods.length,
-      symptom_count: (symptoms || []).length,
-      has_flow: Boolean(flow),
-      has_bbt: Boolean(bbtPayload),
-      has_mucus: Boolean(mucus),
-      has_sex: Boolean(sex),
-      has_sleep: Boolean(sleep),
-      has_note: Boolean((note || '').trim().length),
+      has_mood: vals.moods.length > 0,
+      mood_count: vals.moods.length,
+      symptom_count: (vals.symptoms || []).length,
+      has_flow: Boolean(vals.flow),
+      has_bbt: Boolean(vals.bbt),
+      has_mucus: Boolean(vals.mucus),
+      has_sex: Boolean(vals.sex),
+      has_sleep: Boolean(vals.sleep),
+      has_note: Boolean((vals.note || '').trim().length),
+      source: vals.source || 'manual',
     })).catch(() => {})
     // Brief delay so the save-pulse animation has time to play
     // before we leave the screen.
@@ -277,9 +281,61 @@ export default function Log() {
     }, 480)
   }
 
+  const save = () => {
+    const bbtErr = validateBBT(bbt, bbtUnit)
+    if (bbtErr) {
+      setBbtError(bbtErr)
+      setShowOptionalDetails(true)
+      return
+    }
+    setBbtError('')
+    const bbtNum = parseFloat(bbt)
+    const bbtPayload = !isNaN(bbtNum) && bbt !== '' ? { value: bbtNum, unit: bbtUnit } : null
+    doSave({ moods, symptoms, flow, bbt: bbtPayload, mucus, sex, sleep, note, source: 'manual' })
+  }
+
   const dateLabel = new Date(editingISO + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
   const isToday = editingISO === todayISO
+  // Luna's pre-made call for today — same cycle day, last few cycles.
+  // Only offered on today's still-empty log: an entry with content
+  // means the user is already composing, not confirming.
+  const prediction = (isToday && !logHasContent(existing))
+    ? predictLogForCycleDay(logs, cycle.periodHistory, cycle.cycleDay)
+    : null
+  const showPrediction = Boolean(prediction) && !predictionDismissed
+  const predictionPhrase = (() => {
+    if (!prediction) return ''
+    const parts = []
+    if (prediction.flow) parts.push(prediction.flow === 'Spotting' ? 'spotting' : `${prediction.flow.toLowerCase()} bleeding`)
+    prediction.symptoms.forEach((id) => { const s = SYMPTOMS[id]; if (s) parts.push(s.label.toLowerCase()) })
+    prediction.moods.forEach((id) => { const l = MOOD_LABELS[id]; if (l) parts.push(`feeling ${l.toLowerCase()}`) })
+    if (prediction.sleep) parts.push(`${prediction.sleep.toLowerCase()} sleep`)
+    return naturalList(parts)
+  })()
+
+  // One tap = the whole day logged. Values come from the prediction,
+  // not form state, so there's no async-setState race.
+  const acceptPrediction = () => {
+    import('../lib/posthog').then(({ capture }) => capture('log_prediction_accepted', { cycles_sampled: prediction.cyclesSampled })).catch(() => {})
+    doSave({ moods: prediction.moods, symptoms: prediction.symptoms, flow: prediction.flow, bbt: null, mucus: null, sex: null, sleep: prediction.sleep, note: '', source: 'prediction' })
+  }
+  // "Not quite" still does the heavy lifting: prefill the form with
+  // Luna's guess so the user only fixes what's wrong.
+  const adjustPrediction = () => {
+    import('../lib/posthog').then(({ capture }) => capture('log_prediction_adjusted', { cycles_sampled: prediction.cyclesSampled })).catch(() => {})
+    setMoods(prediction.moods)
+    setSymptoms(prediction.symptoms)
+    setFlow(prediction.flow)
+    setSleep(prediction.sleep)
+    if (prediction.sleep) setShowOptionalDetails(true)
+    setPredictionDismissed(true)
+    setPredictionAdjusted(true)
+  }
+
   const returnContext = (() => {
+    // The prediction card is the stronger welcome-back — when Luna
+    // already has a call for today, don't stack a second message.
+    if (prediction) return null
     if (!isToday || logHasContent(existing)) return null
     const loggedDates = Object.keys(logs)
       .filter((iso) => iso < todayISO && logHasContent(logs[iso]))
@@ -315,7 +371,7 @@ export default function Log() {
       note.trim() ? 'a note' : null,
       optionalDetailsChosen.length ? 'more detail' : null,
     ].filter(Boolean)
-    if (parts.length === 0) return returnContext ? '' : 'Start with what felt obvious. Leave the rest alone.'
+    if (parts.length === 0) return (returnContext || showPrediction) ? '' : 'Start with what felt obvious. Leave the rest alone.'
     return `So far: ${naturalList(parts)}.`
   })()
 
@@ -373,6 +429,57 @@ export default function Log() {
             </div>
           )}
         </div>
+
+        {showPrediction && (
+          <div className="insight-stagger frost-card"
+            style={{
+              margin: '-6px 0 26px',
+              padding: '16px 16px 15px',
+              background: 'rgba(253,250,245,0.55)',
+              border: `1px solid ${acc}2E`,
+              borderRadius: 20,
+              boxShadow: `0 18px 44px -34px ${acc}80`,
+              animationDelay: '112ms',
+            }}>
+            <Eyebrow color={acc}>Luna's guess · day {cycle.cycleDay}</Eyebrow>
+            <div style={{ fontFamily: T.serif, fontSize: 18, fontWeight: 500, letterSpacing: -0.3, lineHeight: 1.3, marginBottom: 5 }}>
+              Same as <em>usual?</em>
+            </div>
+            <div style={{ fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', color: T.muted, lineHeight: 1.58, marginBottom: 14 }}>
+              The last {prediction.cyclesSampled === 3 ? 'three' : 'two'} cycles, this day brought {predictionPhrase}.
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <button onClick={acceptPrediction} disabled={savedJustNow}
+                className={`alive-card${savedJustNow ? ' save-bloom' : ''}`}
+                style={{
+                  background: acc, color: '#fff', border: 'none',
+                  padding: '11px 20px', cursor: 'pointer',
+                  fontFamily: T.sans, fontSize: 12.5, fontWeight: 600,
+                  letterSpacing: 0.3, borderRadius: 999,
+                  boxShadow: `0 10px 22px -10px ${acc}80`,
+                  '--save-bloom-color': `${acc}80`,
+                }}>
+                {savedJustNow ? '✓  Logged' : 'Yes — log it'}
+              </button>
+              <button onClick={adjustPrediction}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.serif, fontStyle: 'italic', fontSize: 13.5, padding: 0 }}>
+                Not quite — adjust
+              </button>
+            </div>
+          </div>
+        )}
+
+        {predictionAdjusted && (
+          <div style={{
+            margin: '-6px 0 24px',
+            padding: '2px 0 2px 14px',
+            borderLeft: `2px solid ${acc}70`,
+            animation: 'fadeUp 0.32s ease-out both',
+            fontFamily: T.serif, fontSize: 14, fontStyle: 'italic', lineHeight: 1.58, color: T.text, letterSpacing: -0.08,
+          }}>
+            Noted — next cycle, Luna will guess this day a little differently.
+          </div>
+        )}
 
         {returnContext && (
           <div className="insight-stagger"
@@ -786,17 +893,12 @@ export default function Log() {
           </>
         )}
 
-        <div style={{ marginTop: 20, fontFamily: T.serif, fontStyle: 'italic', fontSize: 12.5, color: T.muted, lineHeight: 1.6, paddingTop: 14, borderTop: '1px solid rgba(26,19,16,0.05)' }}>
-          Tracked over time, this is what gives a doctor something concrete to work with.
-        </div>
-
         {/* Quiet undo path — if the user logged something on the wrong
             day, or wants to start fresh, let them empty this day's
-            entry entirely. Confirmation prompt so it's not accidental. */}
-        <div style={{ marginTop: 22, paddingTop: 18, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
-          <div style={{ fontFamily: T.serif, fontSize: 13, color: T.muted, fontStyle: 'italic', lineHeight: 1.55, marginBottom: 12 }}>
-            Tapped the wrong thing? Take it back — your future self won't mind.
-          </div>
+            entry entirely. Confirmation prompt so it's not accidental.
+            The explainer lines above the button were cut (Keep/Merge/
+            Cut pass 2) — the button says everything it needs to. */}
+        <div style={{ marginTop: 26, paddingTop: 18, borderTop: '1px solid rgba(26,19,16,0.06)' }}>
           <button
             className="alive-card"
             onClick={() => {

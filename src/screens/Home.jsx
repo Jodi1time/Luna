@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import { Screen, SourceLine } from '../components/shared'
 import { PHASES, getReflectionPrompt } from '../data/lunaData'
-import { adaptiveLessonFor } from '../data/bodyLiteracy'
+import { adaptiveLessonFor, tomorrowHookFor } from '../data/bodyLiteracy'
 import { getCondition } from '../data/conditions'
 import { dailyThought } from '../lib/lunaChat'
 import LunaChat from '../components/LunaChat'
 import QuickNote from '../components/QuickNote'
 import { PhaseFlourish } from '../components/phaseFlourishes'
-import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary } from '../hooks/useCycle'
+import { useCycle, isOnHormonalBC, detectSymptomPatterns, buildPatternSummary, getPhaseForDay } from '../hooks/useCycle'
 import { getBcCycleModel } from '../lib/bcCycle'
 import { useCountUp } from '../hooks/useCountUp'
 import { resurfaceNote } from '../lib/noteResurface'
@@ -303,32 +303,13 @@ function BCReminder({ bcMethod, wellness, markWellness }) {
   )
 }
 
-// Quiet invitations under the phase cover. The first row is the
-// emotional layer: talk, share, look something up. The compact shelf
-// below keeps the deeper tools present without making every feature
-// fight for the same visual weight.
-function QuickActions({ go, onOpenChat }) {
-  // Each action still carries its route and category. Category gives
-  // the icon a quiet accent, but the card backgrounds now stay close
-  // to Luna's paper so the row feels like invitations, not a menu.
+// One quiet shelf under the phase cover. Keep/Merge/Cut pass 2:
+// "Talk to Luna" cut (the daily-thought strip below is the one chat
+// entry), "Look it up" cut (Library opens with the same search),
+// tiers + sub-lines + scroll teaser cut. One row, one job each.
+function QuickActions({ go }) {
   const items = [
-    // "Log today" QuickAction was a direct duplicate of the center
-    // [+] button in the TabBar. Cut to enforce the "one canonical
-    // home per job" rule — the [+] button is the canonical entry.
-    { key: 'talk', category: 'reflect', tier: 'primary', label: 'Talk to Luna', sub: 'A real conversation for today',
-      icon: (
-        <svg className="icon-anim-talk" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          {/* Chat bubble with three pulsing dots — typing-indicator
-              motif. The dots cycle in sequence so the bubble reads
-              as "Luna composing something for you". */}
-          <path d="M4 4h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H8l-4 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
-          <circle className="dot dot-1" cx="7" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-2" cx="10" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-          <circle className="dot dot-3" cx="13" cy="9.5" r="1" fill="currentColor" stroke="none"/>
-        </svg>
-      ),
-      onTap: () => onOpenChat?.() },
-    { key: 'share', category: 'plan', tier: 'primary', label: 'Share with someone', sub: 'A partner, your mother, a friend',
+    { key: 'share', category: 'plan', label: 'Share',
       icon: (
         <svg className="icon-anim-share" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           {/* Two soft rings — a Venn meeting. The right ring drifts
@@ -342,21 +323,7 @@ function QuickActions({ go, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('shareWith') },
-    { key: 'lookup', category: 'read', tier: 'primary', label: 'Look it up', sub: 'Search the library, sourced',
-      icon: (
-        <svg className="icon-anim-ask" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-          {/* The whole glass-and-handle tilts around the end of the
-              handle (17,17) — like a hand holding it and tilting
-              to look at different spots. The handle stays "in the
-              user's hand" while the glass sweeps. */}
-          <g className="glass">
-            <circle cx="9" cy="9" r="5.5"/>
-            <path d="M13 13l4 4"/>
-          </g>
-        </svg>
-      ),
-      onTap: () => go('askLuna') },
-    { key: 'conditions', category: 'urgent', tier: 'secondary', label: 'Conditions', sub: 'PCOS, endo, PMDD',
+    { key: 'conditions', category: 'urgent', label: 'Conditions',
       icon: (
         <svg className="icon-anim-conditions" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <circle className="ring" cx="10" cy="10" r="7" pathLength="100"/>
@@ -366,9 +333,8 @@ function QuickActions({ go, onOpenChat }) {
       ),
       onTap: () => go('conditions') },
     // Insights moved to the tab bar (fourth slot) — this chip now
-    // carries the Library, which gave up that slot. Browse entry;
-    // "Look it up" above stays the search entry.
-    { key: 'library', category: 'read', tier: 'secondary', label: 'Library', sub: 'Doctor-grounded reads',
+    // carries the Library. Browse + search both live inside Library.
+    { key: 'library', category: 'read', label: 'Library',
       icon: (
         <svg className="icon-anim-insights" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 3.5h5a1.8 1.8 0 011.8 1.8V17a1.6 1.6 0 00-1.6-1.4H4z"/>
@@ -376,7 +342,7 @@ function QuickActions({ go, onOpenChat }) {
         </svg>
       ),
       onTap: () => go('library') },
-    { key: 'cheatsheet', category: 'care', tier: 'secondary', label: 'Visit notes', sub: 'Talking points',
+    { key: 'cheatsheet', category: 'care', label: 'Visit notes',
       icon: (
         <svg className="icon-anim-cheatsheet" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <rect x="4" y="3" width="12" height="14" rx="1.5"/>
@@ -387,161 +353,50 @@ function QuickActions({ go, onOpenChat }) {
       ),
       onTap: () => go('cheatsheet') },
   ]
-  const primaryItems = items.filter((it) => it.tier === 'primary')
-  const secondaryItems = items.filter((it) => it.tier === 'secondary')
-  // One-shot scroll teaser — runs once on mount unless the user
-  // touches the row first, in which case it cancels immediately so
-  // the user's finger always wins over the animation. Spring tail
-  // (forward glide → light overshoot → settle) reads as physical
-  // motion, not a programmed slide.
-  const scrollerRef = useRef(null)
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let raf = 0
-    let cancelled = false
-    let startTimer = 0
-    const cancel = () => {
-      cancelled = true
-      if (startTimer) clearTimeout(startTimer)
-      if (raf) cancelAnimationFrame(raf)
-    }
-    el.addEventListener('touchstart', cancel, { passive: true, once: true })
-    el.addEventListener('pointerdown', cancel, { passive: true, once: true })
-    el.addEventListener('wheel', cancel, { passive: true, once: true })
-    const start = performance.now()
-    const duration = 1650
-    const peak = 64
-    const tick = (now) => {
-      if (cancelled) return
-      const t = Math.min(1, (now - start) / duration)
-      let x
-      if (t < 0.42) {
-        const p = t / 0.42
-        x = peak * (1 - Math.pow(1 - p, 3))
-      } else if (t < 0.78) {
-        const p = (t - 0.42) / 0.36
-        const eased = 1 - Math.pow(1 - p, 2.5)
-        x = peak + (-peak - 8) * eased
-      } else {
-        const p = (t - 0.78) / 0.22
-        const eased = Math.sin((p * Math.PI) / 2)
-        x = -8 + 8 * eased
-      }
-      el.scrollLeft = Math.max(0, x)
-      if (t < 1) raf = requestAnimationFrame(tick)
-    }
-    startTimer = setTimeout(() => { if (!cancelled) raf = requestAnimationFrame(tick) }, 650)
-    return () => {
-      cancel()
-      el.removeEventListener('touchstart', cancel)
-      el.removeEventListener('pointerdown', cancel)
-      el.removeEventListener('wheel', cancel)
-    }
-  }, [])
   return (
-    <div style={{ marginTop: 16 }}>
-      <div ref={scrollerRef} className="h-scroller" style={{
-        display: 'flex', gap: 10, overflowX: 'auto', overflowY: 'hidden',
-        marginLeft: -22, marginRight: -22, padding: '6px 22px 8px',
-      }}>
-      {primaryItems.map((it, idx) => {
+    <div className="frost-card" style={{
+      display: 'grid',
+      gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+      overflow: 'hidden',
+      marginTop: 16,
+      background: 'rgba(253,250,245,0.42)',
+      border: '1px solid rgba(26,19,16,0.055)',
+      borderRadius: 18,
+      boxShadow: 'none',
+    }}>
+      {items.map((it, idx) => {
         const colors = sectionColors(it.category)
         return (
-          <button key={it.key} onClick={it.onTap} className="stagger-card alive-card frost-card"
+          <button key={it.key} onClick={it.onTap} className="alive-card"
             style={{
-              position: 'relative',
-              flex: '0 0 58%',
-              maxWidth: 222,
-              minHeight: 130,
-              scrollSnapAlign: 'start',
-              textAlign: 'left',
-              borderRadius: 24,
-              padding: 16,
-              overflow: 'hidden',
-              cursor: 'pointer',
-              color: T.text,
-              fontFamily: 'inherit',
+              minWidth: 0,
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
-              alignItems: 'flex-start',
-              background: 'rgba(253,250,245,0.54)',
-              border: '1px solid rgba(26,19,16,0.065)',
-              boxShadow: '0 10px 22px -28px rgba(26,19,16,0.18)',
-              animationDelay: `${idx * 50}ms`,
+              alignItems: 'center',
+              gap: 7,
+              border: 'none',
+              borderRight: idx < items.length - 1 ? '1px solid rgba(26,19,16,0.055)' : 'none',
+              background: 'transparent',
+              padding: '13px 6px 12px',
+              cursor: 'pointer',
+              textAlign: 'center',
+              color: T.text,
+              fontFamily: 'inherit',
             }}>
             <span style={{
-              width: 38, height: 38, borderRadius: 16,
+              width: 28, height: 28, borderRadius: 12,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               color: colors.accent,
               background: `${colors.accent}12`,
-              border: `1px solid ${colors.accent}1f`,
             }}>
               {it.icon}
             </span>
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 5, position: 'relative', zIndex: 1 }}>
-              <span style={{ fontFamily: T.serif, fontSize: 17, fontWeight: 500, lineHeight: 1.16, letterSpacing: -0.25, color: T.text }}>
-                {it.label}
-              </span>
-              <span style={{ fontFamily: T.sans, fontSize: 11.5, color: T.muted, lineHeight: 1.42, letterSpacing: 0.05 }}>
-                {it.sub}
-              </span>
+            <span style={{ display: 'block', minWidth: 0, maxWidth: '100%', fontFamily: T.serif, fontSize: 12.5, fontWeight: 500, lineHeight: 1.1, letterSpacing: -0.12, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {it.label}
             </span>
           </button>
         )
       })}
-      </div>
-      <div className="frost-card" style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-        overflow: 'hidden',
-        marginTop: 10,
-        background: 'rgba(253,250,245,0.42)',
-        border: '1px solid rgba(26,19,16,0.055)',
-        borderRadius: 18,
-        boxShadow: 'none',
-      }}>
-        {secondaryItems.map((it, idx) => {
-          const colors = sectionColors(it.category)
-          return (
-            <button key={it.key} onClick={it.onTap} className="alive-card"
-              style={{
-                minWidth: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: 7,
-                border: 'none',
-                borderRight: idx < secondaryItems.length - 1 ? '1px solid rgba(26,19,16,0.055)' : 'none',
-                background: 'transparent',
-                padding: '13px 10px 12px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                color: T.text,
-                fontFamily: 'inherit',
-              }}>
-              <span style={{
-                width: 28, height: 28, borderRadius: 12,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                color: colors.accent,
-                background: `${colors.accent}12`,
-              }}>
-                {it.icon}
-              </span>
-              <span style={{ minWidth: 0 }}>
-                <span style={{ display: 'block', fontFamily: T.serif, fontSize: 13.5, fontWeight: 500, lineHeight: 1.1, letterSpacing: -0.12, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {it.label}
-                </span>
-                <span style={{ display: 'block', marginTop: 3, fontFamily: T.sans, fontSize: 10.5, lineHeight: 1.25, color: T.muted }}>
-                  {it.sub}
-                </span>
-              </span>
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }
@@ -928,6 +783,26 @@ export default function Home() {
   // Share surface only for the first-cycle milestone so it feels like
   // an occasion, not a repeated menu item.
   const showCircleMilestoneCard = !hideCircleCard && !settings?.circleSeenFirstCycle && (cycle?.cyclesLogged ?? 0) >= 1
+  // One educational surface per visit (Keep/Merge/Cut pass 2): the
+  // school card and the daily lesson never stack. An UNSTARTED school
+  // is an invitation, not furniture — it gets the slot only on the
+  // first two days of its phase, then the rotating lesson returns.
+  // A STARTED school owns the slot until she finishes it.
+  const phaseJustBegan = (() => {
+    if (!phase || !cycleDay) return false
+    const prev = cycleDay > 2 ? getPhaseForDay(cycleDay - 2, cycleLength, periodLength) : null
+    return !prev || prev.id !== phase.id
+  })()
+  const activeSchool = (() => {
+    if (isPreg || !phase || hideEducational) return null
+    const school = schoolForPhase(phase.id)
+    if (!school) return null
+    const state = settings?.schools?.[school.id] || {}
+    const done = state.completedDays || []
+    if (done.length === school.duration) return null
+    const started = done.length > 0 || state.startedAt
+    return (started || phaseJustBegan) ? school : null
+  })()
   const hasFlowToday = todayLog?.flow && todayLog.flow !== 'Spotting'
   // Smart cramps surface: if today's log has cramps as a mood OR as a
   // symptom, surface a "Sit with me" card pointing to the Cramps Helper.
@@ -1237,14 +1112,12 @@ export default function Home() {
                 <div style={{ marginTop: 12, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto' }}>
                   {/* Countdown is data, not poetry — functional sans,
                       stronger contrast, so it reads instantly. */}
+                  {/* Data line only — the explanatory sub was filler
+                      (Keep/Merge/Cut pass 2); reasoning lives in
+                      Insights where she goes looking for it. */}
                   <div style={{ fontFamily: T.sans, fontSize: 13, fontWeight: 600, letterSpacing: 0.2, color: `color-mix(in srgb, ${phase ? phase.color : T.accent}, ${T.ink} 35%)` }}>
                     {contextLine.text}
                   </div>
-                  {contextLine.sub && (
-                    <div style={{ fontFamily: T.sans, fontSize: 12, color: T.muted, marginTop: 4, lineHeight: 1.5 }}>
-                      {contextLine.sub}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -1273,41 +1146,35 @@ export default function Home() {
           )}
 
           {/* The one dominant action — the screen's answer to "what
-              now?". Filled accent when today isn't logged (clearly THE
-              thing to do), a quiet "noted" state once she has. Sits
-              above the secondary quick-action row. Suppressed when a
-              stronger nudge (period CTA / catch-up) owns the day. */}
-          {!isPreg && !showCatchUp && !showPeriodCTA && (
+              now?". Only exists while it IS the next action: once
+              today is logged it disappears entirely (the tab [+]
+              remains the standing entry — no "noted" duplicate card).
+              Suppressed when a stronger nudge owns the day. */}
+          {!isPreg && !showCatchUp && !showPeriodCTA && !todayHasContent && (
             <button onClick={() => { setActiveLogDate(todayISO); go('log') }}
               className="alive-card"
               style={{
                 marginTop: 18, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
                 padding: '17px 18px 17px 20px', borderRadius: 18,
-                background: todayHasContent ? 'rgba(253,250,245,0.58)' : T.accent,
-                border: todayHasContent ? `1px solid ${T.accent}2e` : `1px solid ${T.accent}`,
-                color: todayHasContent ? T.text : '#fff',
-                boxShadow: todayHasContent
-                  ? 'none'
-                  : `0 12px 22px -18px ${T.accent}85`,
+                background: T.accent,
+                border: `1px solid ${T.accent}`,
+                color: '#fff',
+                boxShadow: `0 12px 22px -18px ${T.accent}85`,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14,
               }}>
               <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: T.serif, fontSize: 19, fontWeight: 500, letterSpacing: -0.3 }}>
-                  {todayHasContent ? 'Today’s noted.' : showQuietReturn ? 'Welcome back. Start with today.' : 'How are you feeling today?'}
+                  {showQuietReturn ? 'Welcome back. Start with today.' : 'How are you feeling today?'}
                 </span>
-                <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: todayHasContent ? T.muted : 'rgba(255,250,245,0.88)' }}>
-                  {todayHasContent
-                    ? 'Add more anytime — a symptom, a mood, a note.'
-                    : showQuietReturn
-                      ? 'The quiet days can stay quiet. A few taps is enough.'
-                      : 'A few taps. It teaches Luna your body, and takes a moment.'}
+                <span style={{ fontFamily: T.sans, fontSize: 12.5, lineHeight: 1.4, color: 'rgba(255,250,245,0.88)' }}>
+                  {showQuietReturn ? 'The quiet days can stay quiet.' : 'A few taps is enough.'}
                 </span>
               </span>
               <span aria-hidden="true" style={{
                 flexShrink: 0, width: 38, height: 38, borderRadius: 999,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: todayHasContent ? `${T.accent}14` : 'rgba(255,255,255,0.22)',
-                color: todayHasContent ? T.accent : '#fff',
+                background: 'rgba(255,255,255,0.22)',
+                color: '#fff',
               }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 8h9M8 3l5 5-5 5"/></svg>
               </span>
@@ -1433,18 +1300,10 @@ export default function Home() {
             </div>
           )}
 
-          {/* Quick actions — a horizontal scroll wheel of the most
-              common entries (Log today, Edit period) plus the four
-              navigation cards that used to live in AlwaysHere
-              (intimate / watch / cheatsheet / care). "A note" used to
-              be here but is now covered by the sticky note in the
-              corner, so removed to avoid redundancy. */}
-          {!isPreg && (
-            <QuickActions
-              go={go}
-              onOpenChat={() => { setChatOpener(null); setChatOpen(true) }}
-            />
-          )}
+          {/* Quick actions — one quiet shelf, one entry per job.
+              Chat lives in the daily-thought strip, search inside
+              Library, logging in the tab [+]. */}
+          {!isPreg && <QuickActions go={go} />}
 
           {/* Smart helper surfaces — only appear when she has told us
               something is happening today. Each gets its own eyebrow
@@ -1639,7 +1498,7 @@ export default function Home() {
               thing on the page, so it leads. Hidden when intent is
               just-tracking — schools are body-literacy depth, not what
               that user came for. */}
-          {!isPreg && phase && !hideEducational && (
+          {activeSchool && (
             <CycleSchoolCard phase={phase} settings={settings} go={go} />
           )}
 
@@ -1649,8 +1508,10 @@ export default function Home() {
               you over coffee — sourced still, but the source lives
               behind a tap, not stamped on the card. Adapts to today's
               log; rotates by cycle day. Hidden when intent is
-              just-tracking — they explicitly opted out of teach moments. */}
-          {!isPreg && phase && !hideEducational && (() => {
+              just-tracking — they explicitly opted out of teach
+              moments — and when the school card already owns the
+              teach slot today (one educational surface per visit). */}
+          {!isPreg && phase && !hideEducational && !activeSchool && (() => {
             const lesson = adaptiveLessonFor({
               phaseId: phase.id,
               cycleDay: cycle.cycleDay,
@@ -1658,6 +1519,16 @@ export default function Home() {
               recentLogs: logs,
             })
             if (!lesson) return null
+            // Zeigarnik hook — only on the eve of a phase change, so
+            // the user carries one open loop overnight. Null on
+            // ordinary days; the card stays as-is.
+            const tomorrowDay = cycle.cycleDay + 1
+            const tomorrowIsDayOne = Boolean(cycle.cycleDay) && tomorrowDay > cycle.cycleLength
+            const hook = cycle.cycleDay ? tomorrowHookFor({
+              todayPhaseId: phase.id,
+              tomorrowPhaseId: tomorrowIsDayOne ? null : getPhaseForDay(tomorrowDay, cycle.cycleLength, cycle.periodLength)?.id,
+              tomorrowIsDayOne,
+            }) : null
             return (
               <button onClick={() => lesson.readId ? goArticle(lesson.readId) : null}
                 disabled={!lesson.readId}
@@ -1683,6 +1554,11 @@ export default function Home() {
                 <div style={{ fontFamily: T.serif, fontSize: 17.5, fontStyle: 'italic', lineHeight: 1.44, color: T.text, letterSpacing: -0.25 }}>
                   {lesson.title}
                 </div>
+                {hook && (
+                  <div style={{ fontFamily: T.serif, fontSize: 13.5, fontStyle: 'italic', lineHeight: 1.55, marginTop: 10, color: `color-mix(in srgb, ${phase.color}, ${T.ink} 35%)`, letterSpacing: -0.1 }}>
+                    {hook}
+                  </div>
+                )}
               </button>
             )
           })()}

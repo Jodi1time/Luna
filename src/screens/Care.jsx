@@ -10,16 +10,18 @@ const CATEGORIES = [...new Set(CHECKUPS.map((c) => c.category))]
 
 export default function Care() {
   const store = useLuna()
-  const { back, completedChecks, toggleCheck, session } = store
+  const { back, completedChecks, toggleCheck } = store
   const cycle = useCycle(store)
   const phase = cycle?.phase
   const acc = phase?.color || T.accent
-  const totalChecks = CHECKUPS.length
-  const doneTotal = CHECKUPS.filter((item) => completedChecks?.includes(item.id)).length
+  // Endowed progress, the honest kind: cycle tracking IS preventive
+  // care — it's the record every visit below gets sharper with. If
+  // she's tracking, the plan never opens at zero. No medical checkup
+  // is ever auto-marked; only the thing she has genuinely done.
+  const trackingCredit = Boolean(store.lastPeriodStart || Object.keys(store.logs || {}).length)
+  const totalChecks = CHECKUPS.length + (trackingCredit ? 1 : 0)
+  const doneTotal = CHECKUPS.filter((item) => completedChecks?.includes(item.id)).length + (trackingCredit ? 1 : 0)
   const nextOpen = CHECKUPS.find((item) => !completedChecks?.includes(item.id)) || null
-  const storageLine = session?.user
-    ? 'These check marks sync with your Luna account and stay cached on this device for speed.'
-    : 'Without an account, these check marks stay only on this device.'
 
   const findProvider = () => {
     window.open('https://maps.google.com/?q=OB+GYN+near+me', '_blank')
@@ -60,6 +62,21 @@ export default function Care() {
               transition: 'width 0.3s var(--ease-out)',
             }} />
           </div>
+          {trackingCredit && (
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: 4, flexShrink: 0, marginTop: 1,
+                border: `1.5px solid ${acc}`, background: acc,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+              }}>
+                {Icons.check}
+              </div>
+              <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.text }}>
+                <span style={{ fontWeight: 500 }}>Tracking your cycle</span>
+                <span style={{ color: T.muted, fontStyle: 'italic' }}> — already yours. It's the record every visit below gets sharper with.</span>
+              </div>
+            </div>
+          )}
           <div style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.58, color: T.muted, fontStyle: 'italic', marginBottom: 14 }}>
             {nextOpen
               ? `A practical next step: ${nextOpen.label.toLowerCase()}.`
@@ -150,7 +167,7 @@ export default function Care() {
         })}
 
         <div style={{ fontSize: 11.5, color: T.muted, fontFamily: T.serif, fontStyle: 'italic', lineHeight: 1.55, paddingBottom: 8 }}>
-          {storageLine} Care is a planning checklist, not a medical record.
+          A planning checklist, not a medical record.
         </div>
       </div>
     </Screen>

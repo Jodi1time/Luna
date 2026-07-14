@@ -610,6 +610,54 @@ export function detectSymptomPatterns(logs, periodStarts, cycleLength, periodLen
   return patterns.sort((a, b) => b.occurrences - a.occurrences).slice(0, 6)
 }
 
+// Predicts what today's log will likely contain by re-reading the
+// same cycle day (±1) in up to the last three completed cycles. Only
+// signals that repeated in at least two of those cycles make the cut —
+// a one-off day never becomes "your usual". Returns null when there
+// isn't enough history to make an honest call, so the Log screen can
+// simply not show the card rather than guess.
+export function predictLogForCycleDay(logs, periodStarts, cycleDay) {
+  if (!logs || !cycleDay || !periodStarts || periodStarts.length < 3) return null
+  // Previous *completed* cycles only — the last start anchors the
+  // current cycle, so it can't testify about this cycle day yet.
+  const prevStarts = periodStarts.slice(0, -1).slice(-3)
+
+  // One sample log per past cycle: exact cycle day first, then ±1.
+  const samples = []
+  for (const start of prevStarts) {
+    const nextStart = periodStarts[periodStarts.indexOf(start) + 1]
+    for (const offset of [0, -1, 1]) {
+      const iso = toDateKey(addCalendarDays(start, cycleDay - 1 + offset))
+      if (nextStart && iso >= nextStart) continue // that cycle ended sooner
+      const log = logs[iso]
+      if (!log) continue
+      if (!moodIdsOf(log).length && !(log.symptoms || []).length && !log.flow && !log.sleep) continue
+      samples.push(log)
+      break
+    }
+  }
+  if (samples.length < 2) return null
+
+  const tally = (values) => {
+    const counts = {}
+    for (const v of values) counts[v] = (counts[v] || 0) + 1
+    return counts
+  }
+  const repeated = (counts) => Object.keys(counts).filter((k) => counts[k] >= 2)
+  const commonest = (counts) => {
+    const [top] = Object.entries(counts).filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1])
+    return top ? top[0] : null
+  }
+
+  const moods    = repeated(tally(samples.flatMap((log) => moodIdsOf(log))))
+  const symptoms = repeated(tally(samples.flatMap((log) => log.symptoms || [])))
+  const flow     = commonest(tally(samples.map((log) => log.flow).filter(Boolean)))
+  const sleep    = commonest(tally(samples.map((log) => log.sleep).filter(Boolean)))
+
+  if (!moods.length && !symptoms.length && !flow && !sleep) return null
+  return { moods, symptoms, flow, sleep, cyclesSampled: samples.length }
+}
+
 export function getCycleDay(lastPeriodStart, cycleLength) {
   if (!lastPeriodStart) return null
   const start = parseDateOnly(lastPeriodStart)

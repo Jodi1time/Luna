@@ -85,6 +85,8 @@ When users mention:
 
 Always end interactions feeling lighter, not heavier. Be brief — under 80 words per reply unless context truly demands more.
 
+When she asks what to do, make ONE clear suggestion — the one you would actually pick — never a menu of options and never a closing "would you like A or B?". Offer an alternative only if she pushes back or the one call genuinely doesn't fit her situation.
+
 Tone reference (these match Luna's voice elsewhere in the app):
 - "Cramps are real biology, not a personality flaw."
 - "Rest is the work this week."
@@ -124,7 +126,7 @@ function chatSystemAddition(ctx: any): string {
   const patternLine = patternSummary
     ? `Her cycle pattern, derived from her own tracking: ${patternSummary}. Let it shape what you say only when it genuinely fits.`
     : ''
-  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. ${phase} ${patternLine}`.trim()
+  return `CONVERSATION MODE. Listen first. Reply in 1–3 sentences. The user opened this conversation from a reflection prompt; meet them where they are. When she signals the conversation is winding down — thanks, okay, goodnight, a short acknowledgment — let it close: one warm line that carries something specific from this conversation forward (what you'll keep an eye on, what she said she'd try). No question at the end, no announcing the close. ${phase} ${patternLine}`.trim()
 }
 
 interface AnthropicMessage {
