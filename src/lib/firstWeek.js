@@ -113,7 +113,7 @@ export function getFirstWeekMoment({ joinedAt, todayISO, logs, cycleDay, cycleLe
   return {
     id,
     eyebrow: 'a week in',
-    text: `A week ago you gave Luna a starting point.${middle} From here it compounds — by your second cycle, predictions stop being guesses and start being yours.`,
+    text: `A week ago you gave Luna a starting point.${middle} Your entries can help you remember what happened and prepare questions. Cycle predictions remain estimates.`,
     cta: 'talk',
   }
 }

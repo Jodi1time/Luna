@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import PcosCompanion from '../components/PcosCompanion'
 import { T } from '../data/theme'
 import { Masthead, Eyebrow, Screen, Rule } from '../components/shared'
 import { sectionColors, sectionPaper } from '../data/sectionPalette'
@@ -166,6 +167,7 @@ export default function Pcos() {
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
         <Masthead issue="PCOS" onBack={back} />
+        <PcosCompanion />
 
         {/* Hero — phase-flourished header that names the mode. */}
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '0ms' }}>

@@ -41,7 +41,7 @@ export default function Calendar() {
   // month renders settled instead of re-assembling for ~750ms.
   const [animate] = useState(() => choreoOnce('calendar'))
   const onHormonalBC = isOnHormonalBC(store.birthControl)
-  const { go, setActiveLogDate } = store
+  const { go, setActiveLogDate, logs } = store
   const openLogFor = (iso) => {
     setActiveLogDate(iso)
     go('log')
@@ -123,14 +123,7 @@ export default function Calendar() {
   // visual cue (left edge accent) so the eye can see "this is where
   // follicular becomes ovulation" without reading copy. Computed
   // per-cell by comparing each cell's phase id to the previous cell's.
-  const cellsWithBoundary = useMemo(() => {
-    let prevPhaseId = null
-    return monthCells.map((c) => {
-      const startsPhase = c.phase && c.phase.id !== prevPhaseId
-      prevPhaseId = c.phase?.id ?? prevPhaseId
-      return { ...c, startsPhase }
-    })
-  }, [monthCells])
+  const cellsWithBoundary = monthCells
 
   const monthLabel = viewed.toLocaleDateString('en-US', { month: 'long' })
   const yearLabel = viewed.getFullYear()
@@ -235,11 +228,7 @@ export default function Calendar() {
               </>
             ) : (
               <>
-                {Object.values(PHASES).map((p) => (
-                  <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, background: p.color, borderRadius: 1 }} />{p.name}
-                  </div>
-                ))}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: T.text }} />Today</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 6, height: 6, background: T.accent, borderRadius: '50%' }} />Logged period
                 </div>
@@ -263,7 +252,7 @@ export default function Calendar() {
               position keeps total reveal under ~750ms. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
             {Array.from({ length: offset }).map((_, i) => <div key={`pad${i}`} />)}
-            {cellsWithBoundary.map(({ date, day, phase, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue, startsPhase }, cellIdx) => {
+            {cellsWithBoundary.map(({ date, day, future, isPeriodDay, isLoggedPeriod, isSpotting, isPlacebo, isPackStart, isShotDay, isShotDue }, cellIdx) => {
               const isToday = date === todayISO
               const showLoggedDot = isLoggedPeriod && !bcMode
               const showPredictedDot = !isLoggedPeriod && isPeriodDay && future
@@ -282,27 +271,28 @@ export default function Calendar() {
                 ? (isLoggedPeriod ? T.accent + '30'
                   : isPlacebo && !future ? PHASES.menstrual.color + '22'
                   : 'transparent')
-                : (phase && !future ? phase.color + (isToday ? '' : '28') : 'transparent')
+                : (isLoggedPeriod ? T.accent + '18' : 'transparent')
               const cellBorder = bcMode
                 ? (isShotDay ? `1.5px solid ${T.accent}`
                   : isShotDue ? `1.5px dashed ${T.accent}`
                   : isPlacebo && future ? `1px dashed ${PHASES.menstrual.color}88`
                   : 'none')
-                : (future && phase ? `1px dashed ${phase.color}88` : 'none')
+                : (showPredictedDot ? `1px dashed ${T.accent}70` : '1px solid transparent')
               return (
                 <button key={date}
                   onClick={tappable ? () => openLogFor(date) : undefined}
                   disabled={!tappable}
-                  aria-label={tappable ? `Log for ${date}` : `Future day ${date}`}
+                  aria-label={`${date}${isToday ? ', today' : ''}${isLoggedPeriod ? ', recorded bleeding' : ''}${showPredictedDot ? ', estimated period' : ''}${logs[date] ? ', entry saved' : ''}${tappable ? ', add or edit entry' : ', future day'}`}
+                  aria-current={isToday ? 'date' : undefined}
                   className="insight-stagger"
                   style={{
                     position: 'relative',
                     aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 13, fontFamily: T.serif, fontWeight: isToday ? 600 : 400,
-                    background: cellBg,
-                    color: isToday && phase && !bcMode ? '#fff' : T.text,
+                    background: isToday ? T.text : cellBg,
+                    color: isToday ? '#fff' : T.text,
                     border: cellBorder,
-                    borderRadius: T.r,
+                    borderRadius: 14,
                     cursor: tappable ? 'pointer' : 'default',
                     padding: 0,
                     animationDelay: `${cellDelay}ms`,
@@ -311,19 +301,10 @@ export default function Calendar() {
                     // begins here" without copy.
                     boxShadow: bcMode
                       ? (isPackStart ? `inset 3px 0 0 0 ${T.accent}` : 'none')
-                      : (startsPhase && !future && phase ? `inset 3px 0 0 0 ${phase.color}` : 'none'),
+                      : 'none',
                   }}>
-                  {/* Today cell pulse ring — quiet "you are here" anchor */}
-                  {isToday && (phase || bcMode) && (
-                    <div className="pulse-ring" aria-hidden="true"
-                      style={{
-                        position: 'absolute', inset: -3,
-                        border: `1.5px solid ${bcMode ? T.accent : phase.color}`,
-                        borderRadius: T.r,
-                        pointerEvents: 'none',
-                      }} />
-                  )}
                   {day}
+                  {logs[date] && !showLoggedDot && <span aria-hidden="true" style={{ position: 'absolute', bottom: 7, width: 4, height: 4, borderRadius: '50%', background: isToday ? '#fff' : T.muted }} />}
                   {showLoggedDot && (
                     <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, background: T.accent, borderRadius: '50%' }} />
                   )}
