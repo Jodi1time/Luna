@@ -1,0 +1,16 @@
+.pcos-companion{padding:24px;margin:22px 0;background:#fffaf3;border:1px solid #e0d6c8;border-radius:24px;color:#1a1310;font-family:'DM Sans',sans-serif}
+.pcos-companion h2{font:500 29px/1.1 'Newsreader',Georgia,serif;letter-spacing:-.6px;margin:12px 0}
+.pcos-companion h3{font:500 22px/1.2 'Newsreader',Georgia,serif;margin:15px 0 12px}
+.pcos-companion p{font-size:14px;line-height:1.6;color:#756a60}
+.care-kicker{font-size:10px;letter-spacing:1.5px;font-weight:600;color:#756a60}
+.pcos-companion button{font:500 13px/1.4 'DM Sans',sans-serif;min-height:44px;padding:11px 14px;border:1px solid #ded3c4;border-radius:12px;background:transparent;color:#1a1310;cursor:pointer}
+.pcos-companion button:disabled{opacity:.45;cursor:default}
+.pcos-companion .care-primary{background:#1a1310;color:#fff;border-color:#1a1310}
+.care-actions{display:flex;flex-direction:column;gap:8px;margin:20px 0}
+.care-recap{border-top:1px solid #e5dbce;padding-top:20px;margin-top:22px}
+.care-count{display:flex;justify-content:space-between;gap:16px;font-size:13px;padding:8px 0;border-bottom:1px solid #eee6da}
+.pcos-companion .care-small{font-size:12px;line-height:1.6}
+.pcos-companion label{display:block;font-size:13px;line-height:1.5;margin:12px 0 8px}
+.pcos-companion textarea{width:100%;box-sizing:border-box;border:1px solid #d6cabc;border-radius:12px;padding:12px;background:#fffef9;color:#1a1310;font:16px/1.5 'DM Sans',sans-serif;resize:vertical;margin-bottom:10px}
+.care-questions{list-style:none;padding:0}.care-questions li{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;line-height:1.5;padding:10px 0;border-bottom:1px solid #e5dbce;overflow-wrap:anywhere}.care-questions button{flex-shrink:0;font-size:11px;border:0;color:#756a60;padding:8px}
+.pcos-companion .care-check{display:flex;align-items:center;gap:10px;margin:20px 0}.care-check input{width:20px;height:20px;accent-color:#c84e2e}.care-draft{margin-top:20px}.pcos-companion :focus-visible{outline:2px solid #c84e2e;outline-offset:3px}

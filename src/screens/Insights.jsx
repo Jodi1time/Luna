@@ -36,14 +36,14 @@ function ringArc(cx, cy, r, a0, a1) {
 // the wheel reads as a journey in progress instead of a static chart.
 // Each band is one large tap target into that phase's teaching surface.
 function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase, animate = true }) {
+  const animatedCenter = useCountUp(cycleDay || 0, animate ? 1100 : 0)
   if (!cycleDay || !cycleLength) return null
-  const animatedCenter = useCountUp(cycleDay, animate ? 1100 : 0)
   const size = 260
   const r = 110
   const cx = size / 2
   const cy = size / 2
-  const BAND = 13          // stroke width of the phase bands
-  const GAP  = 3.2         // degrees of breathing room at each phase boundary
+  const BAND = 8
+  const GAP  = 7
   const angleFor = (day) => ((day - 1) / cycleLength) * 360 - 90
   const todayAngle = angleFor(cycleDay + 0.5)
 
@@ -115,7 +115,8 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase,
             {onTapPhase && (
               <path d={b.path} fill="none" stroke="#000" strokeOpacity={0}
                 strokeWidth={30} strokeLinecap="round"
-                role="button" aria-label={`Read about the ${b.id} phase`}
+                role="button" tabIndex={0} aria-label={`Read about the ${b.id} phase`}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onTapPhase(b.id) } }}
                 onClick={() => onTapPhase(b.id)}
                 style={{ cursor: 'pointer' }} />
             )}
@@ -131,12 +132,12 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase,
         <circle cx={mx} cy={my} r={5} fill="#fff" stroke={todayPhase.color} strokeWidth={1.8} />
         {/* Center — huge italic day number + small serif "of X" */}
         <text x={cx} y={cy + 2} textAnchor="middle"
-          style={{ fontFamily: T.serif, fontSize: 92, fontWeight: 300, fill: todayPhase.color, fontStyle: 'italic', letterSpacing: -3 }}>
+          style={{ fontFamily: T.serif, fontSize: 70, fontWeight: 400, fill: T.text, letterSpacing: -2 }}>
           {animatedCenter}
         </text>
         <text x={cx} y={cy + 26} textAnchor="middle"
           style={{ fontFamily: T.serif, fontSize: 12, fill: T.muted, fontStyle: 'italic', letterSpacing: 0.3 }}>
-          of {cycleLength}
+          cycle day · estimated {cycleLength}-day cycle
         </text>
       </svg>
       <button
@@ -146,7 +147,7 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase,
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 18, background: 'transparent', border: 'none', padding: 0, cursor: onTapPhase ? 'pointer' : 'default', fontFamily: 'inherit' }}
       >
         <div style={{ fontFamily: T.serif, fontSize: 18, color: T.text, fontStyle: 'italic', letterSpacing: -0.2 }}>
-          You're in your <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
+          Estimated <em style={{ color: todayPhase.color, fontStyle: 'normal', fontWeight: 500 }}>{todayPhase.name.toLowerCase()}</em> phase.
         </div>
         <span style={{ color: todayPhase.color, opacity: 0.78, display: 'inline-flex' }} aria-hidden="true">
           <PhaseFlourish phaseId={todayPhase.id} size={22} />
@@ -154,7 +155,7 @@ function CycleWheel({ cycleDay, cycleLength, periodLength, bbtShift, onTapPhase,
       </button>
       {onTapPhase && (
         <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 12, color: T.muted, marginTop: 6, opacity: 0.75 }}>
-          tap any phase to read about it
+          Calendar estimate, not confirmation of ovulation.
         </div>
       )}
     </div>
@@ -646,7 +647,7 @@ function PatternVisualDeck({ deck, accent, cyclesLogged }) {
               : 'As Luna gathers more cycles, the repeating signals will light up here instead of staying abstract.'}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(86px, 1fr) repeat(5, minmax(28px, 1fr))', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: deck.hasRows ? 'grid' : 'none', gridTemplateColumns: 'minmax(86px, 1fr) repeat(5, minmax(28px, 1fr))', gap: 8, alignItems: 'center' }}>
             <div />
             {deck.cycles.map((cycle) => (
               <div key={cycle.start} style={{ textAlign: 'center', fontFamily: T.mono, fontSize: 10.5, letterSpacing: 0.8, fontWeight: 600, color: T.muted }}>
@@ -654,10 +655,7 @@ function PatternVisualDeck({ deck, accent, cyclesLogged }) {
               </div>
             ))}
 
-            {(deck.hasRows ? deck.rows : [
-              { id: 'placeholder-a', label: 'Signal one', color: accent, hits: [0, 0, 0, 0, 0] },
-              { id: 'placeholder-b', label: 'Signal two', color: accent, hits: [0, 0, 0, 0, 0] },
-            ]).map((row) => (
+            {deck.rows.map((row) => (
               <div key={row.id} style={{ display: 'contents' }}>
                 <div style={{ fontFamily: T.serif, fontSize: 13.5, color: T.text, lineHeight: 1.3, paddingRight: 4 }}>
                   {row.label}
@@ -895,14 +893,14 @@ export default function Insights() {
         <div style={{ position: 'relative', zIndex: 1, padding: '20px 22px 0', color: T.text }}>
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginTop: 6, marginBottom: 10, animationDelay: '0ms' }}>
           <div style={{ fontFamily: T.serif, fontSize: 40, fontWeight: 500, letterSpacing: -1, lineHeight: 1, flex: 1 }}>
-            What we've noticed.
+            Your cycle & history.
           </div>
           <div aria-hidden="true" style={{ color: (phase?.color || T.accent), opacity: 0.6, paddingTop: 4 }}>
             <MoonMark size={28} />
           </div>
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, lineHeight: 1.55, color: T.muted, marginBottom: 18, fontStyle: 'italic', animationDelay: '60ms' }}>
-          Patterns Luna sees across your cycles, gathered gently.
+          Your recorded experiences, with estimates clearly marked.
         </div>
 
         {/* Cycle wheel — circular visualization of where you are. Now
@@ -922,9 +920,8 @@ export default function Insights() {
             </>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0' }}>
-              <CycleWheel cycleDay={1} cycleLength={cycle.cycleLength || 28} periodLength={cycle.periodLength || 5} bbtShift={null} onTapPhase={goPhase} animate={animate} />
               <div style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, marginTop: 8, fontStyle: 'italic', textAlign: 'center', maxWidth: 260, lineHeight: 1.5 }}>
-                Log your first period and Luna will mark where you are on the wheel.
+                No cycle start recorded. Add one when you know it; there is no need to guess.
               </div>
             </div>
           )}

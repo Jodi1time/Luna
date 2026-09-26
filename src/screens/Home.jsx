@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
+import ActionIcon from '../components/ActionIcon'
+import PcosCompanion from '../components/PcosCompanion'
 import { Screen, SourceLine } from '../components/shared'
 import { PHASES, getReflectionPrompt } from '../data/lunaData'
 import { adaptiveLessonFor, tomorrowHookFor } from '../data/bodyLiteracy'
@@ -389,7 +391,7 @@ function QuickActions({ go }) {
               color: colors.accent,
               background: `${colors.accent}12`,
             }}>
-              {it.icon}
+              <ActionIcon name={it.key} />
             </span>
             <span style={{ display: 'block', minWidth: 0, maxWidth: '100%', fontFamily: T.serif, fontSize: 12.5, fontWeight: 500, lineHeight: 1.1, letterSpacing: -0.12, color: T.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {it.label}
@@ -1303,6 +1305,7 @@ export default function Home() {
           {/* Quick actions — one quiet shelf, one entry per job.
               Chat lives in the daily-thought strip, search inside
               Library, logging in the tab [+]. */}
+          {!isPreg && (settings?.conditions || []).includes('pcos') && <PcosCompanion compact />}
           {!isPreg && <QuickActions go={go} />}
 
           {/* Smart helper surfaces — only appear when she has told us
