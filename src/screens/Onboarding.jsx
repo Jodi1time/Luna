@@ -20,10 +20,10 @@ import { todayKey, toDateKey } from '../lib/dateOnly'
 // hurting woman), planning second (TTC / avoiding / pregnant /
 // menopause), the calm-default last.
 const INTENT_OPTIONS = [
-  { id: 'understanding',       label: 'Understanding my cycle & moods',         hint: 'Why I feel how I feel, week to week.' },
-  { id: 'managing-condition',  label: 'Managing a condition',                    hint: 'PCOS, endo, PMDD, fibroids, thyroid, HA.' },
+  { id: 'managing-condition',  label: 'Support with PCOS or another condition', hint: 'Keep symptoms, treatments and visit questions together.' },
+  { id: 'understanding',       label: 'Keeping track of how I feel', hint: 'Symptoms, moods and cycle history in one place.' },
   { id: 'ttc',                 label: 'Trying to conceive',                      hint: 'Make this window as clear as it can be.' },
-  { id: 'avoiding',            label: 'Avoiding pregnancy',                      hint: 'Know my fertile days, without guessing.' },
+  { id: 'avoiding',            label: 'Avoiding pregnancy', hint: 'Luna’s estimates are not a method of contraception.' },
   { id: 'pregnant',            label: 'Pregnant or postpartum',                  hint: 'Walk this with someone, week by week.' },
   { id: 'menopause',           label: 'Approaching menopause',                   hint: 'Hold space for a body that’s changing.' },
   { id: 'just-tracking',       label: 'Just tracking, simply',                   hint: 'The basics, beautifully. Nothing more.' },
@@ -110,9 +110,9 @@ const CONDITION_OPTIONS = [
 // the moat: the moment she realises Luna talks to her like a person.
 const INTENT_REPLIES = {
   'understanding':       'Then let’s start with what’s actually happening in your body.',
-  'managing-condition':  'Then let’s make sure Luna actually understands it — not just tracks it.',
+  'managing-condition':  'You don’t have to remember every detail. Let’s make a space for your records and questions.',
   'ttc':                 'Then let’s make this window as clear as it can be.',
-  'avoiding':            'Then knowing your fertile days is power. Luna will be honest about them.',
+  'avoiding':            'You can keep records here, but do not rely on Luna’s cycle estimates to prevent pregnancy.',
   'pregnant':            'Then welcome — Luna will walk this with you, week by week.',
   'menopause':           'Then let’s hold space for a body that’s changing — without alarm.',
   'just-tracking':       'Then we keep it simple. The basics, beautifully.',
@@ -855,10 +855,9 @@ export default function Onboarding({ step, slug: slugProp }) {
   const slug = slugProp || legacyStepToSlug(step)
   const stepNum = STEP_NUMBER[slug] ?? 1
   const { go, setOnboarding, cycleLength, updateSetting, settings } = useLuna()
-  // Period start is stored as an ISO date string so the picker can
-  // navigate back across months. Defaults to today; the user can
-  // step back up to 12 months via the calendar header.
-  const [lastPeriodISO, setLastPeriodISO] = useState(todayKey)
+  // Leave the date unknown until explicitly selected. The picker can
+  // navigate back across months without inventing a period start.
+  const [lastPeriodISO, setLastPeriodISO] = useState(null)
   const [cycleDays, setCycleDays]= useState(cycleLength || 28)
   const [account, setAccount] = useState({
     name: '', email: '', accountPassword: '',
@@ -901,9 +900,7 @@ export default function Onboarding({ step, slug: slugProp }) {
     setFatalError('')
     setFinishing(true)
     try {
-      // lastPeriodISO is already the user's exact pick (YYYY-MM-DD),
-      // possibly in a previous month.
-      const d = new Date(lastPeriodISO + 'T12:00:00')
+      // Preserve an explicitly selected date, or null when skipped.
 
       let acct = null
       if (signedInEmail) {
@@ -958,7 +955,7 @@ export default function Onboarding({ step, slug: slugProp }) {
       // Save profile to cloud and flip onboarded=true. The store's
       // setOnboarding action handles the cloud write.
       setOnboarding({
-        lastPeriodStart: toDateKey(d),
+        lastPeriodStart: lastPeriodISO,
         cycleLength: cycleDays,
         displayName: account.name.trim(),
         account: acct,
@@ -1067,7 +1064,7 @@ export default function Onboarding({ step, slug: slugProp }) {
           What brings<br /><em>you to Luna?</em>
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
-          Two minutes, and Luna becomes yours. You can change any of this later.
+          Welcome. Choose a starting point, not a label. You can change this later.
         </div>
         <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
           <StepIntent value={intent} onChange={(id) => updateSetting('intent', id)} />
@@ -1079,7 +1076,7 @@ export default function Onboarding({ step, slug: slugProp }) {
           Which one(s) are<br /><em>you navigating?</em>
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
-          You can pick more than one. Luna will pin what matters for each.
+          Share only what you want to. Choose more than one, or continue without choosing.
         </div>
         <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
           <StepConditions values={conditions} onChange={(arr) => updateSetting('conditions', arr)} />
@@ -1091,7 +1088,7 @@ export default function Onboarding({ step, slug: slugProp }) {
           When did your<br /><em>last period</em> start?
         </div>
         <div className="insight-stagger" style={{ fontSize: 14, color: T.muted, marginBottom: 24, fontFamily: T.serif, lineHeight: 1.55, fontStyle: 'italic', animationDelay: '100ms' }}>
-          A rough estimate is enough. We'll learn the rest from you.
+          This is optional and helps with calendar estimates. If you don’t know, you can skip it—your symptoms and care notes still belong here.
         </div>
         <div className="insight-stagger" style={{ animationDelay: '160ms' }}>
           <StepDate value={lastPeriodISO} onChange={setLastPeriodISO} />
@@ -1195,6 +1192,8 @@ export default function Onboarding({ step, slug: slugProp }) {
               : (slug === 'account' ? 'Welcome to Luna' : (slug === 'payoff' ? 'Save your space' : 'Continue'))} {Icons.arrow}
           </CTAButton>
         </div>
+        {slug === 'date' && <button onClick={() => { setLastPeriodISO(null); goNext() }} style={{ minHeight: 44, border: 0, background: 'transparent', color: T.muted, fontFamily: T.sans, cursor: 'pointer' }}>I don’t know / skip for now</button>}
+        {slug === 'intent' && <button onClick={() => { updateSetting('intent', 'just-tracking'); go('onb1') }} style={{ minHeight: 44, border: 0, background: 'transparent', color: T.muted, fontFamily: T.sans, cursor: 'pointer' }}>I’m not sure yet</button>}
 
       </div>
       </div>

@@ -15,7 +15,7 @@ import { getSession, onAuthStateChange } from './lib/supabase'
 import { StatusView } from './components/StatusView'
 
 import Welcome      from './screens/Welcome'
-import Onboarding   from './screens/Onboarding'
+import Onboarding   from './screens/OnboardingFlow'
 import Home         from './screens/Home'
 import Log          from './screens/Log'
 import Calendar     from './screens/Calendar'
