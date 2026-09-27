@@ -21,6 +21,14 @@ Browser validation could not complete: Chromium failed in this workspace. Saving
 
 ## Before release
 
+### Full onboarding replacement
+
+The active flow now uses `OnboardingFlow.jsx`: starting point → optional details → first-steps overview → account. The older Onboarding module is retained because EditSetup imports its reusable fields; it is no longer the first-run router target. Existing onboarding route names lead into the new flow.
+
+After setup, the persisted FirstSteps guide appears at the top of Today. It opens actual logging, calendar, and PCOS/visit-note routes. Skipping or finishing the guide does not mark health actions complete. Settings includes a replay control. Existing users do not see the guide automatically.
+
+Required manual checks: back/forward choices; blank health details; all optional goals; PCOS selection; rejected future dates; signed-in setup; successful signup with and without email confirmation; failed signup and failed profile save; guide routes, skip, replay and persistence. Refreshing or leaving setup currently resets the unsaved draft; passwords are never persisted. No guest mode was added. Profile and preference saves now happen together before onboarding completes. New validator tests plus the existing suite total 87 passing tests; production build and targeted lint pass. Browser and real authentication verification remain outstanding.
+
 Run `npm ci`, `npm run dev`, and test at phone and desktop widths. Select PCOS in conditions, open the care space, save a question, reload, prepare/edit/download notes, and verify the treatment inclusion option. Test calendar date selection and keyboard use of the cycle wheel. Check non-PCOS and hormonal birth-control modes for regressions.
 
 The existing app's clinical content and privacy/security implementation have not received a comprehensive audit. This is a focused first iteration, not a claim of medical validation or improved retention.

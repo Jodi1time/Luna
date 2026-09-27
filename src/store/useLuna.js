@@ -120,15 +120,16 @@ const useLuna = create(
       // type ∈ 'miscarriage' | 'stillbirth' | 'abortion' | 'ectopic' | 'chemical' | 'live-birth'
       pregnancyHistory: [],
 
-      setOnboarding: (data) => {
-        set({ ...data, onboarded: true })
-        fireAndForget(saveProfile({
+      setOnboarding: async (data) => {
+        await saveProfile({
           display_name:      data.displayName ?? get().displayName,
-          last_period_start: data.lastPeriodStart ?? get().lastPeriodStart,
+          last_period_start: data.lastPeriodStart === undefined ? get().lastPeriodStart : data.lastPeriodStart,
           cycle_length:      data.cycleLength ?? get().cycleLength,
           period_length:     data.periodLength ?? get().periodLength,
           onboarded:         true,
-        }), 'setOnboarding')
+          settings:          data.settings ?? get().settings,
+        })
+        set({ ...data, onboarded: true })
       },
       setCycleLength: (n) => {
         set({ cycleLength: n })

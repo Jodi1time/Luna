@@ -197,6 +197,7 @@ export default function Settings() {
         </div>
       </div>
 
+      <div style={{ padding: '16px 22px' }}><Row label="Show the getting-started guide" onTap={() => { updateSetting('firstSteps', { active: true, step: 0 }); go('home') }} /></div>
       {/* Pro card — avatar now tinted to current phase color */}
       <div className="insight-stagger" style={{ padding: '20px 16px 8px', animationDelay: '90ms' }}>
         <Panel style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 14 }}>
