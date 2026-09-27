@@ -21,18 +21,18 @@ export default function Welcome() {
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div style={{ fontFamily: T.serif, fontSize: 36, fontWeight: 500, letterSpacing: -0.8, lineHeight: 1.1 }}>
-          A companion for the body<br /><em>you live in.</em>
+          A little less to remember.<br /><em>A little more support.</em>
         </div>
         <div style={{ fontFamily: T.serif, fontSize: 16, lineHeight: 1.6, color: T.muted, marginTop: 20 }}>
-          Luna learns your cycle and meets you where you are — in the quiet of menstrual, the energy of follicular, the heat of ovulation. A companion, on the days you need one.
+          Keep your symptoms, treatment history and appointment questions together. Whether you’re managing PCOS or simply getting to know your body, there’s a place for you here.
         </div>
       </div>
 
       <div style={{ padding: '18px 0', borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 24 }}>
         {[
-          { n: '01', h: 'Yours alone',      s: 'Encrypted at rest. Never sold.' },
-          { n: '02', h: 'Grounded in care', s: 'Every claim sourced from doctors and clinical research.' },
-          { n: '03', h: 'Quiet by design',  s: 'No notifications you didn\'t ask for. No optimisation talk.' },
+          { n: '01', h: 'Notice', s: 'Record how you feel, in your own words.' },
+          { n: '02', h: 'Remember', s: 'Keep your care history and questions close.' },
+          { n: '03', h: 'Prepare', s: 'Review and edit notes for your next visit.' },
         ].map((p) => (
           <div key={p.n}>
             <div style={{ fontFamily: T.mono, fontSize: 11, color: T.accent, marginBottom: 5 }}>{p.n}</div>
@@ -43,10 +43,13 @@ export default function Welcome() {
       </div>
 
       <div style={{ marginTop: 22 }}>
+        <p style={{ fontFamily: T.sans, fontSize: 13, lineHeight: 1.6, color: T.muted }}>
+          No perfect routine or regular cycle needed. Start with what you know; leave the rest for later. Luna helps you keep records, not diagnose a condition.
+        </p>
         <div style={{ fontSize: 11, color: T.muted, fontFamily: T.sans, lineHeight: 1.55, marginBottom: 16, textAlign: 'center' }}>
           You're 13 or older and you agree to Luna's <button onClick={() => go('terms')} style={{ background: 'none', border: 'none', padding: 0, color: T.text, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}>Terms</button> and <button onClick={() => go('privacy')} style={{ background: 'none', border: 'none', padding: 0, color: T.text, cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', textDecoration: 'underline', textUnderlineOffset: 2 }}>Privacy Policy</button>.
         </div>
-        <CTAButton full onClick={() => go('onbIntent')}>BEGIN</CTAButton>
+        <CTAButton full onClick={() => go('onbIntent')}>Make Luna mine</CTAButton>
         <button onClick={() => go('auth')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.muted, fontFamily: T.sans, fontSize: 12, marginTop: 12, padding: 8, width: '100%' }}>
           Already with us? <span style={{ color: T.text, fontWeight: 600 }}>Sign in</span>
         </button>
