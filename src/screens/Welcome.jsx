@@ -1,6 +1,7 @@
 import { T } from '../data/theme'
 import { CTAButton } from '../components/shared'
 import useLuna from '../store/useLuna'
+import LunaLogo from '../components/LunaLogo'
 
 export default function Welcome() {
   const go = useLuna((s) => s.go)
@@ -12,7 +13,7 @@ export default function Welcome() {
       <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column', padding: '60px 28px 36px', color: T.text, animation: 'fadeUp .35s ease-out both', overflowY: 'auto', minHeight: 0 }}>
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700, fontFamily: T.sans, color: T.muted }}>
-            LUNA
+            <LunaLogo />
           </div>
           <div style={{ fontFamily: T.serif, fontStyle: 'italic', fontSize: 11, color: T.muted, marginTop: 2, letterSpacing: 0.3 }}>
             by Gloria

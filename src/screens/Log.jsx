@@ -610,7 +610,7 @@ export default function Log() {
           <div className="insight-stagger" style={{ animationDelay: '195ms', marginTop: -8, marginBottom: 24 }}>
             <Eyebrow color={acc}>For your PCOS</Eyebrow>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
-              {['hirsutism', 'scalpThinning', 'acanthosis', 'sugarCraving', 'energyCrash'].map((id) => {
+              {Array.from(new Set([...(store.settings?.pcosFocus ?? ['hirsutism', 'scalpThinning', 'acanthosis', 'sugarCraving', 'energyCrash']), ...symptoms.filter(id => ['hirsutism', 'scalpThinning', 'acanthosis', 'sugarCraving', 'energyCrash'].includes(id))])).map((id) => {
                 const s = SYMPTOMS[id]
                 if (!s) return null
                 const on = symptoms.includes(id)
