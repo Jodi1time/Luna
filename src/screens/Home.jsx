@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react'
 import { T } from '../data/theme'
 import ActionIcon from '../components/ActionIcon'
 import FirstSteps from '../components/FirstSteps'
-import LunaLogo from '../components/LunaLogo'
 import PcosCompanion from '../components/PcosCompanion'
 import { Screen, SourceLine } from '../components/shared'
 import { PHASES, getReflectionPrompt } from '../data/lunaData'
@@ -1004,7 +1003,6 @@ export default function Home() {
       <Screen ref={screenRef}>
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} phaseId={phase?.id} />
-          <LunaLogo width={120} />
           <FirstSteps />
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
