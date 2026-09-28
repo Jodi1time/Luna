@@ -5,6 +5,7 @@ import { todayKey } from '../lib/dateOnly'
 import { validateEmail, validateAccountPassword } from '../lib/validation'
 import { SETUP_STAGES, STARTING_POINTS, setupProfile, validateSetupDetails } from '../lib/onboardingFlow'
 import '../components/firstSteps.css'
+import LunaLogo from '../components/LunaLogo'
 
 const CONDITIONS = [['pcos', 'PCOS'], ['endo', 'Endometriosis'], ['pmdd', 'PMDD'], ['thyroid', 'Thyroid condition'], ['fibroids', 'Fibroids'], ['ha', 'Hypothalamic amenorrhea']]
 export default function OnboardingFlow() {
@@ -63,7 +64,7 @@ export default function OnboardingFlow() {
   }
   const headings = ['Let’s start with you.', 'Only what you want to share.', 'Here’s how Luna can help.', 'A space to come back to.']
   return <main className="luna-setup">
-    <div className="setup-brand">LUNA <span>at your pace</span></div>
+    <div className="setup-brand"><LunaLogo width={180} /><span>at your pace</span></div>
     <nav aria-label="Setup progress"><p className="setup-eyebrow">{stage + 1} OF 4 · {SETUP_STAGES[stage]}</p><progress max="4" value={stage + 1} aria-label={`Step ${stage + 1} of 4: ${SETUP_STAGES[stage]}`} /></nav>
     <h1 tabIndex={-1} ref={title}>{headings[stage]}</h1>
     {stage === 0 && <><p>You don’t need to know exactly what you need. Pick a starting point; you can explore everything later.</p><fieldset><legend>What would feel useful today?</legend>{STARTING_POINTS.map(item => <label className={`setup-option ${intent === item.id ? 'selected' : ''}`} key={item.id}><input type="radio" name="intent" checked={intent === item.id} onChange={() => setIntent(item.id)} /><span><strong>{item.title}</strong><small>{item.detail}</small></span></label>)}</fieldset><p className="setup-note">Luna organizes your records. It doesn’t diagnose conditions or replace your care team.</p></>}

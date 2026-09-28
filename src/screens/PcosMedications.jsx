@@ -324,8 +324,8 @@ export default function PcosMedications() {
     writeMeds(next)
   }
   const deleteMed = (id) => {
-    if (!window.confirm('Stop tracking this? Your check-in history will be removed.')) return
-    writeMeds(meds.filter((m) => m.id !== id))
+    if (!window.confirm('Archive this tracker? Your check-in history will be kept. This does not record a medical stop date.')) return
+    writeMeds(meds.map((m) => m.id === id ? { ...m, archivedAt: todayISO() } : m))
   }
   const checkMed = (id, state) => {
     const t = todayISO()
@@ -366,10 +366,11 @@ export default function PcosMedications() {
           </div>
         )}
 
-        {meds.map((m) => (
+        {meds.filter(m => !m.archivedAt).map((m) => (
           <MedCard key={m.id} med={m} accent={accent} onCheck={checkMed} onDelete={deleteMed} />
         ))}
 
+        {meds.some(m => m.archivedAt) && <details style={{ margin: '20px 0' }}><summary>Archived treatment trackers</summary>{meds.filter(m => m.archivedAt).map(m => <div key={m.id} style={{ padding: 12 }}><strong>{m.name}</strong><p>Started {m.startedAt} · tracking archived {m.archivedAt}</p><p>{Object.keys(m.dailyLog || {}).length} check-ins preserved</p><button onClick={() => writeMeds(meds.map(item => item.id === m.id ? { ...item, archivedAt: null } : item))}>Restore tracking</button></div>)}</details>}
         {picking && (
           <MedPicker
             accent={accent}

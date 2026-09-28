@@ -37,4 +37,6 @@ Prepared for a separate-branch push at the owner's request. No production deploy
 
 ## Logo concept
 
+The approved rounded wordmark is installed from `public/brand/luna-rounded.png` in Welcome, onboarding and Today. It does not yet replace launcher icons. PCOS now includes optional symptom-row preferences, dated self-reported care events, and opt-in inclusion of those events in editable visit summaries. Treatment trackers archive and restore rather than deleting check-in history; archive dates are explicitly not medical stop dates. NHS and Monash resource links were checked September 27, 2026, not clinically reviewed by Luna. Current verification: 88 tests and production build pass; browser and live account flows remain unverified.
+
 `public/brand/luna-wordmark-concept.png` is a new transparent-background logo concept, kept separate from the live branding. It was made with built-in image generation, using this direction: an editorial Luna serif wordmark paired with a simple crescent-like embracing arc, in deep burnt terracotta, clean vector-like contours, without extra text or medical symbols. It is a raster concept, not a vector master or trademark-cleared identity.
