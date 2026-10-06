@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { DEFAULT_JOURNAL_THEME } from '../data/journalThemes'
+import { supabaseEnabled } from '../lib/supabase'
+import { readCareSpace } from '../lib/careSpace'
 import {
   loadProfile, saveProfile,
   loadLogs, upsertLog, deleteLog,
@@ -226,6 +228,28 @@ const useLuna = create(
         const next = { ...get().settings, [key]: val }
         set({ settings: next })
         fireAndForget(saveProfile({ settings: next }), 'updateSetting')
+      },
+
+      // Care forms retain their input until an account write is acknowledged.
+      // No new data goes into daily logs, analytics, or partner-share payloads.
+      careSaving: false,
+      saveCareSpace: (patch) => get().saveCareSettings({ pcosCareSpace: { ...readCareSpace(get().settings.pcosCareSpace), ...patch } }),
+      saveCareQuestions: (questions) => get().saveCareSettings({ pcosQuestions: questions }),
+      saveCareSettings: async (patch) => {
+        if (get().careSaving) throw new Error('Another care save is in progress.')
+        const owner = get().session?.user?.id || null
+        set({ careSaving: true })
+        try {
+          if (supabaseEnabled) {
+            if (!owner) throw new Error('Sign in to save your care space.')
+            await saveProfile({ settings: { ...get().settings, ...patch } }, { requireSaved: true, expectedUserId: owner })
+            if (get().session?.user?.id !== owner) throw new Error('Account changed while saving.')
+          }
+          set({ settings: { ...get().settings, ...patch } })
+          return supabaseEnabled ? 'account' : 'device'
+        } finally {
+          set({ careSaving: false })
+        }
       },
 
       // Mark a wellness habit as done today (or replace with a partial
