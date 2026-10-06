@@ -1004,6 +1004,7 @@ export default function Home() {
         <div onClick={handleContentTap} style={{ position: 'relative', padding: '12px 22px 0', color: T.text, zIndex: 1 }}>
           <Greeting name={displayName} phaseId={phase?.id} />
           <FirstSteps />
+          {!isPreg && (settings?.conditions || []).includes('pcos') && <PcosCompanion compact />}
 
           {!isPreg && <WeekStrip go={go} setActiveLogDate={setActiveLogDate} cycle={cycle} logs={logs} />}
 
@@ -1307,7 +1308,6 @@ export default function Home() {
           {/* Quick actions — one quiet shelf, one entry per job.
               Chat lives in the daily-thought strip, search inside
               Library, logging in the tab [+]. */}
-          {!isPreg && (settings?.conditions || []).includes('pcos') && <PcosCompanion compact />}
           {!isPreg && <QuickActions go={go} />}
 
           {/* Smart helper surfaces — only appear when she has told us

@@ -1,4 +1,5 @@
 import { addCalendarDays, toDateKey, todayKey } from './dateOnly'
+import { careEntryLines } from './careSpace'
 
 export function careRecap(logs = {}, end = todayKey()) {
   const start = toDateKey(addCalendarDays(end, -6))
@@ -12,11 +13,16 @@ export function careRecap(logs = {}, end = todayKey()) {
   return { start, end, recorded: rows.length, missing: 7 - rows.length, symptoms: Object.entries(counts).sort((a, b) => b[1] - a[1]) }
 }
 
-export function careSummary({ recap, labels = {}, questions = [], medications = [], events = [] }) {
+export function careSummary({ recap, labels = {}, questions = [], medications = [], events = [], concern = null, careEntries = [] }) {
   return [
     'MY PCOS CONVERSATION NOTES', `${recap.start} to ${recap.end}`, '',
     `${recap.recorded} of 7 days have entries. Unrecorded days are unknown, not symptom-free.`,
     ...recap.symptoms.map(([id, count]) => `${labels[id]?.label || id}: recorded on ${count} day${count === 1 ? '' : 's'}.`),
+    '', 'WHAT I WANT TO DISCUSS',
+    concern?.label || 'No pinned concern included.',
+    '', 'CARE-SPACE MOMENTS I SELECTED — DATES SHOWN PER ENTRY',
+    ...careEntryLines(careEntries),
+    ...(careEntries.length ? [] : ['No care-space moments included.']),
     '', 'TREATMENTS I HAVE RECORDED',
     ...medications.map(m => `${m.name || 'Unnamed treatment'}${m.dose ? ` · ${m.dose}` : ''}${m.startedAt ? ` · started ${m.startedAt}` : ''}${m.archivedAt ? ` · tracking archived ${m.archivedAt} (not a confirmed stop date)` : ''}`),
     ...(medications.length ? [] : ['None included.']),

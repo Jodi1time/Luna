@@ -30,13 +30,20 @@ export async function loadProfile() {
 }
 
 // Partial update of profile fields. Pass only the keys you want to change.
-export async function saveProfile(patch) {
+export async function saveProfile(patch, { requireSaved = false, expectedUserId = null } = {}) {
   const user = await currentUser()
-  if (!user) return
-  const { error } = await supabase
+  if (!user) {
+    if (requireSaved) throw new Error('Sign in to save to your account.')
+    return
+  }
+  if (expectedUserId && user.id !== expectedUserId) throw new Error('Account changed before saving.')
+  const request = supabase
     .from('profiles')
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', user.id)
+  // Opt-in acknowledgement for care records: RLS or a missing profile
+  // can otherwise update zero rows without returning an error.
+  const { error } = requireSaved ? await request.select('id').single() : await request
   if (error) throw error
 }
 

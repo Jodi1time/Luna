@@ -166,9 +166,10 @@ export default function Pcos() {
   return (
     <Screen padBottom={40}>
       <div style={{ padding: '12px 22px 0', color: T.text }}>
-        <Masthead issue="PCOS" onBack={back} />
+        <Masthead issue="YOUR CARE" onBack={back} />
         <PcosCompanion />
-
+        <details className="care-more-tools">
+          <summary>More PCOS tracking tools</summary>
         {/* Hero — phase-flourished header that names the mode. */}
         <div className="insight-stagger" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, animationDelay: '0ms' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -184,7 +185,7 @@ export default function Pcos() {
           )}
         </div>
         <div className="insight-stagger" style={{ fontFamily: T.serif, fontSize: 14, color: T.muted, lineHeight: 1.6, fontStyle: 'italic', marginTop: 10, marginBottom: 26, animationDelay: '40ms' }}>
-          PCOS reads itself slowly. Each day you log adds to the picture — and to what Luna can hand to your doctor.
+          Your recorded symptoms and cycle dates, with estimates kept separate from your own notes.
         </div>
 
         {/* Cycle pattern read — the most Luna-distinctive section.
@@ -362,6 +363,7 @@ export default function Pcos() {
             />
           </div>
         </div>
+        </details>
       </div>
     </Screen>
   )
